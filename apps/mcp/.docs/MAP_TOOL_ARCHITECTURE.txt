@@ -1,0 +1,372 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      MAP TOOL ARCHITECTURE & FLOW                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+TOOL REQUEST FLOW
+═════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────┐
+│  AI Agent / Client  │
+│   (e.g., Claude)    │
+└──────────┬──────────┘
+           │
+           │ Tool Call with JSON arguments
+           │ {
+           │   url: "https://example.com",
+           │   startIndex: 0,
+           │   maxResults: 200,
+           │   resultHandling: "saveAndReturn"
+           │ }
+           │
+           ▼
+┌──────────────────────────────────────────────┐
+│ MCP Server Registration Handler              │
+│ (shared/mcp/registration.ts:131-159)        │
+│                                              │
+│ 1. Find tool by name: 'map'                 │
+│ 2. Call handler with args                   │
+│ 3. Return CallToolResult                    │
+└──────────┬───────────────────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ MAP TOOL HANDLER (shared/mcp/tools/map/index.ts:20-42)                   │
+│                                                                           │
+│ try {                                                                     │
+│   ├─ Validate input: mapOptionsSchema.parse(args)                       │
+│   │  └─ Check URL format, ranges, enum values                           │
+│   │                                                                       │
+│   ├─ Call mapPipeline(client, validatedArgs)                            │
+│   │  │                                                                   │
+│   │  └─> shared/mcp/tools/map/pipeline.ts                              │
+│   │      └─ Transform schema to client options                          │
+│   │      └─ Call client.map(options)                                   │
+│   │         └─> FirecrawlMapClient.map()                               │
+│   │            └─ HTTP POST to Firecrawl API                           │
+│   │            └─ Return MapResult { links: [...] }                    │
+│   │                                                                       │
+│   └─ Format response: formatMapResponse(...)                            │
+│      └─> shared/mcp/tools/map/response.ts                              │
+│         └─ See RESPONSE FORMATTING below                               │
+│                                                                           │
+│ } catch (error) {                                                         │
+│   └─ Return error response with isError: true                           │
+│ }                                                                          │
+└──────────┬───────────────────────────────────────────────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ RESPONSE CONTENT BUILDING (shared/mcp/tools/map/response.ts:14-88)       │
+│                                                                           │
+│ Content Array: CallToolResult['content']                                 │
+│                                                                           │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ [0] TEXT SUMMARY (always included)                                 │ │
+│ │                                                                      │ │
+│ │ {                                                                   │ │
+│ │   type: 'text',                                                    │ │
+│ │   text: "Map Results for https://example.com\n                   │ │
+│ │          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n                       │ │
+│ │          Total URLs discovered: 3000\n                            │ │
+│ │          Unique domains: 5\n                                      │ │
+│ │          URLs with titles: 87%\n                                 │ │
+│ │          Showing: 1-200 of 3000"                                 │ │
+│ │ }                                                                   │ │
+│ │                                                                      │ │
+│ │ Purpose: Human-readable summary with statistics                   │ │
+│ │ Always Included: Yes                                               │ │
+│ └─────────────────────────────────────────────────────────────────────┘ │
+│                                                                           │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ [1] DATA CONTENT (varies by resultHandling mode)                   │ │
+│ │                                                                      │ │
+│ │ ┌─ Mode: 'saveOnly' ─────────────────────────────────────────────┐ │ │
+│ │ │                                                                 │ │ │
+│ │ │ {                                                              │ │ │
+│ │ │   type: 'resource_link',                                      │ │ │
+│ │ │   uri: 'pulse-crawl://map/example.com/1730970595847/page-0', │ │ │
+│ │ │   name: 'URL Map: https://example.com (200 URLs)',           │ │ │
+│ │ │   mimeType: 'application/json',                              │ │ │
+│ │ │   description: 'URLs 1-200 from https://example.com...'      │ │ │
+│ │ │ }                                                              │ │ │
+│ │ │                                                                 │ │ │
+│ │ │ Purpose: Link to resource (saves tokens, resource stored)     │ │ │
+│ │ └─────────────────────────────────────────────────────────────────┘ │ │
+│ │                                                                      │ │
+│ │ ┌─ Mode: 'saveAndReturn' (default) ───────────────────────────────┐ │ │
+│ │ │                                                                  │ │ │
+│ │ │ {                                                               │ │ │
+│ │ │   type: 'resource',                                            │ │ │
+│ │ │   resource: {                                                  │ │ │
+│ │ │     uri: 'pulse-crawl://map/example.com/1730970595847/...',   │ │ │
+│ │ │     name: 'URL Map: https://example.com (200 URLs)',          │ │ │
+│ │ │     mimeType: 'application/json',                             │ │ │
+│ │ │     text: '[{"url":"https://example.com/page-1",...}]'        │ │ │
+│ │ │   }                                                             │ │ │
+│ │ │ }                                                               │ │ │
+│ │ │                                                                  │ │ │
+│ │ │ Purpose: Full content embedded + stored (includes links)       │ │ │
+│ │ └──────────────────────────────────────────────────────────────────┘ │ │
+│ │                                                                      │ │
+│ │ ┌─ Mode: 'returnOnly' ─────────────────────────────────────────────┐ │ │
+│ │ │                                                                  │ │ │
+│ │ │ {                                                               │ │ │
+│ │ │   type: 'text',                                                │ │ │
+│ │ │   text: '[{"url":"https://example.com/page-1","title":"..."}]'│ │ │
+│ │ │ }                                                               │ │ │
+│ │ │                                                                  │ │ │
+│ │ │ Purpose: Raw JSON inline (no storage)                         │ │ │
+│ │ └──────────────────────────────────────────────────────────────────┘ │ │
+│ │                                                                      │ │
+│ └──────────────────────────────────────────────────────────────────────┘ │
+│                                                                           │
+│ Return: { content: [...], isError: false }                              │
+└──────────┬───────────────────────────────────────────────────────────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  AI Agent / Client  │
+│  Receives Result    │
+│  Can access URL     │
+│  links and stats    │
+└─────────────────────┘
+
+
+INPUT VALIDATION LAYERS
+═════════════════════════════════════════════════════════════════════════════
+
+┌──────────────────────────────────────┐
+│ LAYER 1: ZORD SCHEMA VALIDATION      │
+├──────────────────────────────────────┤
+│                                      │
+│ url:              z.string().url()   │ Required, URL format
+│ search:           z.string()         │ Optional
+│ limit:            1-100000           │ Default: 5000
+│ sitemap:          enum(3 values)     │ Default: 'include'
+│ includeSubdomains: boolean           │ Default: true
+│ ignoreQueryParams: boolean           │ Default: true
+│ timeout:          positive integer   │ Optional
+│ location:         { country, lang }  │ Optional with env defaults
+│ startIndex:       min(0)             │ Default: 0 (pagination)
+│ maxResults:       1-5000             │ Default: 200 (pagination)
+│ resultHandling:   enum(3 values)     │ Default: 'saveAndReturn'
+│                                      │
+│ ✅ All values validated before use   │
+│ ✅ Type-safe inference               │
+│ ✅ Early return on invalid input     │
+│                                      │
+└──────────────────────────────────────┘
+           ↓ success
+┌──────────────────────────────────────┐
+│ LAYER 2: RANGE CONSTRAINTS           │
+├──────────────────────────────────────┤
+│                                      │
+│ startIndex ≥ 0  (no negative)        │ Pagination safety
+│ maxResults 1-5000 (reasonable)       │ Memory/API limits
+│ limit 1-100000 (API constraint)      │ Firecrawl API max
+│                                      │
+│ ✅ Prevents allocation attacks       │
+│ ✅ Aligns with Firecrawl limits      │
+│                                      │
+└──────────────────────────────────────┘
+           ↓ success
+┌──────────────────────────────────────┐
+│ LAYER 3: ENUM CONSTRAINTS            │
+├──────────────────────────────────────┤
+│                                      │
+│ sitemap:        'skip'               │
+│                 'include' (default)  │
+│                 'only'               │
+│                                      │
+│ resultHandling: 'saveOnly'           │
+│                 'saveAndReturn'      │
+│                 'returnOnly'         │
+│                                      │
+│ ✅ Restricts to known values         │
+│ ✅ Prevents misuse                   │
+│                                      │
+└──────────────────────────────────────┘
+           ↓ success
+┌──────────────────────────────────────┐
+│ LAYER 4: FORMAT VALIDATION           │
+├──────────────────────────────────────┤
+│                                      │
+│ url:  Must be valid URL format       │ Zod .url() validator
+│       https://example.com ✅         │
+│       not-a-url ✗                    │
+│                                      │
+│ ✅ Prevents injection attacks        │
+│ ✅ Ensures valid Firecrawl calls     │
+│                                      │
+└──────────────────────────────────────┘
+           ↓ all valid
+┌──────────────────────────────────────┐
+│ ✅ PROCEED TO BUSINESS LOGIC         │
+└──────────────────────────────────────┘
+
+
+ENVIRONMENT VARIABLES
+═════════════════════════════════════════════════════════════════════════════
+
+From shared/mcp/tools/map/schema.ts:
+
+┌─────────────────────────────────────────────┐
+│ MAP_DEFAULT_COUNTRY                         │
+├─────────────────────────────────────────────┤
+│ Default: 'US'                               │
+│ Used for: location.country in Firecrawl    │
+│ Example: export MAP_DEFAULT_COUNTRY='AU'   │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ MAP_DEFAULT_LANGUAGES                       │
+├─────────────────────────────────────────────┤
+│ Default: 'en-US'                            │
+│ Format: comma-separated                     │
+│ Used for: location.languages in Firecrawl  │
+│ Example: export MAP_DEFAULT_LANGUAGES='     │
+│           en-US,es-ES,fr-FR'                │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ MAP_MAX_RESULTS_PER_PAGE                    │
+├─────────────────────────────────────────────┤
+│ Default: 200 (≈13k tokens)                 │
+│ Range: 1-5000                               │
+│ Used for: maxResults default                │
+│ Example: export MAP_MAX_RESULTS_PER_PAGE=500│
+│                                             │
+│ Invalid values:                             │
+│ • < 1 → warns, uses 200                    │
+│ • > 5000 → warns, uses 200                 │
+│ • NaN → warns, uses 200                    │
+│                                             │
+│ ✅ Graceful fallback on error              │
+└─────────────────────────────────────────────┘
+
+From shared/mcp/registration.ts:
+
+┌─────────────────────────────────────────────┐
+│ FIRECRAWL_API_KEY                           │
+├─────────────────────────────────────────────┤
+│ Required: Yes (for map to work)             │
+│ Used for: Firecrawl API authentication      │
+│ Default: empty string (map will fail)       │
+│ Example: export FIRECRAWL_API_KEY='fc_...'  │
+│                                             │
+│ ✅ Not exposed in logs/errors               │
+│ ✅ Handled by FirecrawlMapClient            │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ FIRECRAWL_BASE_URL                          │
+├─────────────────────────────────────────────┤
+│ Required: No                                 │
+│ Default: 'https://api.firecrawl.dev'        │
+│ Used for: Custom Firecrawl instances        │
+│ Example: export FIRECRAWL_BASE_URL='        │
+│           https://self-hosted.local'        │
+│                                             │
+│ ✅ Configurable for enterprise setups      │
+│ ✅ Self-hosted support                      │
+└─────────────────────────────────────────────┘
+
+
+TEST COVERAGE MATRIX
+═════════════════════════════════════════════════════════════════════════════
+
+Test File            │ Test Count │ Areas Covered
+─────────────────────┼────────────┼──────────────────────────────────────
+index.test.ts        │     5      │ Tool structure, parameters, error handling
+schema.test.ts       │    22      │ Validation, env vars, fallbacks, ranges
+response.test.ts     │    11      │ Formatting, modes, URIs, statistics
+pipeline.test.ts     │    11      │ Integration, transformation, mocking
+─────────────────────┼────────────┼──────────────────────────────────────
+TOTAL                │    49      │ ✅ ALL PASSING
+
+Test Distribution:
+  Unit Tests:      35 (schema, response, pipeline)
+  Integration:      5 (tool structure, error paths)
+  Mock Coverage:   49 (all tests use mocks for Firecrawl API)
+
+Edge Cases Covered:
+  ✅ Empty result sets (0 URLs)
+  ✅ Large result sets (3000 URLs)
+  ✅ Pagination boundaries
+  ✅ Multiple domains
+  ✅ Missing metadata fields
+  ✅ Environment variable overrides
+  ✅ Invalid enum values
+  ✅ Out-of-range numbers
+  ✅ API failures (402 payment required)
+  ✅ All three result handling modes
+
+
+PROTOCOL COMPLIANCE CHECKLIST
+═════════════════════════════════════════════════════════════════════════════
+
+✅ Tool Definition
+   ├─ name: 'map' ✅
+   ├─ description: detailed and helpful ✅
+   ├─ inputSchema: valid JSON schema ✅
+   └─ handler: async function ✅
+
+✅ Response Structure
+   ├─ CallToolResult interface ✅
+   ├─ content: array of content items ✅
+   └─ isError: boolean flag ✅
+
+✅ Content Types
+   ├─ text type ✅
+   │  └─ required: text field
+   ├─ resource_link type ✅
+   │  └─ required: uri, name, mimeType
+   └─ resource type ✅
+      └─ required: uri, mimeType, text (in resource property)
+
+✅ Input Validation
+   ├─ Zod schema validation ✅
+   ├─ Type-safe parsing ✅
+   ├─ Error messages ✅
+   └─ Early returns on error ✅
+
+✅ Error Handling
+   ├─ isError: true on failure ✅
+   ├─ Human-readable messages ✅
+   ├─ No uncaught exceptions ✅
+   └─ Consistent error format ✅
+
+✅ Security
+   ├─ Input sanitization ✅
+   ├─ No SQL/shell injection ✅
+   ├─ Output encoding ✅
+   ├─ API key not exposed ✅
+   └─ Safe JSON handling ✅
+
+✅ Best Practices
+   ├─ No union types at root (Anthropic compatible) ✅
+   ├─ Proper async/await ✅
+   ├─ Single responsibility ✅
+   ├─ Dependency injection ✅
+   ├─ Type safety (TypeScript) ✅
+   └─ Documentation ✅
+
+
+SUMMARY
+═════════════════════════════════════════════════════════════════════════════
+
+Status: ✅ PRODUCTION READY
+
+The map tool demonstrates:
+  • Proper MCP protocol compliance
+  • Robust input validation (4 layers)
+  • Comprehensive error handling
+  • Security best practices
+  • Excellent test coverage (49 tests)
+  • Clean architecture (4 focused modules)
+  • Professional response formatting
+  • Environment configuration support
+
+No issues found. Ready for production deployment.
+
+═════════════════════════════════════════════════════════════════════════════

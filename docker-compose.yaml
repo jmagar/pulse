@@ -1,0 +1,59 @@
+name: firecrawl
+
+x-common-service: &common-service
+  restart: unless-stopped
+  networks:
+    - firecrawl
+  env_file:
+    - .env
+  labels:
+    - "com.centurylinklabs.watchtower.enable=false"
+
+services:
+  firecrawl_playwright:
+    <<: *common-service
+    image: ghcr.io/firecrawl/playwright-service:latest
+    # build: apps/playwright-service-ts
+    container_name: firecrawl_playwright
+    ports:
+      - "${PLAYWRIGHT_PORT:-4302}:3000"
+
+  firecrawl:
+    <<: *common-service
+    image: ghcr.io/firecrawl/firecrawl
+    # build: apps/api
+    container_name: firecrawl
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    depends_on:
+      - firecrawl_cache
+      - firecrawl_playwright
+      - firecrawl_db
+    ports:
+      - "${FIRECRAWL_PORT:-3002}:${FIRECRAWL_INTERNAL_PORT:-3002}"
+    command: node dist/src/harness.js --start-docker
+
+  firecrawl_cache:
+    <<: *common-service
+    image: redis:alpine
+    container_name: firecrawl_cache
+    ports:
+      - "${REDIS_PORT:-4303}:6379"
+    volumes:
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_redis:/data
+    command: redis-server --bind 0.0.0.0 --appendonly yes --save 60 1
+
+  firecrawl_db:
+    <<: *common-service
+    build: apps/nuq-postgres
+    container_name: firecrawl_db
+    ports:
+      - "${POSTGRES_PORT:-4304}:5432"
+    volumes:
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_postgres:/var/lib/postgresql/data
+
+networks:
+  firecrawl:
+    driver: bridge

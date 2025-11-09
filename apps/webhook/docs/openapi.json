@@ -1,0 +1,1357 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Firecrawl Search Bridge API",
+    "version": "0.1.0",
+    "description": "Semantic search service for Firecrawl web scraping with hybrid search capabilities.\n\n## Features\n- **Hybrid Search**: Combines vector similarity and BM25 keyword search with RRF fusion\n- **Multiple Search Modes**: Semantic, keyword, and hybrid search\n- **Async Indexing**: Background job processing via Redis queue\n- **Webhook Integration**: Native Firecrawl webhook support with HMAC signature verification\n- **Health Monitoring**: Real-time service health checks\n\n## Authentication\n- **API Secret**: Bearer token authentication for API endpoints\n- **Webhook Signature**: HMAC-SHA256 verification for webhook endpoints\n\n## Rate Limits\n- Index: 10 requests/minute\n- Search: 50 requests/minute\n- Test Index: 5 requests/minute\n",
+    "contact": {
+      "name": "FC-Bridge Support",
+      "url": "https://github.com/yourusername/fc-bridge"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:52100",
+      "description": "Local development server"
+    },
+    {
+      "url": "http://0.0.0.0:52100",
+      "description": "Docker container server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "indexing",
+      "description": "Document indexing operations"
+    },
+    {
+      "name": "search",
+      "description": "Search operations"
+    },
+    {
+      "name": "webhooks",
+      "description": "Firecrawl webhook handlers"
+    },
+    {
+      "name": "monitoring",
+      "description": "Health and statistics endpoints"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Root endpoint",
+        "description": "Service information and available endpoints",
+        "operationId": "getRoot",
+        "tags": [
+          "monitoring"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "service": {
+                      "type": "string",
+                      "example": "Firecrawl Search Bridge"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "0.1.0"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "running"
+                    },
+                    "docs": {
+                      "type": "string",
+                      "example": "/docs"
+                    },
+                    "health": {
+                      "type": "string",
+                      "example": "/health"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Check health status of all system dependencies (Redis, Qdrant, TEI)",
+        "operationId": "healthCheck",
+        "tags": [
+          "monitoring"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                },
+                "examples": {
+                  "healthy": {
+                    "summary": "All services healthy",
+                    "value": {
+                      "status": "healthy",
+                      "services": {
+                        "redis": "healthy",
+                        "qdrant": "healthy",
+                        "tei": "healthy"
+                      },
+                      "timestamp": "2025-11-08T12:00:00"
+                    }
+                  },
+                  "degraded": {
+                    "summary": "One or more services unhealthy",
+                    "value": {
+                      "status": "degraded",
+                      "services": {
+                        "redis": "healthy",
+                        "qdrant": "unhealthy: Connection refused",
+                        "tei": "healthy"
+                      },
+                      "timestamp": "2025-11-08T12:00:00"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "summary": "Get index statistics",
+        "description": "Retrieve statistics about indexed documents and chunks",
+        "operationId": "getStats",
+        "tags": [
+          "monitoring"
+        ],
+        "responses": {
+          "200": {
+            "description": "Index statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexStats"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/index": {
+      "post": {
+        "summary": "Index document (DEPRECATED)",
+        "deprecated": true,
+        "description": "**DEPRECATED**: Use `/api/webhook/firecrawl` instead.\n\nQueue a document for asynchronous indexing. The document is validated,\nqueued to Redis, and processed by a background worker.\n",
+        "operationId": "indexDocument",
+        "tags": [
+          "indexing"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndexDocumentRequest"
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Basic document",
+                  "value": {
+                    "url": "https://docs.example.com/api",
+                    "resolvedUrl": "https://docs.example.com/api",
+                    "title": "API Documentation",
+                    "description": "Complete API reference",
+                    "markdown": "# API Reference\n\n## Authentication\n\nUse Bearer tokens for authentication.\n",
+                    "html": "<html>...</html>",
+                    "statusCode": 200
+                  }
+                },
+                "full": {
+                  "summary": "Document with all fields",
+                  "value": {
+                    "url": "https://docs.example.com/api",
+                    "resolvedUrl": "https://docs.example.com/api",
+                    "title": "API Documentation",
+                    "description": "Complete API reference",
+                    "markdown": "# API Reference",
+                    "html": "<html>...</html>",
+                    "statusCode": 200,
+                    "gcsPath": "gs://bucket/path",
+                    "screenshotUrl": "https://example.com/screenshot.png",
+                    "language": "en",
+                    "country": "US",
+                    "isMobile": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Document queued for indexing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexDocumentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "post": {
+        "summary": "Search indexed documents",
+        "description": "Search indexed documents using hybrid, semantic, or keyword search modes.\n\n## Search Modes\n- **hybrid**: Vector + BM25 with RRF fusion (best quality)\n- **semantic**: Vector similarity only (best for conceptual search)\n- **keyword/bm25**: BM25 keyword search only (best for exact matches)\n\n## Filters\nAll filters are applied at the Qdrant level for efficiency:\n- domain: Filter by exact domain match\n- language: Filter by ISO language code (e.g., 'en')\n- country: Filter by ISO country code (e.g., 'US')\n- isMobile: Filter by mobile device flag\n",
+        "operationId": "searchDocuments",
+        "tags": [
+          "search"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              },
+              "examples": {
+                "hybrid": {
+                  "summary": "Hybrid search (default)",
+                  "value": {
+                    "query": "authentication methods",
+                    "mode": "hybrid",
+                    "limit": 10
+                  }
+                },
+                "semantic": {
+                  "summary": "Semantic search",
+                  "value": {
+                    "query": "how to secure API endpoints",
+                    "mode": "semantic",
+                    "limit": 5
+                  }
+                },
+                "keyword": {
+                  "summary": "Keyword search",
+                  "value": {
+                    "query": "PostgreSQL connection string",
+                    "mode": "keyword",
+                    "limit": 20
+                  }
+                },
+                "filtered": {
+                  "summary": "Search with filters",
+                  "value": {
+                    "query": "database configuration",
+                    "mode": "hybrid",
+                    "limit": 10,
+                    "filters": {
+                      "domain": "docs.example.com",
+                      "language": "en"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/webhook/firecrawl": {
+      "post": {
+        "summary": "Firecrawl webhook handler",
+        "description": "Process Firecrawl webhook events with HMAC-SHA256 signature verification.\n\n## Event Types\n\n**Page Events** (contain documents):\n- `crawl.page` - Scraped page from crawl job\n- `batch_scrape.page` - Scraped page from batch scrape\n\n**Lifecycle Events** (no documents):\n- `crawl.started` - Crawl job started\n- `crawl.completed` - Crawl job finished\n- `crawl.failed` - Crawl job failed\n- `batch_scrape.started` - Batch scrape started\n- `batch_scrape.completed` - Batch scrape finished\n- `extract.started` - Extract job started\n- `extract.completed` - Extract job finished\n- `extract.failed` - Extract job failed\n\n## Signature Verification\nThe webhook signature is verified using HMAC-SHA256:\n```\nsignature = hmac.new(\n    key=webhook_secret.encode('utf-8'),\n    msg=request_body,\n    digestmod=hashlib.sha256\n).hexdigest()\n```\n",
+        "operationId": "webhookFirecrawl",
+        "tags": [
+          "webhooks"
+        ],
+        "security": [
+          {
+            "WebhookSignature": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/FirecrawlPageEvent"
+                  },
+                  {
+                    "$ref": "#/components/schemas/FirecrawlLifecycleEvent"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "type",
+                  "mapping": {
+                    "crawl.page": "#/components/schemas/FirecrawlPageEvent",
+                    "batch_scrape.page": "#/components/schemas/FirecrawlPageEvent",
+                    "crawl.started": "#/components/schemas/FirecrawlLifecycleEvent",
+                    "crawl.completed": "#/components/schemas/FirecrawlLifecycleEvent",
+                    "crawl.failed": "#/components/schemas/FirecrawlLifecycleEvent"
+                  }
+                }
+              },
+              "examples": {
+                "pageEvent": {
+                  "summary": "Page event with document",
+                  "value": {
+                    "type": "crawl.page",
+                    "success": true,
+                    "id": "crawl_abc123",
+                    "data": [
+                      {
+                        "markdown": "# Example Page\\n\\nContent here...",
+                        "html": "<html>...</html>",
+                        "metadata": {
+                          "url": "https://example.com/page",
+                          "title": "Example Page",
+                          "statusCode": 200,
+                          "language": "en"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "lifecycleEvent": {
+                  "summary": "Crawl started event",
+                  "value": {
+                    "type": "crawl.started",
+                    "success": true,
+                    "id": "crawl_abc123",
+                    "data": [],
+                    "metadata": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lifecycle event acknowledged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "acknowledged"
+                    },
+                    "event_type": {
+                      "type": "string",
+                      "example": "crawl.started"
+                    },
+                    "event_id": {
+                      "type": "string",
+                      "example": "crawl_abc123"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Lifecycle event acknowledged"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Page event queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "queued"
+                    },
+                    "event_type": {
+                      "type": "string",
+                      "example": "crawl.page"
+                    },
+                    "event_id": {
+                      "type": "string",
+                      "example": "crawl_abc123"
+                    },
+                    "queued_jobs": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "failed_documents": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/test-index": {
+      "post": {
+        "summary": "Test document indexing",
+        "description": "Synchronously index a document with detailed timing information for testing/debugging.\n\nThis endpoint processes the document immediately (no background job) and returns\nstep-by-step timing details. Use for:\n- Testing the indexing pipeline end-to-end\n- Debugging performance issues\n- Verifying configuration without checking worker logs\n",
+        "operationId": "testIndexDocument",
+        "tags": [
+          "indexing"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndexDocumentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test indexing results with timing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/TestIndexSuccess"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TestIndexFailure"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API secret token for authentication. Configure via `SEARCH_BRIDGE_API_SECRET` environment variable.\n\n**Header format:**\n```\nAuthorization: Bearer <your-api-secret>\n```\n\n**Alternative format (backwards compatible):**\n```\nAuthorization: <your-api-secret>\n```\n"
+      },
+      "WebhookSignature": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Firecrawl-Signature",
+        "description": "HMAC-SHA256 signature for webhook verification.\n\n**Header format:**\n```\nX-Firecrawl-Signature: sha256=<hex-digest>\n```\n\nThe signature is computed as:\n```python\nhmac.new(\n    key=webhook_secret.encode('utf-8'),\n    msg=request_body,\n    digestmod=hashlib.sha256\n).hexdigest()\n```\n"
+      }
+    },
+    "schemas": {
+      "SearchMode": {
+        "type": "string",
+        "enum": [
+          "hybrid",
+          "semantic",
+          "keyword",
+          "bm25"
+        ],
+        "description": "Search mode:\n- `hybrid`: Vector + BM25 with RRF fusion (best quality)\n- `semantic`: Vector similarity only (best for conceptual search)\n- `keyword`: BM25 keyword search only (best for exact matches)\n- `bm25`: Alias for keyword\n"
+      },
+      "IndexDocumentRequest": {
+        "type": "object",
+        "required": [
+          "url",
+          "resolvedUrl",
+          "markdown",
+          "html",
+          "statusCode"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Original URL",
+            "example": "https://docs.example.com/api"
+          },
+          "resolvedUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Final URL after redirects",
+            "example": "https://docs.example.com/api"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Page title",
+            "example": "API Documentation"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Page description",
+            "example": "Complete API reference"
+          },
+          "markdown": {
+            "type": "string",
+            "description": "Markdown content (primary search content)",
+            "example": "# API Reference\\n\\n## Authentication"
+          },
+          "html": {
+            "type": "string",
+            "description": "Raw HTML content",
+            "example": "<html>...</html>"
+          },
+          "statusCode": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "gcsPath": {
+            "type": "string",
+            "nullable": true,
+            "description": "GCS bucket path",
+            "example": "gs://bucket/path"
+          },
+          "screenshotUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Screenshot URL",
+            "example": "https://example.com/screenshot.png"
+          },
+          "language": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO language code",
+            "example": "en"
+          },
+          "country": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO country code",
+            "example": "US"
+          },
+          "isMobile": {
+            "type": "boolean",
+            "nullable": true,
+            "default": false,
+            "description": "Mobile device flag"
+          }
+        }
+      },
+      "IndexDocumentResponse": {
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "message"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Background job ID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "status": {
+            "type": "string",
+            "description": "Job status",
+            "example": "queued"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message",
+            "example": "Document queued for indexing: https://docs.example.com/api"
+          }
+        }
+      },
+      "SearchRequest": {
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query text",
+            "example": "authentication methods",
+            "minLength": 1
+          },
+          "mode": {
+            "$ref": "#/components/schemas/SearchMode",
+            "default": "hybrid"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum results",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 100,
+            "example": 10
+          },
+          "filters": {
+            "$ref": "#/components/schemas/SearchFilter"
+          }
+        }
+      },
+      "SearchFilter": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by domain",
+            "example": "docs.example.com"
+          },
+          "language": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by ISO language code",
+            "example": "en"
+          },
+          "country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by ISO country code",
+            "example": "US"
+          },
+          "isMobile": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Filter by mobile flag",
+            "example": false
+          }
+        }
+      },
+      "SearchResponse": {
+        "type": "object",
+        "required": [
+          "results",
+          "total",
+          "query",
+          "mode"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            },
+            "description": "Search results"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of results",
+            "example": 5
+          },
+          "query": {
+            "type": "string",
+            "description": "Original query",
+            "example": "authentication methods"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/SearchMode"
+          }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "required": [
+          "url",
+          "text",
+          "score"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Document URL",
+            "example": "https://docs.example.com/auth"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Document title",
+            "example": "Authentication"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Document description",
+            "example": "Authentication methods"
+          },
+          "text": {
+            "type": "string",
+            "description": "Matched text snippet",
+            "example": "We support multiple authentication methods including OAuth2, API keys..."
+          },
+          "score": {
+            "type": "number",
+            "format": "float",
+            "description": "Relevance score (0.0-1.0 for cosine, variable for RRF)",
+            "example": 0.8543
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional metadata",
+            "example": {
+              "url": "https://docs.example.com/auth",
+              "chunk_index": 0,
+              "token_count": 234,
+              "language": "en"
+            }
+          }
+        }
+      },
+      "HealthStatus": {
+        "type": "object",
+        "required": [
+          "status",
+          "services",
+          "timestamp"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded"
+            ],
+            "description": "Overall status",
+            "example": "healthy"
+          },
+          "services": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Individual service statuses",
+            "example": {
+              "redis": "healthy",
+              "qdrant": "healthy",
+              "tei": "healthy"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Health check timestamp (ISO 8601 UTC)",
+            "example": "2025-11-08T12:00:00"
+          }
+        }
+      },
+      "IndexStats": {
+        "type": "object",
+        "required": [
+          "total_documents",
+          "total_chunks",
+          "qdrant_points",
+          "bm25_documents",
+          "collection_name"
+        ],
+        "properties": {
+          "total_documents": {
+            "type": "integer",
+            "description": "Total indexed documents",
+            "example": 1543
+          },
+          "total_chunks": {
+            "type": "integer",
+            "description": "Total chunks",
+            "example": 15430
+          },
+          "qdrant_points": {
+            "type": "integer",
+            "description": "Total Qdrant points",
+            "example": 15430
+          },
+          "bm25_documents": {
+            "type": "integer",
+            "description": "Total BM25 documents",
+            "example": 1543
+          },
+          "collection_name": {
+            "type": "string",
+            "description": "Qdrant collection name",
+            "example": "firecrawl_docs"
+          }
+        }
+      },
+      "FirecrawlPageEvent": {
+        "type": "object",
+        "required": [
+          "type",
+          "success",
+          "id",
+          "data"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "crawl.page",
+              "batch_scrape.page"
+            ],
+            "description": "Event type"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether event succeeded",
+            "example": true
+          },
+          "id": {
+            "type": "string",
+            "description": "Firecrawl job/crawl identifier",
+            "example": "crawl_abc123"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FirecrawlDocumentPayload"
+            },
+            "description": "Scraped documents"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Arbitrary metadata from Firecrawl",
+            "default": {}
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message (present when success=false)"
+          }
+        }
+      },
+      "FirecrawlLifecycleEvent": {
+        "type": "object",
+        "required": [
+          "type",
+          "success",
+          "id"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "crawl.started",
+              "crawl.completed",
+              "crawl.failed",
+              "batch_scrape.started",
+              "batch_scrape.completed",
+              "extract.started",
+              "extract.completed",
+              "extract.failed"
+            ],
+            "description": "Event type"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether event succeeded",
+            "example": true
+          },
+          "id": {
+            "type": "string",
+            "description": "Firecrawl job/crawl identifier",
+            "example": "crawl_abc123"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Typically empty for lifecycle events",
+            "default": []
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Arbitrary metadata from Firecrawl",
+            "default": {}
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message (present when success=false)"
+          }
+        }
+      },
+      "FirecrawlDocumentPayload": {
+        "type": "object",
+        "required": [
+          "metadata"
+        ],
+        "properties": {
+          "markdown": {
+            "type": "string",
+            "nullable": true,
+            "description": "Markdown content",
+            "example": "# Example Page\\n\\nContent here..."
+          },
+          "html": {
+            "type": "string",
+            "nullable": true,
+            "description": "HTML content",
+            "example": "<html>...</html>"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/FirecrawlDocumentMetadata"
+          }
+        }
+      },
+      "FirecrawlDocumentMetadata": {
+        "type": "object",
+        "required": [
+          "url",
+          "statusCode"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Document URL",
+            "example": "https://example.com/page"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Document title",
+            "example": "Example Page"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Document description"
+          },
+          "statusCode": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "contentType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Content type",
+            "example": "text/html"
+          },
+          "scrapeId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Scrape ID"
+          },
+          "sourceURL": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Source URL"
+          },
+          "proxyUsed": {
+            "type": "string",
+            "nullable": true,
+            "description": "Proxy used"
+          },
+          "cacheState": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cache state"
+          },
+          "cachedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Cached timestamp"
+          },
+          "creditsUsed": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Credits used"
+          },
+          "language": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO language code",
+            "example": "en"
+          },
+          "country": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO country code",
+            "example": "US"
+          }
+        }
+      },
+      "TestIndexSuccess": {
+        "type": "object",
+        "required": [
+          "status",
+          "url",
+          "total_duration_ms",
+          "steps",
+          "summary"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "example": "success"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/page"
+          },
+          "total_duration_ms": {
+            "type": "number",
+            "format": "float",
+            "example": 1234.56
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "step": {
+                  "type": "string",
+                  "example": "index_document"
+                },
+                "duration_ms": {
+                  "type": "number",
+                  "format": "float",
+                  "example": 1222.22
+                },
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "details": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "chunks_indexed": {
+                "type": "integer",
+                "example": 15
+              },
+              "total_tokens": {
+                "type": "integer",
+                "example": 3456
+              },
+              "indexed_to_qdrant": {
+                "type": "boolean",
+                "example": true
+              },
+              "indexed_to_bm25": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          }
+        }
+      },
+      "TestIndexFailure": {
+        "type": "object",
+        "required": [
+          "status",
+          "url",
+          "total_duration_ms",
+          "steps",
+          "error",
+          "error_type"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "failed"
+            ],
+            "example": "failed"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/page"
+          },
+          "total_duration_ms": {
+            "type": "number",
+            "format": "float",
+            "example": 567.89
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "error": {
+            "type": "string",
+            "example": "Connection timeout"
+          },
+          "error_type": {
+            "type": "string",
+            "example": "TimeoutError"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Error message or structured error object",
+            "example": "Invalid credentials"
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "loc": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "description": "Error location path",
+                  "example": [
+                    "body",
+                    "query"
+                  ]
+                },
+                "msg": {
+                  "type": "string",
+                  "description": "Error message",
+                  "example": "Field required"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Error type",
+                  "example": "missing"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "detail": "Invalid signature format, expected sha256=<digest>"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "missingAuth": {
+                "summary": "Missing authorization",
+                "value": {
+                  "detail": "Missing Authorization header"
+                }
+              },
+              "invalidAuth": {
+                "summary": "Invalid credentials",
+                "value": {
+                  "detail": "Invalid credentials"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "example": {
+              "detail": [
+                {
+                  "loc": [
+                    "body",
+                    "query"
+                  ],
+                  "msg": "Field required",
+                  "type": "missing"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "RateLimitExceeded": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "detail": "Rate limit exceeded: 10 per 1 minute"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "detail": "Search failed: Connection timeout"
+            }
+          }
+        }
+      }
+    }
+  }
+}

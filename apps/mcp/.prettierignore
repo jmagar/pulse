@@ -1,0 +1,20 @@
+# Build outputs
+dist/
+*.d.ts
+*.js.map
+
+# Dependencies
+node_modules/
+
+# Symlinked shared code
+local/shared/
+remote/shared/
+
+# Cache
+.cache/
+
+# Logs
+*.log
+
+# Coverage
+coverage/

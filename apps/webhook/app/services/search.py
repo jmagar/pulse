@@ -1,0 +1,230 @@
+"""
+Hybrid search orchestrator.
+
+Combines vector similarity and BM25 keyword search using Reciprocal Rank Fusion (RRF).
+"""
+
+from typing import Any
+
+from app.models import SearchMode
+from app.services.bm25_engine import BM25Engine
+from app.services.embedding import EmbeddingService
+from app.services.vector_store import VectorStore
+from app.utils.logging import get_logger
+
+logger = get_logger(__name__)
+
+
+def reciprocal_rank_fusion(
+    ranked_lists: list[list[dict[str, Any]]],
+    k: int = 60,
+) -> list[dict[str, Any]]:
+    """
+    Combine multiple ranked result lists using Reciprocal Rank Fusion (RRF).
+
+    Formula: score = sum(1 / (k + rank_i))
+    where rank_i is the position in the i-th ranking (1-indexed)
+
+    Args:
+        ranked_lists: List of ranked result lists (each with 'id' or unique identifier)
+        k: Constant (60 is standard from original RRF paper by Cormack et al.)
+
+    Returns:
+        Merged and re-ranked results
+    """
+    scores: dict[str, float] = {}
+    doc_map: dict[str, dict[str, Any]] = {}
+
+    for ranked_list in ranked_lists:
+        for rank, result in enumerate(ranked_list, start=1):
+            # Use URL as unique identifier
+            doc_id = result.get("metadata", {}).get("url") or result.get("id", str(rank))
+
+            # Calculate RRF score
+            rrf_score = 1.0 / (k + rank)
+
+            # Accumulate scores
+            scores[doc_id] = scores.get(doc_id, 0.0) + rrf_score
+
+            # Keep first occurrence metadata
+            if doc_id not in doc_map:
+                doc_map[doc_id] = result
+
+    # Sort by RRF score (descending)
+    sorted_docs = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+    # Build final result list
+    results = []
+    for doc_id, rrf_score in sorted_docs:
+        result = doc_map[doc_id].copy()
+        result["rrf_score"] = rrf_score
+        results.append(result)
+
+    logger.debug(
+        "RRF fusion complete",
+        input_lists=len(ranked_lists),
+        unique_docs=len(results),
+        k=k,
+    )
+
+    return results
+
+
+class SearchOrchestrator:
+    """Orchestrates hybrid search across vector and keyword search."""
+
+    def __init__(
+        self,
+        embedding_service: EmbeddingService,
+        vector_store: VectorStore,
+        bm25_engine: BM25Engine,
+        rrf_k: int = 60,
+    ) -> None:
+        """
+        Initialize search orchestrator.
+
+        Args:
+            embedding_service: Embedding service instance
+            vector_store: Vector store instance
+            bm25_engine: BM25 engine instance
+            rrf_k: RRF k constant
+        """
+        self.embedding_service = embedding_service
+        self.vector_store = vector_store
+        self.bm25_engine = bm25_engine
+        self.rrf_k = rrf_k
+
+        logger.info("Search orchestrator initialized", rrf_k=rrf_k)
+
+    async def search(
+        self,
+        query: str,
+        mode: SearchMode = SearchMode.HYBRID,
+        limit: int = 10,
+        domain: str | None = None,
+        language: str | None = None,
+        country: str | None = None,
+        is_mobile: bool | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Execute search with specified mode.
+
+        Args:
+            query: Search query text
+            mode: Search mode (hybrid, semantic, keyword, bm25)
+            limit: Maximum results
+            domain: Filter by domain
+            language: Filter by language
+            country: Filter by country
+            is_mobile: Filter by mobile flag
+
+        Returns:
+            List of search results
+        """
+        logger.info(
+            "Executing search",
+            query=query,
+            mode=mode,
+            limit=limit,
+            filters={"domain": domain, "language": language, "country": country, "is_mobile": is_mobile},
+        )
+
+        if mode == SearchMode.HYBRID:
+            return await self._hybrid_search(
+                query, limit, domain, language, country, is_mobile
+            )
+        elif mode == SearchMode.SEMANTIC:
+            return await self._semantic_search(
+                query, limit, domain, language, country, is_mobile
+            )
+        elif mode in (SearchMode.KEYWORD, SearchMode.BM25):
+            return self._keyword_search(
+                query, limit, domain, language, country, is_mobile
+            )
+        else:
+            raise ValueError(f"Unknown search mode: {mode}")
+
+    async def _hybrid_search(
+        self,
+        query: str,
+        limit: int,
+        domain: str | None,
+        language: str | None,
+        country: str | None,
+        is_mobile: bool | None,
+    ) -> list[dict[str, Any]]:
+        """
+        Hybrid search: Vector + BM25 with RRF fusion.
+        """
+        # Run both searches in parallel
+        vector_results = await self._semantic_search(
+            query, limit * 2, domain, language, country, is_mobile  # Get more for fusion
+        )
+        keyword_results = self._keyword_search(
+            query, limit * 2, domain, language, country, is_mobile  # Get more for fusion
+        )
+
+        # Apply RRF fusion
+        fused_results = reciprocal_rank_fusion(
+            [vector_results, keyword_results],
+            k=self.rrf_k,
+        )
+
+        # Return top results
+        return fused_results[:limit]
+
+    async def _semantic_search(
+        self,
+        query: str,
+        limit: int,
+        domain: str | None,
+        language: str | None,
+        country: str | None,
+        is_mobile: bool | None,
+    ) -> list[dict[str, Any]]:
+        """
+        Semantic search: Vector similarity only.
+        """
+        # Embed query
+        query_vector = await self.embedding_service.embed_single(query)
+
+        if not query_vector:
+            logger.warning("Failed to generate query embedding")
+            return []
+
+        # Search vector store
+        results = await self.vector_store.search(
+            query_vector=query_vector,
+            limit=limit,
+            domain=domain,
+            language=language,
+            country=country,
+            is_mobile=is_mobile,
+        )
+
+        logger.info("Semantic search completed", results=len(results))
+        return results
+
+    def _keyword_search(
+        self,
+        query: str,
+        limit: int,
+        domain: str | None,
+        language: str | None,
+        country: str | None,
+        is_mobile: bool | None,
+    ) -> list[dict[str, Any]]:
+        """
+        Keyword search: BM25 only.
+        """
+        results = self.bm25_engine.search(
+            query=query,
+            limit=limit,
+            domain=domain,
+            language=language,
+            country=country,
+            is_mobile=is_mobile,
+        )
+
+        logger.info("Keyword search completed", results=len(results))
+        return results

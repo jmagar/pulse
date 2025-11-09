@@ -1,0 +1,94 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+dist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+
+# Documentation (session logs, investigation notes)
+.docs/
+
+# Data directories
+data/
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.dev
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.swp
+*.swo
+*~
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Distribution / packaging
+*.whl
+
+# Jupyter
+.ipynb_checkpoints
+
+# Model files (too large for git)
+*.bin
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.pickle
+
+# BM25 indices
+*.bm25
+CRAWL_CLAUDE_DOCS.md

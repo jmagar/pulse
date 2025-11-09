@@ -1,0 +1,88 @@
+{
+  "name": "@pulsemcp/pulse-crawl",
+  "version": "0.3.0",
+  "description": "MCP server for fetching and processing web content",
+  "author": "PulseMCP",
+  "license": "MIT",
+  "workspaces": [
+    "local",
+    "shared",
+    "remote"
+  ],
+  "type": "module",
+  "scripts": {
+    "install-all": "npm install && cd local && npm install && cd ../shared && npm install",
+    "ci:install": "npm ci && cd shared && npm ci && cd ../local && npm ci && cd ../../../libs/test-mcp-client && npm ci --ignore-scripts",
+    "build": "npm run build -w shared && npm run build -w local",
+    "build:test": "npm run build && cd libs/test-mcp-client && npm run build",
+    "clean": "find . -name '*.js' -not -path './node_modules/*' -not -path './*/node_modules/*' -not -path './local/dist/*' -not -path './shared/dist/*' -not -path './*/dist/*' -delete && find . -name '*.js.map' -not -path './node_modules/*' -not -path './*/node_modules/*' -not -path './local/dist/*' -not -path './shared/dist/*' -not -path './*/dist/*' -delete",
+    "dev": "cd local && npm run dev",
+    "test": "node scripts/run-vitest.js",
+    "test:ui": "node scripts/run-vitest.js --ui",
+    "test:run": "node scripts/run-vitest.js run",
+    "test:integration": "npm run build:test && node scripts/run-vitest.js run -c vitest.config.integration.ts tests/integration/pulse-crawl.integration.test.ts && npm run clean",
+    "test:integration:source": "npm run build:test && node scripts/run-vitest.js run -c vitest.config.integration.ts tests/integration/pulse-crawl.source.integration.test.ts && npm run clean",
+    "test:integration:built": "npm run build:test && node scripts/run-vitest.js run -c vitest.config.integration.ts tests/integration/pulse-crawl.built.integration.test.ts && npm run clean",
+    "test:integration:watch": "node scripts/run-vitest.js -c vitest.config.integration.ts",
+    "test:manual:setup": "node scripts/setup-manual-tests.js",
+    "test:manual": "npm run test:manual:features && npm run test:manual:pages",
+    "test:manual:features": "node scripts/run-manual-built.js features",
+    "test:manual:pages": "node scripts/run-manual-built.js pages",
+    "test:all": "npm run test:run && npm run test:integration",
+    "deps:sync": "node scripts/sync-dependencies.js",
+    "deps:validate": "node scripts/validate-dependencies.js",
+    "lint": "cd .. && npm run lint",
+    "lint:fix": "cd .. && npm run lint:fix",
+    "format": "cd .. && npm run format",
+    "format:check": "cd .. && npm run format:check",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "shared/**/*.ts": [
+      "eslint --fix --config shared/eslint.config.js",
+      "prettier --write"
+    ],
+    "local/**/*.ts": [
+      "eslint --fix --config local/eslint.config.js",
+      "prettier --write"
+    ],
+    "remote/**/*.ts": [
+      "eslint --fix --config remote/eslint.config.js",
+      "prettier --write"
+    ],
+    "*.{js,json,md}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pulsemcp/mcp-servers.git"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@types/eventsource": "^1.1.15",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^24.0.0",
+    "@vitest/ui": "^3.2.3",
+    "dotenv": "^16.6.1",
+    "eventsource": "^4.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "openai": "^6.8.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.9.5",
+    "@rollup/rollup-darwin-x64": "^4.9.5",
+    "@rollup/rollup-linux-arm64-gnu": "^4.9.5",
+    "@rollup/rollup-linux-arm64-musl": "^4.9.5",
+    "@rollup/rollup-linux-x64-gnu": "^4.9.5",
+    "@rollup/rollup-linux-x64-musl": "^4.9.5",
+    "@rollup/rollup-win32-arm64-msvc": "^4.9.5",
+    "@rollup/rollup-win32-x64-msvc": "^4.9.5"
+  },
+  "dependencies": {
+    "happy-coder": "^0.11.2"
+  }
+}
