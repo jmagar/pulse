@@ -253,7 +253,7 @@ Content in Markdown format...
 
 ```bash
 MCP_RESOURCE_STORAGE=filesystem
-MCP_RESOURCE_FILESYSTEM_ROOT=/var/cache/pulse-fetch
+MCP_RESOURCE_FILESYSTEM_ROOT=/var/cache/pulse
 MCP_RESOURCE_TTL=0             # Infinite TTL
 MCP_RESOURCE_MAX_SIZE=1000     # MB
 MCP_RESOURCE_MAX_ITEMS=10000   # Count

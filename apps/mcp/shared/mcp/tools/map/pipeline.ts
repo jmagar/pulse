@@ -2,7 +2,7 @@ import type {
   FirecrawlMapClient,
   MapOptions as ClientMapOptions,
   MapResult,
-} from '../../../clients/firecrawl/index.js';
+} from '@firecrawl/client';
 import type { MapOptions } from './schema.js';
 
 export async function mapPipeline(

@@ -4,7 +4,7 @@ import type {
   StartCrawlResult,
   CrawlStatusResult,
   CancelResult,
-} from '../../../clients/firecrawl/index.js';
+} from '@firecrawl/client';
 import type { CrawlOptions } from './schema.js';
 
 export async function crawlPipeline(

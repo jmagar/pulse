@@ -13,9 +13,9 @@
 ## Task 1: Add Environment Variables for Location Configuration
 
 **Files:**
-pulse-crawl
+pulse
 
-- Modify: `/home/jmagar/code/pulse-fetch/.env.example`
+- Modify: `/home/jmagar/code/pulse/.env.example`
 - Create: Test file to verify env var loading (later tasks)
 
 ### Step 1: Add location environment variables to .env.example
@@ -78,16 +78,16 @@ Expected: Commit created successfully
 
 ## Task 2: Update Map Schema with Pagination and Token Management Parameters
 
-pulse-crawl
-**Files:**pulse-crawl
+pulse
+**Files:**pulse
 
-- Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.ts`
-- Test: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.test.ts` (create)
-  pulse-crawl
+- Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.ts`
+- Test: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.test.ts` (create)
+  pulse
 
 ### Step 1: Write failing test for pagination parameters
 
-Create: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.test.ts`
+Create: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.test.ts`
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -207,11 +207,11 @@ describe('Map Options Schema', () => {
 Run: `npm test shared/mcp/tools/map/schema.test.ts`
 
 Expected: Test fails with errors about missing properties (startIndex, maxResults, resultHandling)
-pulse-crawl
+pulse
 
 ### Step 3: Update schema to add pagination parameters
 
-Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.ts`
+Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.ts`
 
 ```typescript
 import { z } from 'zod';
@@ -274,12 +274,12 @@ Expected: Commit created successfully
 
 **Files:**
 
-- Modify: `/home/jmagar/code/pulse-crawl/shared/mcp/tools/map/response.ts`
-- Test: `/home/jmagar/code/pulse-crawl/shared/mcp/tools/map/response.test.ts` (create)
+- Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/response.ts`
+- Test: `/home/jmagar/code/pulse/shared/mcp/tools/map/response.test.ts` (create)
 
 ### Step 1: Write failing test for paginated response formatting
 
-Create: `/home/jmagar/code/pulse-crawl/shared/mcp/tools/map/response.test.ts`
+Create: `/home/jmagar/code/pulse/shared/mcp/tools/map/response.test.ts`
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -370,25 +370,25 @@ describe('Map Response Formatter', () => {
   });
 
   describe('Result Handling Modes', () => {
-    it('should return embedded resourpulse-crawlndReturn mode', () => {
+    it('should return embedded resourpulsendReturn mode', () => {
       const result = createMockResult(10);
       const response = formatMapResponse(result, 'https://example.com', 0, 1000, 'saveAndReturn');
 
       expect(response.content[1].type).toBe('resource');
       const resource = (response.content[1] as any).resource;
-      expect(resource.uri).toMatch(/^pulse-fetch:\/\/map\/example\.com\/\d+/);
+      expect(resource.uri).toMatch(/^pulse:\/\/map\/example\.com\/\d+/);
       expect(resource.name).toBe('URL Map: https://example.com (10 URLs)');
       expect(resource.mimeType).toBe('application/json');
       expect(resource.text).toBeDefined();
     });
 
-    it('should return resource lipulse-crawlnly mode', () => {
+    it('should return resource lipulsenly mode', () => {
       const result = createMockResult(10);
       const response = formatMapResponse(result, 'https://example.com', 0, 1000, 'saveOnly');
 
       expect(response.content[1].type).toBe('resource_link');
       const link = response.content[1] as any;
-      expect(link.uri).toMatch(/^pulse-fetch:\/\/map\/example\.com\/\d+/);
+      expect(link.uri).toMatch(/^pulse:\/\/map\/example\.com\/\d+/);
       expect(link.name).toBe('URL Map: https://example.com (10 URLs)');
       expect(link.description).toBeDefined();
     });
@@ -450,11 +450,11 @@ describe('Map Response Formatter', () => {
 Run: `npm test shared/mcp/tools/map/response.test.ts`
 
 Expected: Test fails because formatMapResponse doesn't accept new parameters
-pulse-crawl
+pulse
 
 ### Step 3: Update response formatter implementation
 
-Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/response.ts`
+Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/response.ts`
 
 ```typescript
 import type { MapResult } from '../../../clients/firecrawl-map.client.js';
@@ -513,7 +513,7 @@ export function formatMapResponse(
   const resourceData = JSON.stringify(paginatedLinks, null, 2);
   const hostname = new URL(url).hostname;
   const pageNumber = Math.floor(startIndex / maxResults);
-  const baseUri = `pulse-fetch://map/${hostname}/${Date.now()}/page-${pageNumber}`;
+  const baseUri = `pulse://map/${hostname}/${Date.now()}/page-${pageNumber}`;
   const resourceName = `URL Map: ${url} (${paginatedLinks.length} URLs)`;
 
   // Handle different result modes
@@ -566,20 +566,20 @@ git commit -m "feat: add pagination and statistics to map response formatter"
 ```
 
 Expected: Commit created successfully
-pulse-crawl
+pulse
 
 ---
 
 ## Task 4: Update Pipeline to Pass New Parameters
 
-**Files:**pulse-crawl
+**Files:**pulse
 
-- Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/pipeline.ts`
+- Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/pipeline.ts`
 - Test: Update existing test file
 
 ### Step 1: Write failing test for pipeline with new parameters
 
-Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/pipeline.test.ts` (if exists, otherwise create)
+Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/pipeline.test.ts` (if exists, otherwise create)
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -671,21 +671,21 @@ git add shared/mcp/tools/map/pipeline.test.ts
 git commit -m "test: verify pipeline doesn't pass tool-level parameters to client"
 ```
 
-pulse-crawl
-Expected: Commit created supulse-crawl
+pulse
+Expected: Commit created supulse
 
 ---
 
-## Task 5: Update Tool Handpulse-crawlNew Parameters
+## Task 5: Update Tool HandpulseNew Parameters
 
 **Files:**
 
-- Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/index.ts`
-- Test: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/index.test.ts`
+- Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/index.ts`
+- Test: `/home/jmagar/code/pulse/shared/mcp/tools/map/index.test.ts`
 
 ### Step 1: Write failing test for tool handler with pagination
 
-Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/index.test.ts`
+Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/index.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -774,7 +774,7 @@ describe('Map Tool', () => {
 });
 ```
 
-pulse-crawl
+pulse
 
 ### Step 2: Run test to verify it fails
 
@@ -784,7 +784,7 @@ Expected: Tests fail because handler doesn't pass new parameters to formatMapRes
 
 ### Step 3: Update tool handler implementation
 
-Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/index.ts`
+Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/index.ts`
 
 ```typescript
 import { FirecrawlMapClient } from '../../../clients/firecrawl-map.client.js';
@@ -843,13 +843,13 @@ Expected: All tests pass
 
 ### Step 5: Commit tool handler changes
 
-Run:pulse-crawl
-pulse-crawl
+Run:pulse
+pulse
 
 ````bash
 git add shared/mcp/tools/map/index.ts shared/mcp/tools/map/index.test.ts
 git commit -m "feat: add pagination support to map tool handler"
-```pulse-crawl
+```pulse
 
 Expected: Commit created successfully
 
@@ -859,12 +859,12 @@ Expected: Commit created successfully
 
 **Files:**
 
-- Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.ts`
-- Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/registration.ts`
+- Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.ts`
+- Modify: `/home/jmagar/code/pulse/shared/mcp/registration.ts`
 
 ### Step 1: Write failing test for environment variable defaults
 
-Add to: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.test.ts`
+Add to: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.test.ts`
 
 ```typescript
 describe('Location Environment Variables', () => {
@@ -941,7 +941,7 @@ describe('Location Environment Variables', () => {
 
     const result = mapOptionsSchema.parse({
       url: 'https://example.com',
-    });pulse-crawl
+    });pulse
 
     expect(result.maxResults).toBe(200);
   });
@@ -956,7 +956,7 @@ Expected: Tests fail because schema doesn't read environment variables
 
 ### Step 3: Update schema to read environment variables
 
-Modify: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.ts`
+Modify: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.ts`
 
 ```typescript
 import { z } from 'zod';
@@ -1016,11 +1016,11 @@ Expected: All tests pass
 Run:
 
 ```bash
-git add shared/mcp/tools/map/pulse-crawlhared/mcp/tools/map/schema.test.ts
+git add shared/mcp/tools/map/pulsehared/mcp/tools/map/schema.test.ts
 git commit -m "feat: support MAP_DEFAULT_COUNTRY, MAP_DEFAULT_LANGUAGES, and MAP_MAX_RESULTS_PER_PAGE env vars"
 ```
 
-Expected: Commit created supulse-crawl
+Expected: Commit created supulse
 
 ---
 
@@ -1028,11 +1028,11 @@ Expected: Commit created supulse-crawl
 
 **Files:**
 
-- Create: `/home/jmagar/code/pulse-fetch/tests/functional/map-pagination.test.ts`
+- Create: `/home/jmagar/code/pulse/tests/functional/map-pagination.test.ts`
 
 ### Step 1: Write integration test for pagination workflow
 
-Create: `/home/jmagar/code/pulse-fetch/tests/functional/map-pagination.test.ts`
+Create: `/home/jmagar/code/pulse/tests/functional/map-pagination.test.ts`
 
 ```typescript
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -1271,12 +1271,12 @@ Expected: All tests pass
 ### Step 3: Commit integration tests
 
 Run:
-pulse-crawl
+pulse
 
 `````bash
 git add tests/functional/map-pagination.test.ts
 git commit -m "test: add comprehensive pagination integration tests for map tool"
-```pulse-crawl
+```pulse
 
 Expected: Commit created successfully
 
@@ -1286,11 +1286,11 @@ Expected: Commit created successfully
 
 **Files:**
 
-- Create: `/home/jmagar/code/pulse-fetch/docs/tools/MAP.md`
+- Create: `/home/jmagar/code/pulse/docs/tools/MAP.md`
 
 ### Step 1: Create comprehensive documentation
 
-Create: `/home/jmagar/code/pulse-fetch/docs/tools/MAP.md`
+Create: `/home/jmagar/code/pulse/docs/tools/MAP.md`
 
 ````markdown
 # Map Tool Documentation
@@ -1685,11 +1685,11 @@ Returns only URLs found in sitemap.xml.
 
 ## See Also
 
-- [Crawl Tool](./CRAWL.md) - pulse-crawlsite analysis with content
+- [Crawl Tool](./CRAWL.md) - pulsesite analysis with content
 - [Search Tool](./SEARCH.md) - For web search with content extraction
 - [Scrape Tool](./SCRAPE.md) - For single-page content extraction
 
-````pulse-crawl
+````pulse
 
 ### Step 2: Commit documentation
 
@@ -1707,11 +1707,11 @@ Expected: Commit created successfully
 
 **Files:**
 
-- Modify: `/home/jmagar/code/pulse-fetch/CHANGELOG.md`
+- Modify: `/home/jmagar/code/pulse/CHANGELOG.md`
 
 ### Step 1: Add new version entry to changelog
 
-Prepend to: `/home/jmagar/code/pulse-fetch/CHANGELOG.md`
+Prepend to: `/home/jmagar/code/pulse/CHANGELOG.md`
 
 ```markdown
 ## [Unreleased]

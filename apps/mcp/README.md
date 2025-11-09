@@ -1,6 +1,6 @@
 # Pulse Fetch
 
-[![npm version](https://badge.fury.io/js/pulse-crawl-shared.svg)](https://www.npmjs.com/package/pulse-crawl-shared)
+[![npm version](https://badge.fury.io/js/pulse-shared.svg)](https://www.npmjs.com/package/pulse-shared)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Intelligent web content extraction for AI assistants** - An MCP server that scrapes, searches, maps, and crawls the web with smart fallback strategies and LLM-powered extraction.
@@ -36,8 +36,8 @@ Haven't heard about MCP yet? The easiest way to keep up-to-date is to read our [
 **Option 1: Local Mode (Claude Desktop)**
 
 ```bash
-git clone https://github.com/your-org/pulse-fetch.git
-cd pulse-fetch
+git clone https://github.com/your-org/pulse.git
+cd pulse
 npm install
 cd local && npm run build
 ```
@@ -49,7 +49,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "pulse": {
       "command": "node",
-      "args": ["/path/to/pulse-fetch/local/dist/index.js"]
+      "args": ["/path/to/pulse/local/dist/index.js"]
     }
   }
 }
@@ -179,8 +179,8 @@ Pulse Fetch uses a three-layer architecture that separates business logic from t
 
 ```bash
 # Clone and install
-git clone https://github.com/your-org/pulse-fetch.git
-cd pulse-fetch
+git clone https://github.com/your-org/pulse.git
+cd pulse
 npm install
 
 # Build all packages
@@ -199,8 +199,8 @@ cd remote && npm run dev
 ### Project Structure
 
 ```
-pulse-fetch/
-├── shared/          # Core business logic (published as pulse-crawl-shared)
+pulse/
+├── shared/          # Core business logic (published as pulse-shared)
 │   ├── clients/     # Firecrawl, Anthropic integrations
 │   ├── mcp/tools/   # Tool implementations
 │   └── storage/     # Storage backends
@@ -264,8 +264,8 @@ This project is built and maintained by [PulseMCP](https://www.pulsemcp.com/).
 ## Support
 
 - **Documentation:** [docs/](docs/)
-- **Issues:** [GitHub Issues](https://github.com/your-org/pulse-fetch/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/your-org/pulse-fetch/discussions)
+- **Issues:** [GitHub Issues](https://github.com/your-org/pulse/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/your-org/pulse/discussions)
 
 ---
 

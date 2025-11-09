@@ -82,7 +82,7 @@ describe('Cache Eviction - TTL Support', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = path.join(os.tmpdir(), `pulse-crawl-ttl-test-${Date.now()}`);
+      testDir = path.join(os.tmpdir(), `pulse-ttl-test-${Date.now()}`);
       storage = new FileSystemResourceStorage(testDir, {
         defaultTTL: 1000, // 1 second
       });
@@ -218,7 +218,7 @@ describe('Cache Eviction - LRU Policy', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = path.join(os.tmpdir(), `pulse-crawl-lru-test-${Date.now()}`);
+      testDir = path.join(os.tmpdir(), `pulse-lru-test-${Date.now()}`);
       storage = new FileSystemResourceStorage(testDir, {
         maxItems: 3,
         maxSizeBytes: 2048, // 2KB
@@ -321,7 +321,7 @@ describe('Cache Eviction - Background Cleanup', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = path.join(os.tmpdir(), `pulse-crawl-cleanup-test-${Date.now()}`);
+      testDir = path.join(os.tmpdir(), `pulse-cleanup-test-${Date.now()}`);
       storage = new FileSystemResourceStorage(testDir, {
         defaultTTL: 100,
         cleanupInterval: 200,

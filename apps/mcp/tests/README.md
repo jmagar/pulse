@@ -21,7 +21,7 @@ Located in `functional/`, these tests verify individual tools and components in 
 
 Located in `integration/`, these tests verify the complete MCP protocol interaction using TestMCPClient with mocked external services.
 
-- `pulse-crawl.integration.test.ts` - Tests full MCP server functionality
+- `pulse.integration.test.ts` - Tests full MCP server functionality
 
 ### Manual Tests
 

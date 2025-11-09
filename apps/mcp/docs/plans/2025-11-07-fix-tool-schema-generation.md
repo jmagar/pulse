@@ -557,15 +557,15 @@ DEBUG=true FIRECRAWL_API_KEY=test-key node .cache/test-registration.js
 ```
 Creating MCP server...
 Registering handlers...
-[pulse-crawl] Registered tools:
-[pulse-crawl]   1. scrape
-[pulse-crawl]      Schema type: object
-[pulse-crawl]   2. search
-[pulse-crawl]      Schema type: object
-[pulse-crawl]   3. map
-[pulse-crawl]      Schema type: object
-[pulse-crawl]   4. crawl
-[pulse-crawl]      Schema type: object
+[pulse] Registered tools:
+[pulse]   1. scrape
+[pulse]      Schema type: object
+[pulse]   2. search
+[pulse]      Schema type: object
+[pulse]   3. map
+[pulse]      Schema type: object
+[pulse]   4. crawl
+[pulse]      Schema type: object
 Handlers registered successfully!
 ```
 

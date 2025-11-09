@@ -14,8 +14,8 @@ import type { IStrategyConfigClient } from './scraping/strategies/learned/index.
 import { FilesystemStrategyConfigClient } from './scraping/strategies/learned/index.js';
 import { NativeScrapingClient } from './scraping/clients/native/native-scrape-client.js';
 import type { CrawlRequestConfig } from './config/crawl-config.js';
-import { FirecrawlClient as ActualFirecrawlClient } from './clients/firecrawl/client.js';
-import type { FirecrawlConfig } from './clients/firecrawl/types.js';
+import { FirecrawlClient as ActualFirecrawlClient } from '@firecrawl/client';
+import type { FirecrawlConfig } from '@firecrawl/client';
 
 /**
  * Interface for Firecrawl API client
@@ -232,7 +232,7 @@ export type StrategyConfigFactory = () => IStrategyConfigClient;
 export function createMCPServer() {
   const server = new Server(
     {
-      name: '@pulsemcp/pulse-crawl',
+      name: '@pulsemcp/pulse',
       version: '0.0.1',
     },
     {

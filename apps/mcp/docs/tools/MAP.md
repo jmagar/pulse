@@ -143,12 +143,12 @@ This estimation helps plan pagination and context window usage.
 Saved resources use this URI format:
 
 ```
-pulse-crawl://map/{hostname}/{timestamp}/page-{pageNumber}
+pulse://map/{hostname}/{timestamp}/page-{pageNumber}
 ```
 
 Where `pageNumber = floor(startIndex / maxResults)`
 
-Example: `pulse-crawl://map/example.com/1699564800000/page-2`
+Example: `pulse://map/example.com/1699564800000/page-2`
 
 ## Use Cases
 

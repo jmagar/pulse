@@ -1,5 +1,5 @@
 {
-  "name": "pulse-crawl",
+  "name": "pulse",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -7,12 +7,16 @@
     "build:mcp": "pnpm --filter './apps/mcp' build",
     "build:web": "pnpm --filter './apps/web' build",
     "build:packages": "pnpm --filter './packages/*' build",
+    "build:webhook": "cd apps/webhook && uv sync",
     "test": "pnpm -r --filter './apps/mcp' --filter './apps/web' --filter './packages/*' test",
     "test:mcp": "pnpm --filter './apps/mcp' test",
     "test:web": "pnpm --filter './apps/web' test",
+    "test:packages": "pnpm --filter './packages/*' test",
+    "test:webhook": "cd apps/webhook && uv run pytest",
     "dev": "pnpm --parallel --filter './apps/mcp' --filter './apps/web' dev",
     "dev:mcp": "pnpm --filter './apps/mcp' dev",
     "dev:web": "pnpm --filter './apps/web' dev",
+    "dev:webhook": "cd apps/webhook && uv run uvicorn app.main:app --reload --port 52100",
     "clean": "pnpm -r --filter './apps/*' --filter './packages/*' clean",
     "install:webhook": "cd apps/webhook && uv sync"
   }

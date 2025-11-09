@@ -44,8 +44,8 @@ Production deployment guide for Pulse Fetch MCP server using Docker Compose.
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/pulse-fetch.git
-cd pulse-fetch
+git clone https://github.com/your-org/pulse.git
+cd pulse
 
 # Create .env file
 cp .env.example .env
@@ -165,11 +165,11 @@ The included `docker-compose.yml` is production-ready:
 
 ```yaml
 services:
-  pulse-crawl:
+  pulse:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pulse-crawl
+    container_name: pulse
     ports:
       - '${PORT:-3060}:3060'
     environment:
@@ -188,7 +188,7 @@ services:
       - ./resources:/app/resources
     restart: unless-stopped
     networks:
-      - pulse-crawl-network
+      - pulse-network
     healthcheck:
       test: ['CMD', 'wget', '--spider', 'http://localhost:3060/health']
       interval: 30s
@@ -197,7 +197,7 @@ services:
       retries: 3
 
 networks:
-  pulse-crawl-network:
+  pulse-network:
     driver: bridge
 ```
 
@@ -252,14 +252,14 @@ For non-Docker deployments, run as systemd service:
 
 ```bash
 # Install dependencies
-cd /opt/pulse-fetch
+cd /opt/pulse
 npm install
 
 # Build application
 npm run build
 
 # Create systemd service file
-sudo nano /etc/systemd/system/pulse-fetch.service
+sudo nano /etc/systemd/system/pulse.service
 ```
 
 ### Service Configuration
@@ -268,14 +268,14 @@ sudo nano /etc/systemd/system/pulse-fetch.service
 [Unit]
 Description=Pulse Fetch MCP Server
 After=network.target
-Documentation=https://github.com/your-org/pulse-fetch
+Documentation=https://github.com/your-org/pulse
 
 [Service]
 Type=simple
 User=pulse
 Group=pulse
-WorkingDirectory=/opt/pulse-fetch
-ExecStart=/usr/bin/node /opt/pulse-fetch/remote/dist/index.js
+WorkingDirectory=/opt/pulse
+ExecStart=/usr/bin/node /opt/pulse/remote/dist/index.js
 Restart=always
 RestartSec=10
 
@@ -287,7 +287,7 @@ Environment=FIRECRAWL_API_KEY=your-key-here
 Environment=LLM_PROVIDER=anthropic
 Environment=LLM_API_KEY=your-key-here
 Environment=MCP_RESOURCE_STORAGE=filesystem
-Environment=MCP_RESOURCE_FILESYSTEM_ROOT=/var/cache/pulse-fetch
+Environment=MCP_RESOURCE_FILESYSTEM_ROOT=/var/cache/pulse
 Environment=METRICS_AUTH_ENABLED=true
 Environment=METRICS_AUTH_KEY=your-secret-key
 Environment=LOG_FORMAT=json
@@ -297,12 +297,12 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/cache/pulse-fetch /var/log/pulse-fetch
+ReadWritePaths=/var/cache/pulse /var/log/pulse
 
 # Logging
-StandardOutput=append:/var/log/pulse-fetch/access.log
-StandardError=append:/var/log/pulse-fetch/error.log
-SyslogIdentifier=pulse-fetch
+StandardOutput=append:/var/log/pulse/access.log
+StandardError=append:/var/log/pulse/error.log
+SyslogIdentifier=pulse
 
 [Install]
 WantedBy=multi-user.target
@@ -313,23 +313,23 @@ WantedBy=multi-user.target
 ```bash
 # Create user and directories
 sudo useradd -r -s /bin/false pulse
-sudo mkdir -p /var/cache/pulse-fetch /var/log/pulse-fetch
-sudo chown -R pulse:pulse /var/cache/pulse-fetch /var/log/pulse-fetch
-sudo chown -R pulse:pulse /opt/pulse-fetch
+sudo mkdir -p /var/cache/pulse /var/log/pulse
+sudo chown -R pulse:pulse /var/cache/pulse /var/log/pulse
+sudo chown -R pulse:pulse /opt/pulse
 
 # Enable and start service
 sudo systemctl daemon-reload
-sudo systemctl enable pulse-fetch
-sudo systemctl start pulse-fetch
+sudo systemctl enable pulse
+sudo systemctl start pulse
 
 # Check status
-sudo systemctl status pulse-fetch
+sudo systemctl status pulse
 
 # View logs
-sudo journalctl -u pulse-fetch -f
+sudo journalctl -u pulse -f
 
 # Restart service
-sudo systemctl restart pulse-fetch
+sudo systemctl restart pulse
 ```
 
 ---
@@ -389,7 +389,7 @@ docker run -d \
 
 Configure HTTP monitor:
 
-- **URL**: `http://pulse-crawl:3060/health`
+- **URL**: `http://pulse:3060/health`
 - **Method**: GET
 - **Interval**: 60 seconds
 - **Expected**: Status 200, response contains `"status":"healthy"`
@@ -528,7 +528,7 @@ secrets:
     file: ./secrets/llm_api_key.txt
 
 services:
-  pulse-crawl:
+  pulse:
     secrets:
       - firecrawl_key
       - llm_key
@@ -746,7 +746,7 @@ pulse_cache_hits_total 890
 **Check logs:**
 
 ```bash
-docker compose logs pulse-crawl
+docker compose logs pulse
 ```
 
 **Common causes:**
@@ -774,7 +774,7 @@ sudo chown -R 1001:1001 ./resources
 **Check container stats:**
 
 ```bash
-docker stats pulse-crawl
+docker stats pulse
 ```
 
 **Reduce memory usage:**

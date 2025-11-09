@@ -1,4 +1,4 @@
-# Pulse-Fetch & FC-Bridge Integration Plan
+# pulse & FC-Bridge Integration Plan
 
 **Version:** 2.0
 **Date:** 2025-11-08
@@ -9,13 +9,13 @@
 
 ## Executive Summary
 
-This document outlines the comprehensive plan to merge **fc-bridge** (Firecrawl webhook server with semantic search) into **pulse-fetch** (MCP server for web scraping). The integration will create a unified, full-stack semantic search and scraping platform combining the best of both systems.
+This document outlines the comprehensive plan to merge **fc-bridge** (Firecrawl webhook server with semantic search) into **pulse** (MCP server for web scraping). The integration will create a unified, full-stack semantic search and scraping platform combining the best of both systems.
 
 ### Integration Goals
 
 1. **Unified Repository**: Single monorepo with TypeScript (MCP tools) + Python (semantic search)
 2. **Shared Services**: Consolidated Firecrawl, Qdrant, TEI, and Redis infrastructure
-3. **Enhanced Capabilities**: Add semantic search, webhooks, and embeddings to pulse-fetch
+3. **Enhanced Capabilities**: Add semantic search, webhooks, and embeddings to pulse
 4. **Maintained Compatibility**: Preserve existing MCP tool interfaces
 5. **Production Ready**: Unified deployment, testing, and documentation
 
@@ -50,9 +50,9 @@ This document outlines the comprehensive plan to merge **fc-bridge** (Firecrawl 
 
 ## 1. Current State Analysis
 
-### 1.1 Pulse-Fetch (TypeScript MCP Server)
+### 1.1 pulse (TypeScript MCP Server)
 
-**Location:** `/home/jmagar/code/pulse-fetch`
+**Location:** `/home/jmagar/code/pulse`
 
 **Architecture:**
 
@@ -119,11 +119,11 @@ This document outlines the comprehensive plan to merge **fc-bridge** (Firecrawl 
 **Shared Services:**
 
 - ✅ Firecrawl API (both use for scraping)
-- ✅ Qdrant (pulse-fetch planned, fc-bridge implemented)
+- ✅ Qdrant (pulse planned, fc-bridge implemented)
 
 **Complementary Features:**
 
-| Feature         | Pulse-Fetch | FC-Bridge |
+| Feature         | pulse | FC-Bridge |
 | --------------- | ----------- | --------- |
 | MCP Tools       | ✅          | ❌        |
 | Direct Scraping | ✅          | ❌        |
@@ -145,7 +145,7 @@ This document outlines the comprehensive plan to merge **fc-bridge** (Firecrawl 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Pulse-Fetch Unified Platform                 │
+│                    pulse Unified Platform                 │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐  │
@@ -214,7 +214,7 @@ Python [Clean Content] → TypeScript [LLM Extract] → Return to Client
 
 **Decision 1: Monorepo with Multi-Language Support**
 
-- **Choice:** Extend pulse-fetch workspace with Python package
+- **Choice:** Extend pulse workspace with Python package
 - **Rationale:** Maintains existing MCP structure, adds Python capabilities
 - **Alternative Rejected:** Separate repositories (increases complexity)
 
@@ -258,7 +258,7 @@ Python [Clean Content] → TypeScript [LLM Extract] → Return to Client
 
 **Phase 1: Repository Preparation**
 
-- Migrate fc-bridge into pulse-fetch as `python/` workspace
+- Migrate fc-bridge into pulse as `python/` workspace
 - Preserve git history for both projects
 - Update build systems for multi-language support
 
@@ -270,7 +270,7 @@ Python [Clean Content] → TypeScript [LLM Extract] → Return to Client
 
 **Phase 3: Storage Layer Integration**
 
-- Implement Qdrant backend for pulse-fetch storage
+- Implement Qdrant backend for pulse storage
 - Migrate fc-bridge vector store to unified interface
 - Unify storage configuration
 
@@ -290,9 +290,9 @@ Python [Clean Content] → TypeScript [LLM Extract] → Return to Client
 
 **Unified Platform, Not Optional Services:**
 
-- This is **Pulse-Fetch v2.0**: A complete rewrite of the architecture
+- This is **pulse v2.0**: A complete rewrite of the architecture
 - Python services are **required**, not optional add-ons
-- fc-bridge merges into pulse-fetch as core infrastructure
+- fc-bridge merges into pulse as core infrastructure
 - Users deploy the full platform (MCP + Python + services)
 
 **Preserve MCP Tool Interface:**
@@ -321,7 +321,7 @@ Python [Clean Content] → TypeScript [LLM Extract] → Return to Client
 ### 4.1 Proposed Directory Layout
 
 ```
-pulse-fetch/                          # Main repository
+pulse/                          # Main repository
 ├── shared/                           # TypeScript shared code (existing)
 │   ├── mcp/                          # MCP registration
 │   ├── clients/                      # REMOVED: Firecrawl (Python owns it)
@@ -387,7 +387,7 @@ pulse-fetch/                          # Main repository
 
 ```json
 {
-  "name": "pulse-fetch",
+  "name": "pulse",
   "version": "1.0.0",
   "workspaces": ["shared", "local", "remote", "python"],
   "scripts": {
@@ -410,7 +410,7 @@ pulse-fetch/                          # Main repository
 ```json
 // python/package.json (minimal, for workspace compatibility)
 {
-  "name": "@pulse-fetch/python",
+  "name": "@pulse/python",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -547,7 +547,7 @@ async def search(
 
 **Current State:**
 
-- **Pulse-Fetch v1:** TypeScript client talks directly to Firecrawl
+- **pulse v1:** TypeScript client talks directly to Firecrawl
 - **FC-Bridge:** Python webhook receiver for crawled documents
 
 **Unified Approach (v2.0):**
@@ -566,7 +566,7 @@ SEARCH_SERVICE_API_SECRET=shared-secret
 SEARCH_INDEX_SAMPLE_RATE=1.0
 ```
 
-**Pulse-Fetch Configuration:**
+**pulse Configuration:**
 
 ```bash
 # Python service configuration (owns ALL Firecrawl operations)
@@ -789,7 +789,7 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/pulse_fetch
 
 ### 7.1 Current Storage Systems
 
-**Pulse-Fetch Storage:**
+**pulse Storage:**
 
 - **Backends:** Memory, Filesystem
 - **Interface:** ResourceStorage (CRUD operations)
@@ -1676,7 +1676,7 @@ export async function scrapeTool(server: Server) {
 
 ```bash
 #######################################
-# PULSE-FETCH UNIFIED CONFIGURATION  #
+# pulse UNIFIED CONFIGURATION  #
 #######################################
 
 # === Docker & Services ===
@@ -1931,7 +1931,7 @@ validate_settings(settings)
 version: '3.8'
 
 networks:
-  pulse-fetch-network:
+  pulse-network:
     driver: bridge
 
 volumes:
@@ -1948,14 +1948,14 @@ services:
 
   qdrant:
     image: qdrant/qdrant:v1.8.0
-    container_name: pulse-fetch-qdrant
+    container_name: pulse-qdrant
     ports:
       - '52102:6333' # HTTP API
       - '52103:6334' # gRPC API
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
-      - pulse-fetch-network
+      - pulse-network
     restart: unless-stopped
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:6333/health']
@@ -1965,13 +1965,13 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: pulse-fetch-redis
+    container_name: pulse-redis
     ports:
       - '6379:6379'
     volumes:
       - redis_data:/data
     networks:
-      - pulse-fetch-network
+      - pulse-network
     restart: unless-stopped
     command: redis-server --appendonly yes
     healthcheck:
@@ -1982,7 +1982,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: pulse-fetch-postgres
+    container_name: pulse-postgres
     ports:
       - '5432:5432'
     environment:
@@ -1992,7 +1992,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - pulse-fetch-network
+      - pulse-network
     restart: unless-stopped
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U pulse_fetch']
@@ -2002,7 +2002,7 @@ services:
 
   tei:
     image: ghcr.io/huggingface/text-embeddings-inference:1.8
-    container_name: pulse-fetch-tei
+    container_name: pulse-tei
     ports:
       - '52104:80'
     volumes:
@@ -2012,7 +2012,7 @@ services:
       MAX_BATCH_TOKENS: 163840
       MAX_CLIENT_BATCH_SIZE: 100
     networks:
-      - pulse-fetch-network
+      - pulse-network
     restart: unless-stopped
     deploy:
       resources:
@@ -2036,7 +2036,7 @@ services:
     build:
       context: .
       dockerfile: python/Dockerfile
-    container_name: pulse-fetch-python-api
+    container_name: pulse-python-api
     ports:
       - '${PORT:-52100}:52100'
     environment:
@@ -2057,7 +2057,7 @@ services:
       - ./data/bm25:/app/data/bm25
       - ./data/resources:/app/data/resources
     networks:
-      - pulse-fetch-network
+      - pulse-network
     depends_on:
       qdrant:
         condition: service_healthy
@@ -2079,7 +2079,7 @@ services:
     build:
       context: .
       dockerfile: python/Dockerfile
-    container_name: pulse-fetch-python-worker
+    container_name: pulse-python-worker
     environment:
       # Same environment as API
       - PYTHON_SERVICE_API_SECRET
@@ -2095,7 +2095,7 @@ services:
     volumes:
       - ./data/bm25:/app/data/bm25
     networks:
-      - pulse-fetch-network
+      - pulse-network
     depends_on:
       python-api:
         condition: service_healthy
@@ -2107,7 +2107,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: remote
-    container_name: pulse-fetch-mcp-remote
+    container_name: pulse-mcp-remote
     ports:
       - '${MCP_REMOTE_PORT:-3060}:3060'
     environment:
@@ -2139,7 +2139,7 @@ services:
       # Scraping
       - OPTIMIZE_FOR
     networks:
-      - pulse-fetch-network
+      - pulse-network
     depends_on:
       python-api:
         condition: service_healthy
@@ -2554,7 +2554,7 @@ test-watch:  ## Run tests in watch mode
 
 Tasks:
 
-1. Create integration branch in pulse-fetch
+1. Create integration branch in pulse
 2. Copy fc-bridge into `python/` directory
 3. Update .gitignore for new structure
 4. Preserve git history with subtree merge
@@ -2563,7 +2563,7 @@ Tasks:
 Commands:
 
 ```bash
-# In pulse-fetch repo
+# In pulse repo
 git checkout -b feature/fc-bridge-integration
 
 # Add fc-bridge as subtree
@@ -2739,7 +2739,7 @@ Target: Same location, no changes needed
 Current: Metrics tables (if used)
 Target: Same schema, no changes needed
 
-**Scenario 3: Existing Pulse-Fetch Cache**
+**Scenario 3: Existing pulse Cache**
 
 **Memory Storage → Qdrant:**
 
@@ -2808,7 +2808,7 @@ tsx scripts/migrate-filesystem-to-qdrant.ts
 2. **Restore Original Repos:**
 
    ```bash
-   # Pulse-fetch
+   # pulse
    git checkout main
    git branch -D feature/fc-bridge-integration
 
@@ -2824,8 +2824,8 @@ tsx scripts/migrate-filesystem-to-qdrant.ts
    cd ~/code/fc-bridge
    docker compose up -d
 
-   # Pulse-fetch (if using remote)
-   cd ~/code/pulse-fetch
+   # pulse (if using remote)
+   cd ~/code/pulse
    docker compose up -d
    ```
 
@@ -3084,7 +3084,7 @@ tsx scripts/migrate-filesystem-to-qdrant.ts
 
 ## Conclusion
 
-This integration plan provides a comprehensive roadmap for merging fc-bridge into pulse-fetch, creating **Pulse-Fetch v2.0**: a unified platform with Python-First architecture and enhanced semantic search capabilities. The phased approach minimizes risk while maximizing value delivery.
+This integration plan provides a comprehensive roadmap for merging fc-bridge into pulse, creating **pulse v2.0**: a unified platform with Python-First architecture and enhanced semantic search capabilities. The phased approach minimizes risk while maximizing value delivery.
 
 **Key Takeaways:**
 

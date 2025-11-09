@@ -26,7 +26,7 @@ export async function getStrategyConfigPath(): Promise<string> {
   }
 
   // Use default temp directory location
-  const tempDir = join(tmpdir(), 'pulse-crawl');
+  const tempDir = join(tmpdir(), 'pulse');
   const tempConfigPath = join(tempDir, 'scraping-strategies.md');
 
   // Check if temp config already exists

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { formatMapResponse } from './response.js';
-import type { MapResult } from '../../../clients/firecrawl/index.js';
+import type { MapResult } from '@firecrawl/client';
 
 describe('Map Response Formatter', () => {
   const createMockResult = (count: number): MapResult => ({
@@ -92,7 +92,7 @@ describe('Map Response Formatter', () => {
 
       expect(response.content[1].type).toBe('resource');
       const resource = (response.content[1] as any).resource;
-      expect(resource.uri).toMatch(/^pulse-crawl:\/\/map\/example\.com\/\d+/);
+      expect(resource.uri).toMatch(/^pulse:\/\/map\/example\.com\/\d+/);
       expect(resource.name).toBe('URL Map: https://example.com (10 URLs)');
       expect(resource.mimeType).toBe('application/json');
       expect(resource.text).toBeDefined();
@@ -104,7 +104,7 @@ describe('Map Response Formatter', () => {
 
       expect(response.content[1].type).toBe('resource_link');
       const link = response.content[1] as any;
-      expect(link.uri).toMatch(/^pulse-crawl:\/\/map\/example\.com\/\d+/);
+      expect(link.uri).toMatch(/^pulse:\/\/map\/example\.com\/\d+/);
       expect(link.name).toBe('URL Map: https://example.com (10 URLs)');
       expect(link.description).toBeDefined();
     });

@@ -294,7 +294,7 @@ Fast URL discovery from websites (8x faster than crawl). Uses sitemaps and optio
     {
       type: "resource",
       resource: {
-        uri: "pulse-crawl://map/example.com/1736346123456/page-0",
+        uri: "pulse://map/example.com/1736346123456/page-0",
         name: "URL Map: https://example.com (200 URLs)",
         mimeType: "application/json",
         text: "[{\"url\":\"https://example.com/page1\",\"title\":\"Page 1\"},{\"url\":\"https://example.com/page2\",\"title\":\"Page 2\"}]"
@@ -419,7 +419,7 @@ Google search integration with optional content scraping.
     {
       type: "resource",
       resource: {
-        uri: "pulse-crawl://search/web/1736346123456",
+        uri: "pulse://search/web/1736346123456",
         name: "Web Results: query",
         mimeType: "application/json",
         text: "[{\"title\":\"...\",\"url\":\"...\",\"description\":\"...\"}]"
@@ -428,7 +428,7 @@ Google search integration with optional content scraping.
     {
       type: "resource",
       resource: {
-        uri: "pulse-crawl://search/images/1736346123456",
+        uri: "pulse://search/images/1736346123456",
         name: "Image Results: query",
         mimeType: "application/json",
         text: "[{\"title\":\"...\",\"url\":\"...\",\"image\":\"...\"}]"
@@ -437,7 +437,7 @@ Google search integration with optional content scraping.
     {
       type: "resource",
       resource: {
-        uri: "pulse-crawl://search/news/1736346123456",
+        uri: "pulse://search/news/1736346123456",
         name: "News Results: query",
         mimeType: "application/json",
         text: "[{\"title\":\"...\",\"url\":\"...\",\"date\":\"...\"}]"
@@ -549,7 +549,7 @@ Multi-page crawling with job management. Supports URL patterns, depth limits, an
     {
       type: "resource",
       resource: {
-        uri: "pulse-crawl://crawl/results/1736346123456",
+        uri: "pulse://crawl/results/1736346123456",
         name: "Crawl Results (50 pages)",
         mimeType: "application/json",
         text: "[{\"url\":\"...\",\"markdown\":\"...\",\"html\":\"...\"}]"
@@ -818,39 +818,39 @@ file:///var/data/resources/cleaned/example.com_path_20250108123456789.md
 **Map Results:**
 
 ```
-pulse-crawl://map/<hostname>/<timestamp>/page-<pageNumber>
+pulse://map/<hostname>/<timestamp>/page-<pageNumber>
 ```
 
 Example:
 
 ```
-pulse-crawl://map/example.com/1736346123456/page-0
+pulse://map/example.com/1736346123456/page-0
 ```
 
 **Search Results:**
 
 ```
-pulse-crawl://search/<source>/<timestamp>
+pulse://search/<source>/<timestamp>
 ```
 
 Examples:
 
 ```
-pulse-crawl://search/web/1736346123456
-pulse-crawl://search/images/1736346123456
-pulse-crawl://search/news/1736346123456
+pulse://search/web/1736346123456
+pulse://search/images/1736346123456
+pulse://search/news/1736346123456
 ```
 
 **Crawl Results:**
 
 ```
-pulse-crawl://crawl/results/<timestamp>
+pulse://crawl/results/<timestamp>
 ```
 
 Example:
 
 ```
-pulse-crawl://crawl/results/1736346123456
+pulse://crawl/results/1736346123456
 ```
 
 ### Resource Types

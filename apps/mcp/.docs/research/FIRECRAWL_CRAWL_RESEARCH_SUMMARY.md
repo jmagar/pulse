@@ -7,7 +7,7 @@
 
 ## Overview
 
-pulse-crawl currently exposes ~40% of Firecrawl's CRAWL endpoint capabilities. This document summarizes key findings and provides prioritized recommendations for enhancement.
+pulse currently exposes ~40% of Firecrawl's CRAWL endpoint capabilities. This document summarizes key findings and provides prioritized recommendations for enhancement.
 
 ---
 
@@ -309,7 +309,7 @@ zeroDataRetention: z.boolean().optional(),
 2. Webhook event delivery
 3. Mobile viewport rendering
 4. Format variations (summary, images, json)
-   pulse-crawl
+   pulse
 
 ---
 
@@ -334,17 +334,17 @@ zeroDataRetention: z.boolean().optional(),
 
 ## Quick Comparison to Competitors
 
-| Feature                  | Firecrawl      | Competitors | Pulse-Fetch  |
+| Feature                  | Firecrawl      | Competitors | pulse  |
 | ------------------------ | -------------- | ----------- | ------------ |
 | Natural language prompts | ✅ v2          | Limited     | ❌           |
-| Page actions             | ✅ pulse-crawl | ❌          |
+| Page actions             | ✅ pulse | ❌          |
 | Pagination               | ✅             | Limited     | ❌           |
 | Multiple formats         | ✅             | ✅          | ✅ (partial) |
 | Custom headers           | ✅             | ✅          | ❌           |
 | Webhooks                 | ✅             | Limited     | ❌           |
 | Anti-bot proxy           | ✅             | Limited     | ❌           |
 
-## pulse-crawl
+## pulse
 
 ## Recommendation
 
@@ -365,13 +365,13 @@ The 4 Phase 1 features are critical for:
 
 ### Long-term Vision
 
-Complete Firecrawl API surface in pulse-fetch, making it the most comprehensive MCP wrapper for web data extraction.
+Complete Firecrawl API surface in pulse, making it the most comprehensive MCP wrapper for web data extraction.
 
 ---
 
 ## Full Research Document
 
-See: `/home/jmagar/code/pulse-fetch/docs/plans/2025-11-07-firecrawl-crawl-api-comprehensive-research.md`
+See: `/home/jmagar/code/pulse/docs/plans/2025-11-07-firecrawl-crawl-api-comprehensive-research.md`
 
 Contains:
 

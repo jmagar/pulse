@@ -1,6 +1,6 @@
 # Test Suite Summary - HTTP Streaming Transport
 
-This document summarizes the comprehensive test coverage for the pulse-crawl HTTP streaming transport implementation.
+This document summarizes the comprehensive test coverage for the pulse HTTP streaming transport implementation.
 
 ## Test Statistics
 

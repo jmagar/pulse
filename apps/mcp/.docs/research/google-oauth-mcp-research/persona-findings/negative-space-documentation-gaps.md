@@ -172,9 +172,9 @@ No standard pattern exists for:
 
 It's a "plumbing" concern that developers solve differently based on their OS and security requirements. Most examples use simple JSON files because they're easy to demonstrate.
 
-### Impact Assessmentpulse-crawl
+### Impact Assessmentpulse
 
-pulse-crawl
+pulse
 **Severity**: MEDIUM-HIGH
 
 **Security Risks**:
@@ -185,7 +185,7 @@ pulse-crawl
 
 **Operational Risks**:
 
-- Hard-coded storage pathpulse-crawlon-standard systems
+- Hard-coded storage pathpulseon-standard systems
 - Keychain integration breaks in containerized environments
 - Token loss on server restart requires re-authentication
 
@@ -204,8 +204,8 @@ pulse-crawl
 ```typescript
 import keytar from 'keytar';
 
-await keytar.setPassword('mcp-pulse-fetch', 'google-oauth', token);
-const token = await keytar.getPassword('mcp-pulse-fetch', 'google-oauth');
+await keytar.setPassword('mcp-pulse', 'google-oauth', token);
+const token = await keytar.getPassword('mcp-pulse', 'google-oauth');
 ```
 
 **Pros**: Secure, OS-integrated, user-scoped
@@ -218,7 +218,7 @@ import { encrypt, decrypt } from 'crypto';
 
 const key = deriveKeyFromMachineId(); // Machine-specific key
 const encrypted = encrypt(token, key);
-fs.writeFileSync('~/.mcp-pulse-fetch/tokens.enc', encrypted);
+fs.writeFileSync('~/.mcp-pulse/tokens.enc', encrypted);
 ```
 
 **Pros**: Works everywhere, no native deps
@@ -350,7 +350,7 @@ OAuth refresh tokens can fail for many reasons, but documentation rarely covers 
 - Graceful degradation strategies
 - Refresh failure impact on in-flight requests
 
-### Why It's Overlookedpulse-crawl
+### Why It's Overlookedpulse
 
 Happy-path documentation shows successful refresh flows. Edge cases are left to developers to discover through trial and error.
 
@@ -414,7 +414,7 @@ if (!(await refreshToken())) {
 ```typescript
 // For stdio servers, write to stderr
 console.error('[AUTH ERROR] Your Google OAuth token has expired.');
-console.error('Run: mcp-pulse-fetch --reauth');
+console.error('Run: mcp-pulse --reauth');
 ```
 
 **Recommendation**: Document standard error handling patterns:

@@ -18,7 +18,7 @@ try {
   const localContent = readFileSync(localReadmePath, 'utf-8');
 
   // Add GitHub repo reference at the top
-  const repoNotice = `> **Note**: This package is part of the [MCP Servers](https://github.com/pulsemcp/mcp-servers) monorepo. For the latest updates and full source code, visit the [Pulse Fetch MCP Server directory](https://github.com/pulsemcp/mcp-servers/tree/main/productionized/pulse-crawl).
+  const repoNotice = `> **Note**: This package is part of the [MCP Servers](https://github.com/pulsemcp/mcp-servers) monorepo. For the latest updates and full source code, visit the [Pulse Fetch MCP Server directory](https://github.com/pulsemcp/mcp-servers/tree/main/productionized/pulse).
 
 `;
 

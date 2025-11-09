@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { FirecrawlMapClient } from '../../shared/clients/firecrawl/index.js';
+import { FirecrawlMapClient } from '@firecrawl/client';
 
 describe('MAP tool error handling', () => {
   let client: FirecrawlMapClient;

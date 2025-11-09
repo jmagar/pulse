@@ -16,7 +16,7 @@ export class FileSystemResourceStorage implements ResourceStorage {
   private initialized = false;
 
   constructor(rootDir?: string) {
-    this.rootDir = rootDir || path.join(os.tmpdir(), 'pulse-fetch', 'resources');
+    this.rootDir = rootDir || path.join(os.tmpdir(), 'pulse', 'resources');
   }
 
   async init(): Promise<void> {

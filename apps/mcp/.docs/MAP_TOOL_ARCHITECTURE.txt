@@ -84,7 +84,7 @@ TOOL REQUEST FLOW
 │ │ │                                                                 │ │ │
 │ │ │ {                                                              │ │ │
 │ │ │   type: 'resource_link',                                      │ │ │
-│ │ │   uri: 'pulse-crawl://map/example.com/1730970595847/page-0', │ │ │
+│ │ │   uri: 'pulse://map/example.com/1730970595847/page-0', │ │ │
 │ │ │   name: 'URL Map: https://example.com (200 URLs)',           │ │ │
 │ │ │   mimeType: 'application/json',                              │ │ │
 │ │ │   description: 'URLs 1-200 from https://example.com...'      │ │ │
@@ -98,7 +98,7 @@ TOOL REQUEST FLOW
 │ │ │ {                                                               │ │ │
 │ │ │   type: 'resource',                                            │ │ │
 │ │ │   resource: {                                                  │ │ │
-│ │ │     uri: 'pulse-crawl://map/example.com/1730970595847/...',   │ │ │
+│ │ │     uri: 'pulse://map/example.com/1730970595847/...',   │ │ │
 │ │ │     name: 'URL Map: https://example.com (200 URLs)',          │ │ │
 │ │ │     mimeType: 'application/json',                             │ │ │
 │ │ │     text: '[{"url":"https://example.com/page-1",...}]'        │ │ │

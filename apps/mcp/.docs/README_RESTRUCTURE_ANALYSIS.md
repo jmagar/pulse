@@ -453,9 +453,9 @@ Remote HTTP Server:
    ```json
    {
      "mcpServers": {
-       "pulse-crawl": {
+       "pulse": {
          "command": "npx",
-         "args": ["-y", "@pulsemcp/pulse-crawl"]
+         "args": ["-y", "@pulsemcp/pulse"]
        }
      }
    }

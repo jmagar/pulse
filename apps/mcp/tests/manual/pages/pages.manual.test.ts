@@ -5,7 +5,7 @@
  * under different environment variable configurations.
  *
  * Usage:
- * cd productionized/pulse-crawl && node --import tsx tests/manual/pages/pages.manual.test.ts [--continue-on-failure]
+ * cd productionized/pulse && node --import tsx tests/manual/pages/pages.manual.test.ts [--continue-on-failure]
  */
 
 import 'dotenv/config';
@@ -25,7 +25,7 @@ import type {
   IScrapingClients,
 } from '../../../shared/server.js';
 import { NativeFetcher } from '../../../shared/server.js';
-import { FirecrawlClient } from '../../../shared/clients/firecrawl/index.js';
+import { FirecrawlClient } from '@firecrawl/client';
 
 interface TestResult {
   page: PageTestCase;
@@ -372,7 +372,7 @@ async function runPagesTestSuite() {
 // CLI usage
 if (import.meta.url === `file://${process.argv[1]}`) {
   console.log(
-    'Usage: cd productionized/pulse-crawl && node --import tsx tests/manual/pages/pages.manual.test.ts [--continue-on-failure]'
+    'Usage: cd productionized/pulse && node --import tsx tests/manual/pages/pages.manual.test.ts [--continue-on-failure]'
   );
   runPagesTestSuite().catch((error) => {
     console.error('Fatal error:', error);

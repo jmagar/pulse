@@ -103,7 +103,7 @@ describe('Storage findByUrlAndExtract', () => {
     let tempDir: string;
 
     beforeEach(async () => {
-      tempDir = await mkdtemp(join(tmpdir(), 'pulse-crawl-test-'));
+      tempDir = await mkdtemp(join(tmpdir(), 'pulse-test-'));
       storage = new FileSystemResourceStorage(tempDir);
     });
 

@@ -10,7 +10,7 @@ The crawl tool implementation in `shared/mcp/tools/crawl/` is **well-implemented
 
 ### Status: PASS ✓
 
-**File**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/crawl/schema.ts`
+**File**: `/home/jmagar/code/pulse/shared/mcp/tools/crawl/schema.ts`
 
 **Schema Structure**:
 
@@ -51,7 +51,7 @@ export const crawlOptionsSchema = z
 
 ### Status: PASS ✓
 
-**File**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/crawl/index.ts`
+**File**: `/home/jmagar/code/pulse/shared/mcp/tools/crawl/index.ts`
 
 **Implementation**:
 
@@ -89,7 +89,7 @@ export function createCrawlTool(config: FirecrawlConfig): Tool {
 
 ### Status: PASS ✓
 
-**File**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/crawl/response.ts`
+**File**: `/home/jmagar/code/pulse/shared/mcp/tools/crawl/response.ts`
 
 **Implementation**:
 
@@ -123,7 +123,7 @@ export function formatCrawlResponse(
       content.push({
         type: 'resource',
         resource: {
-          uri: `pulse-crawl://crawl/results/${Date.now()}`,
+          uri: `pulse://crawl/results/${Date.now()}`,
           name: `Crawl Results (${statusResult.completed} pages)`,
           mimeType: 'application/json',
           text: JSON.stringify(statusResult.data, null, 2),
@@ -159,7 +159,7 @@ export function formatCrawlResponse(
    {
      "type": "resource",
      "resource": {
-       "uri": "pulse-crawl://crawl/results/...",
+       "uri": "pulse://crawl/results/...",
        "name": "Crawl Results (...)",
        "mimeType": "application/json",
        "text": "{ JSON data }"
@@ -289,7 +289,7 @@ constructor(config: FirecrawlConfig) {
 
 - ✓ Crawl results returned as JSON (no HTML/raw data injection)
 - ✓ Error messages string-escaped
-- ✓ Resource URIs use safe namespace (`pulse-crawl://`)
+- ✓ Resource URIs use safe namespace (`pulse://`)
 
 ---
 
@@ -326,7 +326,7 @@ constructor(config: FirecrawlConfig) {
 **Current Implementation**:
 
 - Crawl tool uses basic resource metadata:
-  - `uri`: `pulse-crawl://crawl/results/{timestamp}`
+  - `uri`: `pulse://crawl/results/{timestamp}`
   - `name`: Human-readable name with page count
   - `mimeType`: `application/json`
   - `text`: JSON-formatted crawl results

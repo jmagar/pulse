@@ -40,7 +40,7 @@ import { getMetricsCollector } from '../monitoring/index.js';
  *
  * @example
  * ```typescript
- * const server = new Server({ name: 'pulse-crawl', version: '1.0.0' }, {});
+ * const server = new Server({ name: 'pulse', version: '1.0.0' }, {});
  * registerTools(server, () => createClients(), strategyFactory);
  * // Server now handles tool requests
  * ```
@@ -95,10 +95,10 @@ export function registerTools(
 
   // Log tool schemas for debugging (only in development or when DEBUG env var is set)
   if (process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development') {
-    console.error('[pulse-crawl] Registered tools:');
+    console.error('[pulse] Registered tools:');
     tools.forEach((tool, index) => {
-      console.error(`[pulse-crawl]   ${index + 1}. ${tool.name}`);
-      console.error(`[pulse-crawl]      Schema type: ${tool.inputSchema.type || 'unknown'}`);
+      console.error(`[pulse]   ${index + 1}. ${tool.name}`);
+      console.error(`[pulse]      Schema type: ${tool.inputSchema.type || 'unknown'}`);
 
       // Check for problematic top-level schema properties
       const hasProblematicProps = [
@@ -109,10 +109,10 @@ export function registerTools(
 
       if (hasProblematicProps.some(Boolean)) {
         console.error(
-          `[pulse-crawl]      ⚠️ WARNING: Schema contains oneOf/allOf/anyOf at root level`
+          `[pulse]      ⚠️ WARNING: Schema contains oneOf/allOf/anyOf at root level`
         );
         console.error(
-          `[pulse-crawl]         This may cause issues with some AI providers (like Anthropic)`
+          `[pulse]         This may cause issues with some AI providers (like Anthropic)`
         );
       }
     });
@@ -170,7 +170,7 @@ export function registerTools(
  *
  * @example
  * ```typescript
- * const server = new Server({ name: 'pulse-crawl', version: '1.0.0' }, {});
+ * const server = new Server({ name: 'pulse', version: '1.0.0' }, {});
  * registerResources(server);
  * // Server now handles resource requests
  * ```

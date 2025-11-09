@@ -90,7 +90,7 @@ describe('HTTP Transport End-to-End', () => {
       expect(initData.result).toHaveProperty('protocolVersion');
       expect(initData.result).toHaveProperty('capabilities');
       expect(initData.result).toHaveProperty('serverInfo');
-      expect(initData.result.serverInfo.name).toBe('@pulsemcp/pulse-crawl');
+      expect(initData.result.serverInfo.name).toBe('@pulsemcp/pulse');
 
       // Step 2: Send initialized notification
       const initializedNotification = {

@@ -287,7 +287,7 @@ MCP_RESOURCE_STORAGE=memory
 
 - Fast, no disk I/O
 - Lost on restart
-- URI: `pulse-fetch://scraped/{timestamp}`
+- URI: `pulse://scraped/{timestamp}`
 
 **Filesystem:**
 
@@ -298,7 +298,7 @@ MCP_RESOURCE_FILESYSTEM_ROOT=/path/to/storage
 
 - Persistent across restarts
 - Organized in subdirectories
-- URI: `pulse-fetch://scraped/extracted/{domain}-{hash}`
+- URI: `pulse://scraped/extracted/{domain}-{hash}`
 
 ## Response Format
 
@@ -310,7 +310,7 @@ MCP_RESOURCE_FILESYSTEM_ROOT=/path/to/storage
     {
       "type": "resource",
       "resource": {
-        "uri": "pulse-fetch://scraped/extracted/example.com-abc123",
+        "uri": "pulse://scraped/extracted/example.com-abc123",
         "name": "https://example.com",
         "mimeType": "text/markdown",
         "text": "Full extracted content..."
@@ -327,7 +327,7 @@ MCP_RESOURCE_FILESYSTEM_ROOT=/path/to/storage
   "content": [
     {
       "type": "resource_link",
-      "uri": "pulse-fetch://scraped/extracted/example.com-abc123",
+      "uri": "pulse://scraped/extracted/example.com-abc123",
       "name": "https://example.com",
       "description": "Extracted information using query: \"...\""
     }

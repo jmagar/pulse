@@ -1,6 +1,6 @@
 # Pulse Fetch MCP Server
 
-> **Note**: This package is part of the [MCP Servers](https://github.com/pulsemcp/mcp-servers) monorepo. For the latest updates and full source code, visit the [Pulse Fetch MCP Server directory](https://github.com/pulsemcp/mcp-servers/tree/main/productionized/pulse-crawl).
+> **Note**: This package is part of the [MCP Servers](https://github.com/pulsemcp/mcp-servers) monorepo. For the latest updates and full source code, visit the [Pulse Fetch MCP Server directory](https://github.com/pulsemcp/mcp-servers/tree/main/productionized/pulse).
 
 Haven't heard about MCP yet? The easiest way to keep up-to-date is to read our [weekly newsletter at PulseMCP](https://www.pulsemcp.com/).
 
@@ -154,7 +154,7 @@ Most other alternatives fall short on one or more vectors:
 | `STRATEGY_CONFIG_PATH`         | Path to markdown file containing scraping strategy configuration    | No       | OS temp dir                  | `/path/to/scraping-strategies.md` |
 | `OPTIMIZE_FOR`                 | Optimization strategy for scraping: `cost` or `speed`               | No       | `cost`                       | `speed`                           |
 | `MCP_RESOURCE_STORAGE`         | Storage backend for saved resources: `memory` or `filesystem`       | No       | `memory`                     | `filesystem`                      |
-| `MCP_RESOURCE_FILESYSTEM_ROOT` | Directory for filesystem storage (only used with `filesystem` type) | No       | `/tmp/pulse-crawl/resources` | `/home/user/mcp-resources`        |
+| `MCP_RESOURCE_FILESYSTEM_ROOT` | Directory for filesystem storage (only used with `filesystem` type) | No       | `/tmp/pulse/resources` | `/home/user/mcp-resources`        |
 
 ### LLM Configuration for Extract Feature
 
@@ -190,9 +190,9 @@ Add this configuration to your Claude Desktop config file:
 ```json
 {
   "mcpServers": {
-    "pulse-crawl": {
+    "pulse": {
       "command": "npx",
-      "args": ["-y", "@pulsemcp/pulse-crawl"]
+      "args": ["-y", "@pulsemcp/pulse"]
     }
   }
 }
@@ -203,9 +203,9 @@ Add this configuration to your Claude Desktop config file:
 ```json
 {
   "mcpServers": {
-    "pulse-crawl": {
+    "pulse": {
       "command": "npx",
-      "args": ["-y", "@pulsemcp/pulse-crawl"],
+      "args": ["-y", "@pulsemcp/pulse"],
       "env": {
         "FIRECRAWL_API_KEY": "your-firecrawl-api-key",
         "STRATEGY_CONFIG_PATH": "/path/to/your/scraping-strategies.md",
@@ -221,7 +221,7 @@ Add this configuration to your Claude Desktop config file:
 To set up the local version:
 
 1. Clone or download the repository
-2. Navigate to the local directory: `cd pulse-crawl/local`
+2. Navigate to the local directory: `cd pulse/local`
 3. Install dependencies: `npm install`
 4. Build the project: `npm run build`
 5. Update your Claude Desktop config with the correct path
@@ -236,7 +236,7 @@ For a hosted solution, refer to [Pulse Fetch (Remote)](remote/README.md).
 ## Project Structure
 
 ```
-pulse-crawl/
+pulse/
 ├── local/                 # Local server implementation
 │   ├── src/
 │   │   └── index.ts      # Main entry point
@@ -365,7 +365,7 @@ MIT
 
 # Scraping Strategy Configuration
 
-The pulse-crawl MCP server includes an intelligent strategy system that automatically selects the best scraping method for different websites.
+The pulse MCP server includes an intelligent strategy system that automatically selects the best scraping method for different websites.
 
 ## Optimization Modes
 
@@ -401,7 +401,7 @@ export OPTIMIZE_FOR=COST   # For cost-effective scraping (default)
 
 ## Configuration File
 
-The configuration is stored in a markdown table. By default, it's automatically created in your OS temp directory (e.g., `/tmp/pulse-crawl/scraping-strategies.md` on Unix systems). You can customize the location by setting the `STRATEGY_CONFIG_PATH` environment variable.
+The configuration is stored in a markdown table. By default, it's automatically created in your OS temp directory (e.g., `/tmp/pulse/scraping-strategies.md` on Unix systems). You can customize the location by setting the `STRATEGY_CONFIG_PATH` environment variable.
 
 The table has three columns:
 
@@ -450,7 +450,7 @@ The system uses an abstraction layer for config storage:
 
 - **FilesystemClient**: Stores config in a local markdown file (default)
   - Uses `STRATEGY_CONFIG_PATH` if set
-  - Otherwise uses OS temp directory (e.g., `/tmp/pulse-crawl/scraping-strategies.md`)
+  - Otherwise uses OS temp directory (e.g., `/tmp/pulse/scraping-strategies.md`)
   - Automatically creates initial config with common patterns
 - **Future clients**: Could support GCS, S3, database storage, etc.
 

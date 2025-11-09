@@ -36,7 +36,7 @@ Replace the `oneOf` structure with a single object schema that includes all poss
 
 ### Implementation
 
-**File**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts`
+**File**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts`
 
 **Replace lines 348-422 with**:
 
@@ -160,7 +160,7 @@ throw error; // ← BREAKS CONTRACT
 
 ### Solution
 
-**File**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/response.ts`
+**File**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/response.ts`
 
 **Replace lines 100-103 with**:
 
@@ -238,7 +238,7 @@ export function scrapeTool(
 
 Add `outputSchema` property to tool definition.
 
-**File**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/index.ts`
+**File**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/index.ts`
 
 **Add after `inputSchema` property (line 107)**:
 
@@ -345,7 +345,7 @@ response.content.push({
 
 Add `annotations` array to embedded resources.
 
-**File**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/response.ts`
+**File**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/response.ts`
 
 **Update buildSuccessResponse (lines 287-298)**:
 

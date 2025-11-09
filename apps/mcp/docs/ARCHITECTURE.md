@@ -55,7 +55,7 @@ Pulse Fetch uses a **three-layer architecture** that separates business logic fr
 Pulse Fetch uses a workspace-based monorepo with three packages:
 
 ```
-pulse-fetch/
+pulse/
 ├── shared/                  # Core business logic
 │   ├── clients/             # External service integrations
 │   │   ├── firecrawl/       # Firecrawl API client
@@ -95,7 +95,7 @@ pulse-fetch/
 
 **Shared Module:**
 
-- Published as `pulse-crawl-shared` on npm
+- Published as `pulse-shared` on npm
 - Consumed by both local and remote packages
 - All feature development happens here
 - Fully testable in isolation

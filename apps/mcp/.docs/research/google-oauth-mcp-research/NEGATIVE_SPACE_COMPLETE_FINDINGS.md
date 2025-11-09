@@ -544,7 +544,7 @@ MCP servers are often conceived as personal tools (Claude Desktop integration) r
 # User A
 USER_ID=alice GOOGLE_OAUTH_TOKEN=token_a mcp-server
 
-# User Bpulse-crawl
+# User Bpulse
 USER_ID=bob GOOGLE_OAUTH_TOKEN=token_b mcp-server
 ```
 
@@ -612,11 +612,11 @@ It's a "plumbing" concern that developers solve differently based on their OS an
 Support multiple storage backends with fallback:
 
 ```typescript
-class CrossPlatformStorage {pulse-crawl
+class CrossPlatformStorage {pulse
   async storeToken(token: Token): Promise<void> {
     // Try keychain first (most secure)
     try {
-      await keytar.setPassword('mcp-pulse-fetch', 'google-oauth', JSON.stringify(token));
+      await keytar.setPassword('mcp-pulse', 'google-oauth', JSON.stringify(token));
       return;
     } catch (error) {
       console.warn('Keychain unavailable, falling back to encrypted file');
@@ -695,7 +695,7 @@ try {
     console.error('Your Google OAuth access has been revoked.');
     console.error('This can happen if you revoked access in Google settings.');
     console.error('\nTo restore access:');
-    console.error('  Run: mcp-pulse-fetch --reauth\n');
+    console.error('  Run: mcp-pulse --reauth\n');
 
     await clearStoredTokens();
     return null;

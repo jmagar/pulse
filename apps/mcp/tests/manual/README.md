@@ -45,7 +45,7 @@ npm run build
 ### Run All Feature Tests
 
 ```bash
-# From pulse-crawl directory
+# From pulse directory
 npm run test:manual
 ```
 
@@ -63,7 +63,7 @@ node --import tsx tests/manual/pages/pages.manual.test.ts --continue-on-failure
 
 ## Feature Tests
 
-All commands should be run from the `productionized/pulse-crawl` directory.
+All commands should be run from the `productionized/pulse` directory.
 
 ### 1. Native Scraping Client Test
 
@@ -205,8 +205,8 @@ Each test provides detailed output including:
 
 ## Debugging Tips
 
-1. **Enable verbose logging**: Set `DEBUG=pulse-crawl:*` to see detailed logs
-2. **Import Errors**: Make sure you're running from the correct directory (`productionized/pulse-crawl`)
+1. **Enable verbose logging**: Set `DEBUG=pulse:*` to see detailed logs
+2. **Import Errors**: Make sure you're running from the correct directory (`productionized/pulse`)
 3. **API Key Issues**: Check your `.env` file format and ensure keys are properly set
 4. **Build Issues**: Run `npm run build` if you see module resolution errors
 5. **Rate Limiting**: Tests include delays, but be mindful of API rate limits

@@ -7,7 +7,7 @@ This module provides the stdio transport implementation of Pulse Fetch for Claud
 - **Purpose**: Thin wrapper around shared module for stdio (standard input/output) transport
 - **Transport**: `StdioServerTransport` from MCP SDK
 - **Target Client**: Claude Desktop application
-- **Shared Dependency**: `"pulse-crawl-shared": "file:../shared"`
+- **Shared Dependency**: `"pulse-shared": "file:../shared"`
 
 ## Key Files
 
@@ -33,7 +33,7 @@ npm start
 
 - **No Business Logic**: All features implemented in `shared/`, this is just transport
 - **Symlink in Dev**: `setup-dev.js` creates `shared/` symlink for local development
-- **Published Package**: Runs as `npx @pulsemcp/pulse-crawl` in Claude Desktop
+- **Published Package**: Runs as `npx @pulsemcp/pulse` in Claude Desktop
 
 ## Claude Desktop Configuration
 
@@ -42,9 +42,9 @@ Minimal config (macOS: `~/Library/Application Support/Claude/claude_desktop_conf
 ```json
 {
   "mcpServers": {
-    "pulse-crawl": {
+    "pulse": {
       "command": "npx",
-      "args": ["-y", "@pulsemcp/pulse-crawl"],
+      "args": ["-y", "@pulsemcp/pulse"],
       "env": {
         "FIRECRAWL_API_KEY": "your-key-here"
       }
@@ -87,6 +87,6 @@ npm run test:integration
 
 ## Common Issues
 
-- **"Cannot find module 'pulse-crawl-shared'"**: Run `npm install` from project root to sync workspace
+- **"Cannot find module 'pulse-shared'"**: Run `npm install` from project root to sync workspace
 - **Outdated shared code**: Run `npm run build` in `shared/` directory first
 - **Symlink issues**: Run `node setup-dev.js` to recreate symlink

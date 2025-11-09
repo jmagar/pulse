@@ -98,7 +98,7 @@ npm run clean
 
 ## Script Locations Reference
 
-All scripts are in `/home/jmagar/code/pulse-crawl/scripts/`:
+All scripts are in `/home/jmagar/code/pulse/scripts/`:
 
 - [prepare-npm-readme.js](prepare-npm-readme.js)
 - [run-vitest.js](run-vitest.js)

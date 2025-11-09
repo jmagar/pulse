@@ -123,6 +123,6 @@ Detailed references for each of the four tools:
 
 **Need more help?**
 
-- Open an [issue on GitHub](https://github.com/your-org/pulse-fetch/issues)
-- Join [discussions](https://github.com/your-org/pulse-fetch/discussions)
+- Open an [issue on GitHub](https://github.com/your-org/pulse/issues)
+- Join [discussions](https://github.com/your-org/pulse/discussions)
 - Check the [changelog](CHANGELOG.md) for recent updates

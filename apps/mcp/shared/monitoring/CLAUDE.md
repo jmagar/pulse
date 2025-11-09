@@ -1,6 +1,6 @@
 # Monitoring Module
 
-Performance monitoring infrastructure for the pulse-crawl MCP server.
+Performance monitoring infrastructure for the pulse MCP server.
 
 ## Overview
 

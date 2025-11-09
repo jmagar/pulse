@@ -303,7 +303,7 @@
 
 ---
 
-pulse-crawl
+pulse
 
 ## Implementation Recommendations
 
@@ -338,7 +338,7 @@ pulse-crawl
 All files located in:
 
 ```
-/home/jmagar/code/pulse-fetch/google-oauth-mcp-research/persona-findings/
+/home/jmagar/code/pulse/google-oauth-mcp-research/persona-findings/
 ```
 
 ### Quick Access

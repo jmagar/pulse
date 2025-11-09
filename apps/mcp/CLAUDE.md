@@ -18,7 +18,7 @@ The server uses a three-layer architecture:
 2. **`local/`**: Stdio transport implementation
    - Minimal wrapper around shared functionality
    - Uses StdioServerTransport for Claude Desktop integration
-   - References shared via: `"pulse-crawl-shared": "file:../shared"`
+   - References shared via: `"pulse-shared": "file:../shared"`
 
 3. **`remote/`**: StreamableHTTP transport implementation
    - Provides hosted/remote access via HTTP POST with JSON responses

@@ -1,4 +1,4 @@
-# Merge Plan: pulse-fetch + fc-bridge Integration
+# Merge Plan: pulse + fc-bridge Integration
 
 **Date:** 2025-11-08
 **Author:** Claude Code
@@ -8,11 +8,11 @@
 
 ## Executive Summary
 
-This document outlines a comprehensive plan to merge the `pulse-fetch` MCP server (TypeScript) with the `fc-bridge` semantic search service (Python/FastAPI) into a unified repository. The merged system will provide intelligent web content acquisition with semantic search, embeddings, and vector storage capabilities.
+This document outlines a comprehensive plan to merge the `pulse` MCP server (TypeScript) with the `fc-bridge` semantic search service (Python/FastAPI) into a unified repository. The merged system will provide intelligent web content acquisition with semantic search, embeddings, and vector storage capabilities.
 
 **Key Goals:**
 
-1. Combine pulse-fetch's scraping/caching with fc-bridge's semantic search
+1. Combine pulse's scraping/caching with fc-bridge's semantic search
 2. Add vector search capabilities to the MCP server
 3. Maintain backward compatibility with existing deployments
 4. Preserve test coverage and documentation quality
@@ -22,7 +22,7 @@ This document outlines a comprehensive plan to merge the `pulse-fetch` MCP serve
 
 ## Repository Comparison
 
-### pulse-fetch (Current State)
+### pulse (Current State)
 
 **Technology:** TypeScript, Node.js 20+, MCP SDK
 **Architecture:** 3-layer (shared/local/remote)
@@ -84,7 +84,7 @@ This document outlines a comprehensive plan to merge the `pulse-fetch` MCP serve
 ### Proposed Unified System
 
 ```
-pulse-fetch-unified/
+pulse-unified/
 ├── typescript/              # TypeScript components (MCP server)
 │   ├── shared/             # Core MCP tools and business logic
 │   ├── local/              # Stdio transport (Claude Desktop)
@@ -116,7 +116,7 @@ pulse-fetch-unified/
                      │ stdio or HTTP
                      ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              pulse-fetch MCP Server (TypeScript)             │
+│              pulse MCP Server (TypeScript)             │
 │  ┌──────────┬──────────┬──────────┬──────────┬──────────┐  │
 │  │ scrape   │   map    │  crawl   │  search  │ vsearch  │  │
 │  │  tool    │   tool   │   tool   │   tool   │  tool    │  │
@@ -174,7 +174,7 @@ pulse-fetch-unified/
 ### Directory Layout
 
 ```
-pulse-fetch/  (unified repository)
+pulse/  (unified repository)
 ├── typescript/
 │   ├── shared/
 │   │   ├── src/
@@ -362,7 +362,7 @@ const response = await httpClient.post('http://localhost:52100/api/search', {
 
 **Port Allocation:**
 
-- 3060: pulse-fetch MCP remote server (HTTP transport)
+- 3060: pulse MCP remote server (HTTP transport)
 - 52100: fc-bridge Python API
 - 52101: Redis (job queue)
 - 52102: Qdrant HTTP API
@@ -375,7 +375,7 @@ const response = await httpClient.post('http://localhost:52100/api/search', {
 
 ### Current State Analysis
 
-**pulse-fetch Storage:**
+**pulse Storage:**
 
 - Interface: `ResourceStorage` (read, write, writeMulti, list, findByUrl)
 - Backends: Memory, Filesystem
@@ -704,7 +704,7 @@ async function saveToStorage(
 
 1. Create new repository structure
 2. Move fc-bridge to `python/` directory
-3. Keep existing pulse-fetch TypeScript in `typescript/`
+3. Keep existing pulse TypeScript in `typescript/`
 4. Create `shared-config/` for Docker Compose and env templates
 5. Update all relative imports and build paths
 6. Verify independent operation of both systems

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FirecrawlSearchClient } from '../../../shared/clients/firecrawl/index.js';
+import { FirecrawlSearchClient } from '@firecrawl/client';
 
 describe('Firecrawl Search Client', () => {
   it('should perform basic web search', async () => {

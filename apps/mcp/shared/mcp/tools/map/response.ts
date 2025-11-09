@@ -1,4 +1,4 @@
-import type { MapResult } from '../../../clients/firecrawl/index.js';
+import type { MapResult } from '@firecrawl/client';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 export function formatMapResponse(
@@ -54,7 +54,7 @@ export function formatMapResponse(
   const resourceData = JSON.stringify(paginatedLinks, null, 2);
   const hostname = new URL(url).hostname;
   const pageNumber = Math.floor(startIndex / maxResults);
-  const baseUri = `pulse-crawl://map/${hostname}/${Date.now()}/page-${pageNumber}`;
+  const baseUri = `pulse://map/${hostname}/${Date.now()}/page-${pageNumber}`;
   const resourceName = `URL Map: ${url} (${paginatedLinks.length} URLs)`;
 
   // Handle different result modes

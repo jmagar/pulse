@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-This plan adds missing Firecrawl API parameters to pulse-fetch's scrape, crawl, map, and search tools based on comprehensive research comparing our implementation against Firecrawl's official v2 API documentation.
+This plan adds missing Firecrawl API parameters to pulse's scrape, crawl, map, and search tools based on comprehensive research comparing our implementation against Firecrawl's official v2 API documentation.
 
 **Current Coverage:**
 
@@ -34,7 +34,7 @@ This plan adds missing Firecrawl API parameters to pulse-fetch's scrape, crawl, 
 
 **Step 1.1.1: Update Search Schema**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/search/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/search/schema.ts`
 
 Add this parameter to the schema object (after line 12):
 
@@ -50,7 +50,7 @@ tbs: z.string().optional().describe(
 
 **Step 1.1.2: Update Search Client Interface**
 
-File: `/home/jmagar/code/pulse-fetch/shared/clients/firecrawl-search.client.ts`
+File: `/home/jmagar/code/pulse/shared/clients/firecrawl-search.client.ts`
 
 Add to `SearchOptions` interface (after line 11):
 
@@ -60,7 +60,7 @@ tbs?: string;
 
 **Step 1.1.3: Add Test Cases**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/search/schema.test.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/search/schema.test.ts`
 
 Add test cases after existing tests:
 
@@ -120,7 +120,7 @@ Expected: All tests pass, including new tbs tests.
 
 **Step 1.2.1: Add Parameter Descriptions**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts`
 
 Add to `PARAM_DESCRIPTIONS` object (after line 62):
 
@@ -132,7 +132,7 @@ blockAds: 'Enable ad-blocking and cookie popup blocking. Removes advertisements 
 
 **Step 1.2.2: Update buildScrapeArgsSchema**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts`
 
 Add to `baseSchema` object (after line 128):
 
@@ -144,7 +144,7 @@ blockAds: z.boolean().optional().default(true).describe(PARAM_DESCRIPTIONS.block
 
 **Step 1.2.3: Update buildInputSchema**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts`
 
 Add to `baseProperties` object (after line 197):
 
@@ -169,7 +169,7 @@ blockAds: {
 
 **Step 1.2.4: Update Firecrawl Client Interface**
 
-File: `/home/jmagar/code/pulse-fetch/shared/scraping/clients/firecrawl/client.ts`
+File: `/home/jmagar/code/pulse/shared/scraping/clients/firecrawl/client.ts`
 
 Add to `FirecrawlScrapingOptions` interface (after line 36):
 
@@ -181,13 +181,13 @@ blockAds?: boolean;
 
 **Step 1.2.5: Verify Parameter Pass-Through**
 
-File: `/home/jmagar/code/pulse-fetch/shared/scraping/clients/firecrawl/api.ts`
+File: `/home/jmagar/code/pulse/shared/scraping/clients/firecrawl/api.ts`
 
 Confirm that line 41 (`...options`) correctly passes these new parameters to Firecrawl API. No code changes needed - the spread operator already handles it.
 
 **Step 1.2.6: Add Test Cases**
 
-Create new test file: `/home/jmagar/code/pulse-fetch/tests/functional/scrape-tool-new-params.test.ts`
+Create new test file: `/home/jmagar/code/pulse/tests/functional/scrape-tool-new-params.test.ts`
 
 ```typescript
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -278,7 +278,7 @@ describe('New scrape parameters', () => {
 **Verification:**
 
 ```bash
-cd /home/jmagar/code/pulse-fetch
+cd /home/jmagar/code/pulse
 npm test -- tests/functional/scrape-tool-new-params.test.ts
 ```
 
@@ -296,7 +296,7 @@ Expected: All 11 new tests pass.
 
 **Step 1.3.1: Update Crawl Schema**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/crawl/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/crawl/schema.ts`
 
 Add parameter to schema object (after line 17):
 
@@ -315,7 +315,7 @@ prompt: z.string().optional().describe(
 
 **Step 1.3.2: Add Validation Logic**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/crawl/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/crawl/schema.ts`
 
 Add comment before the existing refine (line 46) to document behavior:
 
@@ -329,7 +329,7 @@ No validation changes needed - prompt is optional and can coexist with other par
 
 **Step 1.3.3: Update Crawl Client Interface**
 
-File: `/home/jmagar/code/pulse-fetch/shared/clients/firecrawl-crawl.client.ts`
+File: `/home/jmagar/code/pulse/shared/clients/firecrawl-crawl.client.ts`
 
 Add to `CrawlOptions` interface (after line 4):
 
@@ -339,7 +339,7 @@ prompt?: string;
 
 **Step 1.3.4: Add Test Cases**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/crawl/schema.test.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/crawl/schema.test.ts`
 
 Add test suite:
 
@@ -395,7 +395,7 @@ Expected: All tests pass, including new prompt tests.
 
 **Step 1.4.1: Create Parameter Descriptions Constant**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.ts`
 
 Add before the schema definition (line 3):
 
@@ -436,7 +436,7 @@ export const MAP_PARAM_DESCRIPTIONS = {
 
 **Step 1.4.2: Update Schema with Descriptions**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.ts`
 
 Replace the schema definition (lines 3-36) with:
 
@@ -543,7 +543,7 @@ Browser actions allow interaction with pages before scraping:
 
 **Step 2.1.1: Define Action Types**
 
-Create new file: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/action-types.ts`
+Create new file: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/action-types.ts`
 
 ```typescript
 import { z } from 'zod';
@@ -628,7 +628,7 @@ export const browserActionsArraySchema = z.array(browserActionSchema);
 
 **Step 2.1.2: Add Actions to Scrape Schema**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts`
 
 Add import at top:
 
@@ -769,7 +769,7 @@ actions: {
 
 **Step 2.1.3: Update Firecrawl Client**
 
-File: `/home/jmagar/code/pulse-fetch/shared/scraping/clients/firecrawl/client.ts`
+File: `/home/jmagar/code/pulse/shared/scraping/clients/firecrawl/client.ts`
 
 Add import:
 
@@ -785,7 +785,7 @@ actions?: BrowserAction[];
 
 **Step 2.1.4: Add Comprehensive Tests**
 
-Create: `/home/jmagar/code/pulse-fetch/tests/functional/scrape-actions.test.ts`
+Create: `/home/jmagar/code/pulse/tests/functional/scrape-actions.test.ts`
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -943,7 +943,7 @@ Expected: All 18 tests pass.
 
 **Step 2.2.1: Update Crawl Schema**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/crawl/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/crawl/schema.ts`
 
 Add import:
 
@@ -971,7 +971,7 @@ scrapeOptions: z
 
 **Step 2.2.2: Update Crawl Client Interface**
 
-File: `/home/jmagar/code/pulse-fetch/shared/clients/firecrawl-crawl.client.ts`
+File: `/home/jmagar/code/pulse/shared/clients/firecrawl-crawl.client.ts`
 
 Add import:
 
@@ -993,7 +993,7 @@ scrapeOptions?: {
 
 **Step 2.2.3: Add Tests**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/crawl/schema.test.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/crawl/schema.test.ts`
 
 Add test suite:
 
@@ -1047,7 +1047,7 @@ Expected: All tests pass including new action tests.
 
 **Step 2.3.1: Add Parameter Descriptions**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts`
 
 Add to `PARAM_DESCRIPTIONS`:
 
@@ -1062,7 +1062,7 @@ onlyMainContent: 'Extract only main content, excluding headers, navigation, foot
 
 **Step 2.3.2: Update Schema**
 
-File: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts`
+File: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts`
 
 Add to `baseSchema` (after blockAds):
 
@@ -1120,7 +1120,7 @@ onlyMainContent: {
 
 **Step 2.3.4: Update Firecrawl Client**
 
-File: `/home/jmagar/code/pulse-fetch/shared/scraping/clients/firecrawl/client.ts`
+File: `/home/jmagar/code/pulse/shared/scraping/clients/firecrawl/client.ts`
 
 Update interface (replace lines 26-37):
 
@@ -1149,7 +1149,7 @@ export interface FirecrawlScrapingOptions {
 
 **Step 2.3.5: Remove Hardcoded Formats**
 
-File: `/home/jmagar/code/pulse-fetch/shared/scraping/clients/firecrawl/api.ts`
+File: `/home/jmagar/code/pulse/shared/scraping/clients/firecrawl/api.ts`
 
 Update the fetch body (lines 38-42):
 
@@ -1163,7 +1163,7 @@ body: JSON.stringify({
 
 **Step 2.3.6: Add Tests**
 
-Create: `/home/jmagar/code/pulse-fetch/tests/functional/scrape-advanced-params.test.ts`
+Create: `/home/jmagar/code/pulse/tests/functional/scrape-advanced-params.test.ts`
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -1311,7 +1311,7 @@ Expected: All 15 tests pass.
 
 **Step 3.1.1: Define Error Types**
 
-Create: `/home/jmagar/code/pulse-fetch/shared/clients/firecrawl-error-types.ts`
+Create: `/home/jmagar/code/pulse/shared/clients/firecrawl-error-types.ts`
 
 ```typescript
 /**
@@ -1409,7 +1409,7 @@ export function categorizeFirecrawlError(statusCode: number, responseBody: strin
 
 **Step 3.1.2: Update Map Client with Error Handling**
 
-File: `/home/jmagar/code/pulse-fetch/shared/clients/firecrawl-map.client.ts`
+File: `/home/jmagar/code/pulse/shared/clients/firecrawl-map.client.ts`
 
 Add import:
 
@@ -1449,12 +1449,12 @@ async map(options: MapOptions): Promise<MapResult> {
 
 Repeat the same error handling pattern for:
 
-- `/home/jmagar/code/pulse-fetch/shared/clients/firecrawl-crawl.client.ts`
-- `/home/jmagar/code/pulse-fetch/shared/clients/firecrawl-search.client.ts`
+- `/home/jmagar/code/pulse/shared/clients/firecrawl-crawl.client.ts`
+- `/home/jmagar/code/pulse/shared/clients/firecrawl-search.client.ts`
 
 **Step 3.1.4: Add Tests**
 
-Create: `/home/jmagar/code/pulse-fetch/shared/clients/firecrawl-error-types.test.ts`
+Create: `/home/jmagar/code/pulse/shared/clients/firecrawl-error-types.test.ts`
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -1529,7 +1529,7 @@ Expected: All 7 tests pass.
 
 **Step 3.2.1: Add New Parameter Documentation**
 
-File: `/home/jmagar/code/pulse-fetch/.env.example`
+File: `/home/jmagar/code/pulse/.env.example`
 
 Add new section after line 122:
 
@@ -1596,7 +1596,7 @@ npm test
 Test against real Firecrawl API after each phase:
 
 ```bash
-cd /home/jmagar/code/pulse-fetch
+cd /home/jmagar/code/pulse
 npm test -- tests/integration
 ```
 

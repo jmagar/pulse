@@ -203,19 +203,19 @@ Screenshots:                     Additional (not fully documented)
 
 **Current (Can't do this)**:
 
-````jsonpulse-crawl
+````jsonpulse
 {
   "query": "2024 AI research",
   "categories": ["research"],
   "limit": 5
 }
-```pulse-crawl
+```pulse
 
 **After Adding TBS**:
 
 ```json
 {
-  "query": "AI transformpulse-crawl
+  "query": "AI transformpulse
   "categories": ["research"],
   "tbs": "cdr:1,cd_min:01/01/2024,cd_max:12/31/2024",
   "limit": 5
@@ -228,19 +228,19 @@ Screenshots:                     Additional (not fully documented)
 
 Three detailed documents have been created:
 
-1. **`/home/jmagar/code/pulse-fetch/.docs/sessions/2025-11-07-firecrawl-search-endpoint-research.md`**
+1. **`/home/jmagar/code/pulse/.docs/sessions/2025-11-07-firecrawl-search-endpoint-research.md`**
    - Complete parameter analysis
    - All 13 parameters documented
    - Use cases and best practices
    - Implementation roadmap
 
-2. **`/home/jmagar/code/pulse-fetch/.docs/SEARCH_ENDPOINT_AUDIT.md`**
+2. **`/home/jmagar/code/pulse/.docs/SEARCH_ENDPOINT_AUDIT.md`**
    - Quick reference guide
    - Missing parameters checklist
    - Implementation checklist
    - Priority rankings
 
-3. **`/home/jmagar/code/pulse-fetch/.docs/SEARCH_IMPLEMENTATION_GUIDE.md`**
+3. **`/home/jmagar/code/pulse/.docs/SEARCH_IMPLEMENTATION_GUIDE.md`**
    - Ready-to-implement code snippets
    - Exact file locations
    - Test cases to add

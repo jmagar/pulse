@@ -15,5 +15,5 @@ export { NativeScrapingClient } from './native-scrape-client.js';
 export type {
   FirecrawlScrapingOptions,
   FirecrawlScrapingResult,
-} from '../../../clients/firecrawl/index.js';
-export { FirecrawlScrapingClient } from '../../../clients/firecrawl/index.js';
+} from '@firecrawl/client';
+export { FirecrawlScrapingClient } from '@firecrawl/client';

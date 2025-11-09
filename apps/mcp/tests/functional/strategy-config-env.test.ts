@@ -7,7 +7,7 @@ import type { StrategyConfigEntry } from '../../shared/scraping/strategies/learn
 
 describe('FilesystemStrategyConfigClient with Environment', () => {
   const originalEnv = process.env.STRATEGY_CONFIG_PATH;
-  const testDir = join(tmpdir(), 'pulse-crawl-test-' + Date.now());
+  const testDir = join(tmpdir(), 'pulse-test-' + Date.now());
   const customConfigPath = join(testDir, 'custom-strategies.md');
 
   beforeEach(async () => {
@@ -81,7 +81,7 @@ describe('FilesystemStrategyConfigClient with Environment', () => {
 
     // Clean up default temp directory before test
     try {
-      await fs.rm(join(tmpdir(), 'pulse-crawl'), { recursive: true, force: true });
+      await fs.rm(join(tmpdir(), 'pulse'), { recursive: true, force: true });
     } catch {
       // Ignore if doesn't exist
     }
@@ -109,7 +109,7 @@ describe('FilesystemStrategyConfigClient with Environment', () => {
 
     // Clean up after test
     try {
-      await fs.rm(join(tmpdir(), 'pulse-crawl'), { recursive: true, force: true });
+      await fs.rm(join(tmpdir(), 'pulse'), { recursive: true, force: true });
     } catch {
       // Ignore cleanup errors
     }

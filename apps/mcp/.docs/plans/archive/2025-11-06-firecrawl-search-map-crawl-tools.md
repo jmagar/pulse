@@ -1222,7 +1222,7 @@ export function formatSearchResponse(result: SearchResult, query: string): CallT
       content.push({
         type: 'resource',
         resource: {
-          uri: `pulse-crawl://search/web/${Date.now()}`,
+          uri: `pulse://search/web/${Date.now()}`,
           name: `Web Results: ${query}`,
           mimeType: 'application/json',
           text: JSON.stringify(data.web, null, 2),
@@ -1234,7 +1234,7 @@ export function formatSearchResponse(result: SearchResult, query: string): CallT
       content.push({
         type: 'resource',
         resource: {
-          uri: `pulse-crawl://search/images/${Date.now()}`,
+          uri: `pulse://search/images/${Date.now()}`,
           name: `Image Results: ${query}`,
           mimeType: 'application/json',
           text: JSON.stringify(data.images, null, 2),
@@ -1246,7 +1246,7 @@ export function formatSearchResponse(result: SearchResult, query: string): CallT
       content.push({
         type: 'resource',
         resource: {
-          uri: `pulse-crawl://search/news/${Date.now()}`,
+          uri: `pulse://search/news/${Date.now()}`,
           name: `News Results: ${query}`,
           mimeType: 'application/json',
           text: JSON.stringify(data.news, null, 2),
@@ -1263,7 +1263,7 @@ export function formatSearchResponse(result: SearchResult, query: string): CallT
     content.push({
       type: 'resource',
       resource: {
-        uri: `pulse-crawl://search/results/${Date.now()}`,
+        uri: `pulse://search/results/${Date.now()}`,
         name: `Search Results: ${query}`,
         mimeType: 'application/json',
         text: JSON.stringify(results, null, 2),
@@ -1561,7 +1561,7 @@ export function formatMapResponse(result: MapResult, url: string): CallToolResul
   content.push({
     type: 'resource',
     resource: {
-      uri: `pulse-crawl://map/${new URL(url).hostname}/${Date.now()}`,
+      uri: `pulse://map/${new URL(url).hostname}/${Date.now()}`,
       name: `URL Map: ${url}`,
       mimeType: 'application/json',
       text: JSON.stringify(result.links, null, 2),
@@ -1871,7 +1871,7 @@ export function formatCrawlResponse(
       content.push({
         type: 'resource',
         resource: {
-          uri: `pulse-crawl://crawl/results/${Date.now()}`,
+          uri: `pulse://crawl/results/${Date.now()}`,
           name: `Crawl Results (${statusResult.completed} pages)`,
           mimeType: 'application/json',
           text: JSON.stringify(statusResult.data, null, 2),

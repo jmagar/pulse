@@ -286,9 +286,9 @@ We will NOT:
 
 ## Gap #4: Cross-Platform Token Storage
 
-### What's Missingpulse-crawl
+### What's Missingpulse
 
-pulse-crawl
+pulse
 Token storage that works across Linux, macOS, and Windows is rarely documented:
 
 - OS keychain APIs differ
@@ -320,8 +320,8 @@ Most developers target single OS. Cross-platform adds complexity.
 import keytar from 'keytar';
 
 // Works on macOS, Windows, Linux
-await keytar.setPassword('mcp-pulse-fetch', 'google-oauth', JSON.stringify(token));
-const token = await keytar.getPassword('mcp-pulse-fetch', 'google-oauth');
+await keytar.setPassword('mcp-pulse', 'google-oauth', JSON.stringify(token));
+const token = await keytar.getPassword('mcp-pulse', 'google-oauth');
 ```
 
 **Fallback Strategy**:
@@ -335,17 +335,17 @@ class CrossPlatformStorage {
       return;
     } catch (error) {
       console.warn('Keychain unavailable, falling back to encrypted file');
-    }pulse-crawl
+    }pulse
 
     // Fallback to encrypted file
     const encrypted = await encrypt(JSON.stringify(token));
     await fs.writeFile(TOKEN_FILE, encrypted);
-  }pulse-crawl
+  }pulse
 
   async getToken(): Promise<Token | null> {
     // Try keychain first
     try {
-      const data = await keytapulse-crawlrd(SERVICE, ACCOUNT);
+      const data = await keytapulserd(SERVICE, ACCOUNT);
       return data ? JSON.parse(data) : null;
     } catch (error) {
       // Fallback to file
@@ -371,19 +371,19 @@ class CrossPlatformStorage {
 ### macOS
 
 - **Keychain**: Best option, user-scoped, encrypted
-- **Location**: ~/Library/Application Support/mcp-pulse-fetch/tokens.json (fallback)
+- **Location**: ~/Library/Application Support/mcp-pulse/tokens.json (fallback)
 - **Permissions**: 600 (user read/write only)
 
 ### Windows
 
 - **Credential Manager**: Best option via keytar
-- **Location**: %APPDATA%\mcp-pulse-fetch\tokens.json (fallback)
+- **Location**: %APPDATA%\mcp-pulse\tokens.json (fallback)
 - **Permissions**: NTFS permissions restricting to user
 
 ### Linux
 
 - **Secret Service API**: Best option (GNOME Keyring, KWallet)
-- **Location**: ~/.config/mcp-pulse-fetch/tokens.json (fallback)
+- **Location**: ~/.config/mcp-pulse/tokens.json (fallback)
 - **Permissions**: 600
 - **Encryption**: Strongly recommended for file storage
 ```
@@ -432,7 +432,7 @@ async function fetchData(url: string) {
     }
   }
 
-  // Tier 2: Try cached datapulse-crawl
+  // Tier 2: Try cached datapulse
   console.warn('OAuth unavailable, using cached data');
   const cached = await getCachedData(url);
   if (cached) {
@@ -478,7 +478,7 @@ async function handleAuthFailure() {
   console.error('  ✗ Fetch live data');
   console.error('  ✗ Real-time updates');
   console.error('\nTo restore full functionality:');
-  console.error('  Run: mcp-pulse-fetch --reauth\n');
+  console.error('  Run: mcp-pulse --reauth\n');
 }
 ```
 

@@ -1,5 +1,5 @@
 services:
-  pulse-crawl:
+  pulse:
     build:
       context: .
       dockerfile: Dockerfile
@@ -19,7 +19,7 @@ services:
     env_file:
       - .env
     restart: unless-stopped
-    container_name: pulse-crawl
+    container_name: pulse
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3060/health || exit 1"]
       interval: 30s
@@ -30,12 +30,12 @@ services:
       # Named volume for persistent storage (Docker manages permissions)
       - pulse-resources:/app/resources
     networks:
-      - pulse-crawl-network
+      - pulse-network
 
 volumes:
   pulse-resources:
     driver: local
 
 networks:
-  pulse-crawl-network:
+  pulse-network:
     driver: bridge

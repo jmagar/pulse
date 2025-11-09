@@ -1,8 +1,8 @@
 # Scrape Tool MCP Protocol Compliance Investigation Report
 
 **Investigation Date**: 2025-11-07
-**Repository**: pulse-fetch
-**Tool Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/`
+**Repository**: pulse
+**Tool Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/`
 **Key Files**: index.ts, schema.ts, handler.ts, response.ts, pipeline.ts, helpers.ts, action-types.ts
 
 ---
@@ -21,7 +21,7 @@ The scrape tool implementation demonstrates **strong MCP protocol compliance ove
 
 ### Tool Definition Structure ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/index.ts:42-112`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/index.ts:42-112`
 
 **Status**: Properly implemented per MCP spec
 
@@ -49,7 +49,7 @@ The tool correctly implements required MCP tool definition properties:
 
 ### Schema Building ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts:252-445`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts:252-445`
 
 **Status**: Mostly compliant with ONE CRITICAL ISSUE
 
@@ -69,7 +69,7 @@ The tool correctly implements required MCP tool definition properties:
 
 **Problem**: The `actions` parameter uses `oneOf` at root schema level for browser action types
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts:348-422`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts:348-422`
 
 ```json
 {
@@ -114,7 +114,7 @@ The tool correctly implements required MCP tool definition properties:
 
 ### Missing Output Schema Definition ⚠️
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/index.ts:42-112`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/index.ts:42-112`
 
 **Status**: No `outputSchema` defined
 
@@ -138,7 +138,7 @@ The tool definition does not include an `outputSchema` property. While not stric
 - Properly detected for content (HTML, JSON, XML, plain text)
 - Correct MIME types for images (image/png, image/jpeg, etc.)
 - Defaults to text/markdown for cleaned/extracted content
-- Location: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/helpers.ts:22-46`
+- Location: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/helpers.ts:22-46`
 
 ---
 
@@ -146,7 +146,7 @@ The tool definition does not include an `outputSchema` property. While not stric
 
 ### Resource Wrapper Format ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/response.ts:84-98, 287-298`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/response.ts:84-98, 287-298`
 
 **Status**: Protocol compliant
 
@@ -220,7 +220,7 @@ The MCP protocol supports resource annotations for:
 
 ### Protocol Error Handling ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/handler.ts:117-141, response.ts:109-146`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/handler.ts:117-141, response.ts:109-146`
 
 **Status**: Properly implemented
 
@@ -283,7 +283,7 @@ The MCP protocol supports resource annotations for:
 
 ### Security Measures ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts:140-150`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts:140-150`
 
 **URL Validation**:
 
@@ -325,7 +325,7 @@ The MCP protocol supports resource annotations for:
 
 ### Action Type Validation ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/action-types.ts:1-106`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/action-types.ts:1-106`
 
 **Status**: Excellent implementation
 
@@ -398,7 +398,7 @@ The Anthropic API constraint states: "No union types at root of inputSchema"
 
 ### Protocol Validation Tests ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/tests/functional/resource-shape.test.ts:1-147`
+**Location**: `/home/jmagar/code/pulse/tests/functional/resource-shape.test.ts:1-147`
 
 **Status**: Excellent test coverage for MCP protocol
 
@@ -456,7 +456,7 @@ The Anthropic API constraint states: "No union types at root of inputSchema"
 
 ### 1. Error Handling Issue in response.ts ⚠️
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/response.ts:100-103`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/response.ts:100-103`
 
 **Problem**:
 
@@ -485,7 +485,7 @@ return buildErrorResponse(cachedUri, 'Invalid cache state', undefined);
 
 ### 2. Type Safety in response.ts ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/response.ts:5-25`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/response.ts:5-25`
 
 **Assessment**: Good typing with proper interfaces
 
@@ -638,7 +638,7 @@ return buildErrorResponse(cachedUri, 'Invalid cache state', undefined);
 
 **Files to Update**:
 
-- `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/schema.ts:348-422` (buildInputSchema function, actions parameter definition)
+- `/home/jmagar/code/pulse/shared/mcp/tools/scrape/schema.ts:348-422` (buildInputSchema function, actions parameter definition)
 
 ### Priority 2: HIGH - Fix Exception Throwing in response.ts
 
@@ -646,7 +646,7 @@ return buildErrorResponse(cachedUri, 'Invalid cache state', undefined);
 
 **Solution**: Return buildErrorResponse instead of throwing
 
-**File**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/response.ts:100-103`
+**File**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/response.ts:100-103`
 
 **Change**:
 
@@ -670,7 +670,7 @@ return buildErrorResponse(
 
 **Solution**: Add outputSchema to tool definition in index.ts
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/index.ts:47`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/index.ts:47`
 
 **Add**:
 

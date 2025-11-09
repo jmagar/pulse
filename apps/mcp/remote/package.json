@@ -1,12 +1,12 @@
 {
-  "name": "@pulsemcp/pulse-crawl-remote",
+  "name": "@pulsemcp/pulse-remote",
   "version": "0.3.0",
-  "description": "HTTP streaming transport implementation of pulse-crawl MCP server",
-  "mcpName": "com.pulsemcp.servers/pulse-crawl-remote",
+  "description": "HTTP streaming transport implementation of pulse MCP server",
+  "mcpName": "com.pulsemcp.servers/pulse-remote",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "@pulsemcp/pulse-crawl-remote": "./dist/index.js"
+    "@pulsemcp/pulse-remote": "./dist/index.js"
   },
   "files": [
     "dist/**/*.js",

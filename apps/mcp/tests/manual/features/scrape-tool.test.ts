@@ -7,7 +7,7 @@ import type {
   IScrapingClients,
 } from '../../../shared/server.js';
 import { NativeFetcher } from '../../../shared/server.js';
-import { FirecrawlClient } from '../../../shared/clients/firecrawl/index.js';
+import { FirecrawlClient } from '@firecrawl/client';
 import { FilesystemStrategyConfigClient } from '../../../shared/scraping/strategies/learned/index.js';
 
 describe('Scrape Tool', () => {

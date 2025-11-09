@@ -10,7 +10,7 @@ describe('FileSystemResourceStorage', () => {
 
   beforeEach(async () => {
     // Create a unique test directory
-    testDir = path.join(os.tmpdir(), `pulse-crawl-test-${Date.now()}`);
+    testDir = path.join(os.tmpdir(), `pulse-test-${Date.now()}`);
     storage = new FileSystemResourceStorage(testDir);
     await storage.init();
   });

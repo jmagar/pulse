@@ -20,8 +20,8 @@ Guide for contributing to and developing Pulse Fetch MCP server.
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/pulse-fetch.git
-cd pulse-fetch
+git clone https://github.com/your-org/pulse.git
+cd pulse
 
 # Install dependencies (from root)
 npm install
@@ -47,8 +47,8 @@ docker compose up --build
 ### Monorepo Layout
 
 ```
-pulse-fetch/
-├── shared/               # Core business logic (published as @pulsemcp/pulse-crawl-shared)
+pulse/
+├── shared/               # Core business logic (published as @pulsemcp/pulse-shared)
 │   ├── mcp/              # MCP tools (scrape, search, map, crawl)
 │   ├── clients/          # Service clients (Firecrawl, LLM providers)
 │   ├── scraping/         # Scraping strategies and strategy selection
@@ -58,13 +58,13 @@ pulse-fetch/
 │   ├── utils/            # Shared utilities (logging, validation)
 │   └── types.ts          # Shared TypeScript types
 │
-├── local/                # Stdio transport (published as @pulsemcp/pulse-crawl)
+├── local/                # Stdio transport (published as @pulsemcp/pulse)
 │   ├── dist/             # Compiled JavaScript (gitignored)
 │   ├── index.ts          # Entry point (stdio transport wrapper)
 │   ├── setup-dev.js      # Development symlink setup
 │   └── package.json      # Dependencies and scripts
 │
-├── remote/               # HTTP/SSE transport (published as @pulsemcp/pulse-crawl-remote)
+├── remote/               # HTTP/SSE transport (published as @pulsemcp/pulse-remote)
 │   ├── startup/          # Server startup and initialization
 │   ├── middleware/       # Express middleware (CORS, health, validation)
 │   ├── transport.ts      # StreamableHTTP transport implementation
@@ -899,8 +899,8 @@ Before submitting a PR:
 - **Documentation**: [Documentation Index](index.md)
 - **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md)
 - **Troubleshooting**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-- **GitHub Issues**: [github.com/your-org/pulse-fetch/issues](https://github.com/your-org/pulse-fetch/issues)
-- **Discussions**: [github.com/your-org/pulse-fetch/discussions](https://github.com/your-org/pulse-fetch/discussions)
+- **GitHub Issues**: [github.com/your-org/pulse/issues](https://github.com/your-org/pulse/issues)
+- **Discussions**: [github.com/your-org/pulse/discussions](https://github.com/your-org/pulse/discussions)
 
 ---
 

@@ -1,6 +1,6 @@
 # End-to-End Tests
 
-This directory contains comprehensive end-to-end tests for the pulse-crawl MCP server, covering both stdio and HTTP transports.
+This directory contains comprehensive end-to-end tests for the pulse MCP server, covering both stdio and HTTP transports.
 
 ## Test Files
 
@@ -158,7 +158,7 @@ These tests are designed to run in CI environments:
 
 E2E tests use random ports, but if you see port conflicts:
 
-- Stop any running pulse-crawl servers
+- Stop any running pulse servers
 - Check for orphaned processes: `ps aux | grep node`
 
 ### Test Timeouts

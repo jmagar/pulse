@@ -14,7 +14,7 @@ curl http://localhost:3060/health
 env | grep -E "(FIRECRAWL|LLM|MCP|PORT)"
 
 # Check server logs for errors
-docker compose logs -f pulse-crawl  # Remote mode
+docker compose logs -f pulse  # Remote mode
 # or check Claude Desktop logs for local mode
 ```
 
@@ -54,7 +54,7 @@ npm run build
 **Symptoms:**
 
 ```
-EACCES: permission denied, open '/path/to/pulse-fetch/local/dist/index.js'
+EACCES: permission denied, open '/path/to/pulse/local/dist/index.js'
 ```
 
 **Cause:** Executable permissions not set or file doesn't exist
@@ -284,12 +284,12 @@ curl http://localhost:3060/health
    cat .env | grep PORT
 
    # Check Docker port mapping
-   docker compose ps | grep pulse-crawl
+   docker compose ps | grep pulse
    ```
 
 3. **Check server logs:**
    ```bash
-   docker compose logs pulse-crawl | tail -50
+   docker compose logs pulse | tail -50
    ```
 
 ### Issue: Container keeps restarting
@@ -308,7 +308,7 @@ docker compose ps
 1. **Check container logs:**
 
    ```bash
-   docker compose logs pulse-crawl
+   docker compose logs pulse
    ```
 
 2. **Common causes:**
@@ -457,7 +457,7 @@ Failed to scrape https://example.com: Request timeout
 3. **Check network connectivity:**
    ```bash
    # Test from Docker container
-   docker exec pulse-crawl curl -I https://example.com
+   docker exec pulse curl -I https://example.com
    ```
 
 ### Issue: "Network error connecting to Firecrawl API"
@@ -483,7 +483,7 @@ Network error connecting to Firecrawl API. Please check your internet connection
    ```yaml
    # In docker-compose.yml
    services:
-     pulse-crawl:
+     pulse:
        dns:
          - 8.8.8.8
          - 8.8.4.4
@@ -637,7 +637,7 @@ Screenshot format requires FIRECRAWL_API_KEY environment variable
 2. **Verify provider is available:**
    ```bash
    # Check startup logs
-   docker compose logs pulse-crawl | grep "LLM"
+   docker compose logs pulse | grep "LLM"
    # Should show: "✓ LLM Provider: anthropic"
    ```
 
@@ -826,7 +826,7 @@ When reporting issues, include:
 
    ```bash
    # Last 50 lines
-   docker compose logs pulse-crawl | tail -50
+   docker compose logs pulse | tail -50
    ```
 
 3. **Configuration (redact API keys):**
@@ -842,8 +842,8 @@ When reporting issues, include:
 
 ### Community Resources
 
-- **GitHub Issues**: [github.com/your-org/pulse-fetch/issues](https://github.com/your-org/pulse-fetch/issues)
-- **Discussions**: [github.com/your-org/pulse-fetch/discussions](https://github.com/your-org/pulse-fetch/discussions)
+- **GitHub Issues**: [github.com/your-org/pulse/issues](https://github.com/your-org/pulse/issues)
+- **Discussions**: [github.com/your-org/pulse/discussions](https://github.com/your-org/pulse/discussions)
 - **Documentation**: [docs/](docs/)
 
 ---

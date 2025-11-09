@@ -458,7 +458,7 @@ async function authenticate() {
 
 ---
 
-## Contributingpulse-crawl
+## Contributingpulse
 
 This research was conducted on 2025-11-06. To update:
 
@@ -471,7 +471,7 @@ This research was conducted on 2025-11-06. To update:
 
 ## License
 
-This research compilation is part of the pulse-fetch MCP server project.
+This research compilation is part of the pulse MCP server project.
 See project LICENSE for details.
 
 ---

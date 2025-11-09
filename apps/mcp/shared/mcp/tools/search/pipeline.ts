@@ -2,7 +2,7 @@ import type {
   FirecrawlSearchClient,
   SearchOptions as ClientSearchOptions,
   SearchResult,
-} from '../../../clients/firecrawl/index.js';
+} from '@firecrawl/client';
 import type { SearchOptions } from './schema.js';
 
 export async function searchPipeline(

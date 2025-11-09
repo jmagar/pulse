@@ -1,6 +1,6 @@
 # MCP Map Tool Investigation Report
 
-**Repository**: pulse-fetch  
+**Repository**: pulse  
 **Tool**: shared/mcp/tools/map/  
 **Investigation Date**: 2025-11-07  
 **Status**: COMPLIANT with excellent implementation quality
@@ -24,7 +24,7 @@ No protocol violations or security concerns identified. The implementation excee
 
 ## 1. Tool Schema Compliance ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.ts`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.ts`
 
 ### Schema Definition
 
@@ -55,7 +55,7 @@ export const mapOptionsSchema = z.object({
 
 ### Tool Definition
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/index.ts` (lines 9-44)
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/map/index.ts` (lines 9-44)
 
 ```typescript
 export function createMapTool(config: FirecrawlConfig): Tool {
@@ -76,7 +76,7 @@ export function createMapTool(config: FirecrawlConfig): Tool {
 
 ## 2. Output Schema & Content Types ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/response.ts`
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/map/response.ts`
 
 ### Valid MCP Content Types Used
 
@@ -110,7 +110,7 @@ The tool returns content with **only valid MCP content types**:
    - ✅ Valid type
    - ✅ All required fields: `uri`, `name`, `mimeType`
    - ✅ Optional `description` field used appropriately
-   - ✅ URI follows semantic format: `pulse-crawl://map/{hostname}/{timestamp}/page-{pageNumber}`
+   - ✅ URI follows semantic format: `pulse://map/{hostname}/{timestamp}/page-{pageNumber}`
 
 3. **`resource`** (lines 74-81) - "saveAndReturn" mode:
    ```typescript
@@ -145,7 +145,7 @@ The tool does **not use annotations**, which is appropriate because:
 
 ### MCP SDK Compliance
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/registration.ts` (lines 96-119)
+**Location**: `/home/jmagar/code/pulse/shared/mcp/registration.ts` (lines 96-119)
 
 The registration code **explicitly checks for protocol violations**:
 
@@ -158,7 +158,7 @@ const hasProblematicProps = [
 ];
 
 if (hasProblematicProps.some(Boolean)) {
-  console.error(`[pulse-crawl] ⚠️ WARNING: Schema contains oneOf/allOf/anyOf at root level`);
+  console.error(`[pulse] ⚠️ WARNING: Schema contains oneOf/allOf/anyOf at root level`);
 }
 ```
 
@@ -169,7 +169,7 @@ if (hasProblematicProps.some(Boolean)) {
 
 ### CallToolResult Structure
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/types.ts` (lines 18-24)
+**Location**: `/home/jmagar/code/pulse/shared/types.ts` (lines 18-24)
 
 ```typescript
 export interface ToolResponse {
@@ -237,7 +237,7 @@ export interface ToolResponse {
 
 ## 5. Error Handling ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/index.ts` (lines 20-42)
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/map/index.ts` (lines 20-42)
 
 ### Dual Error Path Handling
 
@@ -263,7 +263,7 @@ export interface ToolResponse {
 
 ### Test Coverage for Errors
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/index.test.ts` (lines 73-88)
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/map/index.test.ts` (lines 73-88)
 
 ```typescript
 it('should handle errors gracefully', async () => {
@@ -340,7 +340,7 @@ it('should handle errors gracefully', async () => {
 
 ### Summary Text Quality
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/response.ts` (lines 34-51)
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/map/response.ts` (lines 34-51)
 
 ```
 Map Results for https://example.com
@@ -361,8 +361,8 @@ Showing: 1-200 of 3000
 ### Resource URI Design
 
 ```
-pulse-crawl://map/{hostname}/{timestamp}/page-{pageNumber}
-Example: pulse-crawl://map/example.com/1730970595847/page-0
+pulse://map/{hostname}/{timestamp}/page-{pageNumber}
+Example: pulse://map/example.com/1730970595847/page-0
 ```
 
 - ✅ Semantic structure (tool/operation/domain/timestamp/page)
@@ -374,7 +374,7 @@ Example: pulse-crawl://map/example.com/1730970595847/page-0
 
 ## 8. Environment Variable Configuration ✅
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/map/schema.ts` (lines 3-20)
+**Location**: `/home/jmagar/code/pulse/shared/mcp/tools/map/schema.ts` (lines 3-20)
 
 ### Configurable Defaults
 
@@ -391,7 +391,7 @@ const DEFAULT_MAX_RESULTS = parseInt(process.env.MAP_MAX_RESULTS_PER_PAGE) || 20
 
 ### Firecrawl Configuration
 
-**Location**: `/home/jmagar/code/pulse-fetch/shared/mcp/registration.ts` (lines 54-57)
+**Location**: `/home/jmagar/code/pulse/shared/mcp/registration.ts` (lines 54-57)
 
 ```typescript
 const firecrawlConfig: FirecrawlConfig = {

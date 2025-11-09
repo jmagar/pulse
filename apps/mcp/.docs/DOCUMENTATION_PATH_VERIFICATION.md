@@ -15,8 +15,8 @@ All documentation paths, directory references, and shell commands verified again
 - References: `local/dist/index.js` and `remote/dist/index.js`
 - Status: CORRECT - Both directories exist and contain compiled output
 - Actual paths:
-  - `/home/jmagar/code/pulse-fetch/local/dist/index.js` ✓ EXISTS
-  - `/home/jmagar/code/pulse-fetch/remote/dist/index.js` ✓ EXISTS
+  - `/home/jmagar/code/pulse/local/dist/index.js` ✓ EXISTS
+  - `/home/jmagar/code/pulse/remote/dist/index.js` ✓ EXISTS
 
 ✅ **DEPLOYMENT.md (Line 278)**
 
@@ -29,7 +29,7 @@ All documentation paths, directory references, and shell commands verified again
 - Status: CORRECT
   - Docker compose volume: `./resources:/app/resources` ✓
   - Matches docker-compose.yml line 31
-  - Resources directory exists at `/home/jmagar/code/pulse-fetch/resources` ✓
+  - Resources directory exists at `/home/jmagar/code/pulse/resources` ✓
 
 ### 2. Directory Structure
 
@@ -126,7 +126,7 @@ All documentation paths, directory references, and shell commands verified again
   import { scrapeTool } from '../../shared/mcp/tools/scrape/index.js';
   ```
 
-  Path exists: `/home/jmagar/code/pulse-fetch/shared/mcp/tools/scrape/` ✓
+  Path exists: `/home/jmagar/code/pulse/shared/mcp/tools/scrape/` ✓
 
 - Tool implementation example (line 606):
 
@@ -155,7 +155,7 @@ All documentation paths, directory references, and shell commands verified again
 ✅ **CONFIGURATION.md (Lines 195-223)**
 
 - `MCP_RESOURCE_STORAGE`: `memory` or `filesystem` ✓
-- `MCP_RESOURCE_FILESYSTEM_ROOT`: References `/var/cache/pulse-fetch` (production) ✓
+- `MCP_RESOURCE_FILESYSTEM_ROOT`: References `/var/cache/pulse` (production) ✓
 - Docker Compose sets: `MCP_RESOURCE_FILESYSTEM_ROOT=/app/resources` ✓
 - Actual docker-compose.yml (line 17): Matches documentation ✓
 
@@ -164,29 +164,29 @@ All documentation paths, directory references, and shell commands verified again
 - Memory storage (lines 544-569): Configuration matches code ✓
 - Filesystem storage (lines 571-619): Paths consistent
   - Docker path: `/app/resources` ✓
-  - Systemd path: `/var/cache/pulse-fetch` ✓
+  - Systemd path: `/var/cache/pulse` ✓
   - Volume mount in docker-compose.yml: `./resources:/app/resources` ✓
 
 ### 7. Docker Configuration
 
 ✅ **docker-compose.yml Consistency**
 
-- Service name: `pulse-crawl` ✓ (matches docs references)
+- Service name: `pulse` ✓ (matches docs references)
 - Port binding: `${PORT:-3060}:3060` ✓
 - Volume mount: `./resources:/app/resources` ✓
 - Health check path: `/health` ✓
-- Network: `pulse-crawl-network` ✓
+- Network: `pulse-network` ✓
 
 ### 8. Systemd Service Example (DEPLOYMENT.md)
 
 ✅ **Lines 247-309**
 
-- Service file path: `/etc/systemd/system/pulse-fetch.service` ✓
-- ExecStart: `/usr/bin/node /opt/pulse-fetch/remote/dist/index.js` ✓
-- WorkingDirectory: `/opt/pulse-fetch` ✓
+- Service file path: `/etc/systemd/system/pulse.service` ✓
+- ExecStart: `/usr/bin/node /opt/pulse/remote/dist/index.js` ✓
+- WorkingDirectory: `/opt/pulse` ✓
 - All environment variables documented in CONFIGURATION.md ✓
-- Log paths: `/var/log/pulse-fetch/` ✓
-- Cache paths: `/var/cache/pulse-fetch` ✓
+- Log paths: `/var/log/pulse/` ✓
+- Cache paths: `/var/cache/pulse` ✓
 
 ### 9. Test File Paths
 

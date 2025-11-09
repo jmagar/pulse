@@ -2167,7 +2167,7 @@ describe('Server Startup Integration', () => {
   it('should display enhanced logging on startup', async () => {
     // RED: This will fail until integration is complete
     const { stdout, stderr } = await execAsync(
-      'docker compose up -d pulse-crawl && docker compose logs pulse-crawl --tail=100'
+      'docker compose up -d pulse && docker compose logs pulse --tail=100'
     );
 
     const output = stdout + stderr;
@@ -2243,7 +2243,7 @@ npm test -- index.integration.test.ts
 npm test
 npm run build
 docker compose up -d
-docker compose logs pulse-crawl
+docker compose logs pulse
 ```
 
 **Status:** ✅ Task 7 Complete
@@ -2271,7 +2271,7 @@ npm test
 docker compose up -d
 
 # Check logs
-docker compose logs -f pulse-crawl
+docker compose logs -f pulse
 
 # Verify display includes:
 # ✓ Colorized banner

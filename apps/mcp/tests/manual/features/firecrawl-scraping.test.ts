@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FirecrawlScrapingClient } from '../../../shared/clients/firecrawl/index.js';
+import { FirecrawlScrapingClient } from '@firecrawl/client';
 
 describe('Firecrawl Scraping Client', () => {
   it('should scrape and convert to markdown', async () => {

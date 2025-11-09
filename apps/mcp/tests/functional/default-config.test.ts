@@ -21,7 +21,7 @@ describe('Default Config Path', () => {
     }
 
     // Clean up default temp directory used by the function
-    const defaultTempDir = join(tmpdir(), 'pulse-crawl');
+    const defaultTempDir = join(tmpdir(), 'pulse');
     try {
       await fs.rm(defaultTempDir, { recursive: true, force: true });
     } catch {
@@ -40,13 +40,13 @@ describe('Default Config Path', () => {
   it('should use temp directory when environment variable not set', async () => {
     const configPath = await getStrategyConfigPath();
     expect(configPath).toContain(tmpdir());
-    expect(configPath).toContain('pulse-crawl');
+    expect(configPath).toContain('pulse');
     expect(configPath).toContain('scraping-strategies.md');
   });
 
   it('should create temp directory if it does not exist', async () => {
     await getStrategyConfigPath(); // This creates the directory
-    const dirPath = join(tmpdir(), 'pulse-crawl');
+    const dirPath = join(tmpdir(), 'pulse');
 
     // Check that directory was created
     const stats = await fs.stat(dirPath);

@@ -30,8 +30,8 @@ For use with Claude Desktop or other MCP clients that support stdio transport.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/pulse-fetch.git
-cd pulse-fetch
+git clone https://github.com/your-org/pulse.git
+cd pulse
 
 # Install dependencies
 npm install
@@ -49,7 +49,7 @@ Add to your `claude_desktop_config.json`:
   "mcpServers": {
     "pulse": {
       "command": "node",
-      "args": ["/path/to/pulse-fetch/local/dist/index.js"]
+      "args": ["/path/to/pulse/local/dist/index.js"]
     }
   }
 }
@@ -65,8 +65,8 @@ For hosted/remote access via HTTP with optional SSE streaming.
 
 ```bash
 # Clone and navigate to project
-git clone https://github.com/your-org/pulse-fetch.git
-cd pulse-fetch
+git clone https://github.com/your-org/pulse.git
+cd pulse
 
 # Start the server
 docker compose up -d

@@ -18,7 +18,7 @@ import type {
   MapResult,
   CrawlOptions,
   StartCrawlResult,
-} from '../../../shared/clients/firecrawl/index.js';
+} from '@firecrawl/client';
 
 describe('Unified Firecrawl Client', () => {
   let mockFetch: ReturnType<typeof vi.fn>;
@@ -34,7 +34,7 @@ describe('Unified Firecrawl Client', () => {
 
   describe('Client Creation and Configuration', () => {
     it('should create client with API key and default base URL', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       const config: FirecrawlConfig = {
         apiKey: 'test-api-key',
@@ -45,7 +45,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should create client with custom base URL', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       const config: FirecrawlConfig = {
         apiKey: 'test-api-key',
@@ -57,7 +57,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should throw error if API key is empty', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       const config: FirecrawlConfig = {
         apiKey: '',
@@ -67,7 +67,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should throw error if API key is missing', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       const config: FirecrawlConfig = {
         apiKey: undefined as any,
@@ -79,7 +79,7 @@ describe('Unified Firecrawl Client', () => {
 
   describe('Scrape Operation', () => {
     it('should scrape URL with default options', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -111,7 +111,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should scrape with custom options', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -143,7 +143,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should handle scrape errors', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -162,7 +162,7 @@ describe('Unified Firecrawl Client', () => {
 
   describe('Search Operation', () => {
     it('should search with query', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -190,7 +190,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should search with advanced options', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -220,7 +220,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should handle search errors', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -237,7 +237,7 @@ describe('Unified Firecrawl Client', () => {
 
   describe('Map Operation', () => {
     it('should map website URLs', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -264,7 +264,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should map with advanced options', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -292,7 +292,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should handle map errors with categorization', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -309,7 +309,7 @@ describe('Unified Firecrawl Client', () => {
 
   describe('Crawl Operation', () => {
     it('should start crawl job', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -334,7 +334,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should get crawl status', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -362,7 +362,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should cancel crawl job', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -384,7 +384,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should start crawl with advanced options', async () => {
-      const { FirecrawlClient } = await import('../../../shared/clients/firecrawl/index.js');
+      const { FirecrawlClient } = await import('@firecrawl/client');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -417,7 +417,7 @@ describe('Unified Firecrawl Client', () => {
   describe('Error Handling and Categorization', () => {
     it('should categorize authentication errors', async () => {
       const { categorizeFirecrawlError } = await import(
-        '../../../shared/clients/firecrawl/errors.js'
+        '@firecrawl/client'
       );
 
       const error = categorizeFirecrawlError(401, '{"error": "Invalid API key"}');
@@ -430,7 +430,7 @@ describe('Unified Firecrawl Client', () => {
 
     it('should categorize rate limit errors', async () => {
       const { categorizeFirecrawlError } = await import(
-        '../../../shared/clients/firecrawl/errors.js'
+        '@firecrawl/client'
       );
 
       const error = categorizeFirecrawlError(429, 'Rate limit exceeded');
@@ -443,7 +443,7 @@ describe('Unified Firecrawl Client', () => {
 
     it('should categorize payment errors', async () => {
       const { categorizeFirecrawlError } = await import(
-        '../../../shared/clients/firecrawl/errors.js'
+        '@firecrawl/client'
       );
 
       const error = categorizeFirecrawlError(402, 'Credits exhausted');
@@ -455,7 +455,7 @@ describe('Unified Firecrawl Client', () => {
 
     it('should categorize server errors', async () => {
       const { categorizeFirecrawlError } = await import(
-        '../../../shared/clients/firecrawl/errors.js'
+        '@firecrawl/client'
       );
 
       const error = categorizeFirecrawlError(503, 'Service unavailable');
@@ -469,7 +469,7 @@ describe('Unified Firecrawl Client', () => {
 
   describe('Type Exports', () => {
     it('should export all operation option types', async () => {
-      const module = await import('../../../shared/clients/firecrawl/index.js');
+      const module = await import('@firecrawl/client');
 
       // Type imports at top of file verify these types are exported and compile-time valid
       // This test verifies the runtime exports (client class and functions)
@@ -477,7 +477,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should export all result types', async () => {
-      const module = await import('../../../shared/clients/firecrawl/index.js');
+      const module = await import('@firecrawl/client');
 
       // Type imports at top of file verify these types are exported and compile-time valid
       // This test verifies the runtime exports (client class and functions)
@@ -485,7 +485,7 @@ describe('Unified Firecrawl Client', () => {
     });
 
     it('should export error types and functions', async () => {
-      const module = await import('../../../shared/clients/firecrawl/index.js');
+      const module = await import('@firecrawl/client');
 
       // Verify error categorization function is exported
       expect(module.categorizeFirecrawlError).toBeDefined();

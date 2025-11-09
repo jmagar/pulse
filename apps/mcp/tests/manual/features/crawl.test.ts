@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FirecrawlCrawlClient } from '../../../shared/clients/firecrawl/index.js';
+import { FirecrawlCrawlClient } from '@firecrawl/client';
 
 describe('Firecrawl Crawl Client', () => {
   it('should start, monitor, and cancel crawl job', async () => {

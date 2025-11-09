@@ -4,7 +4,7 @@ HTTP streaming transport implementation of the Pulse Fetch MCP server using the 
 
 ## Overview
 
-This package provides an HTTP-based MCP server that exposes the same tools and resources as the stdio version (`@pulsemcp/pulse-crawl`), using HTTP POST requests with JSON responses and optional Server-Sent Events (SSE) for server-initiated messages.
+This package provides an HTTP-based MCP server that exposes the same tools and resources as the stdio version (`@pulsemcp/pulse`), using HTTP POST requests with JSON responses and optional Server-Sent Events (SSE) for server-initiated messages.
 
 ### Key Features
 
@@ -141,7 +141,7 @@ Main MCP endpoint for JSON-RPC requests.
   "result": {
     "protocolVersion": "2025-03-26",
     "serverInfo": {
-      "name": "pulse-crawl",
+      "name": "pulse",
       "version": "0.3.0"
     },
     "capabilities": { ... }
@@ -196,7 +196,7 @@ npx @modelcontextprotocol/inspector
 ### Claude Code
 
 ```bash
-claude mcp add --transport http pulse-crawl-remote http://localhost:3060/mcp
+claude mcp add --transport http pulse-remote http://localhost:3060/mcp
 ```
 
 ### Custom Client
@@ -268,7 +268,7 @@ When `enableDnsRebindingProtection` is enabled (automatic in production), the se
 
 ## Differences from Stdio Version
 
-| Feature            | Stdio (`@pulsemcp/pulse-crawl`) | HTTP (`@pulsemcp/pulse-crawl-remote`) |
+| Feature            | Stdio (`@pulsemcp/pulse`) | HTTP (`@pulsemcp/pulse-remote`) |
 | ------------------ | ------------------------------- | ------------------------------------- |
 | Transport          | stdin/stdout                    | HTTP (JSON) + optional SSE            |
 | Session Management | N/A                             | Session IDs required                  |

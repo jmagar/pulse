@@ -27,38 +27,38 @@ FILE LOCATIONS
 ==============
 
 PLACEHOLDER AUTH MIDDLEWARE
-  /home/jmagar/code/pulse-crawl/remote/src/middleware/auth.ts
+  /home/jmagar/code/pulse/remote/src/middleware/auth.ts
   - Line 17: authMiddleware() function
   - Comment says "TODO: Implement authentication logic"
   - Currently just calls next() without any checks
 
 EXPRESS SERVER (NOT USING AUTH)
-  /home/jmagar/code/pulse-crawl/remote/src/server.ts
+  /home/jmagar/code/pulse/remote/src/server.ts
   - Line 7: Imports auth middleware
   - Line 22-23: Uses express.json() and CORS
   - NOT REGISTERED: authMiddleware is imported but never app.use()'d
 
 TRANSPORT & SESSIONS
-  /home/jmagar/code/pulse-crawl/remote/src/transport.ts
+  /home/jmagar/code/pulse/remote/src/transport.ts
   - Lines 50-65: StreamableHTTPServerTransport configuration
   - Line 51: Uses randomUUID() for session IDs (secure)
   - Lines 62-63: ALLOWED_HOSTS and ALLOWED_ORIGINS for DNS protection
 
 SERVER STARTUP
-  /home/jmagar/code/pulse-crawl/remote/src/index.ts
+  /home/jmagar/code/pulse/remote/src/index.ts
   - Line 3: Loads .env with dotenv
   - Lines 22-31: Logs available services based on env vars
   - Lines 48-67: Runs health checks on external API keys
   - Line 71: Starts Express server on port 3060
 
 CONFIGURATION
-  /home/jmagar/code/pulse-crawl/.env.example
+  /home/jmagar/code/pulse/.env.example
   - External service API keys (Firecrawl, Anthropic, OpenAI)
   - Server config: PORT, NODE_ENV, ALLOWED_ORIGINS, ALLOWED_HOSTS
   - Feature flags: ENABLE_RESUMABILITY, SKIP_HEALTH_CHECKS
 
 TESTS
-  /home/jmagar/code/pulse-crawl/tests/remote/middleware.test.ts
+  /home/jmagar/code/pulse/tests/remote/middleware.test.ts
   - Tests that auth middleware is a no-op
   - Tests CORS configuration parsing
   - Tests health endpoint
@@ -162,7 +162,7 @@ Response (includes session ID):
     "result": {
       "protocolVersion": "2025-03-26",
       "serverInfo": {
-        "name": "pulse-crawl",
+        "name": "pulse",
         "version": "0.3.0"
       },
       "capabilities": { ... }
@@ -274,7 +274,7 @@ RECOMMENDATIONS
 CONCLUSION
 ==========
 
-The pulse-crawl remote HTTP server currently has NO authentication implemented.
+The pulse remote HTTP server currently has NO authentication implemented.
 The auth middleware is a non-functional placeholder that requires implementation
 before production deployment.
 

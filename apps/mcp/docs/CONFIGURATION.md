@@ -217,7 +217,7 @@ MCP_RESOURCE_MAX_ITEMS=1000
 
 ```env
 MCP_RESOURCE_STORAGE=filesystem
-MCP_RESOURCE_FILESYSTEM_ROOT=/var/cache/pulse-fetch
+MCP_RESOURCE_FILESYSTEM_ROOT=/var/cache/pulse
 MCP_RESOURCE_TTL=0
 MCP_RESOURCE_MAX_SIZE=500
 ```
@@ -334,7 +334,7 @@ LLM_API_KEY=your-anthropic-key
 
 # Filesystem storage for persistence
 MCP_RESOURCE_STORAGE=filesystem
-MCP_RESOURCE_FILESYSTEM_ROOT=./.cache/pulse-fetch
+MCP_RESOURCE_FILESYSTEM_ROOT=./.cache/pulse
 ```
 
 ### Production (HTTP Server)
@@ -365,7 +365,7 @@ LLM_MODEL=claude-sonnet-4-20250514
 
 # Persistent storage
 MCP_RESOURCE_STORAGE=filesystem
-MCP_RESOURCE_FILESYSTEM_ROOT=/var/cache/pulse-fetch
+MCP_RESOURCE_FILESYSTEM_ROOT=/var/cache/pulse
 MCP_RESOURCE_TTL=0
 MCP_RESOURCE_MAX_SIZE=1000
 
@@ -422,7 +422,7 @@ Or configure per-session in `claude_desktop_config.json`:
   "mcpServers": {
     "pulse": {
       "command": "node",
-      "args": ["/path/to/pulse-fetch/local/dist/index.js"],
+      "args": ["/path/to/pulse/local/dist/index.js"],
       "env": {
         "FIRECRAWL_API_KEY": "your-key",
         "LLM_PROVIDER": "anthropic",
@@ -435,7 +435,7 @@ Or configure per-session in `claude_desktop_config.json`:
 
 ### Systemd Service
 
-Create `/etc/systemd/system/pulse-fetch.service`:
+Create `/etc/systemd/system/pulse.service`:
 
 ```ini
 [Unit]
@@ -445,8 +445,8 @@ After=network.target
 [Service]
 Type=simple
 User=pulse
-WorkingDirectory=/opt/pulse-fetch
-ExecStart=/usr/bin/node /opt/pulse-fetch/remote/dist/index.js
+WorkingDirectory=/opt/pulse
+ExecStart=/usr/bin/node /opt/pulse/remote/dist/index.js
 Restart=always
 
 # Environment variables
