@@ -544,7 +544,22 @@ export const env = {
 
 ---
 
-### Task 9: Update Webhook Configuration for Shared PostgreSQL
+### Task 9: Update Webhook Configuration for Shared PostgreSQL ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: 7c25d96)
+**Implemented:** Three-tier fallback system for environment variables with backward compatibility
+
+**Implementation Details:**
+- Added Pydantic AliasChoices to all configuration fields in `apps/webhook/app/config.py`
+- Priority order: WEBHOOK_* → DATABASE_URL/REDIS_URL → SEARCH_BRIDGE_*
+- Updated all 6 existing tests to use new WEBHOOK_* variable names
+- Created `test_config_fallback.py` with 4 comprehensive fallback tests
+- All 12 configuration tests passing (100% success rate)
+
+**Backward Compatibility:**
+- All legacy SEARCH_BRIDGE_* variables continue to work
+- Shared DATABASE_URL and REDIS_URL variables enable infrastructure consolidation
+- Zero breaking changes for existing deployments
 
 **Files:**
 - Modify: `apps/webhook/app/config.py`
@@ -600,7 +615,23 @@ git commit -m "feat(webhook): support shared PostgreSQL and environment variable
 
 ## Phase 4: Database Schema Integration
 
-### Task 10: Create Webhook Schema in Shared PostgreSQL
+### Task 10: Create Webhook Schema in Shared PostgreSQL ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: 6f9cf0e)
+**Implemented:** Dedicated webhook schema in shared PostgreSQL with schema isolation
+
+**Implementation Details:**
+- Updated SQLAlchemy models (RequestMetric and OperationMetric) with `__table_args__ = {"schema": "webhook"}`
+- Created Alembic migration `20251109_100516_add_webhook_schema.py`
+- Migration uses `ALTER TABLE ... SET SCHEMA` for efficient data preservation
+- Proper upgrade/downgrade paths implemented
+- Schema creation is idempotent (`CREATE SCHEMA IF NOT EXISTS`)
+
+**Database Architecture:**
+- Shared PostgreSQL instance (firecrawl_db) with schema isolation
+- `public` schema: Firecrawl API data
+- `webhook` schema: Webhook bridge timing metrics
+- Clean separation of concerns with no cross-schema queries needed
 
 **Context:** Instead of a separate PostgreSQL instance, webhook will use a dedicated schema in Firecrawl's PostgreSQL.
 
@@ -668,7 +699,42 @@ git commit -m "feat(webhook): use dedicated schema in shared PostgreSQL"
 
 ## Phase 5: Docker Compose Integration
 
-### Task 11: Merge Docker Compose Services
+### Task 11: Merge Docker Compose Services ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: 7c02e9d)
+**Implemented:** Three services added to root docker-compose.yaml with namespaced environment variables
+
+**Services Added:**
+1. **firecrawl_mcp** (port 3060)
+   - MCP_* namespaced environment variables (17 variables configured)
+   - Depends on firecrawl API
+   - Health check with wget
+   - Volume mount for persistent resources
+
+2. **firecrawl_webhook** (port 52100)
+   - WEBHOOK_* namespaced environment variables (18 variables configured)
+   - Depends on shared PostgreSQL (firecrawl_db) and Redis (firecrawl_cache)
+   - Health check with curl
+   - Complete configuration for hybrid vector/BM25 search
+
+3. **firecrawl_webhook_worker**
+   - Background worker configuration (command override)
+   - WEBHOOK_* namespaced environment variables (11 variables configured)
+   - Depends on Redis and webhook API
+   - Redis connection health check
+
+**Infrastructure Consolidation:**
+- All services use shared PostgreSQL (firecrawl_db:5432)
+- All services use shared Redis (firecrawl_cache:6379)
+- Single Docker network (firecrawl)
+- Proper YAML anchor pattern for DRY configuration
+
+**Documentation:**
+- Created `.docs/services-ports.md` with comprehensive port allocation table
+- Documented internal vs external URLs
+- Service descriptions with dependencies
+- Environment variable mapping
+- Guidelines for adding new services
 
 **Files:**
 - Modify: `docker-compose.yaml` (root)
@@ -804,7 +870,39 @@ git commit -m "feat: integrate MCP and webhook services into docker-compose"
 
 ## Phase 6: Documentation Updates
 
-### Task 12: Update Root README.md
+### Task 12: Update Root README.md ✅ COMPLETE
+
+**Status:** ✅ Completed (Commits: 508351b, 0d78c7c)
+**Implemented:** Comprehensive monorepo documentation with 11 major sections
+
+**Documentation Added:**
+1. **Overview** - High-level description of integrated platform
+2. **Architecture** - Monorepo structure, service communication diagram, database architecture
+3. **Applications** - Detailed descriptions of Firecrawl API, MCP Server, and Webhook Bridge
+4. **Quick Start** - Complete installation and first test instructions
+5. **Development** - Workspace commands, service URLs, development workflow
+6. **Deployment** - Production deployment, individual services, persistent data, backups
+7. **Configuration** - Environment variables with MCP_* and WEBHOOK_* naming conventions
+8. **Testing** - Running tests, integration testing, test coverage
+9. **Documentation** - Links to all project and application guides
+10. **Support** - Troubleshooting steps
+11. **Contributing** - Guidelines for multi-language monorepo contributions
+
+**Key Features:**
+- Table of contents for easy navigation
+- ASCII architecture diagram showing service communication
+- Complete deployment instructions referencing root docker-compose.yaml
+- Environment variable documentation with links to .env.example
+- Service URLs for both internal (Docker network) and external (host) access
+- Technology stack for each application
+- Port allocation clearly documented
+- Development workflow with pnpm workspace and uv commands
+
+**Environment Variable Fix (Commit 0d78c7c):**
+- Updated .env.example to use MCP_* prefixed variables (10 variables)
+- Updated .env.example to use WEBHOOK_* prefixed variables (19 variables)
+- Added backward compatibility notes for legacy SEARCH_BRIDGE_* variables
+- Ensured consistency across README.md, docker-compose.yaml, and .env.example
 
 **Files:**
 - Modify: `README.md`
