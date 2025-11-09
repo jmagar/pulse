@@ -27,6 +27,7 @@ class RequestMetric(Base):
     """
 
     __tablename__ = "request_metrics"
+    __table_args__ = {"schema": "webhook"}
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now(), index=True)
@@ -53,6 +54,7 @@ class OperationMetric(Base):
     """
 
     __tablename__ = "operation_metrics"
+    __table_args__ = {"schema": "webhook"}
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now(), index=True)
