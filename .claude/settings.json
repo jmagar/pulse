@@ -1,0 +1,42 @@
+{
+  "$schema": "https://claude.com/schemas/settings.json",
+
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(**)",
+      "Edit(**)",
+      "Write(**)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "SlashCommand(*)",
+      "NotebookEdit(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Task(*)",
+      "TodoWrite(*)",
+      "TodoRead",
+      "BashOutput(*)",
+      "KillShell(*)",
+      "Skill(*)",
+      "AskUserQuestion(*)",
+      "ExitPlanMode"
+    ],
+    "ask": [],
+    "deny": []
+  },
+
+  "additionalDirectories": [
+    "/mnt/cache/compose/pulse"
+  ],
+
+  "enableAllProjectMcpServers": true,
+
+  "model": "sonnet",
+
+  "includeCoAuthoredBy": true,
+
+  "cleanupPeriodDays": 30,
+
+  "env": {}
+}
