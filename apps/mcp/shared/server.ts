@@ -10,6 +10,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { registerResources, registerTools } from './mcp/registration.js';
+import { env } from './config/environment.js';
 import type { IStrategyConfigClient } from './scraping/strategies/learned/index.js';
 import { FilesystemStrategyConfigClient } from './scraping/strategies/learned/index.js';
 import { NativeScrapingClient } from './scraping/clients/native/native-scrape-client.js';
@@ -257,8 +258,8 @@ export function createMCPServer() {
     const factory =
       clientFactory ||
       (() => {
-        const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
-        const firecrawlBaseUrl = process.env.FIRECRAWL_BASE_URL;
+        const firecrawlApiKey = env.firecrawlApiKey;
+        const firecrawlBaseUrl = env.firecrawlBaseUrl;
 
         const clients: IScrapingClients = {
           native: new NativeFetcher(),

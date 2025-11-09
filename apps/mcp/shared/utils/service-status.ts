@@ -6,6 +6,7 @@
  * them for display in server startup logs.
  */
 
+import { env, parseBoolean } from '../config/environment.js';
 import { colorHelpers } from './logging.js';
 
 /**
@@ -42,8 +43,8 @@ export interface ServiceStatus {
  * }
  */
 export async function checkFirecrawlStatus(): Promise<ServiceStatus> {
-  const apiKey = process.env.FIRECRAWL_API_KEY;
-  const baseUrl = process.env.FIRECRAWL_BASE_URL || 'https://api.firecrawl.dev';
+  const apiKey = env.firecrawlApiKey;
+  const baseUrl = env.firecrawlBaseUrl || 'https://api.firecrawl.dev';
 
   // Not configured if API key is missing
   if (!apiKey) {
@@ -55,7 +56,7 @@ export async function checkFirecrawlStatus(): Promise<ServiceStatus> {
 
   // Self-hosted instances or health check skip mode
   const isSelfHosted = apiKey === 'self-hosted-no-auth';
-  const skipHealthCheck = process.env.SKIP_HEALTH_CHECKS === 'true';
+  const skipHealthCheck = parseBoolean(env.skipHealthChecks);
 
   if (isSelfHosted || skipHealthCheck) {
     return {
@@ -94,8 +95,8 @@ export async function checkFirecrawlStatus(): Promise<ServiceStatus> {
  * }
  */
 export function checkLLMProviderStatus(): ServiceStatus {
-  const provider = process.env.LLM_PROVIDER;
-  const apiKey = process.env.LLM_API_KEY;
+  const provider = env.llmProvider;
+  const apiKey = env.llmApiKey;
 
   // Not configured if provider or API key is missing
   if (!provider || !apiKey) {
@@ -105,8 +106,8 @@ export function checkLLMProviderStatus(): ServiceStatus {
     };
   }
 
-  const baseUrl = process.env.LLM_API_BASE_URL;
-  const model = process.env.LLM_MODEL;
+  const baseUrl = env.llmApiBaseUrl;
+  const model = env.llmModel;
 
   return {
     name: `LLM Provider (${provider})`,
@@ -133,8 +134,8 @@ export function checkLLMProviderStatus(): ServiceStatus {
  * console.log(`Using ${status.details?.type} storage`);
  */
 export function checkStorageStatus(): ServiceStatus {
-  const storageType = process.env.MCP_RESOURCE_STORAGE || 'memory';
-  const fsRoot = process.env.MCP_RESOURCE_FILESYSTEM_ROOT;
+  const storageType = env.resourceStorage;
+  const fsRoot = env.resourceFilesystemRoot;
 
   const details: Record<string, unknown> = {
     type: storageType,

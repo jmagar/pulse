@@ -5,6 +5,7 @@
  * proper masking of sensitive values (API keys) and categorization.
  */
 
+import { env } from '../../shared/config/environment.js';
 import { colorHelpers, maskSensitiveValue } from '../../shared/utils/logging.js';
 
 /**
@@ -55,64 +56,127 @@ export function getEnvironmentVariables(): EnvVarDisplay[] {
 
   // Server configuration - always shown with defaults
   vars.push(
-    { name: 'PORT', value: process.env.PORT || '3060', sensitive: false, category: 'Server' },
+    { name: 'PORT', value: env.port, sensitive: false, category: 'Server' },
     {
       name: 'NODE_ENV',
-      value: process.env.NODE_ENV || 'development',
+      value: env.nodeEnv,
       sensitive: false,
       category: 'Server',
     },
     {
       name: 'LOG_FORMAT',
-      value: process.env.LOG_FORMAT || 'text',
+      value: env.logFormat,
       sensitive: false,
       category: 'Server',
     },
-    { name: 'DEBUG', value: process.env.DEBUG || 'false', sensitive: false, category: 'Server' }
+    { name: 'DEBUG', value: env.debug, sensitive: false, category: 'Server' }
   );
 
   // HTTP configuration - conditional display
-  addEnvVarIfExists(vars, 'ALLOWED_ORIGINS', 'HTTP');
-  addEnvVarIfExists(vars, 'ALLOWED_HOSTS', 'HTTP');
+  if (env.allowedOrigins) {
+    vars.push({
+      name: 'ALLOWED_ORIGINS',
+      value: env.allowedOrigins,
+      sensitive: false,
+      category: 'HTTP',
+    });
+  }
+  if (env.allowedHosts) {
+    vars.push({
+      name: 'ALLOWED_HOSTS',
+      value: env.allowedHosts,
+      sensitive: false,
+      category: 'HTTP',
+    });
+  }
   vars.push(
     {
       name: 'ENABLE_OAUTH',
-      value: process.env.ENABLE_OAUTH || 'false',
+      value: env.enableOAuth,
       sensitive: false,
       category: 'HTTP',
     },
     {
       name: 'ENABLE_RESUMABILITY',
-      value: process.env.ENABLE_RESUMABILITY || 'false',
+      value: env.enableResumability,
       sensitive: false,
       category: 'HTTP',
     }
   );
 
   // Scraping services - API key is sensitive
-  addEnvVarIfExists(vars, 'FIRECRAWL_API_KEY', 'Scraping', true);
-  addEnvVarIfExists(vars, 'FIRECRAWL_BASE_URL', 'Scraping');
+  if (env.firecrawlApiKey) {
+    vars.push({
+      name: 'FIRECRAWL_API_KEY',
+      value: env.firecrawlApiKey,
+      sensitive: true,
+      category: 'Scraping',
+    });
+  }
+  if (env.firecrawlBaseUrl) {
+    vars.push({
+      name: 'FIRECRAWL_BASE_URL',
+      value: env.firecrawlBaseUrl,
+      sensitive: false,
+      category: 'Scraping',
+    });
+  }
   vars.push({
     name: 'OPTIMIZE_FOR',
-    value: process.env.OPTIMIZE_FOR || 'cost',
+    value: env.optimizeFor,
     sensitive: false,
     category: 'Scraping',
   });
 
   // LLM provider - conditional display, API key is sensitive
-  addEnvVarIfExists(vars, 'LLM_PROVIDER', 'LLM');
-  addEnvVarIfExists(vars, 'LLM_API_KEY', 'LLM', true);
-  addEnvVarIfExists(vars, 'LLM_API_BASE_URL', 'LLM');
-  addEnvVarIfExists(vars, 'LLM_MODEL', 'LLM');
+  if (env.llmProvider) {
+    vars.push({
+      name: 'LLM_PROVIDER',
+      value: env.llmProvider,
+      sensitive: false,
+      category: 'LLM',
+    });
+  }
+  if (env.llmApiKey) {
+    vars.push({
+      name: 'LLM_API_KEY',
+      value: env.llmApiKey,
+      sensitive: true,
+      category: 'LLM',
+    });
+  }
+  if (env.llmApiBaseUrl) {
+    vars.push({
+      name: 'LLM_API_BASE_URL',
+      value: env.llmApiBaseUrl,
+      sensitive: false,
+      category: 'LLM',
+    });
+  }
+  if (env.llmModel) {
+    vars.push({
+      name: 'LLM_MODEL',
+      value: env.llmModel,
+      sensitive: false,
+      category: 'LLM',
+    });
+  }
 
   // Storage configuration
   vars.push({
     name: 'MCP_RESOURCE_STORAGE',
-    value: process.env.MCP_RESOURCE_STORAGE || 'memory',
+    value: env.resourceStorage,
     sensitive: false,
     category: 'Storage',
   });
-  addEnvVarIfExists(vars, 'MCP_RESOURCE_FILESYSTEM_ROOT', 'Storage');
+  if (env.resourceFilesystemRoot) {
+    vars.push({
+      name: 'MCP_RESOURCE_FILESYSTEM_ROOT',
+      value: env.resourceFilesystemRoot,
+      sensitive: false,
+      category: 'Storage',
+    });
+  }
 
   return vars;
 }

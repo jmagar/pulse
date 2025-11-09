@@ -1,3 +1,4 @@
+import { env } from '../config/environment.js';
 import { ResourceStorage } from './types.js';
 import { MemoryResourceStorage } from './memory.js';
 import { FileSystemResourceStorage } from './filesystem.js';
@@ -12,7 +13,7 @@ export class ResourceStorageFactory {
       return this.instance;
     }
 
-    const rawType = (process.env.MCP_RESOURCE_STORAGE || 'memory').toLowerCase();
+    const rawType = (env.resourceStorage || 'memory').toLowerCase();
     const validTypes: StorageType[] = ['memory', 'filesystem'];
     const storageType = validTypes.includes(rawType as StorageType)
       ? (rawType as StorageType)
@@ -25,7 +26,7 @@ export class ResourceStorageFactory {
       }
 
       case 'filesystem': {
-        const rootDir = process.env.MCP_RESOURCE_FILESYSTEM_ROOT;
+        const rootDir = env.resourceFilesystemRoot;
         const fsStorage = new FileSystemResourceStorage(rootDir);
         await fsStorage.init();
         this.instance = fsStorage;

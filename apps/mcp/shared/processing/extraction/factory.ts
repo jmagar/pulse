@@ -1,3 +1,4 @@
+import { env } from '../../config/environment.js';
 import type { IExtractClient, LLMConfig } from './types.js';
 import { AnthropicExtractClient } from './providers/anthropic-client.js';
 import { OpenAIExtractClient } from './providers/openai-client.js';
@@ -12,8 +13,8 @@ export class ExtractClientFactory {
    * Returns null if no configuration is found
    */
   static createFromEnv(): IExtractClient | null {
-    const provider = process.env.LLM_PROVIDER as LLMConfig['provider'] | undefined;
-    const apiKey = process.env.LLM_API_KEY;
+    const provider = env.llmProvider as LLMConfig['provider'] | undefined;
+    const apiKey = env.llmApiKey;
 
     if (!provider || !apiKey) {
       return null;
@@ -22,8 +23,8 @@ export class ExtractClientFactory {
     const config: LLMConfig = {
       provider,
       apiKey,
-      model: process.env.LLM_MODEL,
-      apiBaseUrl: process.env.LLM_API_BASE_URL,
+      model: env.llmModel,
+      apiBaseUrl: env.llmApiBaseUrl,
     };
 
     return this.create(config);
@@ -51,7 +52,7 @@ export class ExtractClientFactory {
    */
   static isAvailable(): boolean {
     // Check for environment configuration
-    const hasEnvConfig = !!(process.env.LLM_PROVIDER && process.env.LLM_API_KEY);
+    const hasEnvConfig = !!(env.llmProvider && env.llmApiKey);
 
     // TODO: Check for MCP sampling capability when implemented
 

@@ -1,13 +1,14 @@
 import { z } from 'zod';
+import { env, parseNumber } from '../../../config/environment.js';
 
 // Read defaults from environment variables
 // Reserved for future location filtering implementation
-// const DEFAULT_COUNTRY = process.env.MAP_DEFAULT_COUNTRY || 'US';
-// const DEFAULT_LANGUAGES = process.env.MAP_DEFAULT_LANGUAGES
-//   ? process.env.MAP_DEFAULT_LANGUAGES.split(',').map((lang) => lang.trim())
+// const DEFAULT_COUNTRY = env.mapDefaultCountry || 'US';
+// const DEFAULT_LANGUAGES = env.mapDefaultLanguages
+//   ? env.mapDefaultLanguages.split(',').map((lang) => lang.trim())
 //   : ['en-US'];
 const DEFAULT_MAX_RESULTS = (() => {
-  const envValue = process.env.MAP_MAX_RESULTS_PER_PAGE;
+  const envValue = env.mapMaxResultsPerPage;
   if (!envValue) return 200;
 
   const parsed = parseInt(envValue, 10);

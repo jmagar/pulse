@@ -8,6 +8,7 @@
  */
 
 import https from 'https';
+import { env } from './environment.js';
 
 /**
  * Result of a service health check
@@ -88,8 +89,8 @@ async function checkFirecrawlAuth(apiKey: string): Promise<HealthCheckResult> {
 export async function runHealthChecks(): Promise<HealthCheckResult[]> {
   const checks: Promise<HealthCheckResult>[] = [];
 
-  if (process.env.FIRECRAWL_API_KEY) {
-    checks.push(checkFirecrawlAuth(process.env.FIRECRAWL_API_KEY));
+  if (env.firecrawlApiKey) {
+    checks.push(checkFirecrawlAuth(env.firecrawlApiKey));
   }
 
   if (checks.length === 0) {

@@ -10,6 +10,7 @@
 
 import type { IScrapingClients } from '../../server.js';
 import type { ScrapingStrategy, IStrategyConfigClient } from './learned/index.js';
+import { env } from '../../config/environment.js';
 import { logDebug, logWarning } from '../../utils/logging.js';
 import type { ScrapeDiagnostics } from '../../types.js';
 import { getMetricsCollector } from '../../monitoring/index.js';
@@ -119,7 +120,7 @@ export async function scrapeUniversal(
   options: StrategyOptions
 ): Promise<StrategyResult> {
   const { url } = options;
-  const optimizeFor = process.env.OPTIMIZE_FOR || 'cost';
+  const optimizeFor = env.optimizeFor;
 
   // Track diagnostics
   const diagnostics = {
