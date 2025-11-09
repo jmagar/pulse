@@ -1,0 +1,19 @@
+{
+  "name": "pulse-crawl",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r --filter './apps/mcp' --filter './apps/web' --filter './packages/*' build",
+    "build:mcp": "pnpm --filter './apps/mcp' build",
+    "build:web": "pnpm --filter './apps/web' build",
+    "build:packages": "pnpm --filter './packages/*' build",
+    "test": "pnpm -r --filter './apps/mcp' --filter './apps/web' --filter './packages/*' test",
+    "test:mcp": "pnpm --filter './apps/mcp' test",
+    "test:web": "pnpm --filter './apps/web' test",
+    "dev": "pnpm --parallel --filter './apps/mcp' --filter './apps/web' dev",
+    "dev:mcp": "pnpm --filter './apps/mcp' dev",
+    "dev:web": "pnpm --filter './apps/web' dev",
+    "clean": "pnpm -r --filter './apps/*' --filter './packages/*' clean",
+    "install:webhook": "cd apps/webhook && uv sync"
+  }
+}
