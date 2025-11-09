@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { logDebug } from '../../../utils/logging.js';
+import { env } from '../../../config/environment.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,15 +13,15 @@ const __dirname = dirname(__filename);
  * Get the path to the strategy configuration file.
  *
  * Priority:
- * 1. STRATEGY_CONFIG_PATH environment variable
+ * 1. MCP_STRATEGY_CONFIG_PATH or STRATEGY_CONFIG_PATH environment variable
  * 2. Default temp directory location
  *
  * If using default location and file doesn't exist, copies the
  * built-in config to the temp directory.
  */
 export async function getStrategyConfigPath(): Promise<string> {
-  // Check for environment variable
-  const envPath = process.env.STRATEGY_CONFIG_PATH;
+  // Check for environment variable (supports both MCP_* and legacy names)
+  const envPath = env.strategyConfigPath;
   if (envPath) {
     return envPath;
   }

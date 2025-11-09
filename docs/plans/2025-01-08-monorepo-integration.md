@@ -23,7 +23,10 @@
 
 ## Phase 1: Pre-Integration Dependency Resolution
 
-### Task 1: Upgrade MCP to OpenAI SDK v5.x
+### Task 1: Upgrade MCP to OpenAI SDK v5.x ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: 877622e)
+**Actual:** Upgraded to v6.8.1 (pnpm resolved ^5.20.2 to latest compatible)
 
 **Context:** MCP uses openai@4.104.0 but apps/api uses openai@5.20.2. We must upgrade MCP to v5.x to avoid workspace conflicts.
 
@@ -84,7 +87,10 @@ git commit -m "chore(mcp): upgrade openai SDK to v5.x for monorepo compatibility
 
 ---
 
-### Task 2: Align Zod Versions
+### Task 2: Align Zod Versions ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: e8fd6e3)
+**Actual:** Updated to ^3.24.2, pnpm installed 3.25.76
 
 **Files:**
 - Modify: `apps/mcp/shared/package.json`
@@ -119,7 +125,11 @@ git commit -m "chore(mcp): align zod version with monorepo"
 
 ---
 
-### Task 3: Run Security Audits
+### Task 3: Run Security Audits ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: ddd733a)
+**Results:** MCP: 0 vulnerabilities | Webhook: 1 non-critical (pip dev tool)
+**Documentation:** `.docs/security-audit-2025-01-08.md`
 
 **Step 1: Audit MCP dependencies**
 
@@ -157,7 +167,11 @@ git commit -m "docs: security audit for monorepo integration"
 
 ## Phase 2: Shared Code Extraction
 
-### Task 4: Create Shared Firecrawl Client Package
+### Task 4: Create Shared Firecrawl Client Package ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: c3db7be, amended)
+**Created:** `packages/firecrawl-client` with TypeScript strict mode
+**Fixed:** Removed node_modules & dist from git, enabled strict mode
 
 **Files:**
 - Create: `packages/firecrawl-client/package.json`
@@ -264,7 +278,11 @@ git commit -m "feat: extract shared firecrawl client package"
 
 ---
 
-### Task 5: Update Root pnpm Workspace Configuration
+### Task 5: Update Root pnpm Workspace Configuration ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: a10769c)
+**Created:** `pnpm-workspace.yaml`, root `package.json` with scripts
+**Workspace:** 4 packages linked (mcp, web, firecrawl-client, root)
 
 **Files:**
 - Create: `pnpm-workspace.yaml` (root)
@@ -284,19 +302,19 @@ Check if root `package.json` exists. If not, create it:
 
 ```json
 {
-  "name": "firecrawl-monorepo",
+  "name": "pulse",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "pnpm -r --filter './apps/api' --filter './apps/mcp' --filter './packages/*' build",
-    "build:api": "pnpm --filter './apps/api' build",
+    "build": "pnpm -r --filter './apps/mcp' --filter './packages/*' build",
     "build:mcp": "pnpm --filter './apps/mcp' build",
+    "build:web": "pnpm --filter './apps/web' build",
     "build:packages": "pnpm --filter './packages/*' build",
-    "test": "pnpm -r --filter './apps/api' --filter './apps/mcp' --filter './packages/*' test",
-    "test:api": "pnpm --filter './apps/api' test",
+    "test": "pnpm -r --filter './apps/mcp' --filter './packages/*' test",
     "test:mcp": "pnpm --filter './apps/mcp' test",
-    "dev:api": "pnpm --filter './apps/api' dev",
-    "dev:mcp": "pnpm --filter './apps/mcp/local' dev",
+    "test:web": "pnpm --filter './apps/web' test",
+    "dev:mcp": "pnpm --filter './apps/mcp' dev",
+    "dev:web": "pnpm --filter './apps/web' dev",
     "clean": "pnpm -r --filter './apps/*' --filter './packages/*' clean",
     "install:webhook": "cd apps/webhook && uv sync"
   }
@@ -320,7 +338,12 @@ git commit -m "chore: configure pnpm workspace for monorepo"
 
 ---
 
-### Task 6: Update MCP to Use Shared Client
+### Task 6: Update MCP to Use Shared Client ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: 4699f38)
+**Updated:** 99 files, all imports migrated to @firecrawl/client
+**Removed:** apps/mcp/shared/clients/firecrawl directory
+**Added:** test:packages, test:webhook, build:webhook, dev:webhook scripts
 
 **Files:**
 - Modify: `apps/mcp/shared/package.json`
@@ -383,7 +406,11 @@ git commit -m "refactor(mcp): use shared firecrawl client package"
 
 ## Phase 3: Environment Variable Standardization
 
-### Task 7: Create Unified Root .env.example
+### Task 7: Create Unified Root .env.example ✅ COMPLETE
+
+**Status:** ✅ Completed (Commit: a7406f0)
+**Created:** Root `.env.example` with all services documented
+**Updated:** Added monorepo deployment notes to app-specific .env.example files
 
 **Files:**
 - Create: `.env.example` (root, comprehensive)
@@ -479,54 +506,41 @@ git commit -m "docs: create unified environment variable configuration"
 
 ---
 
-### Task 8: Update MCP Configuration to Use Namespaced Variables
+### Task 8: Update MCP Configuration to Use Namespaced Variables ✅ COMPLETE
 
-**Files:**
-- Modify: `apps/mcp/shared/config/*.ts`
-- Check: All files that read process.env
+**Status:** ✅ Completed (Commit: 189a73a)
+**Implemented:** Centralized environment variable configuration with backward compatibility
 
-**Step 1: Identify configuration files**
+**Files Modified:**
+- Created: `apps/mcp/shared/config/environment.ts` - Centralized env var management with MCP_* prefix and legacy fallbacks
+- Updated: All MCP code to use centralized `env` module instead of direct `process.env` access
+- Fixed: `apps/mcp/shared/scraping/strategies/learned/default-config.ts` - Updated to use `env.strategyConfigPath`
 
-```bash
-cd apps/mcp
-grep -r "process.env" . --include="*.ts" | grep -v node_modules
-```
+**Implementation Details:**
 
-**Step 2: Create environment variable mapping**
-
-In `apps/mcp/shared/config/environment.ts`, add backward compatibility:
+Created comprehensive environment configuration module supporting both namespaced (MCP_*) and legacy variable names:
 
 ```typescript
-// Support both MCP_* (monorepo) and legacy names
+// apps/mcp/shared/config/environment.ts
 export const env = {
-  port: process.env.MCP_PORT || process.env.PORT || '3060',
-  firecrawlApiKey: process.env.MCP_FIRECRAWL_API_KEY || process.env.FIRECRAWL_API_KEY,
-  firecrawlBaseUrl: process.env.MCP_FIRECRAWL_BASE_URL || process.env.FIRECRAWL_BASE_URL,
-  llmProvider: process.env.MCP_LLM_PROVIDER || process.env.LLM_PROVIDER,
-  llmApiBaseUrl: process.env.MCP_LLM_API_BASE_URL || process.env.LLM_API_BASE_URL,
-  // ... etc
+  port: getEnvVar('MCP_PORT', 'PORT', '3060'),
+  firecrawlApiKey: getEnvVar('MCP_FIRECRAWL_API_KEY', 'FIRECRAWL_API_KEY'),
+  firecrawlBaseUrl: getEnvVar('MCP_FIRECRAWL_BASE_URL', 'FIRECRAWL_BASE_URL'),
+  llmProvider: getEnvVar('MCP_LLM_PROVIDER', 'LLM_PROVIDER'),
+  strategyConfigPath: getEnvVar('MCP_STRATEGY_CONFIG_PATH', 'STRATEGY_CONFIG_PATH'),
+  // ... 30+ additional variables
 };
 ```
 
-**Step 3: Test with both variable formats**
+**Backward Compatibility:**
+- All environment variables support both MCP_* (new) and legacy (old) formats
+- Primary lookup checks MCP_* prefixed version first
+- Falls back to legacy name if MCP_* not set
+- Ensures seamless migration without breaking existing deployments
 
-```bash
-cd apps/mcp
-# Test with MCP_* variables
-MCP_PORT=3060 npm test
-
-# Test with legacy variables
-PORT=3060 npm test
-```
-
-Expected: Both pass
-
-**Step 4: Commit**
-
-```bash
-git add apps/mcp/shared/config
-git commit -m "feat(mcp): support namespaced environment variables"
-```
+**Code Review Fix:**
+- Updated `default-config.ts` to use centralized `env.strategyConfigPath` instead of direct `process.env.STRATEGY_CONFIG_PATH` access
+- All environment variable access now goes through the centralized module
 
 ---
 
@@ -804,7 +818,6 @@ In `README.md`, add/update:
 
 Firecrawl is a monorepo containing:
 
-- **apps/api** - Main Firecrawl scraping API (TypeScript/Node.js)
 - **apps/mcp** - Model Context Protocol server for Claude integration (TypeScript/Node.js)
 - **apps/webhook** - Semantic search bridge with vector/BM25 hybrid search (Python/FastAPI)
 - **apps/web** - Web interface (Next.js)
@@ -876,7 +889,7 @@ curl http://localhost:52100/health
 pnpm build
 
 # Build specific app
-pnpm build:api
+pnpm build:web
 pnpm build:mcp
 
 # Build shared packages
@@ -890,7 +903,7 @@ pnpm build:packages
 pnpm test
 
 # Test specific app
-pnpm test:api
+pnpm test:web
 pnpm test:mcp
 
 # Test webhook (Python)
@@ -901,7 +914,7 @@ cd apps/webhook && make test
 
 ```bash
 # Run API in dev mode
-pnpm dev:api
+pnpm dev:web
 
 # Run MCP in dev mode
 pnpm dev:mcp
@@ -932,16 +945,15 @@ In `CLAUDE.md`, add section:
 ```markdown
 ## Monorepo Structure
 
-Firecrawl uses a **multi-language monorepo**:
+pulse uses a **multi-language monorepo**:
 
 ### Node.js Apps (pnpm workspace)
-- `apps/api` - Main API
 - `apps/mcp` - MCP server (has internal workspace: local/remote/shared)
 - `apps/web` - Web UI
 - `packages/*` - Shared libraries
 
-**Build:** `pnpm build` or `pnpm build:api`
-**Test:** `pnpm test` or `pnpm test:mcp`
+**Build:** `pnpm build` or `pnpm build:web` or `pnpm build:mcp`
+**Test:** `pnpm test` or `pnpm test:web`  or `pnpm test:mcp`
 
 ### Python Apps (independent)
 - `apps/webhook` - Search bridge
@@ -997,17 +1009,8 @@ git commit -m "docs: add monorepo patterns to CLAUDE.md"
 
 ### Task 14: Run Isolated App Tests
 
-**Step 1: Test API**
 
-```bash
-cd apps/api
-pnpm install
-pnpm test
-```
-
-Expected: All tests pass
-
-**Step 2: Test MCP**
+**Step 1: Test MCP**
 
 ```bash
 cd apps/mcp
@@ -1017,12 +1020,21 @@ pnpm test
 
 Expected: All tests pass
 
-**Step 3: Test webhook**
+**Step 2: Test webhook**
 
 ```bash
 cd apps/webhook
 uv sync
 make test
+```
+
+
+**Step 3: Test Web**
+
+```bash
+cd apps/web
+pnpm install
+pnpm test
 ```
 
 Expected: All tests pass
@@ -1177,7 +1189,7 @@ Same for `apps/webhook/README.md`.
 **Step 4: Commit**
 
 ```bash
-git add apps/mcp apps/webhook
+git add apps/mcp apps/webhook apps/web
 git commit -m "chore: remove standalone docker-compose files"
 ```
 
@@ -1301,9 +1313,9 @@ git commit -m "docs: add migration guide for monorepo integration"
 
 ```bash
 docker compose ps
-curl http://localhost:3002/health  # API
 curl http://localhost:3060/health  # MCP
 curl http://localhost:52100/health # Webhook
+curl http://localhost:4302/health  # Web
 ```
 
 Expected: All return healthy status
