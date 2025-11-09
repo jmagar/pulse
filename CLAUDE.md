@@ -2,6 +2,58 @@ Firecrawl is a web scraper API. The directory you have access to is a monorepo:
  - `apps/api` has the actual API and worker code
  - `apps/js-sdk`, `apps/python-sdk`, and `apps/rust-sdk` are various SDKs
 
+## Monorepo Structure
+
+pulse uses a **multi-language monorepo**:
+
+### Node.js Apps (pnpm workspace)
+- `apps/mcp` - MCP server (has internal workspace: local/remote/shared)
+- `apps/web` - Web UI
+- `packages/*` - Shared libraries
+
+**Build:** `pnpm build` or `pnpm build:web` or `pnpm build:mcp`
+**Test:** `pnpm test` or `pnpm test:web`  or `pnpm test:mcp`
+
+### Python Apps (independent)
+- `apps/webhook` - Search bridge
+
+**Build:** `cd apps/webhook && uv sync`
+**Test:** `cd apps/webhook && make test`
+
+### Shared Infrastructure
+- PostgreSQL: Shared database with app-specific schemas
+  - `public` schema: Firecrawl API data
+  - `webhook` schema: Webhook bridge metrics
+- Redis: Shared queue for API and webhook
+- Docker network: `firecrawl` (bridge)
+
+### Cross-Service Communication
+
+**Internal URLs (Docker network):**
+- API: `http://firecrawl:3002`
+- MCP: `http://firecrawl_mcp:3060`
+- Webhook: `http://firecrawl_webhook:52100`
+- Redis: `redis://firecrawl_cache:6379`
+- PostgreSQL: `postgresql://firecrawl_db:5432/firecrawl_db`
+
+**Never hardcode external URLs in code!** Use environment variables.
+
+### Adding New Services
+
+1. Add to `docker-compose.yaml` following the anchor pattern
+2. Add port to `.docs/services-ports.md`
+3. Add environment variables to `.env.example`
+4. Update this CLAUDE.md with integration points
+5. Add build/test scripts to root `package.json` if Node.js
+
+### Testing Integration
+
+When testing cross-service features:
+1. Use `docker compose up -d` to start all services
+2. Check health endpoints before tests
+3. Use internal service URLs in tests
+4. Clean up with `docker compose down` after
+
 When making changes to the API, here are the general steps you should take:
 1. Write some end-to-end tests that assert your win conditions, if they don't already exist
   - 1 happy path (more is encouraged if there are multiple happy paths with significantly different code paths taken)
