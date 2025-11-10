@@ -8,6 +8,7 @@
 
 import { env, parseBoolean } from '../config/environment.js';
 import { colorHelpers } from './logging.js';
+import { SELF_HOSTED_NO_AUTH } from '@firecrawl/client';
 
 /**
  * Service configuration and status information
@@ -55,7 +56,7 @@ export async function checkFirecrawlStatus(): Promise<ServiceStatus> {
   }
 
   // Self-hosted instances or health check skip mode
-  const isSelfHosted = apiKey === 'self-hosted-no-auth';
+  const isSelfHosted = apiKey === SELF_HOSTED_NO_AUTH;
   const skipHealthCheck = parseBoolean(env.skipHealthChecks);
 
   if (isSelfHosted || skipHealthCheck) {

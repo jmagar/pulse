@@ -5,6 +5,9 @@ import type {
 } from '@firecrawl/client';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
+// Firecrawl API pagination threshold for crawl results
+const PAGINATION_THRESHOLD_MB = 10;
+
 export function formatCrawlResponse(
   result: StartCrawlResult | CrawlStatusResult | CancelResult
 ): CallToolResult {
@@ -37,7 +40,7 @@ export function formatCrawlResponse(
     let statusText = `Crawl Status: ${statusLabel}\nProgress: ${statusResult.completed}/${statusResult.total} pages\nCredits used: ${statusResult.creditsUsed}\nExpires at: ${statusResult.expiresAt}`;
 
     if (statusResult.next) {
-      statusText += `\n\n⚠️ Data pagination required!\nNext batch URL: ${statusResult.next}\n\nThe crawl job has completed, but the results are larger than 10MB.\nUse the pagination URL to retrieve the next batch of data.`;
+      statusText += `\n\n⚠️ Data pagination required!\nNext batch URL: ${statusResult.next}\n\nThe crawl job has completed, but the results are larger than ${PAGINATION_THRESHOLD_MB}MB.\nUse the pagination URL to retrieve the next batch of data.`;
     }
 
     content.push({

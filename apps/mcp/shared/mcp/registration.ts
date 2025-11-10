@@ -27,6 +27,7 @@ import { logInfo, logError } from '../utils/logging.js';
 import { registrationTracker } from '../utils/mcp-status.js';
 import { getMetricsCollector } from '../monitoring/index.js';
 import { env } from '../config/environment.js';
+import { SELF_HOSTED_NO_AUTH } from '@firecrawl/client';
 
 /**
  * Register MCP tools with the server
@@ -53,7 +54,7 @@ export function registerTools(
 ): void {
   // Create Firecrawl config from centralized environment
   const firecrawlConfig: FirecrawlConfig = {
-    apiKey: env.firecrawlApiKey || 'self-hosted-no-auth',
+    apiKey: env.firecrawlApiKey || SELF_HOSTED_NO_AUTH,
     baseUrl: env.firecrawlBaseUrl || 'http://firecrawl:3002',
   };
 

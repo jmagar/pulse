@@ -7,6 +7,7 @@ import {
   formatServiceStatus,
   getAllServiceStatuses,
 } from './service-status.js';
+import { SELF_HOSTED_NO_AUTH } from '@firecrawl/client';
 
 describe('Service Status Checking', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -33,7 +34,7 @@ describe('Service Status Checking', () => {
     });
 
     it('should return healthy for self-hosted instances', async () => {
-      process.env.FIRECRAWL_API_KEY = 'self-hosted-no-auth';
+      process.env.FIRECRAWL_API_KEY = SELF_HOSTED_NO_AUTH;
       process.env.FIRECRAWL_BASE_URL = 'https://firecrawl.local';
 
       const status = await checkFirecrawlStatus();
@@ -56,7 +57,7 @@ describe('Service Status Checking', () => {
     });
 
     it('should use default base URL when not specified', async () => {
-      process.env.FIRECRAWL_API_KEY = 'self-hosted-no-auth';
+      process.env.FIRECRAWL_API_KEY = SELF_HOSTED_NO_AUTH;
       delete process.env.FIRECRAWL_BASE_URL;
 
       const status = await checkFirecrawlStatus();
@@ -195,7 +196,7 @@ describe('Service Status Checking', () => {
   describe('getAllServiceStatuses()', () => {
     it('should return all service statuses', async () => {
       // RED: This will fail because getAllServiceStatuses() doesn't exist
-      process.env.FIRECRAWL_API_KEY = 'self-hosted-no-auth';
+      process.env.FIRECRAWL_API_KEY = SELF_HOSTED_NO_AUTH;
       process.env.LLM_PROVIDER = 'anthropic';
       process.env.LLM_API_KEY = 'test';
 

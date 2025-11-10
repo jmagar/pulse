@@ -8,6 +8,7 @@
 
 import type { MapOptions, MapResult } from '../types.js';
 import { categorizeFirecrawlError } from '../errors.js';
+import { buildHeaders } from '../utils/headers.js';
 
 /**
  * Map website URLs using Firecrawl API
@@ -27,15 +28,7 @@ export async function map(
     JSON.stringify({ url: `${baseUrl}/map`, body: options }, null, 2)
   );
 
-  // Build headers - skip Authorization for self-hosted deployments without auth
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  // Only add Authorization header if API key is not a self-hosted placeholder
-  if (apiKey && apiKey !== 'self-hosted-no-auth') {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
+  const headers = buildHeaders(apiKey, true);
 
   const response = await fetch(`${baseUrl}/map`, {
     method: 'POST',

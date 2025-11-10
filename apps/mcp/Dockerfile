@@ -4,7 +4,7 @@
 FROM node:20-alpine AS builder
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 WORKDIR /app
 
@@ -61,7 +61,10 @@ RUN mkdir -p /app/resources && \
 
 # Create entrypoint script to fix volume permissions
 RUN echo '#!/bin/sh' > /entrypoint.sh && \
-    echo 'chown -R nodejs:nodejs /app/resources 2>/dev/null || true' >> /entrypoint.sh && \
+    echo '# Attempt to fix ownership of /app/resources for mounted volumes' >> /entrypoint.sh && \
+    echo 'if ! chown -R nodejs:nodejs /app/resources 2>/dev/null; then' >> /entrypoint.sh && \
+    echo '  echo "Warning: Failed to change ownership of /app/resources. This may be expected if the volume is mounted with root ownership." >&2' >> /entrypoint.sh && \
+    echo 'fi' >> /entrypoint.sh && \
     echo 'exec su-exec nodejs "$@"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh && \
     apk add --no-cache su-exec

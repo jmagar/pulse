@@ -260,8 +260,8 @@ export function buildSuccessResponse(
   }
 
   // Save as a resource for save options
-  if (resultHandling === 'saveOnly' || resultHandling === 'saveAndReturn') {
-    if (savedUris) {
+  const shouldSaveResource = resultHandling === 'saveOnly' || resultHandling === 'saveAndReturn';
+  if (shouldSaveResource && savedUris) {
       // Use the most processed version
       const primaryUri = extractedContent
         ? savedUris.extracted

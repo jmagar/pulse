@@ -10,6 +10,7 @@
 import https from 'https';
 import http from 'http';
 import { env } from './environment.js';
+import { SELF_HOSTED_NO_AUTH } from '@firecrawl/client';
 
 /**
  * Result of a service health check
@@ -29,7 +30,7 @@ export interface HealthCheckResult {
 async function checkFirecrawlAuth(apiKey: string, baseUrl: string): Promise<HealthCheckResult> {
   return new Promise((resolve) => {
     // Skip health check for self-hosted instances
-    if (apiKey === 'self-hosted-no-auth') {
+    if (apiKey === SELF_HOSTED_NO_AUTH) {
       resolve({
         service: 'Firecrawl',
         success: true,
@@ -50,7 +51,7 @@ async function checkFirecrawlAuth(apiKey: string, baseUrl: string): Promise<Heal
       return;
     }
 
-    const protocol = parsedUrl.protocol === 'https:' ? https : require('http');
+    const protocol = parsedUrl.protocol === 'https:' ? https : http;
     const port = parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80);
 
     const options = {

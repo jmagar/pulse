@@ -1,3 +1,9 @@
+# Agent Documentation
+
+This file references available agent documentation for the Pulse project.
+
+CLAUDE.md
+
 ## Monorepo Structure
 
 pulse uses a **multi-language monorepo**:

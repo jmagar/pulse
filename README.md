@@ -321,7 +321,7 @@ pnpm clean
 - Webhook Bridge: `http://localhost:50108`
 - Redis: `redis://localhost:50104`
 - PostgreSQL: `postgresql://localhost:50105/firecrawl_db`
-- Playwright: `http://localhost:4302`
+- Playwright: `http://localhost:50100`
 
 ### Local Development (Without Docker)
 

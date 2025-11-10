@@ -8,6 +8,7 @@
 
 import type { SearchOptions, SearchResult } from '../types.js';
 import { categorizeFirecrawlError } from '../errors.js';
+import { buildHeaders } from '../utils/headers.js';
 
 /**
  * Search using Firecrawl API
@@ -22,15 +23,7 @@ export async function search(
   baseUrl: string,
   options: SearchOptions
 ): Promise<SearchResult> {
-  // Build headers - skip Authorization for self-hosted deployments without auth
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  // Only add Authorization header if API key is not a self-hosted placeholder
-  if (apiKey && apiKey !== 'self-hosted-no-auth') {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
+  const headers = buildHeaders(apiKey, true);
 
   const response = await fetch(`${baseUrl}/search`, {
     method: 'POST',

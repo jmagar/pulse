@@ -8,6 +8,7 @@
  */
 
 import type { FirecrawlScrapingOptions, FirecrawlScrapingResult } from '../types.js';
+import { buildHeaders } from '../utils/headers.js';
 
 /**
  * Scrape a webpage using Firecrawl API
@@ -25,15 +26,7 @@ export async function scrape(
   options: FirecrawlScrapingOptions = {}
 ): Promise<FirecrawlScrapingResult> {
   try {
-    // Build headers - skip Authorization for self-hosted deployments without auth
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    // Only add Authorization header if API key is not a self-hosted placeholder
-    if (apiKey && apiKey !== 'self-hosted-no-auth') {
-      headers['Authorization'] = `Bearer ${apiKey}`;
-    }
+    const headers = buildHeaders(apiKey, true);
 
     const response = await fetch(`${baseUrl}/scrape`, {
       method: 'POST',

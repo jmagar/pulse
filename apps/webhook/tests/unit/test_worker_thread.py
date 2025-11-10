@@ -38,12 +38,17 @@ def test_worker_thread_manager_stop():
 def test_worker_thread_manager_does_not_start_twice():
     """WorkerThreadManager cannot be started twice."""
     from app.worker_thread import WorkerThreadManager
+    from unittest.mock import Mock, patch
 
     manager = WorkerThreadManager()
-    manager.start()
 
-    # Trying to start again should raise
-    with pytest.raises(RuntimeError, match="Worker thread already running"):
+    with patch('app.worker_thread.Redis') as mock_redis:
+        mock_redis.from_url.return_value = Mock()
+
         manager.start()
 
-    manager.stop()
+        # Trying to start again should raise
+        with pytest.raises(RuntimeError, match="Worker thread already running"):
+            manager.start()
+
+        manager.stop()

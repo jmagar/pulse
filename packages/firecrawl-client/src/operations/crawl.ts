@@ -7,11 +7,7 @@
  */
 
 import type { CrawlOptions, StartCrawlResult, CrawlStatusResult, CancelResult } from '../types.js';
-
-// Simple stderr logging for debugging (bypasses any log filtering)
-function debugLog(message: string, data?: any) {
-  process.stderr.write(`[FIRECRAWL-CLIENT-DEBUG] ${message} ${data ? JSON.stringify(data) : ''}\n`);
-}
+import { buildHeaders, debugLog } from '../utils/headers.js';
 
 /**
  * Start a crawl job using Firecrawl API
@@ -26,17 +22,9 @@ export async function startCrawl(
   baseUrl: string,
   options: CrawlOptions
 ): Promise<StartCrawlResult> {
-  debugLog('startCrawl called', { apiKey, baseUrl, targetUrl: options.url });
+  debugLog('startCrawl called', { baseUrl, targetUrl: options.url });
 
-  // Build headers - skip Authorization for self-hosted deployments without auth
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  // Only add Authorization header if API key is not a self-hosted placeholder
-  if (apiKey && apiKey !== 'self-hosted-no-auth') {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
+  const headers = buildHeaders(apiKey, true);
 
   const fetchUrl = `${baseUrl}/crawl`;
   debugLog('Fetching', { url: fetchUrl, hasAuth: !!headers['Authorization'] });
@@ -74,13 +62,7 @@ export async function getCrawlStatus(
   baseUrl: string,
   jobId: string
 ): Promise<CrawlStatusResult> {
-  // Build headers - skip Authorization for self-hosted deployments without auth
-  const headers: Record<string, string> = {};
-
-  // Only add Authorization header if API key is not a self-hosted placeholder
-  if (apiKey && apiKey !== 'self-hosted-no-auth') {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
+  const headers = buildHeaders(apiKey);
 
   const response = await fetch(`${baseUrl}/crawl/${jobId}`, {
     method: 'GET',
@@ -114,13 +96,7 @@ export async function cancelCrawl(
   baseUrl: string,
   jobId: string
 ): Promise<CancelResult> {
-  // Build headers - skip Authorization for self-hosted deployments without auth
-  const headers: Record<string, string> = {};
-
-  // Only add Authorization header if API key is not a self-hosted placeholder
-  if (apiKey && apiKey !== 'self-hosted-no-auth') {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
+  const headers = buildHeaders(apiKey);
 
   const response = await fetch(`${baseUrl}/crawl/${jobId}`, {
     method: 'DELETE',

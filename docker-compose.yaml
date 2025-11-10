@@ -56,6 +56,8 @@ services:
 
   firecrawl_mcp:
     <<: *common-service
+    # Build context changed from ./apps/mcp to . for monorepo access
+    # All environment variables now configured in root .env file
     build:
       context: .
       dockerfile: apps/mcp/Dockerfile
