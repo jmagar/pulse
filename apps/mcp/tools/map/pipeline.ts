@@ -4,6 +4,7 @@ import type {
   MapResult,
 } from '@firecrawl/client';
 import type { MapOptions } from './schema.js';
+import { logDebug } from '../../utils/logging.js';
 
 export async function mapPipeline(
   client: FirecrawlMapClient,
@@ -20,11 +21,11 @@ export async function mapPipeline(
     location: options.location,
   };
 
-  console.log('[DEBUG] Map pipeline options:', JSON.stringify(clientOptions, null, 2));
+  logDebug('map-pipeline', 'Map pipeline options', { options: clientOptions });
   const result = await client.map(clientOptions);
-  console.log(
-    '[DEBUG] Map pipeline result:',
-    JSON.stringify({ success: result.success, linksCount: result.links?.length || 0 }, null, 2)
-  );
+  logDebug('map-pipeline', 'Map pipeline result', {
+    success: result.success,
+    linksCount: result.links?.length || 0,
+  });
   return result;
 }
