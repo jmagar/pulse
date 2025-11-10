@@ -261,7 +261,13 @@ export function buildSuccessResponse(
 
   // Save as a resource for save options
   const shouldSaveResource = resultHandling === 'saveOnly' || resultHandling === 'saveAndReturn';
-  if (shouldSaveResource && savedUris) {
+  
+  if (!shouldSaveResource) {
+    return response;
+  }
+
+  // Handle successful resource storage
+  if (savedUris) {
     // Use the most processed version
     const primaryUri = extractedContent
       ? savedUris.extracted
@@ -285,7 +291,8 @@ export function buildSuccessResponse(
         mimeType: contentMimeType,
         description: resourceDescription,
       });
-    } else if (resultHandling === 'saveAndReturn') {
+    } else {
+      // resultHandling === 'saveAndReturn'
       response.content.push({
         type: 'resource',
         resource: {
@@ -297,21 +304,22 @@ export function buildSuccessResponse(
         },
       });
     }
-  } else if (shouldSaveResource && !savedUris) {
-    // Fallback: if saving failed, return content as text for saveAndReturn
-    if (resultHandling === 'saveAndReturn') {
-      response.content.push({
-        type: 'text',
-        text: resultText + '\n\n[Note: Resource storage failed, returning content as text]',
-      });
-    } else {
-      // For saveOnly, we must return an error if we couldn't save
-      response.content.push({
-        type: 'text',
-        text: `Failed to save resource for ${url}. Storage may be unavailable.`,
-      });
-      response.isError = true;
-    }
+    return response;
+  }
+
+  // Handle resource storage failure
+  if (resultHandling === 'saveAndReturn') {
+    response.content.push({
+      type: 'text',
+      text: resultText + '\n\n[Note: Resource storage failed, returning content as text]',
+    });
+  } else {
+    // For saveOnly, we must return an error if we couldn't save
+    response.content.push({
+      type: 'text',
+      text: `Failed to save resource for ${url}. Storage may be unavailable.`,
+    });
+    response.isError = true;
   }
 
   return response;
