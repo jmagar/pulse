@@ -91,22 +91,6 @@ services:
       retries: 3
       start_period: 40s
 
-  firecrawl_webhook_worker:
-    <<: *common-service
-    build:
-      context: ./apps/webhook
-      dockerfile: Dockerfile
-    container_name: firecrawl_webhook_worker
-    command: python -m app.worker
-    depends_on:
-      - firecrawl_cache
-      - firecrawl_webhook
-    healthcheck:
-      test: ["CMD", "python", "-c", "import redis; r = redis.from_url('redis://firecrawl_cache:6379'); r.ping()"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
 networks:
   firecrawl:
     driver: bridge
