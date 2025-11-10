@@ -1,6 +1,6 @@
 export * from './server.js';
 export * from './types.js';
-export * from './mcp/index.js';
+export * from './tools/index.js';
 export * from './config/index.js';
 export * from './storage/index.js';
 export * from './scraping/index.js';
