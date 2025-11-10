@@ -12,7 +12,8 @@ apps/api/.env.local
 
 apps/test-suite/node_modules/
 .env.bak
-
+FIXME.md
+FIXME-TASKS.md
 
 apps/test-suite/.env
 apps/test-suite/logs

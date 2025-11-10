@@ -8,66 +8,14 @@ importers:
 
   .: {}
 
-  apps/mcp/local:
+  apps/mcp:
     dependencies:
       '@anthropic-ai/sdk':
         specifier: ^0.68.0
         version: 0.68.0(zod@3.25.76)
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.19.1
-        version: 1.21.1
-      dom-to-semantic-markdown:
-        specifier: ^1.5.0
-        version: 1.5.0
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.2.3
-      jsdom:
-        specifier: ^27.1.0
-        version: 27.1.0
-      openai:
-        specifier: ^5.20.2
-        version: 5.23.2(ws@8.18.3)(zod@3.25.76)
-      pdf-parse:
-        specifier: ^1.1.1
-        version: 1.1.4
-      zod:
-        specifier: ^3.24.1
-        version: 3.25.76
-    devDependencies:
-      '@eslint/js':
-        specifier: ^9.39.1
-        version: 9.39.1
-      '@types/jsdom':
-        specifier: ^21.1.7
-        version: 21.1.7
-      '@types/node':
-        specifier: ^24.0.0
-        version: 24.10.0
-      eslint:
-        specifier: ^9.39.1
-        version: 9.39.1(jiti@2.6.1)
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      tsx:
-        specifier: ^4.19.4
-        version: 4.20.6
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-      typescript-eslint:
-        specifier: ^8.46.3
-        version: 8.46.3(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      vitest:
-        specifier: ^3.2.3
-        version: 3.2.4(@types/node@24.10.0)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.1.0)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
-
-  apps/mcp/remote:
-    dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.68.0
-        version: 0.68.0(zod@3.25.76)
+      '@firecrawl/client':
+        specifier: workspace:*
+        version: link:../../packages/firecrawl-client
       '@modelcontextprotocol/sdk':
         specifier: ^1.19.1
         version: 1.21.1
@@ -99,64 +47,6 @@ importers:
         specifier: ^1.1.1
         version: 1.1.4
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
-    devDependencies:
-      '@eslint/js':
-        specifier: ^9.39.1
-        version: 9.39.1
-      '@types/node':
-        specifier: ^24.0.0
-        version: 24.10.0
-      '@types/supertest':
-        specifier: ^6.0.2
-        version: 6.0.3
-      eslint:
-        specifier: ^9.39.1
-        version: 9.39.1(jiti@2.6.1)
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
-      supertest:
-        specifier: ^7.0.0
-        version: 7.1.4
-      tsx:
-        specifier: ^4.19.4
-        version: 4.20.6
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-      typescript-eslint:
-        specifier: ^8.46.3
-        version: 8.46.3(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      vitest:
-        specifier: ^3.2.3
-        version: 3.2.4(@types/node@24.10.0)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@27.1.0)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
-
-  apps/mcp/shared:
-    dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.68.0
-        version: 0.68.0(zod@3.25.76)
-      '@firecrawl/client':
-        specifier: workspace:*
-        version: link:../../../packages/firecrawl-client
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.19.1
-        version: 1.21.1
-      dom-to-semantic-markdown:
-        specifier: ^1.5.0
-        version: 1.5.0
-      jsdom:
-        specifier: ^27.1.0
-        version: 27.1.0
-      openai:
-        specifier: ^5.20.2
-        version: 5.23.2(ws@8.18.3)(zod@3.25.76)
-      pdf-parse:
-        specifier: ^1.1.1
-        version: 1.1.4
-      zod:
         specifier: ^3.24.2
         version: 3.25.76
       zod-to-json-schema:
@@ -175,12 +65,21 @@ importers:
       '@types/pdf-parse':
         specifier: ^1.1.5
         version: 1.1.5
+      '@types/supertest':
+        specifier: ^6.0.2
+        version: 6.0.3
       eslint:
         specifier: ^9.39.1
         version: 9.39.1(jiti@2.6.1)
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
+      supertest:
+        specifier: ^7.0.0
+        version: 7.1.4
+      tsx:
+        specifier: ^4.19.4
+        version: 4.20.6
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
