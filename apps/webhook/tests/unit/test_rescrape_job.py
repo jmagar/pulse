@@ -9,13 +9,21 @@ from datetime import datetime, timezone
 @pytest.mark.asyncio
 async def test_rescrape_changed_url_success():
     """Test successful rescrape of changed URL."""
-    # Mock change event
+    # Mock change event with rich metadata
     mock_event = ChangeEvent(
         id=123,
         watch_id="test-watch",
         watch_url="https://example.com/test",
         detected_at=datetime.now(timezone.utc),
         rescrape_status="queued",
+        extra_metadata={
+            "watch_title": "Test Watch",
+            "signature": "sha256=abc123",
+            "diff_size": 100,
+            "raw_payload_version": "1.0",
+            "detected_at": "2025-11-10T12:00:00Z",
+            "webhook_received_at": "2025-11-10T12:00:01Z",
+        },
     )
 
     # Mock database session

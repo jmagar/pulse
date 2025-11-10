@@ -365,6 +365,48 @@ async def webhook_firecrawl(
     return JSONResponse(status_code=status_code, content=result)
 
 
+def _compute_diff_size(snapshot: str | None) -> int:
+    """
+    Compute the size of the snapshot content in bytes.
+
+    <summary>
+    Helper function to calculate diff size from snapshot content.
+    </summary>
+
+    <param name="snapshot">The snapshot content string</param>
+    <returns>Size in bytes, or 0 if snapshot is None</returns>
+    """
+    return len(snapshot) if snapshot else 0
+
+
+def _extract_changedetection_metadata(
+    payload: ChangeDetectionPayload,
+    signature: str,
+    snapshot_size: int,
+) -> dict[str, Any]:
+    """
+    Extract and structure metadata from changedetection webhook payload.
+
+    <summary>
+    Builds a comprehensive metadata dictionary with webhook signature,
+    payload version, timestamps, and computed metrics.
+    </summary>
+
+    <param name="payload">The validated changedetection payload</param>
+    <param name="signature">HMAC signature from X-Signature header</param>
+    <param name="snapshot_size">Computed size of snapshot content</param>
+    <returns>Structured metadata dictionary</returns>
+    """
+    return {
+        "watch_title": payload.watch_title,
+        "webhook_received_at": datetime.now(timezone.utc).isoformat(),
+        "signature": signature,
+        "diff_size": snapshot_size,
+        "raw_payload_version": "1.0",
+        "detected_at": payload.detected_at,
+    }
+
+
 @router.post("/api/webhook/changedetection", status_code=202)
 @limiter.exempt
 async def handle_changedetection_webhook(
@@ -421,6 +463,10 @@ async def handle_changedetection_webhook(
     # Store change event in database
     from app.models.timing import ChangeEvent
 
+    # Compute metadata
+    snapshot_size = _compute_diff_size(payload.snapshot)
+    metadata = _extract_changedetection_metadata(payload, signature, snapshot_size)
+
     change_event = ChangeEvent(
         watch_id=payload.watch_id,
         watch_url=payload.watch_url,
@@ -428,10 +474,7 @@ async def handle_changedetection_webhook(
         diff_summary=payload.snapshot[:500] if payload.snapshot else None,
         snapshot_url=payload.diff_url,
         rescrape_status="queued",
-        metadata={
-            "watch_title": payload.watch_title,
-            "webhook_received_at": datetime.now(timezone.utc).isoformat(),
-        },
+        extra_metadata=metadata,
     )
 
     db.add(change_event)

@@ -120,3 +120,17 @@ async def test_changedetection_webhook_stores_event(db_session):
     assert event.watch_url == "https://example.com/dbtest"
     assert event.watch_id == "db-test-watch"
     assert event.rescrape_status == "queued"
+
+    # Verify richer metadata fields
+    assert event.extra_metadata is not None
+    assert "watch_title" in event.extra_metadata
+    assert event.extra_metadata["watch_title"] == "DB Test"
+    assert "webhook_received_at" in event.extra_metadata
+    assert "signature" in event.extra_metadata
+    assert event.extra_metadata["signature"] == f"sha256={signature}"
+    assert "diff_size" in event.extra_metadata
+    assert event.extra_metadata["diff_size"] == len("Test content")
+    assert "raw_payload_version" in event.extra_metadata
+    assert event.extra_metadata["raw_payload_version"] == "1.0"
+    assert "detected_at" in event.extra_metadata
+    assert event.extra_metadata["detected_at"] == "2025-11-10T12:00:00Z"
