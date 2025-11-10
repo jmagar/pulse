@@ -148,6 +148,13 @@ class Settings(BaseSettings):
         description="RRF k constant (standard is 60)",
     )
 
+    # Worker Configuration
+    enable_worker: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("WEBHOOK_ENABLE_WORKER", "SEARCH_BRIDGE_ENABLE_WORKER"),
+        description="Enable background worker thread for processing indexing jobs",
+    )
+
     # PostgreSQL Database (for timing metrics)
     # Supports WEBHOOK_DATABASE_URL or falls back to DATABASE_URL (shared) or SEARCH_BRIDGE_DATABASE_URL (legacy)
     database_url: str = Field(

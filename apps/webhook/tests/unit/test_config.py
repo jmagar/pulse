@@ -195,3 +195,20 @@ def test_webhook_secret_validation() -> None:
                 os.environ[key] = value
             else:
                 os.environ.pop(key, None)
+
+
+def test_enable_worker_default_true() -> None:
+    """Worker should be enabled by default."""
+    settings = Settings(_env_file=None, WEBHOOK_API_SECRET="test", WEBHOOK_SECRET="test1234567890123456")
+    assert settings.enable_worker is True
+
+
+def test_enable_worker_can_be_disabled() -> None:
+    """Worker can be disabled via environment variable."""
+    settings = Settings(
+        _env_file=None,
+        WEBHOOK_API_SECRET="test",
+        WEBHOOK_SECRET="test1234567890123456",
+        WEBHOOK_ENABLE_WORKER="false"
+    )
+    assert settings.enable_worker is False
