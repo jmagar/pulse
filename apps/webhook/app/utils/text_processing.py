@@ -10,6 +10,7 @@ from typing import Any
 from transformers import AutoTokenizer
 
 from app.utils.logging import get_logger
+from app.utils.url import normalize_url
 
 logger = get_logger(__name__)
 

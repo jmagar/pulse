@@ -15,7 +15,7 @@ from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.vector_store import VectorStore
 from app.utils.logging import get_logger
-from app.utils.text_processing import TextChunker, clean_text, extract_domain
+from app.utils.text_processing import TextChunker, clean_text, extract_domain, normalize_url
 from app.utils.timing import TimingContext
 
 logger = get_logger(__name__)
@@ -82,12 +82,14 @@ class IndexingService:
                 "error": "No content after cleaning",
             }
 
-        # Extract domain
+        # Extract domain and canonical URL
         domain = extract_domain(document.url)
+        canonical_url = normalize_url(document.url, remove_tracking=True)
 
         # Prepare chunk metadata
         chunk_metadata = {
             "url": document.url,
+            "canonical_url": canonical_url,
             "domain": domain,
             "title": document.title,
             "description": document.description,
@@ -198,6 +200,7 @@ class IndexingService:
         try:
             bm25_metadata = {
                 "url": document.url,
+                "canonical_url": canonical_url,
                 "domain": domain,
                 "title": document.title,
                 "description": document.description,

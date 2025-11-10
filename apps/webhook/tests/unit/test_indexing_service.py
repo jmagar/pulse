@@ -262,3 +262,43 @@ async def test_metadata_extraction(
     assert metadata["country"] == "US"
     assert metadata["isMobile"] is True
     assert "domain" in metadata
+
+
+@pytest.mark.asyncio
+async def test_canonical_url_normalization(
+    indexing_service: IndexingService,
+    mock_text_chunker: MagicMock,
+    mock_bm25_engine: MagicMock,
+) -> None:
+    """Test that canonical URLs are normalized and included in metadata."""
+    # URL with tracking parameters and fragment
+    document = IndexDocumentRequest(
+        url="https://Example.COM/page?id=123&utm_source=twitter&utm_medium=social#section",
+        resolvedUrl="https://example.com/page",
+        title="Test Page",
+        markdown="Content",
+        html="<p>Content</p>",
+        statusCode=200,
+    )
+
+    await indexing_service.index_document(document)
+
+    # Check chunker was called with canonical URL in metadata
+    chunker_call_args = mock_text_chunker.chunk_text.call_args
+    chunker_metadata = (
+        chunker_call_args[0][1]
+        if len(chunker_call_args[0]) > 1
+        else chunker_call_args[1].get("metadata", {})
+    )
+
+    # Original URL should be preserved
+    assert chunker_metadata["url"] == "https://Example.COM/page?id=123&utm_source=twitter&utm_medium=social#section"
+
+    # Canonical URL should be normalized (lowercase, no fragment, no tracking)
+    assert chunker_metadata["canonical_url"] == "https://example.com/page?id=123"
+
+    # Check BM25 also received canonical URL
+    bm25_call_args = mock_bm25_engine.index_document.call_args
+    bm25_metadata = bm25_call_args[1]["metadata"]
+
+    assert bm25_metadata["canonical_url"] == "https://example.com/page?id=123"
