@@ -16,8 +16,7 @@ Last Updated: 2025-11-09
 | 4303  | Redis                    | firecrawl_cache           | Redis    | Active |
 | 4304  | PostgreSQL               | firecrawl_db              | Postgres | Active |
 | 4305  | Extract Worker           | firecrawl                 | HTTP     | Active |
-| 52100 | Webhook Bridge API       | firecrawl_webhook         | HTTP     | Active |
-| N/A   | Webhook Worker           | firecrawl_webhook_worker  | N/A      | Active |
+| 52100 | Webhook Bridge API + Worker | firecrawl_webhook      | HTTP     | Active |
 
 ## Internal Service URLs (Docker Network)
 
@@ -85,20 +84,14 @@ These URLs are accessible from the host machine:
   - `public`: Firecrawl API data
   - `webhook`: Webhook bridge timing metrics (future)
 
-### Webhook Bridge API
+### Webhook Bridge API + Worker
 - **Container**: firecrawl_webhook
 - **Port**: 52100
-- **Purpose**: FastAPI server providing search indexing webhook endpoint with hybrid vector/BM25 search
+- **Purpose**: FastAPI server with embedded background worker thread for search indexing with hybrid vector/BM25 search
 - **Dependencies**: firecrawl_db, firecrawl_cache
 - **Health Check**: HTTP GET /health
 - **External Services**: Qdrant (vector store), TEI (text embeddings)
-
-### Webhook Worker
-- **Container**: firecrawl_webhook_worker
-- **Port**: N/A (background worker)
-- **Purpose**: Background job processor for indexing scraped content into Qdrant
-- **Dependencies**: firecrawl_cache, firecrawl_webhook
-- **Health Check**: Redis connection test
+- **Worker**: RQ worker runs as background thread within the same process
 
 ## Port Range Allocation
 
