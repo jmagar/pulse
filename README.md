@@ -134,6 +134,16 @@ PostgreSQL is shared across services with schema isolation:
 - API: `52100`
 - Worker: Background process (no port)
 
+### changedetection.io (Port 50109)
+
+Website change detection and monitoring service.
+
+- **Purpose:** Track content changes on monitored URLs
+- **Web UI:** http://localhost:50109
+- **Shared Resources:** Uses firecrawl_playwright for JavaScript rendering
+- **Storage:** File-based in `/datastore` volume
+- **Integration:** Notifies webhook bridge on change detection
+
 ## Quick Start
 
 ### Using Docker Compose (Recommended)
@@ -499,6 +509,31 @@ cd apps/webhook
 uv run pytest --cov=app --cov-report=term --cov-report=html
 open htmlcov/index.html  # View coverage report
 ```
+
+## Monitoring Websites for Changes
+
+### Adding a Watch
+
+1. Open changedetection.io UI: http://localhost:50109
+2. Click "Add new change detection watch"
+3. Enter URL to monitor
+4. (Optional) Configure:
+   - Check interval (default: 1 hour)
+   - CSS selector for specific content
+   - Playwright for JavaScript-heavy sites
+5. Save watch
+
+### Configuring Automatic Rescraping
+
+When changedetection detects a change, it can automatically trigger Firecrawl to rescrape and re-index the content:
+
+1. In changedetection.io, edit a watch
+2. Go to "Notifications" tab
+3. Add notification URL: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+4. Set notification body template (see docs/CHANGEDETECTION_INTEGRATION.md)
+5. Save configuration
+
+Changed content will be automatically indexed for search within minutes.
 
 ## Documentation
 
