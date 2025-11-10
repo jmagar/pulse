@@ -14,6 +14,7 @@ from app.models import (
     FirecrawlPageEvent,
     IndexDocumentRequest,
 )
+from app.services.auto_watch import create_watch_for_url
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -113,6 +114,18 @@ async def _handle_page_event(
                     url=document.metadata.url,
                     document_index=idx,
                 )
+
+                # Attempt to create auto-watch for this URL
+                try:
+                    await create_watch_for_url(document.metadata.url)
+                except Exception as watch_error:
+                    logger.warning(
+                        "Auto-watch creation failed but indexing continues",
+                        url=document.metadata.url,
+                        error=str(watch_error),
+                        error_type=type(watch_error).__name__,
+                    )
+
             except Exception as queue_error:
                 logger.error(
                     "Failed to enqueue document",

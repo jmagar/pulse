@@ -98,3 +98,19 @@ async def db_session():
         # Rollback is handled by get_db_context on exception
         # For successful tests, we still want to rollback to maintain isolation
         await session.rollback()
+
+
+@pytest.fixture
+def test_queue():
+    """
+    Provide a mock RQ queue for testing webhook handlers.
+
+    Returns a MagicMock that can be used to verify queue.enqueue calls.
+    """
+    from unittest.mock import MagicMock
+    queue = MagicMock()
+    # Configure enqueue to return a job with an ID
+    job = MagicMock()
+    job.id = "test-job-id"
+    queue.enqueue.return_value = job
+    return queue
