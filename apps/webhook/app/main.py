@@ -65,12 +65,37 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         logger.error("Failed to ensure Qdrant collection", error=str(e))
         # Don't fail startup - collection might be created later
 
+    # Start background worker thread if enabled
+    worker_manager = None
+    if settings.enable_worker:
+        from app.worker_thread import WorkerThreadManager
+
+        logger.info("Starting background worker thread...")
+        worker_manager = WorkerThreadManager()
+        try:
+            worker_manager.start()
+            app.state.worker_manager = worker_manager
+            logger.info("Background worker started successfully")
+        except Exception as e:
+            logger.error("Failed to start background worker", error=str(e))
+            # Don't fail startup - API can run without worker
+    else:
+        logger.info("Background worker disabled (WEBHOOK_ENABLE_WORKER=false)")
+
     logger.info("Search Bridge API ready")
 
     yield
 
     # Shutdown
     logger.info("Shutting down Search Bridge API")
+
+    # Stop background worker if running
+    if worker_manager is not None:
+        try:
+            worker_manager.stop()
+            logger.info("Background worker stopped successfully")
+        except Exception:
+            logger.exception("Failed to stop background worker")
 
     # Clean up async resources
     try:
