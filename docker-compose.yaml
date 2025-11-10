@@ -95,6 +95,36 @@ services:
       retries: 3
       start_period: 40s
 
+  firecrawl_changedetection:
+    <<: *common-service
+    image: ghcr.io/dgtlmoon/changedetection.io:latest
+    container_name: firecrawl_changedetection
+    hostname: changedetection
+    ports:
+      - "${CHANGEDETECTION_PORT:-50109}:5000"
+    volumes:
+      - changedetection_data:/datastore
+    environment:
+      - PLAYWRIGHT_DRIVER_URL=${CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL:-ws://firecrawl_playwright:3000}
+      - BASE_URL=${CHANGEDETECTION_BASE_URL:-http://localhost:50109}
+      - FETCH_WORKERS=${CHANGEDETECTION_FETCH_WORKERS:-10}
+      - MINIMUM_SECONDS_RECHECK_TIME=${CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME:-60}
+      - LOGGER_LEVEL=INFO
+      - HIDE_REFERER=true
+    depends_on:
+      - firecrawl_playwright
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/')\""]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
 networks:
   firecrawl:
     driver: bridge
+
+volumes:
+  changedetection_data:
+    name: firecrawl_changedetection_data
