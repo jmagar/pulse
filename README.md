@@ -31,8 +31,8 @@ All applications share common infrastructure (PostgreSQL, Redis, Docker network)
 ```
 pulse/
 ├── apps/
-│   ├── api/              # Firecrawl API (Node.js/TypeScript) - Deleted, using official image
 │   ├── mcp/              # MCP Server (Node.js/TypeScript)
+│   ├── nuq-postgres/     # Custom PostgreSQL with Nuqs extension
 │   ├── web/              # Web Interface (Next.js)
 │   └── webhook/          # Search Bridge (Python/FastAPI)
 ├── packages/
