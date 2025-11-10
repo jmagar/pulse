@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ExtractClientFactory } from '../../../processing/extraction/index.js';
-import type { IScrapingClients, StrategyConfigFactory } from '../../../server.js';
+import { ExtractClientFactory } from '../../processing/extraction/index.js';
+import type { IScrapingClients, StrategyConfigFactory } from '../../mcp-server.js';
 import { buildScrapeArgsSchema } from './schema.js';
 import { checkCache, scrapeContent, processContent, saveToStorage } from './pipeline.js';
 import {

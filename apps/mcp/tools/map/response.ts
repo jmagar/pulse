@@ -1,6 +1,6 @@
 import type { MapResult } from '@firecrawl/client';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { DEFAULT_LANGUAGE_EXCLUDES } from '../../../config/crawl-config.js';
+import { DEFAULT_LANGUAGE_EXCLUDES } from '../../config/crawl-config.js';
 
 /**
  * Check if a URL matches any language exclusion pattern

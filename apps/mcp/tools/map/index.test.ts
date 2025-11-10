@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMapTool } from './index.js';
-import type { FirecrawlConfig, ToolResponse } from '../../../types.js';
+import type { FirecrawlConfig, ToolResponse } from '../../types.js';
 
 describe('Map Tool', () => {
   let config: FirecrawlConfig;

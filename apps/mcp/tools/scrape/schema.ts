@@ -9,7 +9,7 @@
  */
 
 import { z } from 'zod';
-import { ExtractClientFactory } from '../../../processing/extraction/index.js';
+import { ExtractClientFactory } from '../../processing/extraction/index.js';
 import { browserActionsArraySchema } from './action-types.js';
 
 /**

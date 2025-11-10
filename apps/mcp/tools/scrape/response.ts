@@ -1,6 +1,6 @@
 import { detectContentType } from './helpers.js';
-import type { ScrapeDiagnostics } from '../../../types.js';
-import { logError } from '../../../utils/logging.js';
+import type { ScrapeDiagnostics } from '../../types.js';
+import { logError } from '../../utils/logging.js';
 
 export interface ResponseContent {
   type: string;

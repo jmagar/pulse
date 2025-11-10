@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createCrawlTool } from './index.js';
-import type { FirecrawlConfig, ToolResponse } from '../../../types.js';
+import type { FirecrawlConfig, ToolResponse } from '../../types.js';
 
 describe('Crawl Tool', () => {
   let config: FirecrawlConfig;

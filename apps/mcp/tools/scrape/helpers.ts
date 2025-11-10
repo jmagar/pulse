@@ -7,8 +7,8 @@
  * @module shared/mcp/tools/scrape/helpers
  */
 
-import type { IScrapingClients } from '../../../server.js';
-import { buildCrawlRequestConfig, shouldStartCrawl } from '../../../config/crawl-config.js';
+import type { IScrapingClients } from '../../mcp-server.js';
+import { buildCrawlRequestConfig, shouldStartCrawl } from '../../config/crawl-config.js';
 
 /**
  * Detect content type from content analysis

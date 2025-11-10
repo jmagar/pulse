@@ -1,5 +1,5 @@
 import { FirecrawlCrawlClient } from '@firecrawl/client';
-import type { FirecrawlConfig } from '../../../types.js';
+import type { FirecrawlConfig } from '../../types.js';
 import { crawlOptionsSchema, buildCrawlInputSchema } from './schema.js';
 import { crawlPipeline } from './pipeline.js';
 import { formatCrawlResponse } from './response.js';

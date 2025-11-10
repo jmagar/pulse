@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createSearchTool } from './index.js';
-import type { FirecrawlConfig } from '../../../types.js';
+import type { FirecrawlConfig } from '../../types.js';
 
 describe('Search Tool', () => {
   let config: FirecrawlConfig;

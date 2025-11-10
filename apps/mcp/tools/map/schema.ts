@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { env, parseNumber } from '../../../config/environment.js';
+import { env, parseNumber } from '../../config/environment.js';
 
 // Read defaults from environment variables
 // Reserved for future location filtering implementation

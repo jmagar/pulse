@@ -7,14 +7,14 @@
  * @module shared/mcp/tools/scrape/pipeline
  */
 
-import { ResourceStorageFactory } from '../../../storage/index.js';
-import { ExtractClientFactory } from '../../../processing/extraction/index.js';
-import { createCleaner } from '../../../processing/cleaning/index.js';
-import type { IScrapingClients, StrategyConfigFactory } from '../../../server.js';
-import { scrapeWithStrategy } from '../../../scraping/strategies/selector.js';
+import { ResourceStorageFactory } from '../../storage/index.js';
+import { ExtractClientFactory } from '../../processing/extraction/index.js';
+import { createCleaner } from '../../processing/cleaning/index.js';
+import type { IScrapingClients, StrategyConfigFactory } from '../../mcp-server.js';
+import { scrapeWithStrategy } from '../../scraping/strategies/selector.js';
 import { detectContentType, startBaseUrlCrawl } from './helpers.js';
-import type { ScrapeDiagnostics } from '../../../types.js';
-import { logWarning, logError, logDebug, logInfo } from '../../../utils/logging.js';
+import type { ScrapeDiagnostics } from '../../types.js';
+import { logWarning, logError, logDebug, logInfo } from '../../utils/logging.js';
 
 /**
  * Configuration options for scraping pipeline

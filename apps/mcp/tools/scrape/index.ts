@@ -10,7 +10,7 @@
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import type { IScrapingClients, StrategyConfigFactory } from '../../../server.js';
+import type { IScrapingClients, StrategyConfigFactory } from '../../mcp-server.js';
 import { buildInputSchema } from './schema.js';
 import { handleScrapeRequest } from './handler.js';
 
