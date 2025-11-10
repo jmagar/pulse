@@ -7,14 +7,13 @@ This guide helps diagnose and resolve issues with webhook delivery from Firecraw
 ## Architecture
 
 ```
-Firecrawl API → Docker Network → Webhook Bridge API → Redis Queue → Worker → Qdrant/BM25
+Firecrawl API → Docker Network → Webhook Bridge (API + Worker Thread) → Redis Queue → Qdrant/BM25
 ```
 
 ### Services Involved
 
 - **Firecrawl** (`firecrawl`): Web scraper that sends webhooks
-- **Webhook Bridge** (`firecrawl_webhook`): FastAPI service that receives webhooks
-- **Webhook Worker** (`firecrawl_webhook_worker`): Background processor for indexing
+- **Webhook Bridge** (`firecrawl_webhook`): FastAPI service with embedded worker thread
 - **Redis** (`firecrawl_cache`): Job queue
 - **Qdrant**: Vector database for semantic search
 - **TEI**: Text embeddings inference service
@@ -139,20 +138,18 @@ WEBHOOK_SECRET=your-shared-secret-here
 
 **Diagnosis:**
 ```bash
-# Check worker is running
-docker ps | grep webhook_worker
-
-# Check worker logs
-docker logs firecrawl_webhook_worker --tail 50
+# Check worker thread is running (look for startup messages)
+docker logs firecrawl_webhook | grep -i worker
 
 # Check Redis queue length
-docker exec firecrawl_cache redis-cli LLEN rq:queue:default
+docker exec firecrawl_cache redis-cli LLEN rq:queue:indexing
 ```
 
 **Common Causes:**
-1. Worker not running → restart with `docker compose restart firecrawl_webhook_worker`
-2. Qdrant connection issues → check `docker logs firecrawl_webhook | grep qdrant`
-3. TEI service down → check `docker logs firecrawl_webhook | grep tei`
+1. Worker disabled in config → check `WEBHOOK_ENABLE_WORKER=true` in .env
+2. Worker thread crashed → restart with `docker compose restart firecrawl_webhook`
+3. Qdrant connection issues → check `docker logs firecrawl_webhook | grep qdrant`
+4. TEI service down → check `docker logs firecrawl_webhook | grep tei`
 
 ## Monitoring Webhooks
 
@@ -168,9 +165,9 @@ docker logs -f firecrawl 2>&1 | grep -i webhook
 docker logs -f firecrawl_webhook | grep -E "(Webhook received|Webhook processed)"
 ```
 
-**Watch Worker processing:**
+**Watch Worker processing (same container as API):**
 ```bash
-docker logs -f firecrawl_webhook_worker
+docker logs -f firecrawl_webhook | grep -E "(Indexing job|Worker)"
 ```
 
 ### Log Patterns to Look For
@@ -251,6 +248,47 @@ Expected output:
 }
 ```
 
+### Worker Status
+
+**Check if worker thread is running:**
+
+The worker runs as a background thread within the webhook API container. Check logs:
+
+```bash
+docker logs firecrawl_webhook | grep -i worker
+```
+
+Look for:
+```
+[info] Starting background worker thread...
+[info] Background worker started successfully
+[info] Worker initialized, listening for jobs...
+```
+
+**Disable worker for debugging:**
+
+Set `WEBHOOK_ENABLE_WORKER=false` to run API without worker:
+
+```bash
+# In .env
+WEBHOOK_ENABLE_WORKER=false
+```
+
+Then restart:
+```bash
+docker compose restart firecrawl_webhook
+```
+
+**Check worker is processing jobs:**
+
+```bash
+# Check Redis queue length
+docker exec firecrawl_cache redis-cli LLEN rq:queue:indexing
+
+# Monitor worker processing
+docker logs -f firecrawl_webhook | grep "Indexing job"
+```
+
 ## Configuration Summary
 
 ### Required Environment Variables
@@ -292,11 +330,8 @@ curl -X POST http://localhost:4300/v1/crawl \
 # Terminal 1: Firecrawl webhooks
 docker logs -f firecrawl 2>&1 | grep -i webhook
 
-# Terminal 2: Webhook Bridge
+# Terminal 2: Webhook Bridge (API + Worker)
 docker logs -f firecrawl_webhook
-
-# Terminal 3: Worker
-docker logs -f firecrawl_webhook_worker
 ```
 
 3. **Verify indexing:**
@@ -323,8 +358,8 @@ When webhooks aren't working, check in this order:
 - [ ] `ALLOW_LOCAL_WEBHOOKS=true` to bypass SSRF protection
 - [ ] HMAC secrets match between Firecrawl and Bridge
 - [ ] Webhook Bridge service is running and healthy
-- [ ] Worker service is running
-- [ ] Redis is accessible from both services
+- [ ] Worker thread started successfully (`WEBHOOK_ENABLE_WORKER=true`)
+- [ ] Redis is accessible
 - [ ] Qdrant and TEI services are healthy
 - [ ] Network connectivity (all services on same Docker network)
 
@@ -370,7 +405,6 @@ If issues persist:
    ```bash
    docker logs firecrawl > firecrawl.log 2>&1
    docker logs firecrawl_webhook > webhook.log 2>&1
-   docker logs firecrawl_webhook_worker > worker.log 2>&1
    ```
 
 3. Check container networking:
