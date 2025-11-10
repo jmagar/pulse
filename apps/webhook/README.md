@@ -29,30 +29,22 @@ Firecrawl (steamy-wsl) → Search Bridge API → Redis Queue → Background Work
 
 ### Installation
 
-```bash
-# Clone repository
-git clone https://github.com/jmagar/fc-bridge.git
-cd fc-bridge
+Run from monorepo root:
 
+```bash
 # Copy environment template
 cp .env.example .env
 # Edit .env with your configuration
 
 # Install dependencies
-make install
+cd apps/webhook && make install
 
-# Check port availability
-make ports
-
-# Start Docker services (Redis, Qdrant, TEI)
-make services
-
-# Run API server (in one terminal)
-make dev
-
-# Run background worker (in another terminal)
-make worker
+# Start all services via Docker Compose
+cd /compose/pulse
+docker compose up -d firecrawl_webhook firecrawl_webhook_worker
 ```
+
+For standalone deployment, see root `docker-compose.yaml` for service definition.
 
 ### API Endpoints
 

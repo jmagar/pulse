@@ -57,11 +57,15 @@ Add to `claude_desktop_config.json`:
 
 **Option 2: Remote Mode (Docker)**
 
+Run from monorepo root:
+
 ```bash
-docker compose up -d
+docker compose up -d firecrawl_mcp
 ```
 
 Server runs on `http://localhost:3060`
+
+For standalone deployment, see root `docker-compose.yaml` for service definition.
 
 [→ Full installation guide](docs/GETTING_STARTED.md#installation)
 
