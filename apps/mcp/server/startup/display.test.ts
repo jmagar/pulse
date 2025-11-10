@@ -20,12 +20,12 @@ describe('Startup Display', () => {
 
   describe('displayStartupInfo()', () => {
     const mockConfig: ServerConfig = {
-      port: 3060,
-      serverUrl: 'http://localhost:3060',
-      mcpEndpoint: 'http://localhost:3060/mcp',
-      healthEndpoint: 'http://localhost:3060/health',
+      port: Number(process.env.MCP_PORT || '50107'),
+      serverUrl: `http://localhost:${process.env.MCP_PORT || '50107'}`,
+      mcpEndpoint: `http://localhost:${process.env.MCP_PORT || '50107'}/mcp`,
+      healthEndpoint: `http://localhost:${process.env.MCP_PORT || '50107'}/health`,
       allowedOrigins: ['*'],
-      allowedHosts: ['localhost:3060'],
+      allowedHosts: [`localhost:${process.env.MCP_PORT || '50107'}`],
       oauthEnabled: false,
       resumabilityEnabled: true,
     };
@@ -45,8 +45,8 @@ describe('Startup Display', () => {
       const output = consoleLogSpy.mock.calls.map((call: any) => call[0]).join('\n');
 
       expect(output).toContain('Server Endpoints');
-      expect(output).toContain('http://localhost:3060/mcp');
-      expect(output).toContain('http://localhost:3060/health');
+      expect(output).toContain(`http://localhost:${process.env.MCP_PORT || '50107'}/mcp`);
+      expect(output).toContain(`http://localhost:${process.env.MCP_PORT || '50107'}/health`);
     });
 
     it('should display security configuration', async () => {
@@ -109,6 +109,30 @@ describe('Startup Display', () => {
       await displayStartupInfo(mockConfig);
 
       expect(consoleClearSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle dynamic port configuration from environment', async () => {
+      // Set MCP_PORT environment variable
+      process.env.MCP_PORT = '50107';
+
+      const dynamicConfig: ServerConfig = {
+        port: Number(process.env.MCP_PORT || '50107'),
+        serverUrl: `http://localhost:${process.env.MCP_PORT || '50107'}`,
+        mcpEndpoint: `http://localhost:${process.env.MCP_PORT || '50107'}/mcp`,
+        healthEndpoint: `http://localhost:${process.env.MCP_PORT || '50107'}/health`,
+        allowedOrigins: ['*'],
+        allowedHosts: [`localhost:${process.env.MCP_PORT || '50107'}`],
+        oauthEnabled: false,
+        resumabilityEnabled: true,
+      };
+
+      await displayStartupInfo(dynamicConfig);
+
+      const output = consoleLogSpy.mock.calls.map((call: any) => call[0]).join('\n');
+
+      // Verify the dynamic port is used in the output
+      expect(output).toContain('http://localhost:50107/mcp');
+      expect(output).toContain('http://localhost:50107/health');
     });
   });
 });

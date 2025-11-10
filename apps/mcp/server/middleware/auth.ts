@@ -32,8 +32,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
  * - METRICS_AUTH_KEY=your-secret-key
  *
  * Access authenticated endpoints with:
- * - X-Metrics-Key header: curl -H "X-Metrics-Key: your-secret-key" http://localhost:3060/metrics
- * - key query parameter: curl http://localhost:3060/metrics?key=your-secret-key
+ * - X-Metrics-Key header: curl -H "X-Metrics-Key: your-secret-key" http://localhost:${MCP_PORT}/metrics
+ * - key query parameter: curl http://localhost:${MCP_PORT}/metrics?key=your-secret-key
  *
  * @param req - Express request object
  * @param res - Express response object
