@@ -5,7 +5,7 @@ import type { ClientFactory, StrategyConfigFactory } from '../server.js';
 import { ResourceStorageFactory } from '../storage/index.js';
 
 // Mock the tool creation functions
-vi.mock('./tools/scrape/index.js', () => ({
+vi.mock('./scrape/index.js', () => ({
   scrapeTool: vi.fn(() => ({
     name: 'scrape',
     description: 'Scrape tool',
@@ -14,7 +14,7 @@ vi.mock('./tools/scrape/index.js', () => ({
   })),
 }));
 
-vi.mock('./tools/search/index.js', () => ({
+vi.mock('./search/index.js', () => ({
   createSearchTool: vi.fn(() => ({
     name: 'search',
     description: 'Search tool',
@@ -23,7 +23,7 @@ vi.mock('./tools/search/index.js', () => ({
   })),
 }));
 
-vi.mock('./tools/map/index.js', () => ({
+vi.mock('./map/index.js', () => ({
   createMapTool: vi.fn(() => ({
     name: 'map',
     description: 'Map tool',
@@ -32,7 +32,7 @@ vi.mock('./tools/map/index.js', () => ({
   })),
 }));
 
-vi.mock('./tools/crawl/index.js', () => ({
+vi.mock('./crawl/index.js', () => ({
   createCrawlTool: vi.fn(() => ({
     name: 'crawl',
     description: 'Crawl tool',
@@ -112,7 +112,7 @@ describe('MCP Registration with Tracking', () => {
 
     it('should continue registration if one tool fails', async () => {
       // Make scrape tool throw an error
-      const { scrapeTool } = await import('./tools/scrape/index.js');
+      const { scrapeTool } = await import('./scrape/index.js');
       vi.mocked(scrapeTool).mockImplementationOnce(() => {
         throw new Error('Scrape tool failed');
       });
@@ -147,7 +147,7 @@ describe('MCP Registration with Tracking', () => {
 
     it('should record error messages for failed registrations', async () => {
       // Make search tool throw an error
-      const { createSearchTool } = await import('./tools/search/index.js');
+      const { createSearchTool } = await import('./search/index.js');
       vi.mocked(createSearchTool).mockImplementationOnce(() => {
         throw new Error('Test error message');
       });

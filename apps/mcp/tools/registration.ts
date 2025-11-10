@@ -17,10 +17,10 @@ import {
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import type { ClientFactory, StrategyConfigFactory } from '../server.js';
-import { scrapeTool } from './tools/scrape/index.js';
-import { createSearchTool } from './tools/search/index.js';
-import { createMapTool } from './tools/map/index.js';
-import { createCrawlTool } from './tools/crawl/index.js';
+import { scrapeTool } from './scrape/index.js';
+import { createSearchTool } from './search/index.js';
+import { createMapTool } from './map/index.js';
+import { createCrawlTool } from './crawl/index.js';
 import { ResourceStorageFactory } from '../storage/index.js';
 import type { FirecrawlConfig } from '../types.js';
 import { logInfo, logError } from '../utils/logging.js';

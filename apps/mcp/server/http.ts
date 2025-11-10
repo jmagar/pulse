@@ -116,11 +116,11 @@ export async function createExpressServer(): Promise<Application> {
         // New initialization request - create transport and server
         transport = createTransport({
           enableResumability: process.env.ENABLE_RESUMABILITY === 'true',
-          onSessionInitialized: (sid) => {
+          onSessionInitialized: (sid: string) => {
             logInfo('MCP', 'Session initialized', { sessionId: sid });
             transports[sid] = transport;
           },
-          onSessionClosed: (sid) => {
+          onSessionClosed: (sid: string) => {
             logInfo('MCP', 'Session closed', { sessionId: sid });
             delete transports[sid];
           },

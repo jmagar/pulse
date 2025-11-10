@@ -13,7 +13,7 @@ import {
   getMetricsCollector,
   ConsoleExporter,
   JSONExporter,
-} from '../../shared/monitoring/index.js';
+} from '../../monitoring/index.js';
 
 /**
  * Handle GET /metrics - Returns console-formatted metrics

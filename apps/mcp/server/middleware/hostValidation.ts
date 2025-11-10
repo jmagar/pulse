@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { logWarning } from '../shared/utils/logging.js';
+import { logWarning } from '../../utils/logging.js';
 
 /**
  * Middleware to log when requests would be blocked by DNS rebinding protection

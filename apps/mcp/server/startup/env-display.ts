@@ -5,8 +5,8 @@
  * proper masking of sensitive values (API keys) and categorization.
  */
 
-import { env } from '../../shared/config/environment.js';
-import { colorHelpers, maskSensitiveValue } from '../../shared/utils/logging.js';
+import { env } from '../../config/environment.js';
+import { colorHelpers, maskSensitiveValue } from '../../utils/logging.js';
 
 /**
  * Represents an environment variable for display purposes

@@ -17,10 +17,10 @@ import {
   createLine,
   Colors,
   colorize,
-} from '../../shared/utils/logging.js';
-import { getAllServiceStatuses, formatServiceStatus } from '../../shared/utils/service-status.js';
+} from '../../utils/logging.js';
+import { getAllServiceStatuses, formatServiceStatus } from '../../utils/service-status.js';
 import { formatEnvironmentVariables } from './env-display.js';
-import { formatRegistrationStatus, registrationTracker } from '../../shared/utils/mcp-status.js';
+import { formatRegistrationStatus, registrationTracker } from '../../utils/mcp-status.js';
 
 // Display constants
 const BANNER_WIDTH = 80;
@@ -188,7 +188,7 @@ function displayMCPStatus(): void {
     return;
   }
 
-  statusLines.forEach((line) => console.log(line));
+  statusLines.forEach((line: string) => console.log(line));
 
   const tracker = registrationTracker;
   const tools = tracker.getToolRegistrations();
