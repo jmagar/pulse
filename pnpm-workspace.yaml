@@ -1,7 +1,5 @@
 packages:
-  - apps/mcp/local
-  - apps/mcp/shared
-  - apps/mcp/remote
+  - apps/mcp
   - apps/web
   - apps/webhook
   - packages/*
