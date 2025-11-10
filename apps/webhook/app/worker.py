@@ -1,7 +1,15 @@
 """
 Background worker for async document indexing.
 
-This module runs as a separate process via RQ (Redis Queue).
+DEPRECATED: This module is kept for backward compatibility only.
+The worker now runs as a background thread within the FastAPI process.
+See app.worker_thread.WorkerThreadManager for the new implementation.
+
+To run worker standalone (not recommended):
+    python -m app.worker
+
+To run worker embedded in API (recommended):
+    WEBHOOK_ENABLE_WORKER=true uvicorn app.main:app
 """
 
 import asyncio
