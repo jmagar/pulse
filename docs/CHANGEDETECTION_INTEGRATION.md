@@ -6,6 +6,7 @@ This guide explains how to use changedetection.io with Firecrawl for automated w
 
 - [Architecture](#architecture)
 - [Setup](#setup)
+- [Automatic Watch Creation](#automatic-watch-creation)
 - [Usage](#usage)
 - [Troubleshooting](#troubleshooting)
 - [Advanced Configuration](#advanced-configuration)
@@ -136,6 +137,80 @@ To enable automatic rescraping when changes are detected:
 ```
 
 6. Save notification configuration
+
+## Automatic Watch Creation
+
+The webhook bridge automatically creates changedetection.io watches for all URLs scraped/crawled by Firecrawl. This creates a self-maintaining monitoring system.
+
+### How It Works
+
+```
+Firecrawl scrapes URL → indexed in search → changedetection watch created
+                                                      ↓
+                                              monitors for changes
+                                                      ↓
+                                          webhook → rescrape → re-index
+```
+
+### Configuration
+
+**Enable/Disable:**
+```bash
+WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=true  # Enable (default)
+WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=false # Disable
+```
+
+**Check Interval:**
+```bash
+WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL=3600  # 1 hour (default)
+WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL=21600 # 6 hours
+WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL=86400 # 24 hours
+```
+
+**API Access:**
+```bash
+WEBHOOK_CHANGEDETECTION_API_URL=http://firecrawl_changedetection:5000  # Default (internal Docker network)
+WEBHOOK_CHANGEDETECTION_API_KEY=                                        # Optional for authenticated instances
+```
+
+### Verification
+
+**Check created watches:**
+
+1. Open changedetection.io UI: http://localhost:50109
+2. Look for watches tagged with `firecrawl-auto`
+3. Verify webhook URL is configured: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+
+**Query via API:**
+```bash
+curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-auto")'
+```
+
+**Check webhook bridge logs:**
+```bash
+docker compose logs firecrawl_webhook | grep "Auto-created changedetection.io watch"
+```
+
+### Idempotency
+
+Watch creation is **idempotent**:
+- Duplicate URLs won't create multiple watches
+- Re-scraping the same URL reuses existing watch
+- No cleanup needed for repeated scrapes
+
+### Disabling Auto-Watch
+
+To disable automatic watch creation:
+
+```bash
+# Add to .env
+WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=false
+
+# Restart webhook service
+docker compose restart firecrawl_webhook
+```
+
+Existing watches remain active. Only new scrapes will skip watch creation.
 
 ## Usage
 
@@ -355,6 +430,33 @@ curl http://localhost:8080/health
 ```bash
 docker compose logs firecrawl_webhook | grep "index_document"
 ```
+
+### Auto-Watch Creation Failures
+
+**Check if auto-watch is enabled:**
+```bash
+docker compose exec firecrawl_webhook env | grep ENABLE_AUTO_WATCH
+```
+
+**View watch creation logs:**
+```bash
+docker compose logs firecrawl_webhook | grep "changedetection.io watch"
+```
+
+**Common issues:**
+
+1. **changedetection.io not accessible:**
+   - Verify service is running: `docker compose ps firecrawl_changedetection`
+   - Check internal URL: `docker compose exec firecrawl_webhook curl http://firecrawl_changedetection:5000/`
+
+2. **API authentication required:**
+   - Set `WEBHOOK_CHANGEDETECTION_API_KEY` if your instance requires auth
+   - Check changedetection.io settings for API key requirement
+
+3. **Watch creation fails but indexing succeeds:**
+   - This is expected behavior - watch creation is best-effort
+   - Indexing always proceeds regardless of watch creation status
+   - Check logs for specific error messages
 
 ## Advanced Configuration
 
