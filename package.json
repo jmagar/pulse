@@ -46,6 +46,11 @@
     "services:external:down": "docker --context gpu-machine compose -f docker-compose.external.yaml down",
     "services:external:ps": "docker --context gpu-machine compose -f docker-compose.external.yaml ps",
     "services:external:logs": "docker --context gpu-machine compose -f docker-compose.external.yaml logs -f",
-    "services:external:restart": "pnpm services:external:down && pnpm services:external:up"
+    "services:external:restart": "pnpm services:external:down && pnpm services:external:up",
+    "prepare": "husky",
+    "validate:filters": "bash scripts/validate-pnpm-filters.sh"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

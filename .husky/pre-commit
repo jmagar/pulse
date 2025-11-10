@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run pnpm filter validation if package.json changed
+if git diff --cached --name-only | grep -q "^package.json$"; then
+  echo "📦 package.json changed, validating pnpm filters..."
+  ./scripts/validate-pnpm-filters.sh
+fi
