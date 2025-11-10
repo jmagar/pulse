@@ -1,60 +1,69 @@
-# Multi-stage build for Pulse Fetch HTTP Server
+# Multi-stage build for Pulse Fetch MCP Server
 
 # Stage 1: Builder
 FROM node:20-alpine AS builder
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
 
-# Copy root package files (includes workspace configuration)
-COPY package*.json ./
+# Copy root workspace configuration
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Copy workspace packages
-COPY shared/ ./shared/
-COPY remote/ ./remote/
+# Copy all workspace packages
+COPY packages/ ./packages/
+COPY apps/mcp/ ./apps/mcp/
 
-# Install all dependencies via root workspace
-RUN npm ci
+# Install all dependencies
+RUN pnpm install
 
-# Build shared
-WORKDIR /app/shared
-RUN npm run build
-
-# Build remote
-WORKDIR /app/remote
-RUN npm run build
+# Build packages
+RUN pnpm --filter @firecrawl/client run build
+RUN pnpm --filter @pulsemcp/pulse-shared run build
+RUN pnpm --filter @pulsemcp/pulse-remote run build
 
 # Stage 2: Production
 FROM node:20-alpine
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
 WORKDIR /app
 
-# Copy root package files (workspace configuration)
-COPY --from=builder /app/package*.json ./
+# Copy workspace configuration
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 
-# Copy workspace package files
-COPY --from=builder /app/shared/package*.json ./shared/
-COPY --from=builder /app/remote/package*.json ./remote/
+# Copy package manifests for dependency installation
+COPY --from=builder /app/packages/firecrawl-client/package.json ./packages/firecrawl-client/
+COPY --from=builder /app/apps/mcp/shared/package.json ./apps/mcp/shared/
+COPY --from=builder /app/apps/mcp/remote/package.json ./apps/mcp/remote/
 
-# Copy built files
-COPY --from=builder /app/remote/dist ./remote/dist
-# Copy shared dist into remote/dist/remote/shared to match compiled import paths
-COPY --from=builder /app/shared/dist ./remote/dist/remote/shared
+# Copy built artifacts
+COPY --from=builder /app/packages/firecrawl-client/dist ./packages/firecrawl-client/dist
+COPY --from=builder /app/apps/mcp/shared/dist ./apps/mcp/shared/dist
+COPY --from=builder /app/apps/mcp/remote/dist ./apps/mcp/remote/dist
 
-# Install production dependencies
-RUN npm ci --omit=dev --ignore-scripts
+# Install production dependencies only
+RUN pnpm install --prod --ignore-scripts
+
+# Create symlink for remote to access shared package
+# The built JS is in dist/remote/, so the symlink must be there too
+RUN cd /app/apps/mcp/remote/dist/remote && \
+    ln -s ../../../shared/dist shared
 
 # Create resources directory with proper ownership
 RUN mkdir -p /app/resources && \
     chown -R nodejs:nodejs /app/resources
 
-# Move to remote directory for runtime
-WORKDIR /app/remote
-
 # Switch to non-root user
 USER nodejs
+
+# Set working directory to remote
+WORKDIR /app/apps/mcp/remote
 
 # Set environment
 ENV NODE_ENV=production
@@ -68,4 +77,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3060) + '/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
 # Start server
-CMD ["node", "/app/remote/dist/remote/index.js"]
+CMD ["node", "dist/remote/index.js"]

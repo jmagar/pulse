@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     # CORS Configuration
     # SECURITY: In production, NEVER use "*" - always specify exact origins
-    # Example: ["https://app.example.com", "https://admin.example.com"]
+    # Example: WEBHOOK_CORS_ORIGINS='["https://app.example.com", "https://admin.example.com"]'
     cors_origins: list[str] = Field(
         default=["http://localhost:3000"],
         validation_alias=AliasChoices("WEBHOOK_CORS_ORIGINS", "SEARCH_BRIDGE_CORS_ORIGINS"),

@@ -57,14 +57,15 @@ services:
   firecrawl_mcp:
     <<: *common-service
     build:
-      context: ./apps/mcp
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/mcp/Dockerfile
     container_name: firecrawl_mcp
     ports:
       - "${MCP_PORT:-3060}:3060"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - MCP_PORT=3060
+      - SKIP_HEALTH_CHECKS=true  # Skip Firecrawl auth health check for integration testing
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost:3060}
       - ENABLE_RESUMABILITY=${ENABLE_RESUMABILITY:-true}
