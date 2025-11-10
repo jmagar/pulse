@@ -51,3 +51,6 @@ CLAUDE.local.md
 apps/python-sdk/.venv/
 
 /apps/api/running-docs/
+
+# Documentation temporary files
+.docs/tmp/
