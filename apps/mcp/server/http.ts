@@ -2,7 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import { createMCPServer } from './shared/index.js';
+import { createMCPServer } from '../mcp-server.js';
 import { createTransport } from './transport.js';
 import {
   healthCheck,
@@ -11,7 +11,7 @@ import {
   metricsAuthMiddleware,
 } from './middleware/index.js';
 import { getMetricsConsole, getMetricsJSON, resetMetrics } from './middleware/metrics.js';
-import { logInfo, logError } from './shared/utils/logging.js';
+import { logInfo, logError } from '../utils/logging.js';
 
 /**
  * Creates and configures an Express server for HTTP streaming MCP transport
