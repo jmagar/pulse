@@ -38,6 +38,25 @@ pulse uses a **multi-language monorepo**:
 
 **Never hardcode external URLs in code!** Use environment variables.
 
+### Environment Variables
+
+**Single Source of Truth:** The root `.env` file contains ALL environment variables for ALL services.
+
+- `MCP_*` - MCP server variables (namespaced for monorepo)
+- `WEBHOOK_*` - Webhook bridge variables (namespaced for monorepo)
+- `FIRECRAWL_*` - Firecrawl API variables
+- Shared infrastructure: `DATABASE_URL`, `REDIS_URL`
+
+**Docker Compose:** The `env_file: - .env` directive in the common service anchor ensures all containers receive the root `.env`.
+
+**Standalone Deployments:** Individual apps have `.env.example` files for standalone use, but these should NOT be used in monorepo deployments.
+
+**Adding New Variables:**
+1. Add to root `.env` and `.env.example`
+2. Use namespaced prefixes (`MCP_*`, `WEBHOOK_*`, etc.)
+3. Update app-specific code to read from environment
+4. Document in this CLAUDE.md
+
 ### Adding New Services
 
 1. Add to `docker-compose.yaml` following the anchor pattern
