@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { FileSystemResourceStorage } from '../storage/resources/backends/filesystem.js';
+import { FileSystemResourceStorage } from '../../storage/filesystem.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';

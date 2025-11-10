@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { Application } from 'express';
-import { createExpressServer } from '../server.js';
+import { createExpressServer } from '../../server/http.js';
 
 /**
  * Test suite for OAuth disabled functionality
