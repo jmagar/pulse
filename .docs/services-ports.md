@@ -19,6 +19,7 @@ All services use sequential high-numbered ports (50100-50110 range) following se
 | 50106 | Extract Worker           | firecrawl                 | HTTP     | Active |
 | 50107 | MCP Server               | firecrawl_mcp             | HTTP     | Active |
 | 50108 | Webhook Bridge API       | firecrawl_webhook         | HTTP     | Active |
+| 50109 | Change Detection | firecrawl_changedetection | HTTP | Active |
 | N/A   | Webhook Worker           | firecrawl_webhook         | N/A      | Active |
 
 ## Internal Service URLs (Docker Network)
@@ -96,6 +97,20 @@ These URLs are accessible from the host machine:
 - **External Services**: Qdrant (vector store), TEI (text embeddings)
 - **Worker**: RQ worker runs as background thread within the same process
 - **Volume**: `/app/data/bm25` for BM25 keyword search index persistence
+
+### changedetection.io Service
+
+**Container:** firecrawl_changedetection
+**Port:** 50109 (external) → 5000 (internal)
+**Purpose:** Monitor websites for content changes, trigger rescraping on updates
+**Dependencies:** firecrawl_playwright (Playwright), firecrawl_webhook (for notifications)
+**Health Check:** HTTP GET / (60s interval, 10s timeout, 30s start period)
+**Volume:** changedetection_data:/datastore (change history, monitor configs)
+
+**Integration:**
+- Shares Playwright browser with Firecrawl for JavaScript rendering
+- Posts change notifications to webhook bridge at http://firecrawl_webhook:52100/api/webhook/changedetection
+- Indexed content searchable via hybrid search (BM25 + vector)
 
 ## Port Range Allocation
 
