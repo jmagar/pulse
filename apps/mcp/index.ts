@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import { config } from 'dotenv';
-import { createExpressServer } from './server.js';
-import { runHealthChecks, type HealthCheckResult } from './shared/config/health-checks.js';
-import { logInfo, logError } from './shared/utils/logging.js';
-import { displayStartupInfo } from './startup/display.js';
+import { createExpressServer } from './server/http.js';
+import { runHealthChecks, type HealthCheckResult } from './config/health-checks.js';
+import { logInfo, logError } from './utils/logging.js';
+import { displayStartupInfo } from './server/startup/display.js';
 
 // Load environment variables (quiet mode to suppress v17 logging)
 config({ quiet: true });
