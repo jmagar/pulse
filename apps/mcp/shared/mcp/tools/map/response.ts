@@ -1,5 +1,23 @@
 import type { MapResult } from '@firecrawl/client';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { DEFAULT_LANGUAGE_EXCLUDES } from '../../../config/crawl-config.js';
+
+/**
+ * Check if a URL matches any language exclusion pattern
+ */
+function shouldExcludeUrl(url: string, excludePatterns: readonly string[]): boolean {
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname;
+
+    return excludePatterns.some((pattern) => {
+      const regex = new RegExp(pattern);
+      return regex.test(path);
+    });
+  } catch {
+    return false; // Don't exclude invalid URLs, let caller handle them
+  }
+}
 
 export function formatMapResponse(
   result: MapResult,
@@ -9,16 +27,21 @@ export function formatMapResponse(
   resultHandling: 'saveOnly' | 'saveAndReturn' | 'returnOnly'
 ): CallToolResult {
   const content: CallToolResult['content'] = [];
-  const totalLinks = result.links.length;
 
-  // Apply pagination
-  const paginatedLinks = result.links.slice(startIndex, startIndex + maxResults);
+  // Filter out language-specific paths before processing
+  const totalLinksBeforeFilter = result.links.length;
+  const filteredLinks = result.links.filter(link => !shouldExcludeUrl(link.url, DEFAULT_LANGUAGE_EXCLUDES));
+  const totalLinks = filteredLinks.length;
+  const excludedCount = totalLinksBeforeFilter - totalLinks;
+
+  // Apply pagination to filtered links
+  const paginatedLinks = filteredLinks.slice(startIndex, startIndex + maxResults);
   const hasMore = startIndex + maxResults < totalLinks;
   const endIndex = Math.min(startIndex + maxResults, totalLinks);
 
   // Calculate statistics
   const domains = new Set(
-    result.links.map((link) => {
+    filteredLinks.map((link) => {
       try {
         return new URL(link.url).hostname;
       } catch {
@@ -27,7 +50,7 @@ export function formatMapResponse(
     })
   );
 
-  const linksWithTitles = result.links.filter((l) => l.title).length;
+  const linksWithTitles = filteredLinks.filter((l) => l.title).length;
   const titleCoverage = totalLinks > 0 ? Math.round((linksWithTitles / totalLinks) * 100) : 0;
 
   // Build summary text
@@ -35,10 +58,17 @@ export function formatMapResponse(
     `Map Results for ${url}`,
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     `Total URLs discovered: ${totalLinks}`,
+  ];
+
+  if (excludedCount > 0) {
+    summaryLines.push(`Language paths excluded: ${excludedCount}`);
+  }
+
+  summaryLines.push(
     `Unique domains: ${domains.size}`,
     `URLs with titles: ${titleCoverage}%`,
-    `Showing: ${startIndex + 1}-${endIndex} of ${totalLinks}`,
-  ];
+    `Showing: ${startIndex + 1}-${endIndex} of ${totalLinks}`
+  );
 
   if (hasMore) {
     summaryLines.push('');

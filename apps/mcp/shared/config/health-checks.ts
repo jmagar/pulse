@@ -8,6 +8,7 @@
  */
 
 import https from 'https';
+import http from 'http';
 import { env } from './environment.js';
 
 /**
@@ -25,10 +26,36 @@ export interface HealthCheckResult {
  * Performs a minimal health check for Firecrawl API
  * Tests authentication without consuming credits
  */
-async function checkFirecrawlAuth(apiKey: string): Promise<HealthCheckResult> {
+async function checkFirecrawlAuth(apiKey: string, baseUrl: string): Promise<HealthCheckResult> {
   return new Promise((resolve) => {
+    // Skip health check for self-hosted instances
+    if (apiKey === 'self-hosted-no-auth') {
+      resolve({
+        service: 'Firecrawl',
+        success: true,
+      });
+      return;
+    }
+
+    // Parse the base URL to extract hostname, port, and protocol
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(baseUrl);
+    } catch (error) {
+      resolve({
+        service: 'Firecrawl',
+        success: false,
+        error: `Invalid base URL: ${baseUrl}`,
+      });
+      return;
+    }
+
+    const protocol = parsedUrl.protocol === 'https:' ? https : require('http');
+    const port = parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80);
+
     const options = {
-      hostname: 'api.firecrawl.dev',
+      hostname: parsedUrl.hostname,
+      port: parseInt(port.toString()),
       path: '/v1/scrape',
       method: 'POST',
       headers: {
@@ -37,7 +64,7 @@ async function checkFirecrawlAuth(apiKey: string): Promise<HealthCheckResult> {
       },
     };
 
-    const req = https.request(options, (res) => {
+    const req = protocol.request(options, (res: http.IncomingMessage) => {
       // We expect 400 for missing URL parameter, but 401 indicates auth failure
       if (res.statusCode === 401) {
         resolve({
@@ -60,7 +87,7 @@ async function checkFirecrawlAuth(apiKey: string): Promise<HealthCheckResult> {
       }
     });
 
-    req.on('error', (error) => {
+    req.on('error', (error: Error) => {
       resolve({
         service: 'Firecrawl',
         success: false,
@@ -90,7 +117,8 @@ export async function runHealthChecks(): Promise<HealthCheckResult[]> {
   const checks: Promise<HealthCheckResult>[] = [];
 
   if (env.firecrawlApiKey) {
-    checks.push(checkFirecrawlAuth(env.firecrawlApiKey));
+    const baseUrl = env.firecrawlBaseUrl || 'https://api.firecrawl.dev';
+    checks.push(checkFirecrawlAuth(env.firecrawlApiKey, baseUrl));
   }
 
   if (checks.length === 0) {

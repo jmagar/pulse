@@ -26,6 +26,7 @@ import type { FirecrawlConfig } from '../types.js';
 import { logInfo, logError } from '../utils/logging.js';
 import { registrationTracker } from '../utils/mcp-status.js';
 import { getMetricsCollector } from '../monitoring/index.js';
+import { env } from '../config/environment.js';
 
 /**
  * Register MCP tools with the server
@@ -50,10 +51,10 @@ export function registerTools(
   clientFactory: ClientFactory,
   strategyConfigFactory: StrategyConfigFactory
 ): void {
-  // Create Firecrawl config from environment
+  // Create Firecrawl config from centralized environment
   const firecrawlConfig: FirecrawlConfig = {
-    apiKey: process.env.FIRECRAWL_API_KEY || '',
-    baseUrl: process.env.FIRECRAWL_BASE_URL || 'https://api.firecrawl.dev',
+    apiKey: env.firecrawlApiKey || 'self-hosted-no-auth',
+    baseUrl: env.firecrawlBaseUrl || 'http://firecrawl:3002',
   };
 
   // Create tool instances with tracking

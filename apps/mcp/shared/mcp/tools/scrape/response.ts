@@ -260,41 +260,58 @@ export function buildSuccessResponse(
   }
 
   // Save as a resource for save options
-  if ((resultHandling === 'saveOnly' || resultHandling === 'saveAndReturn') && savedUris) {
-    // Use the most processed version
-    const primaryUri = extractedContent
-      ? savedUris.extracted
-      : cleanedContent
-        ? savedUris.cleaned
-        : savedUris.raw;
+  if (resultHandling === 'saveOnly' || resultHandling === 'saveAndReturn') {
+    if (savedUris) {
+      // Use the most processed version
+      const primaryUri = extractedContent
+        ? savedUris.extracted
+        : cleanedContent
+          ? savedUris.cleaned
+          : savedUris.raw;
 
-    const resourceDescription = extract
-      ? `Extracted information from ${url} using query: "${extract}"`
-      : `Scraped content from ${url}`;
+      const resourceDescription = extract
+        ? `Extracted information from ${url} using query: "${extract}"`
+        : `Scraped content from ${url}`;
 
-    // Determine MIME type based on what content we're actually storing/returning
-    const contentMimeType =
-      extractedContent || cleanedContent ? 'text/markdown' : detectContentType(rawContent);
+      // Determine MIME type based on what content we're actually storing/returning
+      const contentMimeType =
+        extractedContent || cleanedContent ? 'text/markdown' : detectContentType(rawContent);
 
-    if (resultHandling === 'saveOnly') {
-      response.content.push({
-        type: 'resource_link',
-        uri: primaryUri!,
-        name: url,
-        mimeType: contentMimeType,
-        description: resourceDescription,
-      });
-    } else if (resultHandling === 'saveAndReturn') {
-      response.content.push({
-        type: 'resource',
-        resource: {
+      if (resultHandling === 'saveOnly') {
+        response.content.push({
+          type: 'resource_link',
           uri: primaryUri!,
           name: url,
           mimeType: contentMimeType,
           description: resourceDescription,
-          text: displayContent,
-        },
-      });
+        });
+      } else if (resultHandling === 'saveAndReturn') {
+        response.content.push({
+          type: 'resource',
+          resource: {
+            uri: primaryUri!,
+            name: url,
+            mimeType: contentMimeType,
+            description: resourceDescription,
+            text: displayContent,
+          },
+        });
+      }
+    } else {
+      // Fallback: if saving failed, return content as text for saveAndReturn
+      if (resultHandling === 'saveAndReturn') {
+        response.content.push({
+          type: 'text',
+          text: resultText + '\n\n[Note: Resource storage failed, returning content as text]',
+        });
+      } else {
+        // For saveOnly, we must return an error if we couldn't save
+        response.content.push({
+          type: 'text',
+          text: `Failed to save resource for ${url}. Storage may be unavailable.`,
+        });
+        response.isError = true;
+      }
     }
   }
 

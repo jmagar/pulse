@@ -10,41 +10,34 @@
 import type { FirecrawlScrapingOptions, FirecrawlScrapingResult } from '../types.js';
 
 /**
- * Validate and cache the base URL at module load time
- */
-const getBaseUrl = (): string => {
-  const baseUrl = process.env.FIRECRAWL_BASE_URL || 'https://api.firecrawl.dev';
-
-  // Validate baseUrl to prevent injection attacks
-  if (baseUrl && (!/^https?:\/\/[^\\]+$/.test(baseUrl) || baseUrl.includes('..'))) {
-    throw new Error('Invalid FIRECRAWL_BASE_URL');
-  }
-
-  return baseUrl;
-};
-
-const FIRECRAWL_BASE_URL = getBaseUrl();
-
-/**
  * Scrape a webpage using Firecrawl API
  *
  * @param apiKey - Firecrawl API key
+ * @param baseUrl - Base URL for Firecrawl API
  * @param url - URL to scrape
  * @param options - Scraping options
  * @returns Scraping result with content and metadata
  */
 export async function scrape(
   apiKey: string,
+  baseUrl: string,
   url: string,
   options: FirecrawlScrapingOptions = {}
 ): Promise<FirecrawlScrapingResult> {
   try {
-    const response = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
+    // Build headers - skip Authorization for self-hosted deployments without auth
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Only add Authorization header if API key is not a self-hosted placeholder
+    if (apiKey && apiKey !== 'self-hosted-no-auth') {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    const response = await fetch(`${baseUrl}/scrape`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
         url,
         formats: options.formats || ['markdown', 'html'],

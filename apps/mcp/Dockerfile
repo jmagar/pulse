@@ -59,8 +59,15 @@ RUN cd /app/apps/mcp/remote/dist/remote && \
 RUN mkdir -p /app/resources && \
     chown -R nodejs:nodejs /app/resources
 
-# Switch to non-root user
-USER nodejs
+# Create entrypoint script to fix volume permissions
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'chown -R nodejs:nodejs /app/resources 2>/dev/null || true' >> /entrypoint.sh && \
+    echo 'exec su-exec nodejs "$@"' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh && \
+    apk add --no-cache su-exec
+
+# Don't switch user here - entrypoint will do it
+# USER nodejs
 
 # Set working directory to remote
 WORKDIR /app/apps/mcp/remote
@@ -76,5 +83,6 @@ EXPOSE 3060
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3060) + '/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
-# Start server
+# Use entrypoint to fix permissions before starting
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["node", "dist/remote/index.js"]

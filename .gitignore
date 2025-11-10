@@ -11,6 +11,7 @@ apps/js-sdk/node_modules/
 apps/api/.env.local
 
 apps/test-suite/node_modules/
+.env.bak
 
 
 apps/test-suite/.env

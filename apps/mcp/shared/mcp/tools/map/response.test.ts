@@ -158,4 +158,76 @@ describe('Map Response Formatter', () => {
       expect(text).toContain('URLs with titles: 0%');
     });
   });
+
+  describe('Language Path Filtering', () => {
+    it('should filter out language-specific paths', () => {
+      const result: MapResult = {
+        success: true,
+        links: [
+          { url: 'https://docs.example.com/intro', title: 'Intro' },
+          { url: 'https://docs.example.com/de/intro', title: 'Einführung' },
+          { url: 'https://docs.example.com/es/intro', title: 'Introducción' },
+          { url: 'https://docs.example.com/fr/intro', title: 'Introduction' },
+          { url: 'https://docs.example.com/ja/intro', title: 'はじめに' },
+          { url: 'https://docs.example.com/guide', title: 'Guide' },
+          { url: 'https://docs.example.com/zh-CN/guide', title: '指南' },
+        ],
+      };
+      const response = formatMapResponse(
+        result,
+        'https://docs.example.com',
+        0,
+        1000,
+        'saveAndReturn'
+      );
+
+      const text = (response.content[0] as any).text;
+      expect(text).toContain('Total URLs discovered: 2');
+      expect(text).toContain('Language paths excluded: 5');
+
+      const resourceData = (response.content[1] as any).resource.text;
+      const links = JSON.parse(resourceData);
+      expect(links).toHaveLength(2);
+      expect(links[0].url).toBe('https://docs.example.com/intro');
+      expect(links[1].url).toBe('https://docs.example.com/guide');
+    });
+
+    it('should not show exclusion count when no URLs are excluded', () => {
+      const result: MapResult = {
+        success: true,
+        links: [
+          { url: 'https://example.com/page1', title: 'Page 1' },
+          { url: 'https://example.com/page2', title: 'Page 2' },
+        ],
+      };
+      const response = formatMapResponse(result, 'https://example.com', 0, 1000, 'saveAndReturn');
+
+      const text = (response.content[0] as any).text;
+      expect(text).toContain('Total URLs discovered: 2');
+      expect(text).not.toContain('Language paths excluded');
+    });
+
+    it('should filter multiple language variants', () => {
+      const result: MapResult = {
+        success: true,
+        links: [
+          { url: 'https://docs.example.com/api', title: 'API' },
+          { url: 'https://docs.example.com/pt-BR/api', title: 'API BR' },
+          { url: 'https://docs.example.com/es-MX/api', title: 'API MX' },
+          { url: 'https://docs.example.com/en-GB/api', title: 'API UK' },
+        ],
+      };
+      const response = formatMapResponse(
+        result,
+        'https://docs.example.com',
+        0,
+        1000,
+        'saveAndReturn'
+      );
+
+      const text = (response.content[0] as any).text;
+      expect(text).toContain('Total URLs discovered: 1');
+      expect(text).toContain('Language paths excluded: 3');
+    });
+  });
 });

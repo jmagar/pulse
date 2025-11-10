@@ -4,16 +4,11 @@
   "description": "MCP server for fetching and processing web content",
   "author": "PulseMCP",
   "license": "MIT",
-  "workspaces": [
-    "local",
-    "shared",
-    "remote"
-  ],
   "type": "module",
   "scripts": {
-    "install-all": "npm install && cd local && npm install && cd ../shared && npm install",
-    "ci:install": "npm ci && cd shared && npm ci && cd ../local && npm ci && cd ../../../libs/test-mcp-client && npm ci --ignore-scripts",
-    "build": "npm run build -w shared && npm run build -w local",
+    "install-all": "pnpm install",
+    "ci:install": "pnpm install --frozen-lockfile",
+    "build": "pnpm -F shared run build && pnpm -F local run build",
     "build:test": "npm run build && cd libs/test-mcp-client && npm run build",
     "clean": "find . -name '*.js' -not -path './node_modules/*' -not -path './*/node_modules/*' -not -path './local/dist/*' -not -path './shared/dist/*' -not -path './*/dist/*' -delete && find . -name '*.js.map' -not -path './node_modules/*' -not -path './*/node_modules/*' -not -path './local/dist/*' -not -path './shared/dist/*' -not -path './*/dist/*' -delete",
     "dev": "cd local && npm run dev",

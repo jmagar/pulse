@@ -1,7 +1,7 @@
 /**
  * @fileoverview Crawl configuration and URL filtering
  *
- * Provides configuration for background crawl operations including
+ * Provides configuration for crawl operations including default
  * language path exclusions and discovery depth limits.
  *
  * @module shared/config/crawl-config
@@ -9,39 +9,48 @@
 
 const DEFAULT_MAX_DISCOVERY_DEPTH = 5;
 
-const UNIVERSAL_LANGUAGE_EXCLUDES = [
-  '^/de/',
-  '^/es/',
-  '^/fr/',
-  '^/it/',
-  '^/pt/',
-  '^/pt-BR/',
-  '^/ja/',
-  '^/ko/',
-  '^/zh/',
-  '^/zh-CN/',
-  '^/zh-TW/',
-  '^/ru/',
-  '^/id/',
-];
+export const DEFAULT_LANGUAGE_EXCLUDES = [
+  // European languages
+  '^/de/', // German
+  '^/es/', // Spanish
+  '^/fr/', // French
+  '^/it/', // Italian
+  '^/pt/', // Portuguese
+  '^/nl/', // Dutch
+  '^/pl/', // Polish
+  '^/sv/', // Swedish
+  '^/no/', // Norwegian
+  '^/nb/', // Norwegian Bokmål
+  '^/da/', // Danish
+  '^/fi/', // Finnish
+  '^/cs/', // Czech
+  '^/ru/', // Russian
+  '^/uk/', // Ukrainian
+  '^/tr/', // Turkish
 
-const DOMAIN_LANGUAGE_EXCLUDES: Record<string, string[]> = {
-  'docs.firecrawl.dev': ['^/es/', '^/fr/', '^/ja/', '^/pt-BR/', '^/zh/'],
-  'docs.claude.com': [
-    '^/de/',
-    '^/es/',
-    '^/fr/',
-    '^/id/',
-    '^/it/',
-    '^/ja/',
-    '^/ko/',
-    '^/pt/',
-    '^/ru/',
-    '^/zh-CN/',
-    '^/zh-TW/',
-  ],
-  'docs.unraid.net': ['^/de/', '^/es/', '^/fr/', '^/zh/'],
-};
+  // Middle Eastern languages
+  '^/ar/', // Arabic
+  '^/he/', // Hebrew
+
+  // Asian languages
+  '^/ja/', // Japanese
+  '^/ko/', // Korean
+  '^/zh/', // Chinese
+  '^/zh-CN/', // Simplified Chinese
+  '^/zh-TW/', // Traditional Chinese
+  '^/id/', // Indonesian
+  '^/vi/', // Vietnamese
+  '^/th/', // Thai
+  '^/hi/', // Hindi
+
+  // Regional variants
+  '^/pt-BR/', // Brazilian Portuguese
+  '^/es-MX/', // Mexican Spanish
+  '^/fr-CA/', // Canadian French
+  '^/en-GB/', // British English
+  '^/en-UK/', // British English (alternative)
+  '^/en-AU/', // Australian English
+];
 
 /**
  * Configuration for Firecrawl crawl request
@@ -59,8 +68,8 @@ export interface CrawlRequestConfig {
 /**
  * Build crawl configuration for a target URL
  *
- * Generates crawl configuration with appropriate language path exclusions
- * based on the domain. Returns null if URL is invalid.
+ * Generates crawl configuration with default language path exclusions.
+ * Returns null if URL is invalid.
  *
  * @param targetUrl - URL to generate crawl config for
  * @returns Crawl configuration or null if URL is invalid
@@ -69,13 +78,10 @@ export function buildCrawlRequestConfig(targetUrl: string): CrawlRequestConfig |
   try {
     const parsed = new URL(targetUrl);
     const baseUrl = `${parsed.protocol}//${parsed.host}`;
-    const hostname = parsed.host.toLowerCase();
-
-    const excludePaths = DOMAIN_LANGUAGE_EXCLUDES[hostname] ?? UNIVERSAL_LANGUAGE_EXCLUDES;
 
     return {
       url: baseUrl,
-      excludePaths,
+      excludePaths: DEFAULT_LANGUAGE_EXCLUDES,
       maxDiscoveryDepth: DEFAULT_MAX_DISCOVERY_DEPTH,
     };
   } catch {

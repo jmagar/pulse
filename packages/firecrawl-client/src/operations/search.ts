@@ -22,12 +22,19 @@ export async function search(
   baseUrl: string,
   options: SearchOptions
 ): Promise<SearchResult> {
+  // Build headers - skip Authorization for self-hosted deployments without auth
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  // Only add Authorization header if API key is not a self-hosted placeholder
+  if (apiKey && apiKey !== 'self-hosted-no-auth') {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
   const response = await fetch(`${baseUrl}/search`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify(options),
   });
 
