@@ -25,11 +25,19 @@ export function formatCrawlResponse(
     const statusResult = result as CrawlStatusResult;
     const content: CallToolResult['content'] = [];
 
+    // Determine if crawl is truly complete (job done AND no more data to paginate)
+    const isTrulyComplete = statusResult.status === 'completed' && !statusResult.next;
+    const statusLabel = isTrulyComplete
+      ? 'Completed'
+      : statusResult.status === 'completed' && statusResult.next
+        ? 'Completed (pagination required)'
+        : statusResult.status.charAt(0).toUpperCase() + statusResult.status.slice(1);
+
     // Only return status metadata - data is handled by webhook server
-    let statusText = `Crawl Status: ${statusResult.status}\nProgress: ${statusResult.completed}/${statusResult.total} pages\nCredits used: ${statusResult.creditsUsed}\nExpires at: ${statusResult.expiresAt}`;
+    let statusText = `Crawl Status: ${statusLabel}\nProgress: ${statusResult.completed}/${statusResult.total} pages\nCredits used: ${statusResult.creditsUsed}\nExpires at: ${statusResult.expiresAt}`;
 
     if (statusResult.next) {
-      statusText += `\n\nPagination URL: ${statusResult.next}`;
+      statusText += `\n\n⚠️ Data pagination required!\nNext batch URL: ${statusResult.next}\n\nThe crawl job has completed, but the results are larger than 10MB.\nUse the pagination URL to retrieve the next batch of data.`;
     }
 
     content.push({

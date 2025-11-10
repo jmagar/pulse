@@ -1,7 +1,3 @@
-Firecrawl is a web scraper API. The directory you have access to is a monorepo:
- - `apps/api` has the actual API and worker code
- - `apps/js-sdk`, `apps/python-sdk`, and `apps/rust-sdk` are various SDKs
-
 ## Monorepo Structure
 
 pulse uses a **multi-language monorepo**:

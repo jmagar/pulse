@@ -15,8 +15,9 @@ Firecrawl API → Docker Network → Webhook Bridge (API + Worker Thread) → Re
 - **Firecrawl** (`firecrawl`): Web scraper that sends webhooks
 - **Webhook Bridge** (`firecrawl_webhook`): FastAPI service with embedded worker thread
 - **Redis** (`firecrawl_cache`): Job queue
-- **Qdrant**: Vector database for semantic search
+- **Qdrant**: Vector database for semantic search (persisted)
 - **TEI**: Text embeddings inference service
+- **BM25 Index**: Keyword search index persisted at `/app/data/bm25/index.pkl` via volume mount
 
 ## Common Issues
 

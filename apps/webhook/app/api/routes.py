@@ -257,11 +257,19 @@ async def search_documents(
     "/api/webhook/firecrawl",
     dependencies=[Depends(verify_webhook_signature)],
 )
+@limiter.exempt
 async def webhook_firecrawl(
     request: Request,
     queue: Annotated[Queue, Depends(get_rq_queue)],
 ) -> JSONResponse:
-    """Process Firecrawl webhook with comprehensive logging."""
+    """
+    Process Firecrawl webhook with comprehensive logging.
+
+    Note: Rate limiting is disabled for this endpoint because:
+    - It's an internal service within the Docker network
+    - Signature verification provides security
+    - Large crawls can send hundreds of webhooks rapidly
+    """
 
     request_start = time.perf_counter()
 
