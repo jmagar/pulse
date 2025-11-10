@@ -32,7 +32,7 @@ Firecrawl → Search Bridge (API + Worker Thread) → Redis Queue → HuggingFac
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - Docker & Docker Compose
 - UV package manager
 
