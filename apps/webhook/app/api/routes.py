@@ -206,12 +206,16 @@ async def search_documents(
         for result in raw_results:
             payload = result.get("payload") or result.get("metadata", {})
 
+            # Extract text from both vector (payload) and BM25 (top-level) results
+            # Vector results have text in payload, BM25 results have it at top-level
+            text = payload.get("text") or result.get("text", "")
+
             results.append(
                 SearchResult(
                     url=payload.get("url", ""),
                     title=payload.get("title"),
                     description=payload.get("description"),
-                    text=payload.get("text", ""),
+                    text=text,
                     score=result.get("score") or result.get("rrf_score", 0.0),
                     metadata=payload,
                 )

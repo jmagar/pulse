@@ -217,3 +217,126 @@ async def test_get_stats_failure(mock_services: dict[str, Any]) -> None:
         )
 
     assert exc_info.value.status_code == 500
+
+
+@pytest.mark.asyncio
+async def test_search_text_extraction_from_vector_payload(mock_request: MagicMock) -> None:
+    """
+    Test that text snippets are extracted correctly from vector search results.
+
+    Vector search results have text in payload.
+    """
+    orchestrator = AsyncMock()
+    orchestrator.search.return_value = [
+        {
+            "id": "vec1",
+            "score": 0.95,
+            "payload": {
+                "url": "https://example.com/page1",
+                "text": "This is the vector search snippet",
+                "title": "Page 1",
+                "canonical_url": "https://example.com/page1",
+            },
+        },
+    ]
+
+    search_request = SearchRequest(
+        query="test query",
+        mode=SearchMode.SEMANTIC,
+        limit=10,
+    )
+
+    response = await routes.search_documents(mock_request, search_request, orchestrator)
+
+    assert len(response.results) == 1
+    assert response.results[0].text == "This is the vector search snippet"
+    assert response.results[0].url == "https://example.com/page1"
+    assert response.results[0].title == "Page 1"
+
+
+@pytest.mark.asyncio
+async def test_search_text_extraction_from_bm25_top_level(mock_request: MagicMock) -> None:
+    """
+    Test that text snippets are extracted correctly from BM25 search results.
+
+    BM25 search results have text as a top-level field, not in metadata.
+    """
+    orchestrator = AsyncMock()
+    orchestrator.search.return_value = [
+        {
+            "index": 0,
+            "score": 5.2,
+            "text": "This is the BM25 keyword snippet",
+            "metadata": {
+                "url": "https://example.com/page2",
+                "title": "Page 2",
+                "canonical_url": "https://example.com/page2",
+            },
+        },
+    ]
+
+    search_request = SearchRequest(
+        query="test query",
+        mode=SearchMode.BM25,
+        limit=10,
+    )
+
+    response = await routes.search_documents(mock_request, search_request, orchestrator)
+
+    assert len(response.results) == 1
+    # This should extract text from top-level, not from metadata
+    assert response.results[0].text == "This is the BM25 keyword snippet"
+    assert response.results[0].url == "https://example.com/page2"
+    assert response.results[0].title == "Page 2"
+
+
+@pytest.mark.asyncio
+async def test_search_text_extraction_hybrid_mixed_sources(mock_request: MagicMock) -> None:
+    """
+    Test that text snippets are extracted correctly from hybrid search.
+
+    Hybrid search mixes vector results (text in payload) and BM25 results (text at top level).
+    """
+    orchestrator = AsyncMock()
+    orchestrator.search.return_value = [
+        # Vector result with text in payload
+        {
+            "id": "vec1",
+            "score": 0.95,
+            "payload": {
+                "url": "https://example.com/vector",
+                "text": "Vector snippet",
+                "title": "Vector Result",
+            },
+            "rrf_score": 0.032,
+        },
+        # BM25 result with text at top level
+        {
+            "index": 0,
+            "score": 5.2,
+            "text": "BM25 snippet",
+            "metadata": {
+                "url": "https://example.com/bm25",
+                "title": "BM25 Result",
+            },
+            "rrf_score": 0.028,
+        },
+    ]
+
+    search_request = SearchRequest(
+        query="test query",
+        mode=SearchMode.HYBRID,
+        limit=10,
+    )
+
+    response = await routes.search_documents(mock_request, search_request, orchestrator)
+
+    assert len(response.results) == 2
+
+    # First result (vector)
+    assert response.results[0].text == "Vector snippet"
+    assert response.results[0].url == "https://example.com/vector"
+
+    # Second result (BM25)
+    assert response.results[1].text == "BM25 snippet"
+    assert response.results[1].url == "https://example.com/bm25"

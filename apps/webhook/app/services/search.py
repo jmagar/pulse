@@ -25,6 +25,10 @@ def reciprocal_rank_fusion(
     Formula: score = sum(1 / (k + rank_i))
     where rank_i is the position in the i-th ranking (1-indexed)
 
+    Deduplication uses canonical_url when available (from payload or metadata),
+    falling back to url, then id. This ensures documents with different tracking
+    parameters but same canonical URL are merged into a single result.
+
     Args:
         ranked_lists: List of ranked result lists (each with 'id' or unique identifier)
         k: Constant (60 is standard from original RRF paper by Cormack et al.)
@@ -37,8 +41,18 @@ def reciprocal_rank_fusion(
 
     for ranked_list in ranked_lists:
         for rank, result in enumerate(ranked_list, start=1):
-            # Use URL as unique identifier
-            doc_id = result.get("metadata", {}).get("url") or result.get("id", str(rank))
+            # Extract canonical URL from vector search (payload) or BM25 (metadata)
+            payload = result.get("payload", {})
+            metadata = result.get("metadata", {})
+
+            # Prefer canonical_url for deduplication, fallback to url, then id
+            doc_id = (
+                payload.get("canonical_url")
+                or metadata.get("canonical_url")
+                or payload.get("url")
+                or metadata.get("url")
+                or result.get("id", str(rank))
+            )
 
             # Calculate RRF score
             rrf_score = 1.0 / (k + rank)
