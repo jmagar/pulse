@@ -2,6 +2,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 CREATE SCHEMA IF NOT EXISTS nuq;
+CREATE SCHEMA IF NOT EXISTS webhook;
 
 DO $$ BEGIN
   CREATE TYPE nuq.job_status AS ENUM ('queued', 'active', 'completed', 'failed');
