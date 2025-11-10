@@ -51,7 +51,7 @@ pulse/
 ```
 ┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
 │   MCP Server    │─────▶│  Firecrawl API   │◀────▶│ Webhook Bridge  │
-│  (Port 3060)    │      │   (Port 4300)    │      │  (Port 52100)   │
+│  (Port 50107)   │      │  (Port 50102)    │      │  (Port 50108)   │
 └─────────────────┘      └──────────────────┘      └─────────────────┘
         │                         │                          │
         │                         │                          │
@@ -90,10 +90,9 @@ PostgreSQL is shared across services with schema isolation:
 **Documentation**: Uses official Firecrawl image - see [Firecrawl Documentation](https://docs.firecrawl.dev)
 
 **Ports**:
-- External API: `4300`
-- Internal API: `3002`
-- Worker: `4301`
-- Extract Worker: `4305`
+- External API: `50102` (internal: `3002`)
+- Worker: `50103`
+- Extract Worker: `50106`
 
 ### MCP Server
 
@@ -112,7 +111,9 @@ PostgreSQL is shared across services with schema isolation:
 
 **Documentation**: See [apps/mcp/README.md](apps/mcp/README.md)
 
-**Port**: `3060`
+**Ports**:
+- External: `50107`
+- Internal: `3060`
 
 ### Webhook Bridge
 
@@ -131,7 +132,8 @@ PostgreSQL is shared across services with schema isolation:
 **Documentation**: See [apps/webhook/README.md](apps/webhook/README.md)
 
 **Ports**:
-- API: `52100`
+- External: `50108`
+- Internal: `52100`
 - Worker: Background process (no port)
 
 ### changedetection.io (Port 50109)
