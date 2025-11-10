@@ -4,11 +4,20 @@ A semantic search service that bridges Firecrawl web scraping with vector search
 
 ## Architecture
 
+The Search Bridge runs as a single FastAPI application with an embedded background worker thread:
+
+- **API Server**: FastAPI application handling HTTP requests (webhooks, search, stats)
+- **Background Worker**: RQ worker thread processing indexing jobs from Redis queue
+- **BM25 Engine**: Shared in-memory instance used by both API and worker
+- **Vector Store**: Qdrant for semantic search
+- **Embedding Service**: TEI for generating text embeddings
+
+The worker thread starts automatically during FastAPI startup and shares all services with the API, eliminating file synchronization complexity.
+
 ```
-Firecrawl (steamy-wsl) → Search Bridge API → Redis Queue → Background Worker
-                                                              ├─> HuggingFace TEI (embeddings)
-                                                              ├─> Qdrant (vector storage)
-                                                              └─> BM25 (keyword search)
+Firecrawl → Search Bridge (API + Worker Thread) → Redis Queue → HuggingFace TEI (embeddings)
+                                                                 ├─> Qdrant (vector storage)
+                                                                 └─> BM25 (keyword search)
 ```
 
 ## Features
@@ -41,7 +50,7 @@ cd apps/webhook && make install
 
 # Start all services via Docker Compose
 cd /compose/pulse
-docker compose up -d firecrawl_webhook firecrawl_webhook_worker
+docker compose up -d firecrawl_webhook
 ```
 
 For standalone deployment, see root `docker-compose.yaml` for service definition.
@@ -80,6 +89,40 @@ To find this machine's IP:
 ```bash
 hostname -I | awk '{print $1}'
 ```
+
+## Deployment
+
+### Docker Compose (Recommended)
+
+```yaml
+services:
+  firecrawl_webhook:
+    build: ./apps/webhook
+    ports:
+      - "52100:52100"
+    environment:
+      WEBHOOK_REDIS_URL: redis://firecrawl_cache:6379
+      WEBHOOK_QDRANT_URL: http://qdrant:6333
+      WEBHOOK_TEI_URL: http://tei:80
+      WEBHOOK_ENABLE_WORKER: "true"  # Enable background worker
+    depends_on:
+      - firecrawl_cache
+      - qdrant
+      - tei
+```
+
+### Disable Worker (API Only)
+
+To run only the API without the background worker:
+
+```bash
+WEBHOOK_ENABLE_WORKER=false uvicorn app.main:app --host 0.0.0.0 --port 52100
+```
+
+This is useful for:
+- Development/testing the API independently
+- Scaling API and worker separately (run worker in separate process)
+- Debugging API without worker interference
 
 ## Development
 
