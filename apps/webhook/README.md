@@ -46,11 +46,10 @@ cp .env.example .env
 # Edit .env with your configuration
 
 # Install dependencies
-cd apps/webhook && make install
+pnpm install:webhook
 
 # Start all services via Docker Compose
-cd /compose/pulse
-docker compose up -d firecrawl_webhook
+pnpm services:up
 ```
 
 For standalone deployment, see root `docker-compose.yaml` for service definition.
@@ -126,21 +125,47 @@ This is useful for:
 
 ## Development
 
+### Setup
+
+```bash
+# Install all dependencies (Node.js and Python)
+pnpm install
+pnpm install:webhook
+```
+
+### Running Services
+
+```bash
+# Start all Docker services
+pnpm services:up
+
+# Run API server in development mode
+pnpm dev:webhook
+
+# Run background worker (deprecated - now embedded in API)
+pnpm worker:webhook
+
+# Stop all services
+pnpm services:down
+```
+
+### Code Quality
+
 ```bash
 # Run tests
-make test
+pnpm test:webhook
 
 # Format code
-make format
+pnpm format:webhook
 
 # Lint code
-make lint
+pnpm lint:webhook
 
 # Type check
-make type-check
+pnpm typecheck:webhook
 
-# Run all checks
-make check
+# Run all checks (format, lint, typecheck)
+pnpm check
 ```
 
 ## Project Structure
@@ -204,7 +229,7 @@ Traditional keyword search:
 
 ```bash
 # View service logs
-make services-logs
+pnpm services:logs
 
 # Check health
 curl http://localhost:52100/health
