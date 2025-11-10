@@ -16,7 +16,7 @@ services:
     # build: apps/playwright-service-ts
     container_name: firecrawl_playwright
     ports:
-      - "${PLAYWRIGHT_PORT:-4302}:3000"
+      - "${PLAYWRIGHT_PORT:-50100}:3000"
 
   firecrawl:
     <<: *common-service
@@ -32,7 +32,7 @@ services:
       - firecrawl_playwright
       - firecrawl_db
     ports:
-      - "${FIRECRAWL_PORT:-3002}:${FIRECRAWL_INTERNAL_PORT:-3002}"
+      - "${FIRECRAWL_PORT:-50102}:${FIRECRAWL_INTERNAL_PORT:-3002}"
     command: node dist/src/harness.js --start-docker
 
   firecrawl_cache:
@@ -40,7 +40,7 @@ services:
     image: redis:alpine
     container_name: firecrawl_cache
     ports:
-      - "${REDIS_PORT:-4303}:6379"
+      - "${REDIS_PORT:-50104}:6379"
     volumes:
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_redis:/data
     command: redis-server --bind 0.0.0.0 --appendonly yes --save 60 1
@@ -50,7 +50,7 @@ services:
     build: apps/nuq-postgres
     container_name: firecrawl_db
     ports:
-      - "${POSTGRES_PORT:-4304}:5432"
+      - "${POSTGRES_PORT:-50105}:5432"
     volumes:
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_postgres:/var/lib/postgresql/data
 
@@ -61,7 +61,7 @@ services:
       dockerfile: apps/mcp/Dockerfile
     container_name: firecrawl_mcp
     ports:
-      - "${MCP_PORT:-3060}:3060"
+      - "${MCP_PORT:-50107}:3060"
     volumes:
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_mcp_resources:/app/resources
     depends_on:
@@ -80,7 +80,9 @@ services:
       dockerfile: Dockerfile
     container_name: firecrawl_webhook
     ports:
-      - "${WEBHOOK_PORT:-52100}:52100"
+      - "${WEBHOOK_PORT:-50108}:52100"
+    volumes:
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_webhook:/app/data/bm25
     depends_on:
       - firecrawl_db
       - firecrawl_cache

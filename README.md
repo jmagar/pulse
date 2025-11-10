@@ -173,15 +173,15 @@ PostgreSQL is shared across services with schema isolation:
    docker compose logs -f
 
    # Verify health endpoints
-   curl http://localhost:4300/health     # Firecrawl API
-   curl http://localhost:3060/health     # MCP Server
-   curl http://localhost:52100/health    # Webhook Bridge
+   curl http://localhost:50102/health     # Firecrawl API
+   curl http://localhost:50107/health     # MCP Server
+   curl http://localhost:50108/health    # Webhook Bridge
    ```
 
 Services will be available at:
-- Firecrawl API: http://localhost:4300
-- MCP Server: http://localhost:3060
-- Webhook Bridge: http://localhost:52100
+- Firecrawl API: http://localhost:50102
+- MCP Server: http://localhost:50107
+- Webhook Bridge: http://localhost:50108
 
 ### Local Development
 
@@ -224,7 +224,7 @@ For active development on individual services:
 
 **Test Firecrawl API**:
 ```bash
-curl -X POST http://localhost:4300/v1/scrape \
+curl -X POST http://localhost:50102/v1/scrape \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${FIRECRAWL_API_KEY}" \
   -d '{"url": "https://example.com"}'
@@ -232,14 +232,14 @@ curl -X POST http://localhost:4300/v1/scrape \
 
 **Test MCP Server**:
 ```bash
-curl -X POST http://localhost:3060/scrape \
+curl -X POST http://localhost:50107/scrape \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com", "cleanScrape": true}'
 ```
 
 **Test Webhook Bridge**:
 ```bash
-curl http://localhost:52100/api/stats \
+curl http://localhost:50108/api/stats \
   -H "X-API-Secret: ${WEBHOOK_API_SECRET}"
 ```
 
@@ -316,11 +316,11 @@ pnpm clean
 - Playwright: `http://firecrawl_playwright:3000`
 
 **External (Host machine)**:
-- Firecrawl API: `http://localhost:4300`
-- MCP Server: `http://localhost:3060`
-- Webhook Bridge: `http://localhost:52100`
-- Redis: `redis://localhost:4303`
-- PostgreSQL: `postgresql://localhost:4304/firecrawl_db`
+- Firecrawl API: `http://localhost:50102`
+- MCP Server: `http://localhost:50107`
+- Webhook Bridge: `http://localhost:50108`
+- Redis: `redis://localhost:50104`
+- PostgreSQL: `postgresql://localhost:50105/firecrawl_db`
 - Playwright: `http://localhost:4302`
 
 ### Local Development (Without Docker)
@@ -473,7 +473,7 @@ docker compose up -d
 docker compose ps
 
 # Test MCP → Firecrawl
-curl -X POST http://localhost:3060/scrape \
+curl -X POST http://localhost:50107/scrape \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com"}'
 
