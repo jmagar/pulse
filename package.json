@@ -18,6 +18,11 @@
     "dev:web": "pnpm --filter './apps/web' dev",
     "dev:webhook": "cd apps/webhook && uv run uvicorn app.main:app --reload --port 52100",
     "clean": "pnpm -r --filter './apps/*' --filter './packages/*' clean",
-    "install:webhook": "cd apps/webhook && uv sync"
+    "install:webhook": "cd apps/webhook && uv sync",
+    "services:external:up": "docker --context gpu-machine compose -f docker-compose.external.yaml up -d",
+    "services:external:down": "docker --context gpu-machine compose -f docker-compose.external.yaml down",
+    "services:external:ps": "docker --context gpu-machine compose -f docker-compose.external.yaml ps",
+    "services:external:logs": "docker --context gpu-machine compose -f docker-compose.external.yaml logs -f",
+    "services:external:restart": "pnpm services:external:down && pnpm services:external:up"
   }
 }
