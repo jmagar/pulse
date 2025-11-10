@@ -182,6 +182,43 @@ class Settings(BaseSettings):
         description="Firecrawl API key",
     )
 
+    # changedetection.io API configuration
+    changedetection_api_url: str = Field(
+        default="http://firecrawl_changedetection:5000",
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHANGEDETECTION_API_URL",
+            "CHANGEDETECTION_API_URL",
+        ),
+        description="changedetection.io API base URL",
+    )
+
+    changedetection_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHANGEDETECTION_API_KEY",
+            "CHANGEDETECTION_API_KEY",
+        ),
+        description="changedetection.io API key (optional for self-hosted)",
+    )
+
+    changedetection_default_check_interval: int = Field(
+        default=3600,
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL",
+            "CHANGEDETECTION_CHECK_INTERVAL",
+        ),
+        description="Default check interval in seconds (default: 1 hour)",
+    )
+
+    changedetection_enable_auto_watch: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH",
+            "CHANGEDETECTION_ENABLE_AUTO_WATCH",
+        ),
+        description="Enable automatic watch creation for scraped URLs",
+    )
+
     @field_validator("webhook_secret")
     @classmethod
     def validate_webhook_secret(cls, value: str) -> str:
