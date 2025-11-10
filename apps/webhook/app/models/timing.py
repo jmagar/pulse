@@ -71,3 +71,34 @@ class OperationMetric(Base):
 
     def __repr__(self) -> str:
         return f"<OperationMetric(type={self.operation_type}, name={self.operation_name}, duration_ms={self.duration_ms})>"
+
+
+class ChangeEvent(Base):
+    """Model for tracking changedetection.io events."""
+
+    __tablename__ = "change_events"
+    __table_args__ = {"schema": "webhook"}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    watch_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    watch_url: Mapped[str] = mapped_column(Text, nullable=False)
+    detected_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=func.now,
+        index=True,
+    )
+    diff_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    snapshot_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rescrape_job_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    rescrape_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    extra_metadata: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=func.now,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ChangeEvent(watch_id={self.watch_id}, watch_url={self.watch_url}, status={self.rescrape_status})>"
