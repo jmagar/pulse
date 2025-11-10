@@ -139,7 +139,7 @@ PostgreSQL is shared across services with schema isolation:
 Website change detection and monitoring service.
 
 - **Purpose:** Track content changes on monitored URLs
-- **Web UI:** http://localhost:50109
+- **Web UI:** `http://localhost:50109`
 - **Shared Resources:** Uses firecrawl_playwright for JavaScript rendering
 - **Storage:** File-based in `/datastore` volume
 - **Integration:** Notifies webhook bridge on change detection
@@ -155,6 +155,7 @@ Website change detection and monitoring service.
 **Steps**:
 
 1. **Clone and configure**:
+
    ```bash
    git clone <repository-url>
    cd pulse
@@ -170,11 +171,13 @@ Website change detection and monitoring service.
    ```
 
 2. **Start all services**:
+
    ```bash
    docker compose up -d
    ```
 
 3. **Verify services**:
+
    ```bash
    # Check container status
    docker compose ps
@@ -189,9 +192,10 @@ Website change detection and monitoring service.
    ```
 
 Services will be available at:
-- Firecrawl API: http://localhost:50102
-- MCP Server: http://localhost:50107
-- Webhook Bridge: http://localhost:50108
+
+- Firecrawl API: `http://localhost:50102`
+- MCP Server: `http://localhost:50107`
+- Webhook Bridge: `http://localhost:50108`
 
 ### Local Development
 
@@ -205,6 +209,7 @@ For active development on individual services:
 **Steps**:
 
 1. **Install dependencies**:
+
    ```bash
    # Install Node.js workspace dependencies
    pnpm install
@@ -214,18 +219,21 @@ For active development on individual services:
    ```
 
 2. **Configure environment**:
+
    ```bash
    # Copy and edit .env
    cp .env.example .env
    ```
 
 3. **Start infrastructure services**:
+
    ```bash
    # Start PostgreSQL, Redis, and Playwright
    docker compose up -d firecrawl_db firecrawl_cache firecrawl_playwright
    ```
 
 4. **Run services in development mode**:
+
    ```bash
    # See Development section below for pnpm dev commands
    ```
@@ -233,6 +241,7 @@ For active development on individual services:
 ### First Test
 
 **Test Firecrawl API**:
+
 ```bash
 curl -X POST http://localhost:50102/v1/scrape \
   -H "Content-Type: application/json" \
@@ -241,6 +250,7 @@ curl -X POST http://localhost:50102/v1/scrape \
 ```
 
 **Test MCP Server**:
+
 ```bash
 curl -X POST http://localhost:50107/scrape \
   -H "Content-Type: application/json" \
@@ -248,6 +258,7 @@ curl -X POST http://localhost:50107/scrape \
 ```
 
 **Test Webhook Bridge**:
+
 ```bash
 curl http://localhost:50108/api/stats \
   -H "X-API-Secret: ${WEBHOOK_API_SECRET}"
@@ -260,6 +271,7 @@ curl http://localhost:50108/api/stats \
 The monorepo uses **pnpm workspaces** for Node.js apps and **uv** for Python apps.
 
 **Build commands**:
+
 ```bash
 # Build all Node.js apps and packages
 pnpm build
@@ -514,7 +526,7 @@ open htmlcov/index.html  # View coverage report
 
 ### Adding a Watch
 
-1. Open changedetection.io UI: http://localhost:50109
+1. Open changedetection.io UI: `http://localhost:50109`
 2. Click "Add new change detection watch"
 3. Enter URL to monitor
 4. (Optional) Configure:
@@ -549,12 +561,6 @@ Changed content will be automatically indexed for search within minutes.
 - **[apps/mcp/README.md](apps/mcp/README.md)** - MCP Server documentation
 - **[apps/webhook/README.md](apps/webhook/README.md)** - Webhook Bridge documentation
 - **[apps/web/README.md](apps/web/README.md)** - Web interface documentation
-
-### Development Guides
-
-- **[apps/mcp/docs/GETTING_STARTED.md](apps/mcp/docs/GETTING_STARTED.md)** - MCP setup and usage
-- **[apps/mcp/docs/CONFIGURATION.md](apps/mcp/docs/CONFIGURATION.md)** - MCP configuration reference
-- **[apps/mcp/docs/tools/](apps/mcp/docs/tools/)** - Detailed tool documentation
 
 ### Architecture Documents
 

@@ -68,10 +68,15 @@ docker compose logs -f firecrawl_mcp
 All configuration is via environment variables. See `.env.example` in the project root for available options.
 
 Key variables:
-- `MCP_PORT` - HTTP server port (default: 3060)
+- `MCP_PORT` - External host port (default: 50107, maps to internal container port 3060)
 - `MCP_HOST` - Bind address (default: 0.0.0.0)
 - `FIRECRAWL_API_URL` - Firecrawl API endpoint
 - `FIRECRAWL_API_KEY` - Firecrawl API key
+
+**Port Configuration:**
+- **Container Internal Port**: 3060 (hardcoded in Dockerfile, always the same)
+- **Host External Port**: Configurable via `MCP_PORT` environment variable (default: 50107)
+- **Docker Mapping**: `${MCP_PORT:-50107}:3060` maps the external port to the internal port
 
 ## MCP Tools
 

@@ -2,19 +2,17 @@
 /node_modules/
 /dist/
 .env
+.env.bak
 *.csv
 dump.rdb
 *.rdb
 /mongo-data
-apps/js-sdk/node_modules/
-
-apps/api/.env.local
-
-apps/test-suite/node_modules/
-.env.bak
 FIXME.md
 FIXME-TASKS.md
 
+apps/js-sdk/node_modules/
+apps/api/.env.local
+apps/test-suite/node_modules/
 apps/test-suite/.env
 apps/test-suite/logs
 apps/test-suite/load-test-results/test-run-report.json

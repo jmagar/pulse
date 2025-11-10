@@ -9,6 +9,7 @@ CLAUDE.md
 pulse uses a **multi-language monorepo**:
 
 ### Node.js Apps (pnpm workspace)
+
 - `apps/mcp` - MCP server (consolidated single package)
 - `apps/web` - Web UI
 - `packages/*` - Shared libraries

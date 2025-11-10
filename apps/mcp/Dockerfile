@@ -52,14 +52,12 @@ RUN pnpm install --prod --frozen-lockfile
 # Create resources directory
 RUN mkdir -p /app/resources && chown -R nodejs:nodejs /app/resources
 
-# Create entrypoint script
-RUN echo '#!/bin/sh' > /entrypoint.sh && \
-    echo 'if ! chown -R nodejs:nodejs /app/resources 2>/dev/null; then' >> /entrypoint.sh && \
-    echo '  echo "Warning: Failed to change ownership of /app/resources" >&2' >> /entrypoint.sh && \
-    echo 'fi' >> /entrypoint.sh && \
-    echo 'exec su-exec nodejs "$@"' >> /entrypoint.sh && \
-    chmod +x /entrypoint.sh && \
-    apk add --no-cache su-exec
+# Install su-exec for non-root user execution
+RUN apk add --no-cache su-exec
+
+# Copy entrypoint script
+COPY apps/mcp/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Set working directory
 WORKDIR /app/apps/mcp

@@ -445,7 +445,7 @@ async def handle_changedetection_webhook(
     rescrape_queue = Queue("indexing", connection=redis_client)
 
     job = rescrape_queue.enqueue(
-        "app.worker.rescrape_changed_url",
+        "app.jobs.rescrape.rescrape_changed_url",
         change_event.id,
         job_timeout="10m",
     )
