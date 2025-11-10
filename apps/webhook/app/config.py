@@ -163,6 +163,25 @@ class Settings(BaseSettings):
         description="PostgreSQL connection URL for timing metrics",
     )
 
+    # changedetection.io integration
+    firecrawl_api_url: str = Field(
+        default="http://firecrawl:3002",
+        validation_alias=AliasChoices(
+            "WEBHOOK_FIRECRAWL_API_URL",
+            "FIRECRAWL_API_URL",
+        ),
+        description="Firecrawl API base URL for rescraping",
+    )
+
+    firecrawl_api_key: str = Field(
+        default="self-hosted-no-auth",
+        validation_alias=AliasChoices(
+            "WEBHOOK_FIRECRAWL_API_KEY",
+            "FIRECRAWL_API_KEY",
+        ),
+        description="Firecrawl API key",
+    )
+
     @field_validator("webhook_secret")
     @classmethod
     def validate_webhook_secret(cls, value: str) -> str:
