@@ -1,6 +1,0 @@
-# Build outputs
-dist/
-
-# Symlinked shared code (points to ../shared/dist during development)
-# During npm publish, this becomes a real directory via prepare-publish.js
-shared/

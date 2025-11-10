@@ -1,19 +1,31 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "Node16",
-    "lib": ["ES2022"],
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020"],
+    "moduleResolution": "node",
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node16",
-    "allowJs": true,
-    "noEmit": true
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "**/dist/**"]
+  "include": [
+    "*.ts",
+    "server/**/*",
+    "tools/**/*",
+    "scraping/**/*",
+    "processing/**/*",
+    "storage/**/*",
+    "config/**/*",
+    "utils/**/*",
+    "monitoring/**/*"
+  ],
+  "exclude": ["node_modules", "dist", "tests"]
 }
