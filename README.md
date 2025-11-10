@@ -136,32 +136,19 @@ PostgreSQL is shared across services with schema isolation:
 
 ## Quick Start
 
-### Prerequisites
+### Using Docker Compose (Recommended)
 
-- **Docker** and **Docker Compose** (v2.0+)
-- **Node.js** 20+ and **pnpm** 10+ (for development)
-- **Python** 3.13+ and **uv** (for webhook development)
-- **Git**
+**Prerequisites**:
+- Docker and Docker Compose (v2.0+)
+- Git
 
-### Installation
+**Steps**:
 
-1. **Clone the repository**:
+1. **Clone and configure**:
    ```bash
    git clone <repository-url>
    cd pulse
-   ```
 
-2. **Install dependencies**:
-   ```bash
-   # Install Node.js workspace dependencies
-   pnpm install
-
-   # Install Python webhook dependencies
-   pnpm run install:webhook
-   ```
-
-3. **Configure environment**:
-   ```bash
    # Copy environment template
    cp .env.example .env
 
@@ -170,24 +157,67 @@ PostgreSQL is shared across services with schema isolation:
    # - POSTGRES_PASSWORD
    # - WEBHOOK_API_SECRET
    # - MCP_LLM_API_BASE_URL (if using LLM extraction)
-   # - WEBHOOK_QDRANT_URL (if using search indexing)
-   # - WEBHOOK_TEI_URL (if using search indexing)
    ```
 
-4. **Start all services**:
+2. **Start all services**:
    ```bash
    docker compose up -d
    ```
 
-5. **Verify services are running**:
+3. **Verify services**:
    ```bash
    # Check container status
    docker compose ps
+
+   # View logs
+   docker compose logs -f
 
    # Verify health endpoints
    curl http://localhost:4300/health     # Firecrawl API
    curl http://localhost:3060/health     # MCP Server
    curl http://localhost:52100/health    # Webhook Bridge
+   ```
+
+Services will be available at:
+- Firecrawl API: http://localhost:4300
+- MCP Server: http://localhost:3060
+- Webhook Bridge: http://localhost:52100
+
+### Local Development
+
+For active development on individual services:
+
+**Prerequisites**:
+- Node.js 20+ and pnpm 10+
+- Python 3.12+ and uv
+- Docker (for infrastructure services)
+
+**Steps**:
+
+1. **Install dependencies**:
+   ```bash
+   # Install Node.js workspace dependencies
+   pnpm install
+
+   # Install Python webhook dependencies
+   pnpm install:webhook
+   ```
+
+2. **Configure environment**:
+   ```bash
+   # Copy and edit .env
+   cp .env.example .env
+   ```
+
+3. **Start infrastructure services**:
+   ```bash
+   # Start PostgreSQL, Redis, and Playwright
+   docker compose up -d firecrawl_db firecrawl_cache firecrawl_playwright
+   ```
+
+4. **Run services in development mode**:
+   ```bash
+   # See Development section below for pnpm dev commands
    ```
 
 ### First Test
@@ -249,15 +279,26 @@ pnpm test:webhook
 
 **Development mode**:
 ```bash
-# Run MCP in dev mode with hot reload
+# Run MCP server in development mode
 pnpm dev:mcp
 
-# Run webhook in dev mode with hot reload
+# Run web interface in development mode
+pnpm dev:web
+
+# Run webhook bridge in development mode
 pnpm dev:webhook
 
-# Run both in parallel
+# Run webhook worker
+pnpm worker:webhook
+
+# Run MCP and web together
 pnpm dev
+
+# Run all services together (MCP, web, webhook)
+pnpm dev:all
 ```
+
+**Note**: External services (TEI, Qdrant) must be running separately. See `docs/external-services.md`.
 
 **Clean build artifacts**:
 ```bash
