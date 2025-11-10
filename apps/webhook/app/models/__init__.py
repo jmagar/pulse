@@ -38,6 +38,7 @@ FirecrawlWebhookBase = pydantic_models.FirecrawlWebhookBase
 FirecrawlPageEvent = pydantic_models.FirecrawlPageEvent
 FirecrawlLifecycleEvent = pydantic_models.FirecrawlLifecycleEvent
 FirecrawlWebhookEvent = pydantic_models.FirecrawlWebhookEvent
+ChangeDetectionPayload = pydantic_models.ChangeDetectionPayload
 
 __all__ = [
     # Pydantic models
@@ -56,4 +57,5 @@ __all__ = [
     "FirecrawlPageEvent",
     "FirecrawlLifecycleEvent",
     "FirecrawlWebhookEvent",
+    "ChangeDetectionPayload",
 ]

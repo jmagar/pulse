@@ -4,14 +4,17 @@ API route handlers.
 Implements the REST API endpoints for document indexing and search.
 """
 
+import hashlib
+import hmac
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import TypeAdapter, ValidationError
 from rq import Queue
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import (
     get_bm25_engine,
@@ -23,7 +26,10 @@ from app.api.dependencies import (
     verify_api_secret,
     verify_webhook_signature,
 )
+from app.config import settings
+from app.database import get_db_session
 from app.models import (
+    ChangeDetectionPayload,
     FirecrawlWebhookEvent,
     HealthStatus,
     IndexDocumentRequest,
@@ -357,6 +363,110 @@ async def webhook_firecrawl(
     )
 
     return JSONResponse(status_code=status_code, content=result)
+
+
+@router.post("/api/webhook/changedetection", status_code=202)
+@limiter.exempt
+async def handle_changedetection_webhook(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+    queue: Annotated[Queue, Depends(get_rq_queue)],
+    signature: str | None = Header(None, alias="X-Signature"),
+) -> dict:
+    """
+    Handle webhook notifications from changedetection.io.
+
+    Verifies HMAC signature, stores change event, and enqueues
+    Firecrawl rescrape job for updated content.
+
+    Note: Rate limiting is disabled for this endpoint because:
+    - It's an internal service within the Docker network
+    - Signature verification provides security
+    - Change detection events are naturally rate-limited
+    """
+    # Verify HMAC signature BEFORE parsing payload
+    if not signature:
+        raise HTTPException(401, "Missing X-Signature header")
+
+    body = await request.body()
+    expected_sig = hmac.new(
+        settings.webhook_secret.encode(),
+        body,
+        hashlib.sha256
+    ).hexdigest()
+
+    provided_sig = signature.replace("sha256=", "")
+
+    if not hmac.compare_digest(expected_sig, provided_sig):
+        logger.warning(
+            "Invalid changedetection webhook signature",
+        )
+        raise HTTPException(401, "Invalid signature")
+
+    # Parse and validate payload AFTER signature verification
+    try:
+        import json
+        payload_dict = json.loads(body)
+        payload = ChangeDetectionPayload(**payload_dict)
+    except Exception as e:
+        logger.error("Failed to parse changedetection payload", error=str(e))
+        raise HTTPException(400, f"Invalid payload: {str(e)}")
+
+    logger.info(
+        "Received changedetection webhook",
+        watch_id=payload.watch_id,
+        watch_url=payload.watch_url,
+    )
+
+    # Store change event in database
+    from app.models.timing import ChangeEvent
+
+    change_event = ChangeEvent(
+        watch_id=payload.watch_id,
+        watch_url=payload.watch_url,
+        detected_at=datetime.fromisoformat(payload.detected_at.replace("Z", "+00:00")),
+        diff_summary=payload.snapshot[:500] if payload.snapshot else None,
+        snapshot_url=payload.diff_url,
+        rescrape_status="queued",
+        metadata={
+            "watch_title": payload.watch_title,
+            "webhook_received_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+    db.add(change_event)
+    await db.commit()
+    await db.refresh(change_event)
+
+    # Enqueue rescrape job
+    from app.api.dependencies import get_redis_connection
+
+    redis_client = get_redis_connection()
+    rescrape_queue = Queue("indexing", connection=redis_client)
+
+    job = rescrape_queue.enqueue(
+        "app.worker.rescrape_changed_url",
+        change_event.id,
+        job_timeout="10m",
+    )
+
+    # Update event with job ID
+    change_event.rescrape_job_id = job.id
+    await db.commit()
+
+    logger.info(
+        "Enqueued rescrape job for changed URL",
+        job_id=job.id,
+        watch_url=payload.watch_url,
+        change_event_id=change_event.id,
+    )
+
+    return {
+        "status": "queued",
+        "job_id": job.id,
+        "change_event_id": change_event.id,
+        "url": payload.watch_url,
+    }
 
 
 @router.get("/health", response_model=HealthStatus)

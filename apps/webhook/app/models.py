@@ -208,3 +208,14 @@ FirecrawlWebhookEvent = Annotated[
     FirecrawlPageEvent | FirecrawlLifecycleEvent,
     Field(discriminator="type"),
 ]
+
+
+class ChangeDetectionPayload(BaseModel):
+    """Payload from changedetection.io webhook."""
+
+    watch_id: str = Field(..., description="UUID of the watch")
+    watch_url: str = Field(..., description="URL being monitored")
+    watch_title: str | None = Field(None, description="Title of the watch")
+    detected_at: str = Field(..., description="ISO timestamp of detection")
+    diff_url: str | None = Field(None, description="URL to view diff")
+    snapshot: str | None = Field(None, description="Current snapshot content")

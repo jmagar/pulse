@@ -8,13 +8,15 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
-# Set test database URL before any imports
+# Set test environment variables before any imports
 # Use localhost instead of postgres (Docker service name)
 # Use the same database as dev for simplicity - metrics tables are separate
 os.environ.setdefault(
     "SEARCH_BRIDGE_DATABASE_URL",
     "postgresql+asyncpg://fc_bridge:password@localhost:5432/fc_bridge"
 )
+os.environ.setdefault("WEBHOOK_API_SECRET", "test-api-secret-for-testing-only")
+os.environ.setdefault("WEBHOOK_SECRET", "test-webhook-secret-for-testing-hmac-verification")
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -79,3 +81,20 @@ def api_secret_header() -> dict[str, str]:
     """Provide API secret header for authenticated requests."""
     from app.config import settings
     return {"Authorization": f"Bearer {settings.api_secret}"}
+
+
+@pytest_asyncio.fixture
+async def db_session():
+    """
+    Provide a database session for tests that need direct database access.
+
+    This fixture creates a new session for each test and rolls back
+    changes after the test completes to maintain test isolation.
+    """
+    from app.database import get_db_context
+
+    async with get_db_context() as session:
+        yield session
+        # Rollback is handled by get_db_context on exception
+        # For successful tests, we still want to rollback to maintain isolation
+        await session.rollback()
