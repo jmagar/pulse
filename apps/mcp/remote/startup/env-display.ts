@@ -56,20 +56,20 @@ export function getEnvironmentVariables(): EnvVarDisplay[] {
 
   // Server configuration - always shown with defaults
   vars.push(
-    { name: 'PORT', value: env.port, sensitive: false, category: 'Server' },
+    { name: 'PORT', value: env.port || '3060', sensitive: false, category: 'Server' },
     {
       name: 'NODE_ENV',
-      value: env.nodeEnv,
+      value: env.nodeEnv || 'development',
       sensitive: false,
       category: 'Server',
     },
     {
       name: 'LOG_FORMAT',
-      value: env.logFormat,
+      value: env.logFormat || 'text',
       sensitive: false,
       category: 'Server',
     },
-    { name: 'DEBUG', value: env.debug, sensitive: false, category: 'Server' }
+    { name: 'DEBUG', value: env.debug || 'false', sensitive: false, category: 'Server' }
   );
 
   // HTTP configuration - conditional display
@@ -92,13 +92,13 @@ export function getEnvironmentVariables(): EnvVarDisplay[] {
   vars.push(
     {
       name: 'ENABLE_OAUTH',
-      value: env.enableOAuth,
+      value: env.enableOAuth || 'false',
       sensitive: false,
       category: 'HTTP',
     },
     {
       name: 'ENABLE_RESUMABILITY',
-      value: env.enableResumability,
+      value: env.enableResumability || 'false',
       sensitive: false,
       category: 'HTTP',
     }
@@ -123,7 +123,7 @@ export function getEnvironmentVariables(): EnvVarDisplay[] {
   }
   vars.push({
     name: 'OPTIMIZE_FOR',
-    value: env.optimizeFor,
+    value: env.optimizeFor || 'cost',
     sensitive: false,
     category: 'Scraping',
   });
@@ -165,7 +165,7 @@ export function getEnvironmentVariables(): EnvVarDisplay[] {
   // Storage configuration
   vars.push({
     name: 'MCP_RESOURCE_STORAGE',
-    value: env.resourceStorage,
+    value: env.resourceStorage || 'memory',
     sensitive: false,
     category: 'Storage',
   });
