@@ -464,6 +464,7 @@ open htmlcov/index.html  # View coverage report
 ### Project Documentation
 
 - **[.docs/services-ports.md](.docs/services-ports.md)** - Service port allocation and URLs
+- **[.docs/webhook-troubleshooting.md](.docs/webhook-troubleshooting.md)** - Webhook debugging and troubleshooting guide
 - **[.env.example](.env.example)** - Comprehensive environment variable reference
 - **[docker-compose.yaml](docker-compose.yaml)** - Service definitions and infrastructure
 
@@ -482,6 +483,14 @@ open htmlcov/index.html  # View coverage report
 ### Architecture Documents
 
 See `.docs/sessions/` for detailed session logs documenting architectural decisions and implementation details.
+
+### Troubleshooting
+
+**Webhooks not working?** See **[.docs/webhook-troubleshooting.md](.docs/webhook-troubleshooting.md)** for:
+- Common webhook issues and solutions
+- SSRF protection bypass configuration
+- Real-time log monitoring commands
+- End-to-end testing procedures
 
 ## License
 
