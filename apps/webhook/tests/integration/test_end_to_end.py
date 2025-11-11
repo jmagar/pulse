@@ -74,8 +74,8 @@ def test_webhook_to_search_end_to_end(
     )
     assert response.status_code == 202
 
-    assert in_memory_queue.jobs, "Expected job to be enqueued"
-    job = in_memory_queue.jobs.pop()
+    assert len(in_memory_queue.jobs) == 1, f"Expected 1 job, got {len(in_memory_queue.jobs)}"
+    job = in_memory_queue.jobs[0]
     job.perform()
 
     assert job.is_finished, job.get_status()
