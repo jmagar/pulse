@@ -21,8 +21,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv pip install --system --no-cache -r pyproject.toml
 
 # Copy application code
-COPY app/ ./app/
-COPY infra/ ./infra/
+COPY . .
 
 # Create non-root user
 RUN useradd -m -u 1000 bridge && chown -R bridge:bridge /app
@@ -36,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:52100/health || exit 1
 
 # Default command (can be overridden in docker-compose)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "52100"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "52100"]
