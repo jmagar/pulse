@@ -2,14 +2,14 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add knowledge graph extraction using Ollama (Qwen2.5:7B) and Neo4j to enhance RAG pipeline with entity/relationship extraction and graph-based search re-ranking.
+**Goal:** Add knowledge graph extraction using Ollama (Qwen3:8B) and Neo4j to enhance RAG pipeline with entity/relationship extraction and graph-based search re-ranking.
 
 **Architecture:** Multi-stage extraction pipeline (chunk-level entities → chunk-level relationships → document consolidation) with validation/retry, storing in Neo4j alongside existing Qdrant (vector) and BM25 (keyword) indexes for triple-hybrid search.
 
 **Tech Stack:**
 - **Neo4j 2025.10.1**: Graph database for entities/relationships
 - **Ollama**: LLM inference server (GPU-accelerated on external machine)
-- **Qwen2.5:7B-Instruct**: Entity/relationship extraction model
+- **Qwen3:8B-Instruct**: Entity/relationship extraction model
 - **Python**: neo4j driver, Pydantic schemas, httpx for Ollama API
 - **FastAPI**: Graph query endpoints
 - **Docker Compose**: Service orchestration
@@ -81,7 +81,7 @@ WEBHOOK_NEO4J_URL=bolt://firecrawl_neo4j:7687
 
 # Graph Extraction Settings
 WEBHOOK_GRAPH_EXTRACTION_ENABLED=true
-WEBHOOK_GRAPH_EXTRACTION_MODEL=qwen2.5:7b-instruct
+WEBHOOK_GRAPH_EXTRACTION_MODEL=qwen3:8b-instruct
 WEBHOOK_GRAPH_HALLUCINATION_CHECK=false
 WEBHOOK_GRAPH_MIN_ENTITY_CONFIDENCE=0.6
 WEBHOOK_GRAPH_MIN_RELATIONSHIP_CONFIDENCE=0.5
@@ -177,14 +177,14 @@ docker compose -f docker-compose.external.yaml up -d firecrawl_ollama
 
 Expected: Container starts, GPU allocated
 
-**Step 3: Pull Qwen2.5:7B model**
+**Step 3: Pull Qwen3:8B model**
 
 Run:
 ```bash
-docker exec firecrawl_ollama ollama pull qwen2.5:7b-instruct
+docker exec firecrawl_ollama ollama pull qwen3:8b-instruct
 ```
 
-Expected: Model downloads (takes 5-10 minutes, ~4.7GB)
+Expected: Model downloads (takes 5-10 minutes, ~5.2GB)
 
 **Step 4: Verify model loaded**
 
@@ -193,14 +193,14 @@ Run:
 docker exec firecrawl_ollama ollama list
 ```
 
-Expected output includes `qwen2.5:7b-instruct`
+Expected output includes `qwen3:8b-instruct`
 
 **Step 5: Test model inference**
 
 Run:
 ```bash
 curl http://gpu-machine:50203/api/generate -d '{
-  "model": "qwen2.5:7b-instruct",
+  "model": "qwen3:8b-instruct",
   "prompt": "Say hello",
   "stream": false
 }'
@@ -285,7 +285,7 @@ def test_graph_extraction_settings():
     )
 
     assert settings.graph_extraction_enabled is True
-    assert settings.graph_extraction_model == "qwen2.5:7b-instruct"
+    assert settings.graph_extraction_model == "qwen3:8b-instruct"
     assert settings.graph_min_entity_confidence == 0.6
     assert settings.graph_min_relationship_confidence == 0.5
     assert settings.graph_batch_size == 4
@@ -357,7 +357,7 @@ Edit `apps/webhook/config.py`, add after `changedetection_enable_auto_watch` fie
         description="Enable knowledge graph extraction",
     )
     graph_extraction_model: str = Field(
-        default="qwen2.5:7b-instruct",
+        default="qwen3:8b-instruct",
         validation_alias=AliasChoices(
             "WEBHOOK_GRAPH_EXTRACTION_MODEL", "GRAPH_EXTRACTION_MODEL"
         ),
@@ -794,11 +794,11 @@ async def test_ollama_client_initialization():
     """Test OllamaClient initialization."""
     client = OllamaClient(
         base_url="http://localhost:11434",
-        model="qwen2.5:7b-instruct",
+        model="qwen3:8b-instruct",
     )
 
     assert client.base_url == "http://localhost:11434"
-    assert client.model == "qwen2.5:7b-instruct"
+    assert client.model == "qwen3:8b-instruct"
 
     await client.close()
 
@@ -886,7 +886,7 @@ class OllamaClient:
 
         Args:
             base_url: Ollama server URL (e.g., 'http://localhost:11434')
-            model: Model name (e.g., 'qwen2.5:7b-instruct')
+            model: Model name (e.g., 'qwen3:8b-instruct')
             timeout: Request timeout in seconds
         """
         self.base_url = base_url.rstrip("/")

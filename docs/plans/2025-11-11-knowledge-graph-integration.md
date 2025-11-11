@@ -64,28 +64,33 @@ Upgrade the RAG pipeline to extract structured knowledge graphs using Ollama (7B
 
 ---
 
-## Model Selection: Qwen2.5:7B-Instruct
+## Model Selection: Qwen3:8B-Instruct
 
-### Why Qwen2.5:7B?
+### Why Qwen3:8B?
 
 **Performance on RTX 4070 (12GB VRAM):**
-- Model size: ~7.6B parameters
+- Model size: ~8B parameters
 - Quantization: Q8_0 (8-bit) or FP16
 - VRAM usage: ~8-9GB (leaves 3-4GB for TEI embeddings)
 - Speed: 40-50 tokens/sec on RTX 4070
 - Context: 128K tokens (huge for document-level extraction)
+- Training: 36T tokens (2x more than Qwen2.5)
 
 **Strengths:**
-- Excellent structured output support (native JSON mode)
-- Strong multilingual capabilities (80+ languages)
-- Better instruction following than Llama 3.1:8B
-- Designed for extraction tasks (Qwen family specializes in this)
-- Already using Qwen3-Embedding-0.6B (ecosystem consistency)
+- **Superior performance**: Matches Qwen2.5-14B with half the parameters
+- **Excellent structured output**: Native JSON mode with guided decoding
+- **Agent capabilities**: Enhanced tool integration and structured extraction
+- **Better reasoning**: Outperforms Qwen2.5-72B on STEM/coding tasks
+- **Ecosystem consistency**: Already using Qwen3-Embedding-0.6B
+- **Multilingual**: 119 languages (vs 80+ in Qwen2.5)
+
+**Why not Qwen3-4B?**
+- While Qwen3-4B can rival Qwen2.5-72B on some tasks, the 8B variant provides better reliability for complex entity/relationship extraction with minimal VRAM cost increase
 
 **Alternatives:**
-- Llama 3.1:8B (good general purpose, 40-45 tok/s)
-- Mistral:7B-Instruct (faster but less structured output reliability)
-- Gemma 2:9B (good but larger VRAM footprint)
+- Qwen3-4B (smaller, faster, but less reliable for complex extraction)
+- Llama 3.1:8B (good general purpose, but worse structured output)
+- Qwen2.5:7B (previous generation, smaller training set)
 
 ---
 
@@ -1157,7 +1162,7 @@ WEBHOOK_OLLAMA_URL=http://gpu-machine:50203
 
 # Graph Extraction Settings
 WEBHOOK_GRAPH_EXTRACTION_ENABLED=true
-WEBHOOK_GRAPH_EXTRACTION_MODEL=qwen2.5:7b-instruct
+WEBHOOK_GRAPH_EXTRACTION_MODEL=qwen3:8b-instruct
 WEBHOOK_GRAPH_HALLUCINATION_CHECK=false
 WEBHOOK_GRAPH_MIN_ENTITY_CONFIDENCE=0.6
 WEBHOOK_GRAPH_MIN_RELATIONSHIP_CONFIDENCE=0.5
