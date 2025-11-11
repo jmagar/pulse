@@ -68,10 +68,12 @@ class WorkerThreadManager:
             self._thread.join(timeout=10.0)
             if self._thread.is_alive():
                 logger.error("Worker thread did not stop gracefully")
+                # Don't cleanup if thread is still running - jobs may still be active
+                return
             else:
                 logger.info("Worker thread stopped")
 
-        # Cleanup service pool
+        # Now safe to cleanup - thread has exited so no jobs are running
         try:
             from services.service_pool import ServicePool
 

@@ -62,7 +62,7 @@ async def test_service_pool_close():
 
 def test_service_pool_reset():
     """Test that ServicePool can be reset (for testing)."""
-    pool1 = ServicePool.get_instance()
+    ServicePool.get_instance()
 
     # Reset the singleton
     ServicePool.reset()

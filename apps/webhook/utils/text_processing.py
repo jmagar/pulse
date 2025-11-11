@@ -5,6 +5,7 @@ CRITICAL: We use TOKEN-based chunking, not character-based!
 Embedding models have token limits, not character limits.
 """
 
+import threading
 from typing import Any
 
 from transformers import AutoTokenizer
@@ -23,6 +24,10 @@ class TextChunker:
     2. Splitting by token count (not characters)
     3. Adding overlap in tokens (not characters)
     4. Decoding back to text for embedding
+
+    Thread-safety:
+    - Uses a lock to protect tokenizer access for concurrent use
+    - Safe for use in multi-threaded environments (e.g., RQ workers)
     """
 
     def __init__(
@@ -42,6 +47,7 @@ class TextChunker:
         self.model_name = model_name
         self.max_tokens = max_tokens
         self.overlap_tokens = overlap_tokens
+        self._lock = threading.Lock()
 
         logger.info(
             "Initializing text chunker",
@@ -61,6 +67,8 @@ class TextChunker:
         """
         Split text into token-based chunks with overlap.
 
+        Thread-safe: Uses lock to protect tokenizer access.
+
         Args:
             text: Text to chunk
             metadata: Optional metadata to attach to each chunk
@@ -72,80 +80,82 @@ class TextChunker:
             logger.warning("Empty text provided for chunking")
             return []
 
-        # Tokenize entire text (without special tokens for more accurate counting)
-        try:
-            tokens = self.tokenizer.encode(text, add_special_tokens=False)
-        except Exception as e:
-            logger.error("Failed to tokenize text", error=str(e))
-            raise
-
-        total_tokens = len(tokens)
-        logger.debug(
-            "Tokenized text",
-            total_tokens=total_tokens,
-            text_length=len(text),
-            tokens_per_char=total_tokens / len(text) if text else 0,
-        )
-
-        chunks = []
-        start = 0
-        chunk_index = 0
-
-        while start < total_tokens:
-            # Get chunk of tokens
-            end = min(start + self.max_tokens, total_tokens)
-            chunk_tokens = tokens[start:end]
-
-            # Decode back to text
+        # Protect tokenizer access with lock for thread-safety
+        with self._lock:
+            # Tokenize entire text (without special tokens for more accurate counting)
             try:
-                chunk_text = self.tokenizer.decode(chunk_tokens, skip_special_tokens=True)
+                tokens = self.tokenizer.encode(text, add_special_tokens=False)
             except Exception as e:
-                logger.error(
-                    "Failed to decode chunk",
-                    chunk_index=chunk_index,
-                    start=start,
-                    end=end,
-                    error=str(e),
-                )
+                logger.error("Failed to tokenize text", error=str(e))
                 raise
 
-            # Create chunk dictionary
-            chunk = {
-                "text": chunk_text,
-                "chunk_index": chunk_index,
-                "token_count": len(chunk_tokens),
-                "start_token": start,
-                "end_token": end,
-            }
-
-            # Add metadata if provided
-            if metadata:
-                chunk.update(metadata)
-
-            chunks.append(chunk)
-
+            total_tokens = len(tokens)
             logger.debug(
-                "Created chunk",
-                chunk_index=chunk_index,
-                tokens=len(chunk_tokens),
-                chars=len(chunk_text),
+                "Tokenized text",
+                total_tokens=total_tokens,
+                text_length=len(text),
+                tokens_per_char=total_tokens / len(text) if text else 0,
             )
 
-            chunk_index += 1
+            chunks = []
+            start = 0
+            chunk_index = 0
 
-            # Move forward with overlap
-            # Ensure we make progress even with overlap
-            step = max(1, self.max_tokens - self.overlap_tokens)
-            start += step
+            while start < total_tokens:
+                # Get chunk of tokens
+                end = min(start + self.max_tokens, total_tokens)
+                chunk_tokens = tokens[start:end]
 
-        logger.info(
-            "Chunking complete",
-            total_chunks=len(chunks),
-            total_tokens=total_tokens,
-            avg_tokens_per_chunk=total_tokens / len(chunks) if chunks else 0,
-        )
+                # Decode back to text
+                try:
+                    chunk_text = self.tokenizer.decode(chunk_tokens, skip_special_tokens=True)
+                except Exception as e:
+                    logger.error(
+                        "Failed to decode chunk",
+                        chunk_index=chunk_index,
+                        start=start,
+                        end=end,
+                        error=str(e),
+                    )
+                    raise
 
-        return chunks
+                # Create chunk dictionary
+                chunk = {
+                    "text": chunk_text,
+                    "chunk_index": chunk_index,
+                    "token_count": len(chunk_tokens),
+                    "start_token": start,
+                    "end_token": end,
+                }
+
+                # Add metadata if provided
+                if metadata:
+                    chunk.update(metadata)
+
+                chunks.append(chunk)
+
+                logger.debug(
+                    "Created chunk",
+                    chunk_index=chunk_index,
+                    tokens=len(chunk_tokens),
+                    chars=len(chunk_text),
+                )
+
+                chunk_index += 1
+
+                # Move forward with overlap
+                # Ensure we make progress even with overlap
+                step = max(1, self.max_tokens - self.overlap_tokens)
+                start += step
+
+            logger.info(
+                "Chunking complete",
+                total_chunks=len(chunks),
+                total_tokens=total_tokens,
+                avg_tokens_per_chunk=total_tokens / len(chunks) if chunks else 0,
+            )
+
+            return chunks
 
 
 def clean_text(text: str) -> str:
