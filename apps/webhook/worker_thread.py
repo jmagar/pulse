@@ -4,6 +4,7 @@ Background worker thread manager.
 Runs the RQ worker in a background thread within the FastAPI process.
 """
 
+import asyncio
 import threading
 
 from rq import Worker
@@ -50,7 +51,7 @@ class WorkerThreadManager:
         logger.info("Worker thread started")
 
     def stop(self) -> None:
-        """Stop the worker thread gracefully."""
+        """Stop the worker thread gracefully and cleanup service pool."""
         if not self._running:
             logger.warning("Worker thread not running")
             return
@@ -70,15 +71,42 @@ class WorkerThreadManager:
             else:
                 logger.info("Worker thread stopped")
 
+        # Cleanup service pool
+        try:
+            from services.service_pool import ServicePool
+
+            pool = ServicePool.get_instance()
+            # Run async cleanup in new event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(pool.close())
+                logger.info("Service pool closed")
+            finally:
+                loop.close()
+        except Exception:
+            logger.exception("Failed to close service pool")
+
     def _run_worker(self) -> None:
         """
         Run the RQ worker (called in background thread).
 
         This method runs in a separate thread and processes jobs from Redis.
+        Initializes service pool before starting work to ensure all services
+        are ready for jobs.
         """
         try:
             logger.info("Connecting to Redis for worker", redis_url=settings.redis_url)
             redis_conn = get_redis_connection()
+
+            # Pre-initialize service pool for performance
+            # This loads the tokenizer and creates service connections once
+            # before any jobs are processed
+            logger.info("Pre-initializing service pool...")
+            from services.service_pool import ServicePool
+
+            ServicePool.get_instance()
+            logger.info("Service pool ready for jobs")
 
             # Create worker
             self._worker = Worker(

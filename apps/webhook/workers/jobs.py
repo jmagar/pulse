@@ -11,12 +11,8 @@ from config import settings
 from infra.database import get_db_context
 from api.schemas.indexing import IndexDocumentRequest
 from domain.models import ChangeEvent
-from services.bm25_engine import BM25Engine
-from services.embedding import EmbeddingService
-from services.indexing import IndexingService
-from services.vector_store import VectorStore
+from services.service_pool import ServicePool
 from utils.logging import get_logger
-from utils.text_processing import TextChunker
 
 logger = get_logger(__name__)
 
@@ -29,6 +25,8 @@ async def _index_document_helper(
     """
     Helper function to index a document using the IndexingService.
 
+    Uses service pool for efficient resource reuse.
+
     Args:
         url: Document URL
         text: Document markdown content
@@ -37,64 +35,31 @@ async def _index_document_helper(
     Returns:
         Document URL as identifier
     """
-    # Initialize services
-    text_chunker = TextChunker(
-        model_name=settings.embedding_model,
-        max_tokens=settings.max_chunk_tokens,
-        overlap_tokens=settings.chunk_overlap_tokens,
+    # Get services from pool (FAST - no initialization overhead)
+    service_pool = ServicePool.get_instance()
+    indexing_service = service_pool.get_indexing_service()
+
+    # Ensure collection exists
+    await service_pool.vector_store.ensure_collection()
+
+    # Create IndexDocumentRequest
+    document = IndexDocumentRequest(
+        url=url,
+        markdown=text,
+        title=metadata.get("title", ""),
+        description=metadata.get("description", ""),
+        language="en",  # Default language
+        country=None,
+        is_mobile=False,
     )
 
-    embedding_service = EmbeddingService(
-        tei_url=settings.tei_url,
-        api_key=settings.tei_api_key,
-    )
+    # Index document
+    result = await indexing_service.index_document(document)
 
-    vector_store = VectorStore(
-        url=settings.qdrant_url,
-        collection_name=settings.qdrant_collection,
-        vector_dim=settings.vector_dim,
-        timeout=int(settings.qdrant_timeout),
-    )
+    if not result.get("success"):
+        raise Exception(f"Indexing failed: {result.get('error')}")
 
-    bm25_engine = BM25Engine(
-        k1=settings.bm25_k1,
-        b=settings.bm25_b,
-    )
-
-    indexing_service = IndexingService(
-        text_chunker=text_chunker,
-        embedding_service=embedding_service,
-        vector_store=vector_store,
-        bm25_engine=bm25_engine,
-    )
-
-    try:
-        # Ensure collection exists
-        await vector_store.ensure_collection()
-
-        # Create IndexDocumentRequest
-        document = IndexDocumentRequest(
-            url=url,
-            markdown=text,
-            title=metadata.get("title", ""),
-            description=metadata.get("description", ""),
-            language="en",  # Default language
-            country=None,
-            is_mobile=False,
-        )
-
-        # Index document
-        result = await indexing_service.index_document(document)
-
-        if not result.get("success"):
-            raise Exception(f"Indexing failed: {result.get('error')}")
-
-        return url  # Return URL as document ID
-
-    finally:
-        # Cleanup resources
-        await embedding_service.close()
-        await vector_store.close()
+    return url  # Return URL as document ID
 
 
 async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
