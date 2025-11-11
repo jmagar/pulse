@@ -3,7 +3,7 @@
 import importlib
 import os
 from collections.abc import Generator
-from typing import Any
+from typing import Any, ClassVar
 from uuid import uuid4
 
 import pytest
@@ -166,7 +166,7 @@ class InMemoryQueue:
 class InMemoryVectorStore:
     """In-memory replacement for the Qdrant vector store."""
 
-    collections: dict[str, list[dict[str, Any]]] = {}
+    collections: ClassVar[dict[str, list[dict[str, Any]]]] = {}
 
     def __init__(
         self,
