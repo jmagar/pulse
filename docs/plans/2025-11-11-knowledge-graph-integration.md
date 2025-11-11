@@ -846,7 +846,7 @@ class SearchOrchestrator:
 services:
   firecrawl_neo4j:
     <<: *common-service
-    image: neo4j:5-community
+    image: neo4j:2025.10.1-community-bullseye
     container_name: firecrawl_neo4j
     ports:
       - "${NEO4J_HTTP_PORT:-50210}:7474"
