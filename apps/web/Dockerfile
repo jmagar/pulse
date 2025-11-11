@@ -64,4 +64,4 @@ COPY --from=builder --chown=node:node /app/apps/web/public ./public
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["node", "apps/web/server.js"]
