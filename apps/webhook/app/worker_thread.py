@@ -6,11 +6,11 @@ Runs the RQ worker in a background thread within the FastAPI process.
 
 import threading
 
-from redis import Redis
 from rq import Worker
 
 from app.config import settings
 from app.utils.logging import get_logger
+from apps.webhook.infra.redis import get_redis_connection
 
 logger = get_logger(__name__)
 
@@ -78,7 +78,7 @@ class WorkerThreadManager:
         """
         try:
             logger.info("Connecting to Redis for worker", redis_url=settings.redis_url)
-            redis_conn = Redis.from_url(settings.redis_url)
+            redis_conn = get_redis_connection()
 
             # Create worker
             self._worker = Worker(

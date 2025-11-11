@@ -28,7 +28,7 @@ from app.api.dependencies import (
     verify_webhook_signature,
 )
 from app.config import settings
-from app.database import get_db_session
+from apps.webhook.infra.database import get_db_session
 from app.models import (
     ChangeDetectionPayload,
     FirecrawlWebhookEvent,
@@ -40,7 +40,7 @@ from app.models import (
     SearchResponse,
     SearchResult,
 )
-from app.rate_limit import limiter
+from apps.webhook.infra.rate_limit import limiter
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.indexing import IndexingService

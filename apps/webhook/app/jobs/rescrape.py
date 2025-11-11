@@ -8,7 +8,7 @@ from rq import get_current_job
 from sqlalchemy import select, update
 
 from app.config import settings
-from app.database import get_db_context
+from apps.webhook.infra.database import get_db_context
 from app.models import IndexDocumentRequest
 from app.models.timing import ChangeEvent
 from app.services.bm25_engine import BM25Engine

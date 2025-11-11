@@ -13,7 +13,7 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import verify_api_secret
-from app.database import get_db_session
+from apps.webhook.infra.database import get_db_session
 from app.models.timing import OperationMetric, RequestMetric
 from app.utils.logging import get_logger
 
