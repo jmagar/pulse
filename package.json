@@ -14,7 +14,7 @@
     "test:apps": "pnpm --filter './apps/mcp' --filter './apps/web' test",
     "test:mcp": "pnpm --filter './apps/mcp' test",
     "test:web": "pnpm --filter './apps/web' test",
-    "test:webhook": "cd apps/webhook && uv run pytest tests/ -v",
+    "test:webhook": "apps/webhook/scripts/setup-test-db.sh && cd apps/webhook && uv run pytest tests/ -v",
     "dev": "pnpm --parallel dev:mcp dev:web dev:webhook",
     "dev:all": "pnpm --parallel dev:mcp dev:web dev:webhook",
     "dev:mcp": "pnpm --filter './apps/mcp' dev",
