@@ -1,10 +1,54 @@
 """
 Unit tests for ServicePool.
+
+Uses mocked services to avoid heavy infrastructure initialization
+(tokenizer downloads, network connections, etc.).
 """
 
 import pytest
+from unittest.mock import AsyncMock, Mock, patch
 
 from services.service_pool import ServicePool
+
+
+@pytest.fixture(autouse=True)
+def mock_services():
+    """
+    Mock heavy services for unit tests.
+    
+    Prevents:
+    - TextChunker from downloading HuggingFace tokenizer (1-5s, network)
+    - EmbeddingService from creating HTTP client
+    - VectorStore from creating Qdrant client (may attempt connection)
+    - BM25Engine from loading from disk
+    """
+    with patch('services.service_pool.TextChunker') as mock_chunker, \
+         patch('services.service_pool.EmbeddingService') as mock_embed, \
+         patch('services.service_pool.VectorStore') as mock_vector, \
+         patch('services.service_pool.BM25Engine') as mock_bm25:
+        
+        # Create mock instances with async close methods
+        mock_chunker_instance = Mock()
+        mock_embed_instance = Mock()
+        mock_embed_instance.close = AsyncMock()
+        mock_vector_instance = Mock()
+        mock_vector_instance.close = AsyncMock()
+        mock_bm25_instance = Mock()
+        
+        mock_chunker.return_value = mock_chunker_instance
+        mock_embed.return_value = mock_embed_instance
+        mock_vector.return_value = mock_vector_instance
+        mock_bm25.return_value = mock_bm25_instance
+        
+        yield {
+            'chunker': mock_chunker_instance,
+            'embed': mock_embed_instance,
+            'vector': mock_vector_instance,
+            'bm25': mock_bm25_instance,
+        }
+        
+        # Reset singleton after each test for isolation
+        ServicePool.reset()
 
 
 def test_service_pool_singleton():
@@ -58,6 +102,10 @@ async def test_service_pool_close():
 
     # Should not raise
     await pool.close()
+    
+    # Verify close was called on async services
+    pool.embedding_service.close.assert_called_once()
+    pool.vector_store.close.assert_called_once()
 
 
 def test_service_pool_reset():

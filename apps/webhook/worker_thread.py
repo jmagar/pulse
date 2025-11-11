@@ -79,6 +79,14 @@ class WorkerThreadManager:
 
             pool = ServicePool.get_instance()
             # Run async cleanup in new event loop
+            # Save the current event loop to restore it after cleanup
+            old_loop = None
+            try:
+                old_loop = asyncio.get_event_loop()
+            except RuntimeError:
+                # No current event loop in this thread
+                pass
+            
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
@@ -86,6 +94,12 @@ class WorkerThreadManager:
                 logger.info("Service pool closed")
             finally:
                 loop.close()
+                # Restore the original event loop
+                if old_loop is not None and not old_loop.is_closed():
+                    asyncio.set_event_loop(old_loop)
+                else:
+                    # If there was no loop or it was closed, set to None
+                    asyncio.set_event_loop(None)
         except Exception:
             logger.exception("Failed to close service pool")
 
