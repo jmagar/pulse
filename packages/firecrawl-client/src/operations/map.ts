@@ -8,7 +8,7 @@
 
 import type { MapOptions, MapResult } from '../types.js';
 import { categorizeFirecrawlError } from '../errors.js';
-import { buildHeaders } from '../utils/headers.js';
+import { buildHeaders, debugLog } from '../utils/headers.js';
 
 /**
  * Map website URLs using Firecrawl API
@@ -23,20 +23,18 @@ export async function map(
   baseUrl: string,
   options: MapOptions
 ): Promise<MapResult> {
-  console.log(
-    '[DEBUG] Firecrawl map API request:',
-    JSON.stringify({ url: `${baseUrl}/map`, body: options }, null, 2)
-  );
+  const fetchUrl = `${baseUrl}/map`;
+  debugLog('Firecrawl map API request', { url: fetchUrl, body: options });
 
   const headers = buildHeaders(apiKey, true);
 
-  const response = await fetch(`${baseUrl}/map`, {
+  const response = await fetch(fetchUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify(options),
   });
 
-  console.log('[DEBUG] Firecrawl map API response status:', response.status);
+  debugLog('Firecrawl map API response status', { status: response.status });
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -50,9 +48,9 @@ export async function map(
   }
 
   try {
-    const result = await response.json();
-    console.log('[DEBUG] Firecrawl map API raw response:', JSON.stringify(result, null, 2));
-    return result as MapResult;
+    const result = (await response.json()) as MapResult;
+    debugLog('Firecrawl map API raw response', result);
+    return result;
   } catch (error) {
     throw new Error(
       `Failed to parse Firecrawl API response: ${error instanceof Error ? error.message : String(error)}`
