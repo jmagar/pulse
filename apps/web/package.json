@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "echo 'No tests configured for apps/web yet' && exit 0",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
