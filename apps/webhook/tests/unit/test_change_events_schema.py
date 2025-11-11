@@ -3,7 +3,7 @@
 import pytest
 from sqlalchemy import inspect
 
-from apps.webhook.infra.database import engine
+from infra.database import engine
 
 
 @pytest.mark.asyncio

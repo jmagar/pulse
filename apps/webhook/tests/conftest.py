@@ -33,7 +33,7 @@ import app.config as app_config
 
 app_config.settings = app_config.Settings()  # type: ignore[call-arg]
 
-import apps.webhook.infra.database as app_database
+import infra.database as app_database
 
 importlib.reload(app_database)
 
@@ -58,7 +58,7 @@ async def cleanup_database_engine():
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def initialize_test_database():
     """Ensure PostgreSQL schema exists for tests."""
-    from apps.webhook.infra.database import close_database, init_database
+    from infra.database import close_database, init_database
 
     await init_database()
     yield
@@ -122,7 +122,7 @@ async def db_session():
     This fixture creates a new session for each test and rolls back
     changes after the test completes to maintain test isolation.
     """
-    from apps.webhook.infra.database import get_db_context
+    from infra.database import get_db_context
 
     async with get_db_context() as session:
         yield session
