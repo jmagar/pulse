@@ -6,11 +6,20 @@ handled by more specific plugins. It wraps the existing Firecrawl
 integration and maintains backward compatibility.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from api.schemas.indexing import IndexDocumentRequest
 from plugins.base import BasePlugin
-from utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from api.schemas.indexing import IndexDocumentRequest
+    from utils.logging import Logger
+
+try:
+    from utils.logging import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logger = logging.getLogger(__name__)
 
 logger = get_logger(__name__)
 
@@ -40,7 +49,7 @@ class FirecrawlPlugin(BasePlugin):
         self,
         url: str,
         **kwargs: Any,
-    ) -> IndexDocumentRequest:
+    ) -> "IndexDocumentRequest":
         """
         Fetch content via Firecrawl API.
         

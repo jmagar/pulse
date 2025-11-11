@@ -8,9 +8,13 @@ appropriate plugin based on URL pattern matching and priority.
 from typing import Optional
 
 from plugins.base import BasePlugin
-from utils.logging import get_logger
 
-logger = get_logger(__name__)
+try:
+    from utils.logging import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logger = logging.getLogger(__name__)
 
 
 class PluginRegistry:

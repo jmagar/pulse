@@ -6,14 +6,20 @@ them into documents suitable for RAG indexing.
 """
 
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qs, urlparse
 
-from api.schemas.indexing import IndexDocumentRequest
 from plugins.base import BasePlugin
-from utils.logging import get_logger
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from api.schemas.indexing import IndexDocumentRequest
+
+try:
+    from utils.logging import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logger = logging.getLogger(__name__)
 
 
 class YouTubePlugin(BasePlugin):
@@ -79,7 +85,7 @@ class YouTubePlugin(BasePlugin):
         self,
         url: str,
         **kwargs: Any,
-    ) -> IndexDocumentRequest:
+    ) -> "IndexDocumentRequest":
         """
         Fetch YouTube video transcript and metadata.
         

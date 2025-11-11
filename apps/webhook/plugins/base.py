@@ -6,9 +6,10 @@ compatibility with the indexing pipeline.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from api.schemas.indexing import IndexDocumentRequest
+if TYPE_CHECKING:
+    from api.schemas.indexing import IndexDocumentRequest
 
 
 class BasePlugin(ABC):
@@ -43,7 +44,7 @@ class BasePlugin(ABC):
         self,
         url: str,
         **kwargs: Any,
-    ) -> IndexDocumentRequest:
+    ) -> "IndexDocumentRequest":
         """
         Fetch and transform content from the source.
         

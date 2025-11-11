@@ -2,11 +2,11 @@
 Unit tests for plugin registry.
 """
 
+from typing import Any
 import pytest
 
 from plugins.base import BasePlugin
 from plugins.registry import PluginRegistry
-from api.schemas.indexing import IndexDocumentRequest
 
 
 class MockPlugin(BasePlugin):
@@ -25,21 +25,22 @@ class MockPlugin(BasePlugin):
     def can_handle(self, url: str) -> bool:
         return url in self._can_handle_urls
 
-    async def fetch_content(self, url: str, **kwargs) -> IndexDocumentRequest:
-        return IndexDocumentRequest(
-            url=url,
-            resolvedUrl=url,
-            title=f"Content from {self._name}",
-            description="Test content",
-            markdown=f"# Test\n\nContent from {self._name}",
-            html="",
-            statusCode=200,
-            gcsPath=None,
-            screenshotUrl=None,
-            language="en",
-            country=None,
-            isMobile=False,
-        )
+    async def fetch_content(self, url: str, **kwargs: Any) -> Any:
+        # Return a mock document dict instead of IndexDocumentRequest
+        return {
+            "url": url,
+            "resolvedUrl": url,
+            "title": f"Content from {self._name}",
+            "description": "Test content",
+            "markdown": f"# Test\n\nContent from {self._name}",
+            "html": "",
+            "statusCode": 200,
+            "gcsPath": None,
+            "screenshotUrl": None,
+            "language": "en",
+            "country": None,
+            "isMobile": False,
+        }
 
     def get_priority(self) -> int:
         return self._priority
