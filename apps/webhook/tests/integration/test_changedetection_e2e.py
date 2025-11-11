@@ -79,7 +79,7 @@ async def test_changedetection_full_workflow(db_session):
             mock_client.post.return_value = mock_response
 
             # Execute the rescrape job
-            from app.jobs.rescrape import rescrape_changed_url
+            from workers.jobs import rescrape_changed_url
 
             result = await rescrape_changed_url(change_event.id)
 

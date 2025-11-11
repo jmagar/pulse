@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.jobs.rescrape import rescrape_changed_url
+from workers.jobs import rescrape_changed_url
 from domain.models import ChangeEvent
 
 
