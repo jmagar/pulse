@@ -165,7 +165,9 @@ class ServicePool:
         except Exception:
             logger.exception("Failed to close vector store")
 
-        logger.info("Service pool closed")
+        # Reset singleton so new instance can be created
+        ServicePool._instance = None
+        logger.info("Service pool closed and reset")
 
     @classmethod
     def reset(cls) -> None:
