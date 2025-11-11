@@ -35,7 +35,19 @@ class ServicePool:
     - VectorStore: Qdrant client with persistent connections
     - BM25Engine: BM25 index loaded once
 
-    Thread-safe: Uses double-checked locking pattern.
+    Thread-safety:
+    - Singleton creation uses double-checked locking pattern.
+    - EmbeddingService (HTTP client) and VectorStore (Qdrant client) are thread-safe and use connection pooling.
+    - TextChunker/tokenizer may NOT be thread-safe for concurrent use; external synchronization may be required if accessed by multiple threads.
+    - BM25Engine uses file locking for concurrent read/write safety.
+
+    Limitations:
+    - This implementation assumes sequential job processing (single RQ worker thread).
+    - For concurrent job processing (multiple threads or workers), add locking around tokenizer access in TextChunker.
+
+    Expected RQ worker concurrency:
+    - If using a single worker thread, no additional synchronization is required.
+    - For multiple worker threads or processes, ensure that non-thread-safe services (e.g., tokenizer) are properly synchronized.
     """
 
     _instance: ClassVar["ServicePool | None"] = None
