@@ -15,8 +15,8 @@ def _build_search_orchestrator(
     """Create a dependency override that searches the in-memory vector store."""
 
     class InMemorySearchOrchestrator:
-        async def search(self, query: str, mode: str, limit: int, **_: object):  # noqa: D401
-            """Return chunks whose text contains the provided query string."""
+        async def search(self, query: str, mode: str, limit: int, **_: object):
+            """Search for chunks whose text contains the provided query string."""
 
             records = vector_store_collections.get(settings.qdrant_collection, [])
             lowered_query = query.lower()
