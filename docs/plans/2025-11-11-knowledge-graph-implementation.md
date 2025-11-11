@@ -31,7 +31,7 @@ Edit `docker-compose.yaml`, add after `firecrawl_changedetection` service (befor
 ```yaml
   firecrawl_neo4j:
     <<: *common-service
-    image: neo4j:community
+    image: neo4j:5-community
     container_name: firecrawl_neo4j
     ports:
       - "${NEO4J_HTTP_PORT:-50210}:7474"
