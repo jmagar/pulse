@@ -1,8 +1,4 @@
-"""
-Integration tests for text chunking.
-
-These tests require downloading the actual tokenizer model.
-"""
+"""Integration tests for text chunking using a stub tokenizer."""
 
 import pytest
 
@@ -10,13 +6,21 @@ from app.utils.text_processing import TextChunker
 
 
 @pytest.fixture
-def chunker() -> TextChunker:
-    """Create a TextChunker instance."""
-    return TextChunker(
+def chunker(stub_auto_tokenizer) -> TextChunker:
+    """Create a TextChunker instance backed by the stub tokenizer."""
+
+    chunker = TextChunker(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         max_tokens=256,
         overlap_tokens=50,
     )
+
+    if not getattr(chunker.tokenizer, "_is_stub_tokenizer", False):
+        pytest.fail(
+            "Expected stub tokenizer fixture to be applied; please depend on ``stub_auto_tokenizer``"
+        )
+
+    return chunker
 
 
 @pytest.fixture
