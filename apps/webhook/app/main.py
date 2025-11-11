@@ -170,7 +170,8 @@ async def log_firecrawl_webhook(request: Request, call_next: Any) -> Any:
         }
 
         if isinstance(payload, dict):
-            data = payload.get("data") if isinstance(payload.get("data"), dict) else None
+            data = payload.get("data")
+            data = data if isinstance(data, dict) else None
             event_id = (
                 payload.get("id")
                 or payload.get("event_id")
