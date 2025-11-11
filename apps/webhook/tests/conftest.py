@@ -313,8 +313,10 @@ def stub_external_services(
     finally:
         InMemoryVectorStore.reset()
         in_memory_queue.clear()
+        deps._text_chunker = None
         deps._embedding_service = None
         deps._vector_store = None
+        deps._bm25_engine = None
         deps._indexing_service = None
         deps._search_orchestrator = None
 
