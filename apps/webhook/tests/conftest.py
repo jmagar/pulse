@@ -189,13 +189,13 @@ def stub_auto_tokenizer(monkeypatch: pytest.MonkeyPatch, stub_tokenizer_config: 
             self.model_max_length = stub_tokenizer_config.get("model_max_length", 512)
 
             special_tokens = set(stub_tokenizer_config.get("special_tokens", []))
-            for key, token in {
-                "pad_token": self.pad_token,
-                "cls_token": self.cls_token,
-                "sep_token": self.sep_token,
-                "mask_token": self.mask_token,
-                "unk_token": self.unk_token,
-            }.items():
+            for token in [
+                self.pad_token,
+                self.cls_token,
+                self.sep_token,
+                self.mask_token,
+                self.unk_token,
+            ]:
                 if token:
                     special_tokens.add(token)
 
