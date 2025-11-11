@@ -10,7 +10,8 @@ from fastapi import HTTPException
 from starlette.requests import Request
 
 from app.api import routes
-from app.models import IndexDocumentRequest, SearchMode, SearchRequest
+from api.schemas.indexing import IndexDocumentRequest
+from api.schemas.search import SearchMode, SearchRequest
 
 
 @pytest.fixture
@@ -128,7 +129,7 @@ async def test_search_documents_with_filters(
     mock_request: MagicMock, mock_search_orchestrator: AsyncMock
 ) -> None:
     """Test search with filters."""
-    from app.models import SearchFilter
+    from api.schemas.search import SearchFilter
 
     search_request = SearchRequest(
         query="test",

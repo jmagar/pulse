@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.models.timing import ChangeEvent
+from domain.models import ChangeEvent
 
 
 @pytest.mark.asyncio

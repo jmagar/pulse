@@ -1,6 +1,6 @@
 """Unit tests for timing models."""
 
-from app.models.timing import OperationMetric, RequestMetric
+from domain.models import OperationMetric, RequestMetric
 
 
 def test_request_metric_creation():

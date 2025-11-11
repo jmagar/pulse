@@ -12,7 +12,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from infra.database import get_db_context
-from app.models.timing import RequestMetric
+from domain.models import RequestMetric
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

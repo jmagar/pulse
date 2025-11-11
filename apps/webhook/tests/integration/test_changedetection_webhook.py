@@ -82,7 +82,7 @@ async def test_changedetection_webhook_stores_event(db_session):
     """Test webhook stores change event in database."""
     from sqlalchemy import select
 
-    from app.models.timing import ChangeEvent
+    from domain.models import ChangeEvent
 
     payload = {
         "watch_id": "db-test-watch",

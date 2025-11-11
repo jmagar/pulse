@@ -9,8 +9,8 @@ from sqlalchemy import select, update
 
 from app.config import settings
 from infra.database import get_db_context
-from app.models import IndexDocumentRequest
-from app.models.timing import ChangeEvent
+from api.schemas.indexing import IndexDocumentRequest
+from domain.models import ChangeEvent
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.indexing import IndexingService

@@ -95,7 +95,7 @@ async def init_database() -> None:
 
     Note: In production, use Alembic migrations instead.
     """
-    from app.models.timing import Base
+    from domain.models import Base
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

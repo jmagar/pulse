@@ -29,17 +29,10 @@ from app.api.dependencies import (
 )
 from app.config import settings
 from infra.database import get_db_session
-from app.models import (
-    ChangeDetectionPayload,
-    FirecrawlWebhookEvent,
-    HealthStatus,
-    IndexDocumentRequest,
-    IndexDocumentResponse,
-    IndexStats,
-    SearchRequest,
-    SearchResponse,
-    SearchResult,
-)
+from api.schemas.health import HealthStatus, IndexStats
+from api.schemas.indexing import IndexDocumentRequest, IndexDocumentResponse
+from api.schemas.search import SearchRequest, SearchResponse, SearchResult
+from api.schemas.webhook import ChangeDetectionPayload, FirecrawlWebhookEvent
 from infra.rate_limit import limiter
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
@@ -471,7 +464,7 @@ async def handle_changedetection_webhook(
     )
 
     # Store change event in database
-    from app.models.timing import ChangeEvent
+    from domain.models import ChangeEvent
 
     # Compute metadata
     snapshot_size = _compute_diff_size(payload.snapshot)

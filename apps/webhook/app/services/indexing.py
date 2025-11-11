@@ -10,7 +10,7 @@ Orchestrates the complete indexing pipeline:
 
 from typing import Any
 
-from app.models import IndexDocumentRequest
+from api.schemas.indexing import IndexDocumentRequest
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.vector_store import VectorStore

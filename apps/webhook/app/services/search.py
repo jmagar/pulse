@@ -6,7 +6,7 @@ Combines vector similarity and BM25 keyword search using Reciprocal Rank Fusion 
 
 from typing import Any
 
-from app.models import SearchMode
+from api.schemas.search import SearchMode
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.vector_store import VectorStore

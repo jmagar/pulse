@@ -8,11 +8,11 @@ from typing import Any, cast
 
 from rq import Queue
 
-from app.models import (
+from api.schemas.indexing import IndexDocumentRequest
+from api.schemas.webhook import (
     FirecrawlDocumentPayload,
     FirecrawlLifecycleEvent,
     FirecrawlPageEvent,
-    IndexDocumentRequest,
 )
 from app.services.auto_watch import create_watch_for_url
 from app.utils.logging import get_logger

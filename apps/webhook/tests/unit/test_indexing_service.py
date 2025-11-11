@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.models import IndexDocumentRequest
+from api.schemas.indexing import IndexDocumentRequest
 from app.services.indexing import IndexingService
 
 

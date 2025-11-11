@@ -21,7 +21,7 @@ from rq import Worker
 
 from app.config import settings
 from infra.redis import get_redis_connection
-from app.models import IndexDocumentRequest
+from api.schemas.indexing import IndexDocumentRequest
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.indexing import IndexingService

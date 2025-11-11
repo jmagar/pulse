@@ -168,6 +168,20 @@ pnpm typecheck:webhook
 pnpm check
 ```
 
+### External Integration Tests
+
+Most webhook tests run against in-memory doubles for Redis, Qdrant, and the embedding
+service. To exercise the real infrastructure, set the environment flag and target the
+`external` marker:
+
+```bash
+export WEBHOOK_RUN_EXTERNAL_TESTS=1
+cd apps/webhook && uv run pytest -m external
+```
+
+Tests marked with `@pytest.mark.external` will be skipped automatically unless the
+`WEBHOOK_RUN_EXTERNAL_TESTS` variable is truthy ("1", "true", "yes", or "on").
+
 ## Project Structure
 
 ```

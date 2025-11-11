@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from app.models import FirecrawlPageEvent
+from api.schemas.webhook import FirecrawlPageEvent
 from app.services.webhook_handlers import handle_firecrawl_event
 
 if TYPE_CHECKING:

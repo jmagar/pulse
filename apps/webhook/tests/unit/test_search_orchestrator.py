@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.models import SearchMode
+from api.schemas.search import SearchMode
 from app.services.search import SearchOrchestrator
 
 

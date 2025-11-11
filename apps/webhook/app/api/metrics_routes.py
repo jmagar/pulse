@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import verify_api_secret
 from infra.database import get_db_session
-from app.models.timing import OperationMetric, RequestMetric
+from domain.models import OperationMetric, RequestMetric
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

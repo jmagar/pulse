@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.api import dependencies as deps
 from app.api import routes
-from app.models import FirecrawlPageEvent
+from api.schemas.webhook import FirecrawlPageEvent
 from app.services import webhook_handlers as handlers
 
 
