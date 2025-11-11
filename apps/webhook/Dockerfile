@@ -22,6 +22,7 @@ RUN uv pip install --system --no-cache -r pyproject.toml
 
 # Copy application code
 COPY app/ ./app/
+COPY infra/ ./infra/
 
 # Create non-root user
 RUN useradd -m -u 1000 bridge && chown -R bridge:bridge /app

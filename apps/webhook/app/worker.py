@@ -20,7 +20,7 @@ from uuid import uuid4
 from rq import Worker
 
 from app.config import settings
-from apps.webhook.infra.redis import get_redis_connection
+from infra.redis import get_redis_connection
 from app.models import IndexDocumentRequest
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService

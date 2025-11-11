@@ -18,9 +18,9 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.dependencies import cleanup_services, get_vector_store
 from app.config import settings
-from apps.webhook.infra.database import close_database, init_database
+from infra.database import close_database, init_database
 from app.middleware.timing import TimingMiddleware
-from apps.webhook.infra.rate_limit import limiter
+from infra.rate_limit import limiter
 from app.utils.logging import configure_logging, get_logger
 
 # Configure logging

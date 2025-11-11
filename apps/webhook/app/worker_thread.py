@@ -10,7 +10,7 @@ from rq import Worker
 
 from app.config import settings
 from app.utils.logging import get_logger
-from apps.webhook.infra.redis import get_redis_connection
+from infra.redis import get_redis_connection
 
 logger = get_logger(__name__)
 

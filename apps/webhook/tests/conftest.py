@@ -33,7 +33,7 @@ import app.config as app_config
 
 app_config.settings = app_config.Settings()  # type: ignore[call-arg]
 
-import app.database as app_database
+import apps.webhook.infra.database as app_database
 
 importlib.reload(app_database)
 
