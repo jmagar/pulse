@@ -135,7 +135,7 @@ class Settings(BaseSettings):
     debug_logging: bool = Field(
         default=False,
         validation_alias=AliasChoices("WEBHOOK_DEBUG_LOGGING", "SEARCH_BRIDGE_DEBUG_LOGGING"),
-        description="Enable verbose webhook logging (requires DEBUG log level)",
+        description="Enable verbose webhook logging (most effective with DEBUG log level)",
     )
 
     # BM25 Configuration
