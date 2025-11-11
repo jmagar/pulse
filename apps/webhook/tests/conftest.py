@@ -12,7 +12,15 @@ import pytest_asyncio
 os.makedirs(".cache", exist_ok=True)
 
 # Configure deterministic test environment before importing app modules.
-os.environ.setdefault("SEARCH_BRIDGE_DATABASE_URL", "sqlite+aiosqlite:///./.cache/test_webhook.db")
+# Use environment variables for credentials, falling back to common defaults
+db_user = os.getenv("POSTGRES_USER", "postgres")
+db_pass = os.getenv("POSTGRES_PASSWORD", "postgres")
+db_host = os.getenv("POSTGRES_HOST", "localhost")
+db_port = os.getenv("POSTGRES_PORT", "5432")
+os.environ.setdefault(
+    "WEBHOOK_DATABASE_URL",
+    f"postgresql+asyncpg://{db_user}:{db_pass}@{db_host}:{db_port}/webhook_test"
+)
 os.environ.setdefault("SEARCH_BRIDGE_API_SECRET", "test-api-secret-for-testing-only")
 os.environ.setdefault(
     "SEARCH_BRIDGE_WEBHOOK_SECRET", "test-webhook-secret-for-testing-hmac-verification"
@@ -49,7 +57,7 @@ async def cleanup_database_engine():
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def initialize_test_database():
-    """Ensure SQLite schema exists for tests."""
+    """Ensure PostgreSQL schema exists for tests."""
     from app.database import close_database, init_database
 
     await init_database()
