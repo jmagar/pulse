@@ -4,7 +4,7 @@ Health check API endpoint.
 Verifies that all required services are accessible.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -70,5 +70,5 @@ async def health_check(
     return HealthStatus(
         status=overall_status,
         services=services,
-        timestamp=datetime.utcnow().isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
     )

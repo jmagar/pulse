@@ -9,7 +9,7 @@ import pytest
 from fastapi import HTTPException, status
 from starlette.requests import Request
 
-import app.api.dependencies as deps
+import api.deps as deps
 
 
 def make_request(body: bytes) -> Request:
