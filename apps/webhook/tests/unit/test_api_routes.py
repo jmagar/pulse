@@ -9,7 +9,7 @@ import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
 
-from app.api import routes
+from api.routers import health, indexing, search
 from api.schemas.indexing import IndexDocumentRequest
 from api.schemas.search import SearchMode, SearchRequest
 
@@ -74,7 +74,7 @@ async def test_index_document_success(mock_request: MagicMock, mock_queue: Magic
         statusCode=200,
     )
 
-    result = await routes.index_document(mock_request, document, mock_queue)
+    result = await indexing.index_document(mock_request, document, mock_queue)
 
     assert result.job_id == "test-job-123"
     assert result.status == "queued"
@@ -97,7 +97,7 @@ async def test_index_document_queue_failure(mock_request: MagicMock, mock_queue:
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        await routes.index_document(mock_request, document, mock_queue)
+        await indexing.index_document(mock_request, document, mock_queue)
 
     assert exc_info.value.status_code == 500
 
@@ -113,7 +113,7 @@ async def test_search_documents_success(
         limit=10,
     )
 
-    response = await routes.search_documents(mock_request, search_request, mock_search_orchestrator)
+    response = await search.search_documents(mock_request, search_request, mock_search_orchestrator)
 
     assert response.query == "test query"
     assert response.mode == SearchMode.HYBRID
@@ -138,7 +138,7 @@ async def test_search_documents_with_filters(
         filters=SearchFilter(domain="example.com", language="en"),
     )
 
-    await routes.search_documents(mock_request, search_request, mock_search_orchestrator)
+    await search.search_documents(mock_request, search_request, mock_search_orchestrator)
 
     call_args = mock_search_orchestrator.search.call_args
     assert call_args[1]["domain"] == "example.com"
@@ -155,7 +155,7 @@ async def test_search_documents_failure(
     search_request = SearchRequest(query="test", mode=SearchMode.HYBRID, limit=10)
 
     with pytest.raises(HTTPException) as exc_info:
-        await routes.search_documents(mock_request, search_request, mock_search_orchestrator)
+        await search.search_documents(mock_request, search_request, mock_search_orchestrator)
 
     assert exc_info.value.status_code == 500
 
@@ -168,7 +168,7 @@ async def test_health_check_all_healthy(mock_services: dict[str, Any]) -> None:
         mock_redis_instance.ping.return_value = True
         mock_redis.return_value = mock_redis_instance
 
-        response = await routes.health_check(
+        response = await health.health_check(
             mock_services["embedding"],
             mock_services["vector_store"],
         )
@@ -189,7 +189,7 @@ async def test_health_check_partial_failure(mock_services: dict[str, Any]) -> No
         mock_redis_instance.ping.return_value = True
         mock_redis.return_value = mock_redis_instance
 
-        response = await routes.health_check(
+        response = await health.health_check(
             mock_services["embedding"],
             mock_services["vector_store"],
         )
@@ -201,7 +201,7 @@ async def test_health_check_partial_failure(mock_services: dict[str, Any]) -> No
 @pytest.mark.asyncio
 async def test_get_stats_success(mock_services: dict[str, Any]) -> None:
     """Test stats endpoint success."""
-    response = await routes.get_stats(
+    response = await search.get_stats(
         mock_services["vector_store"],
         mock_services["bm25"],
     )
@@ -218,7 +218,7 @@ async def test_get_stats_failure(mock_services: dict[str, Any]) -> None:
     mock_services["vector_store"].count_points.side_effect = Exception("Stats error")
 
     with pytest.raises(HTTPException) as exc_info:
-        await routes.get_stats(
+        await search.get_stats(
             mock_services["vector_store"],
             mock_services["bm25"],
         )
@@ -253,7 +253,7 @@ async def test_search_text_extraction_from_vector_payload(mock_request: MagicMoc
         limit=10,
     )
 
-    response = await routes.search_documents(mock_request, search_request, orchestrator)
+    response = await search.search_documents(mock_request, search_request, orchestrator)
 
     assert len(response.results) == 1
     assert response.results[0].text == "This is the vector search snippet"
@@ -288,7 +288,7 @@ async def test_search_text_extraction_from_bm25_top_level(mock_request: MagicMoc
         limit=10,
     )
 
-    response = await routes.search_documents(mock_request, search_request, orchestrator)
+    response = await search.search_documents(mock_request, search_request, orchestrator)
 
     assert len(response.results) == 1
     # This should extract text from top-level, not from metadata
@@ -336,7 +336,7 @@ async def test_search_text_extraction_hybrid_mixed_sources(mock_request: MagicMo
         limit=10,
     )
 
-    response = await routes.search_documents(mock_request, search_request, orchestrator)
+    response = await search.search_documents(mock_request, search_request, orchestrator)
 
     assert len(response.results) == 2
 

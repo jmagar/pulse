@@ -2,7 +2,7 @@
 Tests for search and RRF fusion.
 """
 
-from app.services.search import reciprocal_rank_fusion
+from services.search import reciprocal_rank_fusion
 
 
 def test_rrf_basic() -> None:

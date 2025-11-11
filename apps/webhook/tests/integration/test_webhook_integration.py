@@ -11,8 +11,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api import dependencies as deps
-from app.api import routes
+from api import deps
+from api import router
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def integration_client(
     monkeypatch.setattr(deps, "settings", SimpleNamespace(webhook_secret=secret))
 
     app = FastAPI()
-    app.include_router(routes.router)
+    app.include_router(router)
 
     queue = MagicMock()
 

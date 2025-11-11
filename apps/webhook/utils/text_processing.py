@@ -9,7 +9,7 @@ from typing import Any
 
 from transformers import AutoTokenizer
 
-from app.utils.logging import get_logger
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

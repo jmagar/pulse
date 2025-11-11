@@ -6,7 +6,7 @@ import pytest
 
 def test_worker_thread_manager_start():
     """WorkerThreadManager starts worker in background thread."""
-    from app.worker_thread import WorkerThreadManager
+    from worker_thread import WorkerThreadManager
 
     manager = WorkerThreadManager()
 
@@ -24,7 +24,7 @@ def test_worker_thread_manager_start():
 
 def test_worker_thread_manager_stop():
     """WorkerThreadManager stops worker gracefully."""
-    from app.worker_thread import WorkerThreadManager
+    from worker_thread import WorkerThreadManager
 
     manager = WorkerThreadManager()
     manager.start()
@@ -41,7 +41,7 @@ def test_worker_thread_manager_stop():
 
 def test_worker_thread_manager_does_not_start_twice():
     """WorkerThreadManager cannot be started twice."""
-    from app.worker_thread import WorkerThreadManager
+    from worker_thread import WorkerThreadManager
 
     manager = WorkerThreadManager()
 

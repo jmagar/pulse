@@ -12,10 +12,10 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import verify_api_secret
+from api.deps import verify_api_secret
 from infra.database import get_db_session
 from domain.models import OperationMetric, RequestMetric
-from app.utils.logging import get_logger
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

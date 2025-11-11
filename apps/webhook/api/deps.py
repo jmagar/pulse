@@ -15,14 +15,14 @@ from fastapi import Depends, Header, HTTPException, Request, status
 from redis import Redis
 from rq import Queue
 
-from app.config import settings
-from app.services.bm25_engine import BM25Engine
-from app.services.embedding import EmbeddingService
-from app.services.indexing import IndexingService
-from app.services.search import SearchOrchestrator
-from app.services.vector_store import VectorStore
-from app.utils.logging import get_logger
-from app.utils.text_processing import TextChunker
+from config import settings
+from services.bm25_engine import BM25Engine
+from services.embedding import EmbeddingService
+from services.indexing import IndexingService
+from services.search import SearchOrchestrator
+from services.vector_store import VectorStore
+from utils.logging import get_logger
+from utils.text_processing import TextChunker
 
 logger = get_logger(__name__)
 

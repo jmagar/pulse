@@ -2,7 +2,7 @@
 Tests for text processing utilities.
 """
 
-from app.utils.text_processing import clean_text, extract_domain
+from utils.text_processing import clean_text, extract_domain
 
 
 def test_clean_text() -> None:

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.worker import index_document_job
+from worker import index_document_job
 
 
 @pytest.fixture
@@ -185,7 +185,7 @@ def test_run_worker() -> None:
         mock_worker_instance = MagicMock()
         mock_worker_cls.return_value = mock_worker_instance
 
-        from app.worker import run_worker
+        from worker import run_worker
 
         # Mock worker.work() to raise KeyboardInterrupt immediately
         mock_worker_instance.work.side_effect = KeyboardInterrupt()
@@ -210,7 +210,7 @@ def test_run_worker_error_handling() -> None:
         mock_worker_instance = MagicMock()
         mock_worker_cls.return_value = mock_worker_instance
 
-        from app.worker import run_worker
+        from worker import run_worker
 
         # Mock worker.work() to raise exception
         mock_worker_instance.work.side_effect = RuntimeError("Worker error")
@@ -229,7 +229,7 @@ def test_run_worker_validation_failure() -> None:
         patch("app.worker.Redis") as mock_redis_cls,
         patch("app.worker.Worker") as mock_worker_cls,
     ):
-        from app.worker import run_worker
+        from worker import run_worker
 
         # Should exit with error code before attempting to start worker
         with pytest.raises(SystemExit) as exc_info:

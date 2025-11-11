@@ -6,7 +6,7 @@ These tests require downloading the actual tokenizer model.
 
 import pytest
 
-from app.utils.text_processing import TextChunker
+from utils.text_processing import TextChunker
 
 
 @pytest.fixture

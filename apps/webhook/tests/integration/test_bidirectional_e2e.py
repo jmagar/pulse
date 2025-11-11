@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from api.schemas.webhook import FirecrawlDocumentPayload, FirecrawlPageEvent
-from app.services.webhook_handlers import _handle_page_event
+from services.webhook_handlers import _handle_page_event
 
 
 @pytest.mark.asyncio

@@ -7,10 +7,10 @@ Combines vector similarity and BM25 keyword search using Reciprocal Rank Fusion 
 from typing import Any
 
 from api.schemas.search import SearchMode
-from app.services.bm25_engine import BM25Engine
-from app.services.embedding import EmbeddingService
-from app.services.vector_store import VectorStore
-from app.utils.logging import get_logger
+from services.bm25_engine import BM25Engine
+from services.embedding import EmbeddingService
+from services.vector_store import VectorStore
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 def test_timing_middleware_adds_headers():
     """Test middleware adds timing headers."""
-    from app.middleware.timing import TimingMiddleware
+    from api.middleware.timing import TimingMiddleware
 
     app = FastAPI()
     app.add_middleware(TimingMiddleware)
@@ -30,7 +30,7 @@ def test_timing_middleware_adds_headers():
 
 def test_timing_middleware_handles_errors():
     """Test middleware records timing even on errors."""
-    from app.middleware.timing import TimingMiddleware
+    from api.middleware.timing import TimingMiddleware
 
     app = FastAPI()
     app.add_middleware(TimingMiddleware)

@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlparse
 
-from app.clients.changedetection import ChangeDetectionClient
-from app.config import settings
-from app.utils.logging import get_logger
+from clients.changedetection import ChangeDetectionClient
+from config import settings
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

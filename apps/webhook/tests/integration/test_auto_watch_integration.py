@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from api.schemas.webhook import FirecrawlPageEvent
-from app.services.webhook_handlers import handle_firecrawl_event
+from services.webhook_handlers import handle_firecrawl_event
 
 if TYPE_CHECKING:
     from rq import Queue

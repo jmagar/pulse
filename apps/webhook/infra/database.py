@@ -13,8 +13,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.config import settings
-from app.utils.logging import get_logger
+from config import settings
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

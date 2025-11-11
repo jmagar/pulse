@@ -3,13 +3,13 @@ Background worker for async document indexing.
 
 DEPRECATED: This module is kept for backward compatibility only.
 The worker now runs as a background thread within the FastAPI process.
-See app.worker_thread.WorkerThreadManager for the new implementation.
+See worker_thread.WorkerThreadManager for the new implementation.
 
 To run worker standalone (not recommended):
-    python -m app.worker
+    python -m worker
 
 To run worker embedded in API (recommended):
-    WEBHOOK_ENABLE_WORKER=true uvicorn app.main:app
+    WEBHOOK_ENABLE_WORKER=true uvicorn main:app
 """
 
 import asyncio
@@ -19,16 +19,16 @@ from uuid import uuid4
 
 from rq import Worker
 
-from app.config import settings
+from config import settings
 from infra.redis import get_redis_connection
 from api.schemas.indexing import IndexDocumentRequest
-from app.services.bm25_engine import BM25Engine
-from app.services.embedding import EmbeddingService
-from app.services.indexing import IndexingService
-from app.services.vector_store import VectorStore
-from app.utils.logging import configure_logging, get_logger
-from app.utils.text_processing import TextChunker
-from app.utils.timing import TimingContext
+from services.bm25_engine import BM25Engine
+from services.embedding import EmbeddingService
+from services.indexing import IndexingService
+from services.vector_store import VectorStore
+from utils.logging import configure_logging, get_logger
+from utils.text_processing import TextChunker
+from utils.timing import TimingContext
 
 # Configure logging
 configure_logging(settings.log_level)

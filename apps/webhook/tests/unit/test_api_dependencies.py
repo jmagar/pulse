@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-import app.api.dependencies as deps
+import api.deps as deps
 
 
 @pytest.fixture(autouse=True)

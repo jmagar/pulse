@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 def test_root_endpoint() -> None:
     """Test root endpoint returns service info."""
-    from app.main import app
+    from main import app
 
     client = TestClient(app)
     response = client.get("/")
@@ -27,7 +27,7 @@ def test_root_endpoint() -> None:
 
 def test_cors_middleware_configured() -> None:
     """Test CORS middleware is configured."""
-    from app.main import app
+    from main import app
 
     # CORS middleware should be in middleware stack
     # Check that middleware exists (it's wrapped, so we check middleware count)
@@ -42,7 +42,7 @@ async def test_lifespan_startup_success() -> None:
         mock_vs.ensure_collection = AsyncMock()
         mock_get_vs.return_value = mock_vs
 
-        from app.main import app, lifespan
+        from main import app, lifespan
 
         # Test lifespan context
         async with lifespan(app):
@@ -58,7 +58,7 @@ async def test_lifespan_startup_failure_non_fatal() -> None:
         mock_vs.ensure_collection.side_effect = Exception("Collection error")
         mock_get_vs.return_value = mock_vs
 
-        from app.main import app, lifespan
+        from main import app, lifespan
 
         # Should not raise - error is non-fatal
         async with lifespan(app):
@@ -68,7 +68,7 @@ async def test_lifespan_startup_failure_non_fatal() -> None:
 def test_global_exception_handler() -> None:
     """Test global exception handler catches and formats errors."""
 
-    from app.main import app
+    from main import app
 
     # Add a test route that raises an exception
     @app.get("/test-error")
@@ -87,7 +87,7 @@ def test_global_exception_handler() -> None:
 
 def test_app_metadata() -> None:
     """Test FastAPI app metadata is configured."""
-    from app.main import app
+    from main import app
 
     assert app.title == "Firecrawl Search Bridge"
     assert app.description == "Semantic search service for Firecrawl web scraping"
@@ -100,7 +100,7 @@ def test_routes_included() -> None:
 
     from fastapi.routing import APIRoute
 
-    from app.main import app
+    from main import app
 
     # Get all route paths - filter for APIRoute objects which have path attribute
     routes = [cast(APIRoute, route).path for route in app.routes if hasattr(route, "path")]

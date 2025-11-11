@@ -11,13 +11,13 @@ Orchestrates the complete indexing pipeline:
 from typing import Any
 
 from api.schemas.indexing import IndexDocumentRequest
-from app.services.bm25_engine import BM25Engine
-from app.services.embedding import EmbeddingService
-from app.services.vector_store import VectorStore
-from app.utils.logging import get_logger
-from app.utils.text_processing import TextChunker, clean_text, extract_domain
-from app.utils.timing import TimingContext
-from app.utils.url import normalize_url
+from services.bm25_engine import BM25Engine
+from services.embedding import EmbeddingService
+from services.vector_store import VectorStore
+from utils.logging import get_logger
+from utils.text_processing import TextChunker, clean_text, extract_domain
+from utils.timing import TimingContext
+from utils.url import normalize_url
 
 logger = get_logger(__name__)
 

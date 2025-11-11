@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from api.schemas.webhook import FirecrawlLifecycleEvent, FirecrawlPageEvent
-from app.services import webhook_handlers as handlers
+from services import webhook_handlers as handlers
 
 
 @pytest.mark.asyncio

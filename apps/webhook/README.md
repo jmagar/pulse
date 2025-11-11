@@ -115,7 +115,7 @@ services:
 To run only the API without the background worker:
 
 ```bash
-WEBHOOK_ENABLE_WORKER=false uvicorn app.main:app --host 0.0.0.0 --port 52100
+WEBHOOK_ENABLE_WORKER=false uvicorn main:app --host 0.0.0.0 --port 52100
 ```
 
 This is useful for:
@@ -184,33 +184,93 @@ Tests marked with `@pytest.mark.external` will be skipped automatically unless t
 
 ## Project Structure
 
+The webhook service uses a **flattened structure** with all modules at the root level:
+
 ```
-fc-bridge/
-├── app/
-│   ├── main.py              # FastAPI application
-│   ├── config.py            # Settings
-│   ├── models.py            # Pydantic schemas
-│   ├── api/
-│   │   ├── routes.py        # API endpoints (includes changedetection webhook)
-│   │   └── dependencies.py  # Shared dependencies
-│   ├── services/
-│   │   ├── embedding.py     # HF TEI client
-│   │   ├── vector_store.py  # Qdrant client
-│   │   ├── bm25_engine.py   # BM25 indexing
-│   │   ├── search.py        # Hybrid search
-│   │   └── indexing.py      # Document processing
-│   ├── jobs/
-│   │   └── rescrape.py      # Rescrape job for changedetection.io
-│   ├── models/
-│   │   └── timing.py        # ChangeEvent model
-│   ├── utils/
-│   │   └── text_processing.py  # Token-based chunking
-│   └── worker.py            # Background worker
-├── tests/
-├── data/                    # Docker volume mounts
-├── docker-compose.yaml
-├── pyproject.toml
+apps/webhook/
+├── main.py                  # FastAPI application entrypoint
+├── config.py                # Settings and configuration
+├── worker.py                # Background worker
+├── worker_thread.py         # Embedded worker thread
+├── api/                     # API layer
+│   ├── routers/             # HTTP endpoints
+│   │   ├── indexing.py      # Index endpoints
+│   │   ├── search.py        # Search endpoints
+│   │   ├── metrics.py       # Stats/metrics endpoints
+│   │   ├── webhook.py       # Webhook endpoints (changedetection)
+│   │   └── health.py        # Health check endpoint
+│   ├── schemas/             # Pydantic request/response models
+│   │   ├── search.py        # Search models
+│   │   ├── indexing.py      # Index models
+│   │   └── webhook.py       # Webhook models
+│   ├── middleware/          # FastAPI middleware
+│   └── deps.py              # Shared FastAPI dependencies
+├── services/                # Business logic layer
+│   ├── embedding.py         # HF TEI client
+│   ├── vector_store.py      # Qdrant client
+│   ├── bm25_engine.py       # BM25 indexing
+│   ├── search.py            # Hybrid search orchestrator
+│   └── indexing.py          # Document processing
+├── workers/                 # Background job handlers
+│   └── jobs.py              # Indexing and rescrape jobs
+├── domain/                  # Domain layer
+│   └── models.py            # SQLAlchemy ORM models (RequestMetric, etc.)
+├── clients/                 # External API clients
+│   └── firecrawl.py         # Firecrawl API client
+├── infra/                   # Infrastructure layer
+│   └── database/            # Database setup
+│       └── session.py       # SQLAlchemy session management
+├── utils/                   # Utilities
+│   ├── text_processing.py   # Token-based chunking
+│   ├── url.py               # URL normalization
+│   ├── logging.py           # Structured logging
+│   └── timing.py            # Timing context managers
+├── alembic/                 # Database migrations
+├── tests/                   # Test suite
+│   ├── unit/                # Unit tests
+│   └── integration/         # Integration tests
+├── pyproject.toml           # Python dependencies (uv)
+├── Dockerfile               # Production container
 └── README.md
+```
+
+### Import Conventions
+
+The service uses **relative imports** from the root level:
+
+```python
+# API routers and schemas
+from api.routers.search import router as search_router
+from api.routers.indexing import router as indexing_router
+from api.schemas.search import SearchRequest, SearchResponse
+from api.schemas.indexing import IndexRequest, IndexResponse
+from api.deps import get_settings
+
+# Services
+from services.embedding import EmbeddingService
+from services.vector_store import VectorStoreService
+from services.search import SearchOrchestrator
+from services.indexing import IndexingService
+
+# Domain models (SQLAlchemy ORM)
+from domain.models import RequestMetric
+
+# Workers
+from workers.jobs import index_document_job, rescrape_job
+
+# Clients
+from clients.firecrawl import FirecrawlClient
+
+# Utils
+from utils.url import normalize_url
+from utils.timing import timing_context
+from utils.text_processing import chunk_text
+
+# Config
+from config import Settings
+```
+
+**Key principle:** All imports are relative to `/apps/webhook/` (the root of this service). No `PYTHONPATH` manipulation required.
 ```
 
 ## Search Modes
@@ -270,7 +330,7 @@ The webhook bridge integrates with changedetection.io for automated website moni
 
 ### Rescrape Job
 
-**Location:** `app/jobs/rescrape.py`
+**Location:** `workers/jobs.py` (rescrape_job function)
 
 The rescrape job handles URLs detected as changed by changedetection.io:
 
@@ -288,7 +348,7 @@ WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
 
 ### ChangeEvent Model
 
-**Location:** `app/models/timing.py`
+**Location:** `domain/models.py` (SQLAlchemy ORM model)
 
 The `ChangeEvent` model tracks change detection events:
 
