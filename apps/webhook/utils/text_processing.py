@@ -68,9 +68,10 @@ class TextChunker:
         try:
             # Initialize semantic-text-splitter with HuggingFace tokenizer
             # This is thread-safe and optimized for parallel processing
+            # capacity parameter sets the target chunk size in tokens
             self.splitter = HuggingFaceTextSplitter.from_pretrained(
                 model_name,
-                capacity=(max_tokens, max_tokens),
+                capacity=max_tokens,
                 overlap=overlap_tokens,
             )
             logger.info("Semantic text splitter initialized successfully", model=model_name)
@@ -97,19 +98,21 @@ class TextChunker:
 
         try:
             # Use semantic-text-splitter (thread-safe, high-performance Rust implementation)
-            chunk_texts = self.splitter.chunks(text)
+            # chunks() returns an iterator of text chunks
+            chunk_texts = list(self.splitter.chunks(text))
 
             # Convert to list of chunks with metadata
             chunks = []
             for chunk_index, chunk_text in enumerate(chunk_texts):
-                # Estimate token count (semantic-text-splitter ensures within limits)
-                # This is approximate but faster than re-tokenizing
-                token_count = min(self.max_tokens, len(chunk_text.split()) * 1.3)
+                # semantic-text-splitter guarantees chunks are within token limits
+                # We can estimate token count based on character/token ratio
+                # For most tokenizers, ~4 chars per token is a reasonable estimate
+                estimated_tokens = min(self.max_tokens, max(1, len(chunk_text) // 4))
 
                 chunk = {
                     "text": chunk_text,
                     "chunk_index": chunk_index,
-                    "token_count": int(token_count),  # Approximate
+                    "token_count": estimated_tokens,
                 }
 
                 # Add metadata if provided
@@ -122,7 +125,7 @@ class TextChunker:
                     "Created chunk",
                     chunk_index=chunk_index,
                     chars=len(chunk_text),
-                    approx_tokens=int(token_count),
+                    estimated_tokens=estimated_tokens,
                 )
 
             logger.info(
