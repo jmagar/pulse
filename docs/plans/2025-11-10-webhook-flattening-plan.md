@@ -142,61 +142,186 @@ apps/webhook/
 
 ## 5. Migration Steps
 
+### Key Improvements in This Updated Plan
+
+This revised plan addresses all review feedback:
+
+1. **✅ Import Pattern Clarity** - Standardized on absolute imports `from apps.webhook.*` everywhere (never relative imports)
+2. **✅ Redis Factory Functions** - Added complete `infra/redis.py` with `get_redis_connection()` and `get_redis_queue()` signatures
+3. **✅ Test Directory `__init__.py`** - Created in all test directories for consistent test discovery
+4. **✅ Git Checkpoints** - START and END commits for every phase with descriptive messages
+5. **✅ Coverage Baseline** - Established before starting to track regression
+6. **✅ Docker Compose Verification** - Phase 8 now checks docker-compose.yaml for `app/` references
+7. **✅ Intermediate Checks** - Import validation after every phase to catch errors early
+
+### Workflow for Each Phase
+
+**IMPORTANT:** Each phase follows this workflow:
+1. **Git Checkpoint (START):** Create commit at START of phase
+2. **Write Tests (TDD):** Write failing tests BEFORE moving files
+3. **Execute:** Move files and update imports
+4. **Verify:** Run tests and verification commands
+5. **Git Checkpoint (END):** Create commit at END of phase with descriptive message
+6. **Intermediate Check:** Validate imports work correctly
+
+**Before Starting - Establish Baseline:**
+```bash
+cd apps/webhook
+# Record current test coverage
+uv run pytest tests/ --cov=app --cov-report=term-missing > .coverage-baseline.txt
+# Record current test count
+uv run pytest tests/ --collect-only | grep "test session starts" > .test-count-baseline.txt
+```
+
 ### Phase 1: Create New Structure (Non-Breaking)
 
 **Goal:** Set up new directories without moving files yet
 
+**Git Checkpoint (START):**
 ```bash
+git add -A
+git commit -m "checkpoint: start Phase 1 - create directory structure"
+```
+
+**Execute:**
+```bash
+cd apps/webhook
+
 # Create new directories
 mkdir -p api/routers api/middleware api/schemas
 mkdir -p domain infra workers
 mkdir -p tests/unit/{api,domain,infra,services,workers,clients,utils}
 mkdir -p tests/integration/{api,services,workers}
 
-# Create __init__.py files
+# Create __init__.py files for packages
 touch api/__init__.py api/routers/__init__.py api/middleware/__init__.py api/schemas/__init__.py
 touch domain/__init__.py infra/__init__.py workers/__init__.py
+
+# Create __init__.py files for test directories (helps with test discovery)
+touch tests/unit/__init__.py tests/integration/__init__.py
+touch tests/unit/api/__init__.py tests/unit/domain/__init__.py tests/unit/infra/__init__.py
+touch tests/unit/services/__init__.py tests/unit/workers/__init__.py tests/unit/clients/__init__.py tests/unit/utils/__init__.py
+touch tests/integration/api/__init__.py tests/integration/services/__init__.py tests/integration/workers/__init__.py
 ```
 
 **Verification:**
 ```bash
 tree apps/webhook -d -L 2 -I '__pycache__|.venv|.cache|data'
+# Should show new api/, domain/, infra/, workers/ directories
+# Should show restructured tests/unit/ and tests/integration/
+```
+
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 1 - create new directory structure with test directories"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "import apps.webhook; print('✓ Import OK')"
 ```
 
 ### Phase 2: Move Infrastructure Layer
 
 **Goal:** Move database, Redis, rate limiting to `infra/` (no business logic)
 
+**Git Checkpoint (START):**
 ```bash
-# Move files
-mv app/database.py infra/database.py
-mv app/rate_limit.py infra/rate_limit.py
-
-# Extract Redis factory from worker.py
-# Create infra/redis.py with:
-# - get_redis_connection()
-# - get_redis_queue()
+git add -A
+git commit -m "checkpoint: start Phase 2 - move infrastructure layer"
 ```
 
-**Update Imports:**
-- `from app.database import` → `from apps.webhook.infra.database import`
-- `from app.rate_limit import` → `from apps.webhook.infra.rate_limit import`
-
-**Tests to Write (TDD):**
+**Tests to Write (TDD - BEFORE moving files):**
 1. `tests/unit/infra/test_database.py` - Test async session creation, cleanup
 2. `tests/unit/infra/test_redis.py` - Test Redis connection, queue factory
 3. `tests/unit/infra/test_rate_limit.py` - Test limiter initialization
 
+**Execute:**
+```bash
+cd apps/webhook
+
+# Move files
+mv app/database.py infra/database.py
+mv app/rate_limit.py infra/rate_limit.py
+
+# Create infra/redis.py
+cat > infra/redis.py << 'EOF'
+"""Redis connection factory and queue management."""
+from redis import Redis
+from rq import Queue
+
+from apps.webhook.config import settings
+
+
+def get_redis_connection() -> Redis:
+    """
+    Create Redis connection from settings.
+
+    Returns:
+        Redis: Connected Redis client
+    """
+    return Redis.from_url(settings.redis_url)
+
+
+def get_redis_queue(name: str = "default") -> Queue:
+    """
+    Get RQ queue for background jobs.
+
+    Args:
+        name: Queue name (default: "default")
+
+    Returns:
+        Queue: RQ queue instance
+    """
+    redis_conn = get_redis_connection()
+    return Queue(name, connection=redis_conn)
+EOF
+```
+
+**Update Imports:**
+Search and replace across codebase:
+- `from app.database import` → `from apps.webhook.infra.database import`
+- `from app.rate_limit import` → `from apps.webhook.infra.rate_limit import`
+- Add `from apps.webhook.infra.redis import get_redis_connection, get_redis_queue` to `worker.py`
+- Replace `Redis.from_url(settings.redis_url)` in `app/worker.py` with `get_redis_connection()`
+
 **Verification:**
 ```bash
 cd apps/webhook && uv run pytest tests/unit/infra/ -v
+# All 3 new tests should pass
+```
+
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 2 - move infrastructure to infra/ with Redis factory"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "from apps.webhook.infra.database import get_db; from apps.webhook.infra.redis import get_redis_connection; print('✓ Import OK')"
 ```
 
 ### Phase 3: Move Domain Models
 
 **Goal:** Separate SQLAlchemy (domain) from Pydantic (API schemas)
 
+**Git Checkpoint (START):**
 ```bash
+git add -A
+git commit -m "checkpoint: start Phase 3 - move domain models"
+```
+
+**Tests to Write (TDD - BEFORE moving files):**
+1. `tests/unit/domain/test_models.py` - Test SQLAlchemy model creation, relationships
+2. `tests/unit/api/test_schemas_search.py` - Test Pydantic validation for search schemas
+3. `tests/unit/api/test_schemas_indexing.py` - Test Pydantic validation for indexing schemas
+
+**Execute:**
+```bash
+cd apps/webhook
+
 # Move SQLAlchemy models
 mv app/models/timing.py domain/models.py
 rm -rf app/models/  # Remove empty directory
@@ -211,26 +336,45 @@ rm -rf app/models/  # Remove empty directory
 - SQLAlchemy: `from app.models.timing import` → `from apps.webhook.domain.models import`
 - Pydantic: `from app.models import` → `from apps.webhook.api.schemas.search import`
 
-**Update Alembic:**
+**Update Alembic (CRITICAL - do immediately after moving models):**
 - `alembic/env.py`: Change `from app.models.timing import Base` → `from apps.webhook.domain.models import Base`
-
-**Tests to Write (TDD):**
-1. `tests/unit/domain/test_models.py` - Test SQLAlchemy model creation, relationships
-2. `tests/unit/api/test_schemas_search.py` - Test Pydantic validation for search schemas
-3. `tests/unit/api/test_schemas_indexing.py` - Test Pydantic validation for indexing schemas
 
 **Verification:**
 ```bash
 cd apps/webhook && uv run pytest tests/unit/domain/ tests/unit/api/ -v
-# Run Alembic check
+# Run Alembic check (MUST pass before proceeding)
 cd apps/webhook && uv run alembic check
+```
+
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 3 - separate domain models from API schemas"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "from apps.webhook.domain.models import Base; from apps.webhook.api.schemas.search import SearchRequest; print('✓ Import OK')"
 ```
 
 ### Phase 4: Move Workers
 
 **Goal:** Consolidate background job logic into `workers/`
 
+**Git Checkpoint (START):**
 ```bash
+git add -A
+git commit -m "checkpoint: start Phase 4 - move workers"
+```
+
+**Tests to Write (TDD - BEFORE moving files):**
+1. `tests/unit/workers/test_jobs.py` - Test rescrape job logic
+2. `tests/integration/workers/test_worker_lifecycle.py` - Test worker startup/shutdown
+
+**Execute:**
+```bash
+cd apps/webhook
+
 # Move RQ jobs
 mv app/jobs/rescrape.py workers/jobs.py
 rm -rf app/jobs/  # Remove empty directory
@@ -241,20 +385,40 @@ rm -rf app/jobs/  # Remove empty directory
 
 **Update `worker.py`:**
 - Import jobs from new location
-- Use `infra.redis` for Redis connection
-
-**Tests to Write (TDD):**
-1. `tests/unit/workers/test_jobs.py` - Test rescrape job logic
-2. `tests/integration/workers/test_worker_lifecycle.py` - Test worker startup/shutdown
+- Use `infra.redis` for Redis connection (should already be done in Phase 2)
 
 **Verification:**
 ```bash
 cd apps/webhook && uv run pytest tests/unit/workers/ tests/integration/workers/ -v
 ```
 
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 4 - consolidate workers into workers/"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "from apps.webhook.workers.jobs import index_document_job; print('✓ Import OK')"
+```
+
 ### Phase 5: Split API Routers
 
 **Goal:** Break monolithic `routes.py` (714 lines) into feature routers
+
+**Git Checkpoint (START):**
+```bash
+git add -A
+git commit -m "checkpoint: start Phase 5 - split API routers"
+```
+
+**Tests to Write (TDD - BEFORE splitting routers):**
+1. `tests/unit/api/routers/test_search.py` - Test search endpoint logic
+2. `tests/unit/api/routers/test_webhook.py` - Test webhook handling
+3. `tests/unit/api/routers/test_indexing.py` - Test indexing endpoint
+4. `tests/unit/api/routers/test_health.py` - Test health check
+5. `tests/integration/api/test_api_routes.py` - E2E API tests
 
 **Router Breakdown:**
 1. **`api/routers/search.py`** (~200 lines)
@@ -303,24 +467,37 @@ mv app/middleware/timing.py api/middleware/timing.py
 rm -rf app/middleware/
 ```
 
-**Tests to Write (TDD):**
-1. `tests/unit/api/routers/test_search.py` - Test search endpoint logic
-2. `tests/unit/api/routers/test_webhook.py` - Test webhook handling
-3. `tests/unit/api/routers/test_indexing.py` - Test indexing endpoint
-4. `tests/unit/api/routers/test_health.py` - Test health check
-5. `tests/integration/api/test_api_routes.py` - E2E API tests
-
 **Verification:**
 ```bash
 cd apps/webhook && uv run pytest tests/unit/api/routers/ -v
 cd apps/webhook && uv run pytest tests/integration/api/ -v
 ```
 
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 5 - split API routers into feature modules"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "from apps.webhook.api import router; from apps.webhook.api.routers import search, webhook, health; print('✓ Import OK')"
+```
+
 ### Phase 6: Move Services and Clients (No Changes)
 
 **Goal:** Move to top-level without changing code
 
+**Git Checkpoint (START):**
 ```bash
+git add -A
+git commit -m "checkpoint: start Phase 6 - move services and clients"
+```
+
+**Execute:**
+```bash
+cd apps/webhook
+
 # Services (already correct structure, just move)
 mv app/services/* services/
 rm -rf app/services/
@@ -349,11 +526,31 @@ rm -rf app/utils/
 cd apps/webhook && uv run pytest tests/unit/services/ tests/unit/clients/ tests/unit/utils/ -v
 ```
 
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 6 - move services, clients, and utils to top-level"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "from apps.webhook.services.search import SearchService; from apps.webhook.utils.logging import get_logger; print('✓ Import OK')"
+```
+
 ### Phase 7: Move Entry Points
 
 **Goal:** Move `main.py`, `worker.py`, `worker_thread.py`, `config.py` to root
 
+**Git Checkpoint (START):**
 ```bash
+git add -A
+git commit -m "checkpoint: start Phase 7 - move entry points to root"
+```
+
+**Execute:**
+```bash
+cd apps/webhook
+
 # Move entry points
 mv app/main.py main.py
 mv app/worker.py worker.py
@@ -366,19 +563,58 @@ rm -rf app/
 ```
 
 **Update Imports in Entry Points:**
-- All `from app.X` → `from apps.webhook.X` or relative imports
-- Example: `from app.api.deps import` → `from apps.webhook.api.deps import`
+
+**IMPORTANT - Import Pattern Standard:**
+- **From within apps/webhook/**: Use absolute imports `from apps.webhook.X import Y`
+- **From monorepo root**: Use absolute imports `from apps.webhook.X import Y`
+- **Never use**: Relative imports like `from .api import` or `from main import` (ambiguous in monorepo)
+
+Examples:
+- `from app.api.deps import` → `from apps.webhook.api.deps import`
+- `from app.services.search import` → `from apps.webhook.services.search import`
+- `from app.config import settings` → `from apps.webhook.config import settings`
+
+**Files to update:**
+- `main.py` - Update all imports
+- `worker.py` - Update all imports
+- `worker_thread.py` - Update all imports
+- `config.py` - Usually only has external imports
 
 **Verification:**
 ```bash
-cd apps/webhook && uv run python -c "from apps.webhook.main import app; print('Import successful')"
+# Import check - use absolute imports from monorepo root
+cd /compose/pulse && uv run python -c "from apps.webhook.main import app; print('✓ main.py import OK')"
+cd /compose/pulse && uv run python -c "from apps.webhook.worker import index_document_job; print('✓ worker.py import OK')"
+cd /compose/pulse && uv run python -c "from apps.webhook.config import settings; print('✓ config.py import OK')"
+
+# Also verify from within apps/webhook directory
+cd apps/webhook && uv run python -c "from apps.webhook.main import app; print('✓ Import OK from subdirectory')"
+```
+
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 7 - move entry points with absolute imports"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "import apps.webhook; from apps.webhook.main import app; print('✓ Import OK')"
 ```
 
 ### Phase 8: Update Build Configuration
 
-**Goal:** Update Docker, pyproject.toml, .dockerignore
+**Goal:** Update Docker, pyproject.toml, .dockerignore, docker-compose.yaml
 
-**`pyproject.toml` Changes:**
+**Git Checkpoint (START):**
+```bash
+git add -A
+git commit -m "checkpoint: start Phase 8 - update build configuration"
+```
+
+**Execute:**
+
+**1. `pyproject.toml` Changes:**
 ```toml
 # BEFORE:
 [tool.hatch.build.targets.wheel]
@@ -388,7 +624,8 @@ packages = ["app"]
 # [tool.hatch.build.targets.wheel] - DELETED
 ```
 
-**`.dockerignore` Changes:**
+**2. `.dockerignore` Changes:**
+Create or update `apps/webhook/.dockerignore`:
 ```dockerignore
 # Add to prevent copying unnecessary files
 app/
@@ -402,9 +639,12 @@ tests/
 docs/
 .git/
 .gitignore
+.coverage-baseline.txt
+.test-count-baseline.txt
+alembic.ini
 ```
 
-**`Dockerfile` Changes:**
+**3. `Dockerfile` Changes:**
 ```dockerfile
 # BEFORE:
 COPY app/ ./app/
@@ -415,24 +655,75 @@ COPY . .
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "52100"]
 ```
 
+**4. `docker-compose.yaml` Verification (monorepo root):**
+Check for hardcoded `app/` references:
+```bash
+cd /compose/pulse
+
+# Search for app/ references in firecrawl_webhook service
+grep -A 20 "firecrawl_webhook:" docker-compose.yaml | grep -E "app/|COPY|CMD|WORKDIR|volumes"
+
+# Expected: NO references to app/ in:
+# - volume mounts (currently uses /app/data/bm25 - OK, this is container internal path)
+# - build context (currently uses ./apps/webhook - OK)
+# - command overrides (none present - OK)
+# - working directory (none present - OK)
+```
+
+**Current docker-compose.yaml is SAFE:**
+- Build context: `./apps/webhook` (correct)
+- Volume mount: `/app/data/bm25` (container internal path, unchanged)
+- No command overrides (uses Dockerfile CMD)
+- No working directory overrides (uses Dockerfile WORKDIR)
+
 **Verification:**
 ```bash
+# Build locally
 cd apps/webhook && docker build -t webhook-test .
-docker run --rm webhook-test python -c "from apps.webhook.main import app; print('Docker import successful')"
+
+# Test import inside container
+docker run --rm webhook-test python -c "from apps.webhook.main import app; print('✓ Docker import successful')"
+
+# Verify Dockerfile CMD works
+docker run --rm -d --name webhook-test-run webhook-test
+sleep 5
+docker logs webhook-test-run | grep -i "uvicorn"  # Should show uvicorn starting
+docker stop webhook-test-run
+docker rm webhook-test-run
+```
+
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 8 - update build config and verify docker-compose.yaml"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "import apps.webhook; print('✓ Import OK')"
 ```
 
 ### Phase 9: Update All Test Imports
 
 **Goal:** Fix all 90+ `from app.X` imports in tests
 
+**Git Checkpoint (START):**
+```bash
+git add -A
+git commit -m "checkpoint: start Phase 9 - update test imports"
+```
+
+**Execute:**
+
 **Strategy:**
 1. Use `sed` to bulk-replace imports:
    ```bash
    cd apps/webhook/tests
    find . -name "*.py" -exec sed -i 's/from app\./from apps.webhook./g' {} +
+   find . -name "*.py" -exec sed -i 's/import app\./import apps.webhook./g' {} +
    ```
-2. Manually verify and fix relative imports where appropriate
-3. Run full test suite after each file
+2. Manually verify and fix any edge cases
+3. Run full test suite to catch any issues
 
 **Tests to Run:**
 ```bash
@@ -442,30 +733,109 @@ cd apps/webhook && uv run pytest tests/integration/ -v --tb=short
 
 **Verification:**
 ```bash
-# Check for remaining app. imports
+# Check for remaining app. imports (should return 0 results)
 cd apps/webhook && grep -r "from app\." tests/ --include="*.py"
-# Should return 0 results
+cd apps/webhook && grep -r "import app\." tests/ --include="*.py"
+
+# Verify all tests still pass
+cd apps/webhook && uv run pytest tests/ -v
+```
+
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 9 - update all test imports to apps.webhook.*"
+```
+
+**Intermediate Check:**
+```bash
+cd apps/webhook && uv run python -c "import apps.webhook; print('✓ Import OK')"
 ```
 
 ### Phase 10: Update Documentation
 
 **Goal:** Update README, CLAUDE.md, architecture diagrams
 
+**Git Checkpoint (START):**
+```bash
+git add -A
+git commit -m "checkpoint: start Phase 10 - update documentation"
+```
+
+**Execute:**
+
 **Files to Update:**
 1. `apps/webhook/README.md`
    - Update "Project Structure" section with new layout
-   - Update import examples
+   - Update import examples (show `from apps.webhook.*`)
    - Update development commands
-2. `CLAUDE.md`
+   - Add note about absolute imports requirement
+2. `CLAUDE.md` (monorepo root)
    - Update webhook service description
    - Update cross-service communication patterns
+   - Note the flattened structure (no `app/` wrapper)
 3. `.docs/sessions/2025-11-10-webhook-flattening.md`
-   - Create session log documenting all changes, decisions, and verification results
+   - Create session log documenting:
+     - All 10 phases with commit SHAs
+     - All decisions made during implementation
+     - Full verification results (test output, coverage, etc.)
+     - Any issues encountered and resolutions
+     - Final success criteria checklist
 
 **Verification:**
 ```bash
-# Check all links work
-cd apps/webhook && grep -r "apps/webhook" README.md CLAUDE.md
+# Check all documentation references use correct paths
+cd apps/webhook && grep -r "from app\." README.md CLAUDE.md
+# Should return 0 results
+
+# Check for apps/webhook references
+cd apps/webhook && grep -r "apps/webhook" README.md
+# Should show updated import examples
+```
+
+**Git Checkpoint (END):**
+```bash
+git add -A
+git commit -m "feat: complete Phase 10 - update documentation for flattened structure"
+```
+
+**Final Verification - Run ALL Success Criteria:**
+```bash
+cd apps/webhook
+
+# 1. Zero from app. imports in codebase
+echo "✓ Checking for app. imports..."
+! grep -r "from app\." . --include="*.py" --exclude-dir=.venv
+
+# 2. All tests passing
+echo "✓ Running full test suite..."
+uv run pytest tests/ -v
+
+# 3. 85%+ code coverage
+echo "✓ Checking coverage..."
+uv run pytest tests/ --cov=apps.webhook --cov-report=term-missing | grep "TOTAL"
+
+# 4. Static analysis passes
+echo "✓ Running static analysis..."
+cd /compose/pulse && pnpm lint:webhook
+cd /compose/pulse && pnpm typecheck:webhook
+
+# 5. Alembic migrations work
+echo "✓ Checking Alembic..."
+cd apps/webhook && uv run alembic check
+
+# 6-7. Docker Compose services start + health checks pass
+echo "✓ Testing Docker Compose..."
+cd /compose/pulse && docker compose up -d firecrawl_webhook
+sleep 30
+docker compose ps firecrawl_webhook | grep "healthy"
+docker compose logs firecrawl_webhook | grep -i "error" && exit 1 || echo "No errors in logs"
+
+# 8. No circular import errors
+echo "✓ Testing imports..."
+cd /compose/pulse && uv run python -c "import apps.webhook; from apps.webhook.main import app; print('All imports successful')"
+
+echo "✅ ALL SUCCESS CRITERIA MET!"
 ```
 
 ## 6. Verification Strategy
