@@ -236,7 +236,11 @@ def stub_auto_tokenizer(monkeypatch: pytest.MonkeyPatch, stub_tokenizer_config: 
                     continue
                 tokens.append(token)
 
-            return "".join(tokens)
+            # If any token is whitespace, join with empty string; else, join with space
+            if any(re.match(r"^\s+$", t) for t in tokens):
+                return "".join(tokens)
+            else:
+                return " ".join(tokens)
 
     def _from_pretrained_stub(model_name: str, *args: Any, **kwargs: Any) -> StubTokenizer:  # noqa: ARG001
         return StubTokenizer()
