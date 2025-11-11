@@ -40,11 +40,11 @@ Edit `docker-compose.yaml`, add after `firecrawl_changedetection` service (befor
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_neo4j_data:/data
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_neo4j_logs:/logs
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -u neo4j -p $$NEO4J_PASSWORD 'RETURN 1'"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 30s
 ```
 
 **Step 2: Update firecrawl_webhook dependencies**
@@ -100,9 +100,16 @@ Run:
 docker compose up -d firecrawl_neo4j
 ```
 
-Expected: Container starts, health check passes within 60s
+Expected: Container starts, health check passes within 30s
 
 **Step 5: Verify Neo4j is running**
+
+Run:
+```bash
+curl -f http://localhost:50210
+```
+
+Expected: HTTP 200 response with Neo4j browser HTML
 
 Run:
 ```bash

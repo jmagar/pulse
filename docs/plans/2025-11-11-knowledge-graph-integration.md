@@ -855,11 +855,11 @@ services:
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_neo4j_data:/data
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_neo4j_logs:/logs
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -u neo4j -p $$NEO4J_PASSWORD 'RETURN 1'"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 30s
 
   firecrawl_webhook:
     # ... existing config ...
