@@ -64,7 +64,7 @@ async def test_changedetection_full_workflow(db_session):
     }
 
     # Mock index_document_helper to avoid actual indexing
-    with patch("app.jobs.rescrape._index_document_helper", new_callable=AsyncMock) as mock_index:
+    with patch("workers.jobs._index_document_helper", new_callable=AsyncMock) as mock_index:
         mock_index.return_value = "https://example.com/e2e-test"
 
         with patch("httpx.AsyncClient") as mock_client_class:

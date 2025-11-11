@@ -48,7 +48,7 @@ async def test_rescrape_changed_url_success():
         },
     }
 
-    with patch("app.jobs.rescrape.get_db_context") as mock_db_context:
+    with patch("workers.jobs.get_db_context") as mock_db_context:
         mock_db_context.return_value.__aenter__.return_value = mock_session
 
         with patch("httpx.AsyncClient") as mock_client_class:
@@ -63,7 +63,7 @@ async def test_rescrape_changed_url_success():
 
             # Mock indexing helper
             with patch(
-                "app.jobs.rescrape._index_document_helper", new_callable=AsyncMock
+                "workers.jobs._index_document_helper", new_callable=AsyncMock
             ) as mock_index:
                 mock_index.return_value = "https://example.com/test"
 
@@ -93,7 +93,7 @@ async def test_rescrape_changed_url_firecrawl_error():
     mock_result.scalar_one_or_none.return_value = mock_event
     mock_session.execute.return_value = mock_result
 
-    with patch("app.jobs.rescrape.get_db_context") as mock_db_context:
+    with patch("workers.jobs.get_db_context") as mock_db_context:
         mock_db_context.return_value.__aenter__.return_value = mock_session
 
         with patch("httpx.AsyncClient") as mock_client_class:
@@ -118,7 +118,7 @@ async def test_rescrape_changed_url_not_found():
     mock_result.scalar_one_or_none.return_value = None
     mock_session.execute.return_value = mock_result
 
-    with patch("app.jobs.rescrape.get_db_context") as mock_db_context:
+    with patch("workers.jobs.get_db_context") as mock_db_context:
         mock_db_context.return_value.__aenter__.return_value = mock_session
 
         with pytest.raises(ValueError, match="Change event .* not found"):

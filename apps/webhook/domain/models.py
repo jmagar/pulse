@@ -4,7 +4,7 @@ SQLAlchemy models for timing metrics.
 These models store performance metrics for all operations.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -12,6 +12,11 @@ from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+def utc_now() -> datetime:
+    """Return current UTC datetime for use as SQLAlchemy default."""
+    return datetime.now(UTC)
 
 
 class Base(DeclarativeBase):
@@ -32,7 +37,7 @@ class RequestMetric(Base):
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now(), index=True
+        DateTime(timezone=True), nullable=False, default=utc_now, index=True
     )
     method: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     path: Mapped[str] = mapped_column(String(500), nullable=False, index=True)
@@ -43,7 +48,7 @@ class RequestMetric(Base):
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
     extra_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now()
+        DateTime(timezone=True), nullable=False, default=utc_now
     )
 
     def __repr__(self) -> str:
@@ -63,7 +68,7 @@ class OperationMetric(Base):
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now(), index=True
+        DateTime(timezone=True), nullable=False, default=utc_now, index=True
     )
     operation_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     operation_name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -75,7 +80,7 @@ class OperationMetric(Base):
     document_url: Mapped[str | None] = mapped_column(String(500), nullable=True, index=True)
     extra_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now()
+        DateTime(timezone=True), nullable=False, default=utc_now
     )
 
     def __repr__(self) -> str:
@@ -94,7 +99,7 @@ class ChangeEvent(Base):
     detected_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=func.now,
+        default=utc_now,
         index=True,
     )
     diff_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -106,7 +111,7 @@ class ChangeEvent(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=func.now,
+        default=utc_now,
     )
 
     def __repr__(self) -> str:

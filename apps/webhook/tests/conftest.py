@@ -96,6 +96,72 @@ class InMemoryRedis:
     def blpop(self, _key: str, timeout: int = 0):  # pragma: no cover - compatibility
         return None
 
+    def pipeline(self):  # pragma: no cover - used in tests
+        """Return a pipeline stub for Redis transactions."""
+        return self
+
+    def sadd(self, _key: str, *_values):  # pragma: no cover - used in tests
+        """Stub for set add operation."""
+        return len(_values)
+
+    def srem(self, _key: str, *_values):  # pragma: no cover - used in tests
+        """Stub for set remove operation."""
+        return len(_values)
+
+    def smembers(self, _key: str):  # pragma: no cover - used in tests
+        """Stub for set members operation."""
+        return set()
+
+    def execute(self):  # pragma: no cover - used in tests
+        """Stub for pipeline execute."""
+        return []
+
+    def info(self, section=None):  # pragma: no cover - used in tests
+        """Stub for Redis info command."""
+        return {"redis_version": "7.0.0", "server": {"redis_version": "7.0.0"}}
+
+    def hset(self, _key: str, _field: str = None, _value=None, mapping: dict = None):  # pragma: no cover - used in tests
+        """Stub for hash set operation."""
+        if mapping:
+            return len(mapping)
+        return 1
+
+    def hget(self, _key: str, _field: str):  # pragma: no cover - used in tests
+        """Stub for hash get operation."""
+        return None
+
+    def hmset(self, _key: str, _mapping: dict):  # pragma: no cover - used in tests
+        """Stub for hash multiple set operation."""
+        return True
+
+    def hmget(self, _key: str, _fields: list):  # pragma: no cover - used in tests
+        """Stub for hash multiple get operation."""
+        return [None] * len(_fields)
+
+    def hgetall(self, _key: str):  # pragma: no cover - used in tests
+        """Stub for hash get all operation."""
+        return {}
+
+    def hdel(self, _key: str, *_fields):  # pragma: no cover - used in tests
+        """Stub for hash delete operation."""
+        return len(_fields)
+
+    def expire(self, _key: str, _time: int):  # pragma: no cover - used in tests
+        """Stub for key expiration."""
+        return True
+
+    def rpush(self, _key: str, *_values):  # pragma: no cover - used in tests
+        """Stub for list push operation."""
+        return len(_values)
+
+    def lpush(self, _key: str, *_values):  # pragma: no cover - used in tests
+        """Stub for list push operation."""
+        return len(_values)
+
+    def exists(self, _key: str):  # pragma: no cover - used in tests
+        """Stub for key existence check."""
+        return False
+
 
 _JOB_OPTION_KEYS = {
     "at_front",
@@ -357,7 +423,7 @@ async def cleanup_database_engine():
 
     yield
     # Clean up after test
-    from app import database
+    from infra import database
 
     if database.engine:
         await database.engine.dispose()

@@ -18,6 +18,8 @@ from services.vector_store import VectorStore
 from utils.logging import get_logger
 from utils.text_processing import TextChunker
 
+__all__ = ["rescrape_changed_url"]
+
 logger = get_logger(__name__)
 
 
