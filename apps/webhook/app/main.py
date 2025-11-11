@@ -156,20 +156,56 @@ async def log_firecrawl_webhook(request: Request, call_next: Any) -> Any:
 
     if request.url.path == "/api/webhook/firecrawl":
         body = await request.body()
+
+        payload: Any | None = None
         try:
             payload = json.loads(body)
         except json.JSONDecodeError:
             payload = None
 
-        logger.warning(
-            "Webhook request received", payload=payload, raw=body.decode("utf-8", errors="replace")
-        )
+        metadata: dict[str, Any] = {
+            "path": request.url.path,
+            "method": request.method,
+            "content_length": len(body),
+        }
+
+        if isinstance(payload, dict):
+            data = payload.get("data") if isinstance(payload.get("data"), dict) else None
+            event_id = (
+                payload.get("id")
+                or payload.get("event_id")
+                or payload.get("eventId")
+                or (data and data.get("id"))
+            )
+            event_type = (
+                payload.get("type")
+                or payload.get("event_type")
+                or payload.get("eventType")
+                or (data and data.get("type"))
+            )
+
+            if event_id:
+                metadata["event_id"] = event_id
+            if event_type:
+                metadata["event_type"] = event_type
+
+        logger.info("Webhook request received", **metadata)
+
+        if settings.debug_logging:
+            if isinstance(payload, dict):
+                logger.debug("Webhook payload received", payload=payload)
+            else:
+                logger.debug(
+                    "Webhook raw body received",
+                    raw=body.decode("utf-8", errors="replace"),
+                )
 
         async def receive() -> dict[str, object]:
             return {"type": "http.request", "body": body, "more_body": False}
 
         response = await call_next(Request(request.scope, receive))
-        logger.warning("Webhook response sent", status=response.status_code)
+        logger.info("Webhook response sent", status=response.status_code)
+
         return response
 
     return await call_next(request)

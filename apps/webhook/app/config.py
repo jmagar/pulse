@@ -132,6 +132,11 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("WEBHOOK_LOG_LEVEL", "SEARCH_BRIDGE_LOG_LEVEL"),
         description="Logging level",
     )
+    debug_logging: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("WEBHOOK_DEBUG_LOGGING", "SEARCH_BRIDGE_DEBUG_LOGGING"),
+        description="Enable verbose webhook logging (requires DEBUG log level)",
+    )
 
     # BM25 Configuration
     bm25_k1: float = Field(

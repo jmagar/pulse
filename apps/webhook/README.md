@@ -63,6 +63,12 @@ For standalone deployment, see root `docker-compose.yaml` for service definition
 
 ## Configuration
 
+### Logging
+
+- Webhook requests now log only high-level metadata (method, path, and content length) by default to avoid storing sensitive payload data.
+- To opt in to verbose request payload logging, set `WEBHOOK_DEBUG_LOGGING=true` alongside `WEBHOOK_LOG_LEVEL=DEBUG` before starting the service.
+- When debug logging is enabled, detailed payload information is emitted at the `DEBUG` level only.
+
 ### Port Allocation
 
 | Port  | Service | Description |
