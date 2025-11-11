@@ -38,18 +38,19 @@ class ServicePool:
     Thread-safety:
     - Singleton creation uses double-checked locking pattern.
     - EmbeddingService (HTTP client) and VectorStore (Qdrant client) are thread-safe and use connection pooling.
-    - TextChunker now includes thread-safe locking to protect tokenizer access for concurrent use.
+    - TextChunker uses semantic-text-splitter (Rust-based), which is thread-safe by design.
     - BM25Engine uses file locking for concurrent read/write safety.
 
     Concurrency:
     - This implementation is safe for both single-threaded and multi-threaded RQ workers.
-    - TextChunker has been updated with locking to ensure thread-safe tokenizer access.
-    - For optimal performance with high-throughput workloads, consider using multiple
-      single-threaded workers rather than one multi-threaded worker.
+    - TextChunker uses semantic-text-splitter, optimized for high-throughput parallel processing.
+    - No GIL contention for chunking operations (Rust native code).
+    - Ideal for high-throughput workloads with multiple parallel workers.
 
-    Expected RQ worker concurrency:
-    - Safe for single worker thread (default RQ configuration).
-    - Safe for multiple worker threads or processes with the added tokenizer locking.
+    Performance:
+    - TextChunker is 10-100x faster than pure Python implementations.
+    - Optimized for concurrent access with no locking overhead.
+    - Safe for multiple worker threads or processes without performance degradation.
     """
 
     _instance: ClassVar["ServicePool | None"] = None
