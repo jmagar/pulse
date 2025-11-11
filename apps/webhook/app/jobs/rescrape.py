@@ -73,14 +73,23 @@ async def _index_document_helper(
         await vector_store.ensure_collection()
 
         # Create IndexDocumentRequest
+        resolved_url = cast(str, metadata.get("resolved_url") or url)
+        html = cast(str, metadata.get("html") or "")
+        status_code = cast(int, metadata.get("status_code") or 200)
+
         document = IndexDocumentRequest(
             url=url,
+            resolved_url=resolved_url,
             markdown=text,
-            title=metadata.get("title", ""),
-            description=metadata.get("description", ""),
-            language="en",  # Default language
-            country=None,
-            is_mobile=False,
+            html=html,
+            status_code=status_code,
+            title=metadata.get("title"),
+            description=metadata.get("description"),
+            language=metadata.get("language", "en"),
+            country=metadata.get("country"),
+            is_mobile=metadata.get("is_mobile", False),
+            gcs_path=metadata.get("gcs_path"),
+            screenshot_url=metadata.get("screenshot_url"),
         )
 
         # Index document
@@ -144,6 +153,8 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
             firecrawl_url = getattr(settings, "firecrawl_api_url", "http://firecrawl:3002")
             firecrawl_key = getattr(settings, "firecrawl_api_key", "self-hosted-no-auth")
 
+            firecrawl_status_code = None
+
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     f"{firecrawl_url}/v1/scrape",
@@ -155,6 +166,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
                     headers={"Authorization": f"Bearer {firecrawl_key}"},
                 )
                 response.raise_for_status()
+                firecrawl_status_code = response.status_code
                 scrape_data = cast(dict[str, Any], response.json())
 
             if not scrape_data.get("success"):
@@ -164,6 +176,31 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
             logger.info("Indexing scraped content", url=change_event.watch_url)
 
             data = scrape_data.get("data", {})
+            document_metadata = data.get("metadata") or {}
+            resolved_url = (
+                data.get("resolvedUrl")
+                or document_metadata.get("resolvedUrl")
+                or document_metadata.get("url")
+                or data.get("url")
+                or change_event.watch_url
+            )
+            html_content = data.get("html") or ""
+            status_code = (
+                data.get("statusCode")
+                or document_metadata.get("statusCode")
+                or firecrawl_status_code
+                or 200
+            )
+            language = document_metadata.get("language")
+            country = document_metadata.get("country")
+            is_mobile = (
+                document_metadata.get("isMobile")
+                if document_metadata.get("isMobile") is not None
+                else document_metadata.get("is_mobile")
+            )
+            gcs_path = data.get("gcsPath") or document_metadata.get("gcsPath")
+            screenshot_url = data.get("screenshotUrl") or document_metadata.get("screenshotUrl")
+
             doc_id = await _index_document_helper(
                 url=change_event.watch_url,
                 text=data.get("markdown", ""),
@@ -171,8 +208,16 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
                     "change_event_id": change_event_id,
                     "watch_id": change_event.watch_id,
                     "detected_at": change_event.detected_at.isoformat(),
-                    "title": data.get("metadata", {}).get("title"),
-                    "description": data.get("metadata", {}).get("description"),
+                    "title": document_metadata.get("title"),
+                    "description": document_metadata.get("description"),
+                    "resolved_url": resolved_url,
+                    "html": html_content,
+                    "status_code": status_code,
+                    "language": language,
+                    "country": country,
+                    "is_mobile": is_mobile,
+                    "gcs_path": gcs_path,
+                    "screenshot_url": screenshot_url,
                 },
             )
 

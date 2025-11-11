@@ -1,6 +1,7 @@
 """Unit tests for rescrape job."""
 
 from datetime import UTC, datetime
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -72,6 +73,67 @@ async def test_rescrape_changed_url_success():
     assert result["status"] == "success"
     assert result["document_id"] == "https://example.com/test"
     assert result["url"] == "https://example.com/test"
+
+
+@pytest.mark.asyncio
+async def test_rescrape_changed_url_success_with_missing_fields():
+    """Test rescrape succeeds when Firecrawl omits optional fields."""
+
+    mock_event = ChangeEvent(
+        id=456,
+        watch_id="test-watch-missing",
+        watch_url="https://example.com/missing",
+        detected_at=datetime.now(UTC),
+        rescrape_status="queued",
+        extra_metadata={},
+    )
+
+    mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_event
+    mock_session.execute.return_value = mock_result
+
+    mock_firecrawl_response = {
+        "success": True,
+        "data": {
+            "markdown": "# Missing Fields\nThis page lacks optional fields.",
+            # intentionally missing html/resolvedUrl/statusCode metadata
+            "metadata": {
+                "title": "Missing Fields",
+                "description": "Testing fallback behaviour",
+            },
+        },
+    }
+
+    async def _fake_index(url: str, text: str, metadata: dict[str, Any]) -> str:
+        assert metadata["resolved_url"] == mock_event.watch_url
+        assert metadata["html"] == ""
+        assert metadata["status_code"] == 200
+        return url
+
+    with patch("app.jobs.rescrape.get_db_context") as mock_db_context:
+        mock_db_context.return_value.__aenter__.return_value = mock_session
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            mock_response = MagicMock()
+            mock_response.json.return_value = mock_firecrawl_response
+            mock_response.status_code = 200
+            mock_client.post.return_value = mock_response
+
+            with patch(
+                "app.jobs.rescrape._index_document_helper",
+                new_callable=AsyncMock,
+            ) as mock_index:
+                mock_index.side_effect = _fake_index
+
+                result = await rescrape_changed_url(mock_event.id)
+
+    assert result["status"] == "success"
+    assert result["document_id"] == mock_event.watch_url
+    assert result["url"] == mock_event.watch_url
 
 
 @pytest.mark.asyncio
