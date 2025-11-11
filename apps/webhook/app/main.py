@@ -16,10 +16,10 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api.dependencies import cleanup_services, get_vector_store
+from api.deps import cleanup_services, get_vector_store
 from app.config import settings
 from infra.database import close_database, init_database
-from app.middleware.timing import TimingMiddleware
+from api.middleware.timing import TimingMiddleware
 from infra.rate_limit import limiter
 from app.utils.logging import configure_logging, get_logger
 
@@ -143,11 +143,9 @@ app.add_middleware(
 )
 
 # Include API routes (imported here to avoid circular dependency)
-from app.api.metrics_routes import router as metrics_router  # noqa: E402
-from app.api.routes import router  # noqa: E402
+from api import router as api_router  # noqa: E402
 
-app.include_router(router)
-app.include_router(metrics_router)
+app.include_router(api_router)
 
 
 @app.middleware("http")

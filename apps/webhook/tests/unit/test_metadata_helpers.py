@@ -1,6 +1,6 @@
 """Unit tests for metadata helper functions."""
 
-from app.api.routes import _compute_diff_size, _extract_changedetection_metadata
+from api.routers.webhook import _compute_diff_size, _extract_changedetection_metadata
 from api.schemas.webhook import ChangeDetectionPayload
 
 

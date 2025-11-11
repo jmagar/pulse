@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.dependencies import get_search_orchestrator
+from api.deps import get_search_orchestrator
 from app.main import app
 
 

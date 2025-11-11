@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 from fastapi.testclient import TestClient
 
-from app.api.dependencies import get_search_orchestrator
+from api.deps import get_search_orchestrator
 from app.config import settings
 from app.main import app
 

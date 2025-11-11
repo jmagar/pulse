@@ -7,8 +7,8 @@ import pytest
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.testclient import TestClient
 
-from app.api import dependencies as deps
-from app.api import routes
+from api import deps
+from api.routers import webhook
 from api.schemas.webhook import FirecrawlPageEvent
 from app.services import webhook_handlers as handlers
 
@@ -18,7 +18,7 @@ def webhook_client() -> Generator[tuple[TestClient, MagicMock]]:
     """Create a TestClient with overridden dependencies."""
 
     app = FastAPI()
-    app.include_router(routes.router)
+    app.include_router(webhook.router, prefix="/api/webhook")
 
     queue = MagicMock()
 
@@ -77,7 +77,7 @@ def test_webhook_with_invalid_signature(monkeypatch: pytest.MonkeyPatch) -> None
     """Invalid signature should short-circuit with 401."""
 
     app = FastAPI()
-    app.include_router(routes.router)
+    app.include_router(webhook.router, prefix="/api/webhook")
 
     async def failing_signature(
         request: Request,
