@@ -193,12 +193,18 @@ apps/webhook/
 ├── worker.py                # Background worker
 ├── worker_thread.py         # Embedded worker thread
 ├── api/                     # API layer
-│   ├── routes/              # HTTP endpoints
-│   │   ├── index.py         # Index endpoints
+│   ├── routers/             # HTTP endpoints
+│   │   ├── indexing.py      # Index endpoints
 │   │   ├── search.py        # Search endpoints
-│   │   ├── stats.py         # Stats endpoints
-│   │   └── webhook.py       # Webhook endpoints (changedetection)
-│   └── dependencies.py      # Shared FastAPI dependencies
+│   │   ├── metrics.py       # Stats/metrics endpoints
+│   │   ├── webhook.py       # Webhook endpoints (changedetection)
+│   │   └── health.py        # Health check endpoint
+│   ├── schemas/             # Pydantic request/response models
+│   │   ├── search.py        # Search models
+│   │   ├── indexing.py      # Index models
+│   │   └── webhook.py       # Webhook models
+│   ├── middleware/          # FastAPI middleware
+│   └── deps.py              # Shared FastAPI dependencies
 ├── services/                # Business logic layer
 │   ├── embedding.py         # HF TEI client
 │   ├── vector_store.py      # Qdrant client
@@ -207,16 +213,13 @@ apps/webhook/
 │   └── indexing.py          # Document processing
 ├── workers/                 # Background job handlers
 │   └── jobs.py              # Indexing and rescrape jobs
-├── domain/                  # Domain models
-│   └── models/              # Pydantic schemas
-│       ├── search.py        # Search request/response models
-│       ├── index.py         # Index request/response models
-│       └── timing.py        # ChangeEvent database model
+├── domain/                  # Domain layer
+│   └── models.py            # SQLAlchemy ORM models (RequestMetric, etc.)
 ├── clients/                 # External API clients
 │   └── firecrawl.py         # Firecrawl API client
 ├── infra/                   # Infrastructure layer
 │   └── database/            # Database setup
-│       └── models.py        # SQLAlchemy ORM models
+│       └── session.py       # SQLAlchemy session management
 ├── utils/                   # Utilities
 │   ├── text_processing.py   # Token-based chunking
 │   ├── url.py               # URL normalization
@@ -236,18 +239,24 @@ apps/webhook/
 The service uses **relative imports** from the root level:
 
 ```python
-# API routes
-from api.routes.search import router as search_router
-from api.dependencies import get_settings
+# API routers and schemas
+from api.routers.search import router as search_router
+from api.routers.indexing import router as indexing_router
+from api.schemas.search import SearchRequest, SearchResponse
+from api.schemas.indexing import IndexRequest, IndexResponse
+from api.deps import get_settings
 
 # Services
 from services.embedding import EmbeddingService
 from services.vector_store import VectorStoreService
 from services.search import SearchOrchestrator
+from services.indexing import IndexingService
 
-# Domain models
-from domain.models.search import SearchRequest, SearchResponse
-from domain.models.timing import ChangeEvent
+# Domain models (SQLAlchemy ORM)
+from domain.models import RequestMetric
+
+# Workers
+from workers.jobs import index_document_job, rescrape_job
 
 # Clients
 from clients.firecrawl import FirecrawlClient
@@ -255,6 +264,7 @@ from clients.firecrawl import FirecrawlClient
 # Utils
 from utils.url import normalize_url
 from utils.timing import timing_context
+from utils.text_processing import chunk_text
 
 # Config
 from config import Settings
@@ -338,7 +348,7 @@ WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
 
 ### ChangeEvent Model
 
-**Location:** `domain/models/timing.py`
+**Location:** `domain/models.py` (SQLAlchemy ORM model)
 
 The `ChangeEvent` model tracks change detection events:
 
