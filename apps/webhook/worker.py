@@ -22,12 +22,10 @@ from rq import Worker
 from config import settings
 from infra.redis import get_redis_connection
 from api.schemas.indexing import IndexDocumentRequest
-from services.bm25_engine import BM25Engine
 from services.embedding import EmbeddingService
-from services.indexing import IndexingService
+from services.service_pool import ServicePool
 from services.vector_store import VectorStore
 from utils.logging import configure_logging, get_logger
-from utils.text_processing import TextChunker
 from utils.timing import TimingContext
 
 # Configure logging
@@ -38,6 +36,8 @@ logger = get_logger(__name__)
 async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]:
     """
     Async implementation of document indexing with enhanced error logging.
+
+    Uses service pool for efficient resource reuse across jobs.
 
     Args:
         document_dict: Document data as dictionary
@@ -54,10 +54,6 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
     # Generate job ID for correlation
     job_id = str(uuid4())
 
-    # Initialize service references for cleanup
-    embedding_service = None
-    vector_store = None
-
     try:
         # Parse with detailed error context
         try:
@@ -73,40 +69,22 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
             )
             raise
 
-        # Initialize services (in worker context)
-        text_chunker = TextChunker(
-            model_name=settings.embedding_model,
-            max_tokens=settings.max_chunk_tokens,
-            overlap_tokens=settings.chunk_overlap_tokens,
-        )
+        # Get services from pool (FAST - no initialization overhead)
+        async with TimingContext(
+            "worker",
+            "get_service_pool",
+            job_id=job_id,
+            document_url=document.url,
+        ) as ctx:
+            service_pool = ServicePool.get_instance()
+            ctx.metadata = {"pool_exists": True}
 
-        embedding_service = EmbeddingService(
-            tei_url=settings.tei_url,
-            api_key=settings.tei_api_key,
-        )
-
-        vector_store = VectorStore(
-            url=settings.qdrant_url,
-            collection_name=settings.qdrant_collection,
-            vector_dim=settings.vector_dim,
-            timeout=int(settings.qdrant_timeout),
-        )
-
-        bm25_engine = BM25Engine(
-            k1=settings.bm25_k1,
-            b=settings.bm25_b,
-        )
-
-        indexing_service = IndexingService(
-            text_chunker=text_chunker,
-            embedding_service=embedding_service,
-            vector_store=vector_store,
-            bm25_engine=bm25_engine,
-        )
+        # Get indexing service from pool
+        indexing_service = service_pool.get_indexing_service()
 
         # Ensure collection exists
         try:
-            await vector_store.ensure_collection()
+            await service_pool.vector_store.ensure_collection()
         except Exception as coll_error:
             logger.error(
                 "Failed to ensure Qdrant collection",
@@ -153,22 +131,6 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
             "error": str(e),
             "error_type": type(e).__name__,
         }
-
-    finally:
-        # Always cleanup resources, even on exception
-        if embedding_service is not None:
-            try:
-                await embedding_service.close()
-                logger.debug("Embedding service closed")
-            except Exception:
-                logger.exception("Failed to close embedding service")
-
-        if vector_store is not None:
-            try:
-                await vector_store.close()
-                logger.debug("Vector store closed")
-            except Exception:
-                logger.exception("Failed to close vector store")
 
 
 def index_document_job(document_dict: dict[str, Any]) -> dict[str, Any]:

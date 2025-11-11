@@ -33,12 +33,13 @@ class EmbeddingService:
         self.timeout = timeout
         self.api_key = api_key
 
-        # Build headers
-        headers = {}
+        # Build headers for lazy client creation
+        self._headers = {}
         if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
+            self._headers["Authorization"] = f"Bearer {api_key}"
 
-        self.client = httpx.AsyncClient(timeout=timeout, headers=headers)
+        # Lazy initialization - client created on first use
+        self._client: httpx.AsyncClient | None = None
 
         logger.info(
             "Embedding service initialized",
@@ -46,10 +47,26 @@ class EmbeddingService:
             has_api_key=bool(api_key),
         )
 
+    @property
+    def client(self) -> httpx.AsyncClient:
+        """
+        Get the HTTP client, creating it lazily if needed.
+        
+        Lazy initialization ensures the client is created in a thread
+        with an active event loop, avoiding potential issues.
+        """
+        if self._client is None:
+            self._client = httpx.AsyncClient(timeout=self.timeout, headers=self._headers)
+            logger.debug("HTTP client created on first use")
+        return self._client
+
     async def close(self) -> None:
         """Close the HTTP client."""
-        await self.client.aclose()
-        logger.info("Embedding service closed")
+        if self._client is not None:
+            await self._client.aclose()
+            logger.info("Embedding service closed")
+        else:
+            logger.debug("Embedding service close called but client was never created")
 
     async def health_check(self) -> bool:
         """

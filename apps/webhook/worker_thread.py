@@ -4,6 +4,7 @@ Background worker thread manager.
 Runs the RQ worker in a background thread within the FastAPI process.
 """
 
+import asyncio
 import threading
 
 from rq import Worker
@@ -50,7 +51,7 @@ class WorkerThreadManager:
         logger.info("Worker thread started")
 
     def stop(self) -> None:
-        """Stop the worker thread gracefully."""
+        """Stop the worker thread gracefully and cleanup service pool."""
         if not self._running:
             logger.warning("Worker thread not running")
             return
@@ -67,18 +68,61 @@ class WorkerThreadManager:
             self._thread.join(timeout=10.0)
             if self._thread.is_alive():
                 logger.error("Worker thread did not stop gracefully")
+                # Don't cleanup if thread is still running - jobs may still be active
+                return
             else:
                 logger.info("Worker thread stopped")
+
+        # Now safe to cleanup - thread has exited so no jobs are running
+        try:
+            from services.service_pool import ServicePool
+
+            pool = ServicePool.get_instance()
+            # Run async cleanup in new event loop
+            # Save the current event loop to restore it after cleanup
+            old_loop = None
+            try:
+                old_loop = asyncio.get_event_loop()
+            except RuntimeError:
+                # No current event loop in this thread
+                pass
+            
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(pool.close())
+                logger.info("Service pool closed")
+            finally:
+                loop.close()
+                # Restore the original event loop
+                if old_loop is not None and not old_loop.is_closed():
+                    asyncio.set_event_loop(old_loop)
+                else:
+                    # If there was no loop or it was closed, set to None
+                    asyncio.set_event_loop(None)
+        except Exception:
+            logger.exception("Failed to close service pool")
 
     def _run_worker(self) -> None:
         """
         Run the RQ worker (called in background thread).
 
         This method runs in a separate thread and processes jobs from Redis.
+        Initializes service pool before starting work to ensure all services
+        are ready for jobs.
         """
         try:
             logger.info("Connecting to Redis for worker", redis_url=settings.redis_url)
             redis_conn = get_redis_connection()
+
+            # Pre-initialize service pool for performance
+            # This loads the tokenizer and creates service connections once
+            # before any jobs are processed
+            logger.info("Pre-initializing service pool...")
+            from services.service_pool import ServicePool
+
+            ServicePool.get_instance()
+            logger.info("Service pool ready for jobs")
 
             # Create worker
             self._worker = Worker(
