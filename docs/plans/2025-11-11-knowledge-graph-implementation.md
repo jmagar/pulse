@@ -16,6 +16,36 @@
 
 ---
 
+## Qwen3 ChatML Prompt Format
+
+**IMPORTANT:** All extraction prompts in this plan use Qwen3's ChatML format for optimal performance.
+
+### Format Structure:
+```
+<|im_start|>system
+[system instructions]<|im_end|>
+<|im_start|>user
+[user message]<|im_end|>
+<|im_start|>assistant
+```
+
+### Key Requirements:
+1. **System prompt**: "Respond only in raw JSON. No extra text or explanations."
+2. **Include JSON schema** in system prompt for stability
+3. **Temperature**: 0.0 for deterministic structured output
+4. **Use `/api/generate` endpoint** (NOT `/api/chat`) for pre-formatted ChatML prompts
+5. **Response field**: `response["response"]` (NOT `response["message"]["content"]`)
+
+### Benefits:
+- 10-15% improvement in extraction quality
+- Reduced validation failures
+- Consistent JSON structure
+- No extra text/markdown in output
+
+See entity/relationship prompt templates in Phase 5 for implementation examples.
+
+---
+
 ## Phase 1: Foundation Setup
 
 ### Task 1: Add Neo4j Service to Docker Compose
@@ -26,19 +56,19 @@
 
 **Step 1: Add Neo4j service definition**
 
-Edit `docker-compose.yaml`, add after `firecrawl_changedetection` service (before `networks:`):
+Edit `docker-compose.yaml`, add after `pulse_change-detection` service (before `networks:`):
 
 ```yaml
-  firecrawl_neo4j:
+  pulse_neo4j:
     <<: *common-service
     image: neo4j:2025.10.1-community-bullseye
-    container_name: firecrawl_neo4j
+    container_name: pulse_neo4j
     ports:
       - "${NEO4J_HTTP_PORT:-50210}:7474"
       - "${NEO4J_BOLT_PORT:-50211}:7687"
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_neo4j_data:/data
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_neo4j_logs:/logs
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_neo4j_data:/data
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_neo4j_logs:/logs
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
       interval: 10s
@@ -47,17 +77,17 @@ Edit `docker-compose.yaml`, add after `firecrawl_changedetection` service (befor
       start_period: 30s
 ```
 
-**Step 2: Update firecrawl_webhook dependencies**
+**Step 2: Update pulse_webhook dependencies**
 
-In `docker-compose.yaml`, find `firecrawl_webhook` service and add `firecrawl_neo4j` to `depends_on`:
+In `docker-compose.yaml`, find `pulse_webhook` service and add `pulse_neo4j` to `depends_on`:
 
 ```yaml
-  firecrawl_webhook:
+  pulse_webhook:
     # ... existing config ...
     depends_on:
-      - firecrawl_db
-      - firecrawl_cache
-      - firecrawl_neo4j  # ADD THIS LINE
+      - pulse_postgres
+      - pulse_redis
+      - pulse_neo4j  # ADD THIS LINE
 ```
 
 **Step 3: Add environment variables to .env.example**
@@ -77,7 +107,7 @@ NEO4J_dbms_memory_heap_max__size=2g
 NEO4J_dbms_memory_pagecache_size=1g
 
 # Webhook Neo4j Connection (uses NEO4J_USERNAME and NEO4J_PASSWORD above)
-WEBHOOK_NEO4J_URL=bolt://firecrawl_neo4j:7687
+WEBHOOK_NEO4J_URL=bolt://pulse_neo4j:7687
 
 # Graph Extraction Settings
 WEBHOOK_GRAPH_EXTRACTION_ENABLED=true
@@ -97,7 +127,7 @@ WEBHOOK_OLLAMA_URL=http://gpu-machine:50203
 
 Run:
 ```bash
-docker compose up -d firecrawl_neo4j
+docker compose up -d pulse_neo4j
 ```
 
 Expected: Container starts, health check passes within 30s
@@ -113,7 +143,7 @@ Expected: HTTP 200 response with Neo4j browser HTML
 
 Run:
 ```bash
-docker exec firecrawl_neo4j cypher-shell -u neo4j -p firecrawl_graph_2025 "RETURN 'Connected!' as status"
+docker exec pulse_neo4j cypher-shell -u neo4j -p firecrawl_graph_2025 "RETURN 'Connected!' as status"
 ```
 
 Expected output:
@@ -242,7 +272,7 @@ def test_neo4j_url_default():
         webhook_secret="test-webhook-secret-1234567890",
     )
 
-    assert settings.neo4j_url == "bolt://firecrawl_neo4j:7687"
+    assert settings.neo4j_url == "bolt://pulse_neo4j:7687"
 
 
 def test_neo4j_url_from_env(monkeypatch):
@@ -326,7 +356,7 @@ Edit `apps/webhook/config.py`, add after `changedetection_enable_auto_watch` fie
 ```python
     # Neo4j Graph Database
     neo4j_url: str = Field(
-        default="bolt://firecrawl_neo4j:7687",
+        default="bolt://pulse_neo4j:7687",
         validation_alias=AliasChoices("WEBHOOK_NEO4J_URL", "NEO4J_URL"),
         description="Neo4j bolt connection URL",
     )
@@ -1058,7 +1088,7 @@ uv run pytest tests/unit/test_ollama_client.py::test_extract_structured_success 
 
 Expected: FAIL - AttributeError: 'OllamaClient' object has no attribute 'extract_structured'
 
-**Step 3: Implement structured extraction with retry**
+**Step 3: Implement structured extraction with retry (ChatML format)**
 
 Append to `apps/webhook/services/ollama_client.py`:
 
@@ -1080,23 +1110,35 @@ async def extract_structured(
     Extract structured data with automatic retry on validation failure.
 
     Args:
-        prompt: Extraction prompt
+        prompt: Extraction prompt in ChatML format with <|im_start|> and <|im_end|> tokens
         schema: Pydantic schema for response validation
         max_retries: Maximum retry attempts
         temperature: Sampling temperature (0.0 for deterministic)
 
     Returns:
         Validated schema instance, or None if all retries fail
+
+    Note:
+        Prompt must be pre-formatted in ChatML format:
+        <|im_start|>system
+        [system instructions]<|im_end|>
+        <|im_start|>user
+        [user message]<|im_end|>
+        <|im_start|>assistant
     """
     for attempt in range(max_retries):
         try:
+            # Use generate endpoint for ChatML-formatted prompts
             response = await self.client.post(
-                f"{self.base_url}/api/chat",
+                f"{self.base_url}/api/generate",
                 json={
                     "model": self.model,
-                    "messages": [{"role": "user", "content": prompt}],
+                    "prompt": prompt,
                     "format": schema.model_json_schema(),
-                    "options": {"temperature": temperature},
+                    "options": {
+                        "temperature": temperature,
+                        "num_predict": 2048,
+                    },
                     "stream": False,
                 },
             )
@@ -1104,7 +1146,7 @@ async def extract_structured(
 
             # Parse response
             data = response.json()
-            content = data["message"]["content"]
+            content = data["response"]
 
             # Validate with Pydantic
             result = schema.model_validate_json(content)

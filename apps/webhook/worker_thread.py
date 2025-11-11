@@ -87,6 +87,11 @@ class WorkerThreadManager:
                 name="search-bridge-worker",
             )
 
+            # Disable signal handlers since we're in a background thread
+            # Signal handlers only work in the main thread
+            # See: .docs/webhook-worker-debug-2025-11-11.md for full explanation
+            self._worker._install_signal_handlers = lambda: None  # type: ignore[method-assign]
+
             logger.info("Worker initialized, listening for jobs...")
 
             # Work loop

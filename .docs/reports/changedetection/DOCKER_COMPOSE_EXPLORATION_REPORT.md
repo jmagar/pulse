@@ -30,11 +30,11 @@
 ```
 Core Services (6):
 ├── firecrawl              (Node.js) - Firecrawl API - Main web scraping engine
-├── firecrawl_mcp          (Node.js) - MCP Server - Claude integration layer
-├── firecrawl_webhook      (Python)  - Webhook Bridge - Search indexing service
-├── firecrawl_playwright   (Browser) - Playwright Service - Dynamic content scraping
-├── firecrawl_db           (SQL)     - PostgreSQL - Shared data persistence
-└── firecrawl_cache        (Cache)   - Redis - Caching & message queue
+├── pulse_mcp          (Node.js) - MCP Server - Claude integration layer
+├── pulse_webhook      (Python)  - Webhook Bridge - Search indexing service
+├── pulse_playwright   (Browser) - Playwright Service - Dynamic content scraping
+├── pulse_postgres           (SQL)     - PostgreSQL - Shared data persistence
+└── pulse_redis        (Cache)   - Redis - Caching & message queue
 
 External Services (2):
 ├── firecrawl_tei          (GPU)     - Text Embeddings Inference
@@ -49,15 +49,15 @@ External Services (2):
 - **Language:** Node.js
 - **Port Mapping:** `50102` (external) → `3002` (internal)
 - **Startup Command:** `node dist/src/harness.js --start-docker`
-- **Dependencies:** firecrawl_db, firecrawl_cache, firecrawl_playwright
+- **Dependencies:** pulse_postgres, pulse_redis, pulse_playwright
 - **Resource Limits:** Unlimited file descriptors (65535 soft/hard)
 - **Purpose:** Main Firecrawl web scraping API engine
 - **Restart Policy:** unless-stopped
 - **Watchtower:** Disabled (prevent auto-updates)
 
-#### 2. **firecrawl_mcp** (Model Context Protocol Server)
+#### 2. **pulse_mcp** (Model Context Protocol Server)
 - **Image Source:** Built locally from `apps/mcp/Dockerfile`
-- **Container Name:** `firecrawl_mcp`
+- **Container Name:** `pulse_mcp`
 - **Language:** Node.js (TypeScript)
 - **Port Mapping:** `50107` (external) → `3060` (internal)
 - **Dependencies:** firecrawl API
@@ -68,12 +68,12 @@ External Services (2):
 - **Multi-stage Build:** Builder stage + Production stage with optimizations
 - **Entrypoint Script:** Fixes volume permissions before process startup
 
-#### 3. **firecrawl_webhook** (Webhook Bridge / Search Service)
+#### 3. **pulse_webhook** (Webhook Bridge / Search Service)
 - **Image Source:** Built locally from `apps/webhook/Dockerfile`
-- **Container Name:** `firecrawl_webhook`
+- **Container Name:** `pulse_webhook`
 - **Language:** Python 3.13
 - **Port Mapping:** `50108` (external) → `52100` (internal)
-- **Dependencies:** firecrawl_db, firecrawl_cache
+- **Dependencies:** pulse_postgres, pulse_redis
 - **Purpose:** FastAPI server with hybrid search (BM25 + vector) for indexed content
 - **Health Check:** HTTP GET `http://localhost:52100/health` (30s interval, 10s timeout, 40s start period, 3 retries)
 - **Volume:** `/app/data/bm25` for BM25 search index persistence
@@ -81,9 +81,9 @@ External Services (2):
 - **Worker Model:** RQ background worker running as thread within same process
 - **External Dependencies:** Qdrant (vector store), TEI (embeddings)
 
-#### 4. **firecrawl_playwright** (Browser Automation)
+#### 4. **pulse_playwright** (Browser Automation)
 - **Image Source:** `ghcr.io/firecrawl/playwright-service:latest`
-- **Container Name:** `firecrawl_playwright`
+- **Container Name:** `pulse_playwright`
 - **Technology:** Playwright (Chromium/Browser)
 - **Port Mapping:** `50100` (external) → `3000` (internal)
 - **Purpose:** Handles dynamic content scraping via JavaScript rendering
@@ -91,9 +91,9 @@ External Services (2):
 - **Health Check:** None configured
 - **Restart Policy:** unless-stopped
 
-#### 5. **firecrawl_db** (PostgreSQL)
+#### 5. **pulse_postgres** (PostgreSQL)
 - **Image Source:** Built locally from `apps/nuq-postgres/Dockerfile`
-- **Container Name:** `firecrawl_db`
+- **Container Name:** `pulse_postgres`
 - **Language:** SQL/PostgreSQL
 - **Version:** PostgreSQL 17 (configurable via ARG PG_MAJOR)
 - **Port Mapping:** `50105` (external) → `5432` (internal)
@@ -102,14 +102,14 @@ External Services (2):
 - **Dependencies:** None
 - **Health Check:** None configured (implicit via TCP connectivity)
 - **Restart Policy:** unless-stopped
-- **Database:** `firecrawl_db`
+- **Database:** `pulse_postgres`
 - **Schemas:**
   - `public` - Firecrawl API data
   - `webhook` - Webhook bridge metrics (planned)
 
-#### 6. **firecrawl_cache** (Redis)
+#### 6. **pulse_redis** (Redis)
 - **Image Source:** `redis:alpine`
-- **Container Name:** `firecrawl_cache`
+- **Container Name:** `pulse_redis`
 - **Technology:** Redis in-memory data store
 - **Port Mapping:** `50104` (external) → `6379` (internal)
 - **Purpose:** Caching and message queue for async jobs
@@ -167,11 +167,11 @@ External Services (2):
 | Service | Internal URL | Port | Purpose |
 |---------|-------------|------|---------|
 | Firecrawl API | `http://firecrawl:3002` | 3002 | API calls from other services |
-| MCP Server | `http://firecrawl_mcp:3060` | 3060 | Not typically called internally |
-| Webhook Bridge | `http://firecrawl_webhook:52100` | 52100 | Webhook delivery from Firecrawl API |
-| Redis | `redis://firecrawl_cache:6379` | 6379 | Queue jobs, caching |
-| PostgreSQL | `postgresql://firecrawl_db:5432/firecrawl_db` | 5432 | Database connections |
-| Playwright | `http://firecrawl_playwright:3000` | 3000 | Browser automation scraping |
+| MCP Server | `http://pulse_mcp:3060` | 3060 | Not typically called internally |
+| Webhook Bridge | `http://pulse_webhook:52100` | 52100 | Webhook delivery from Firecrawl API |
+| Redis | `redis://pulse_redis:6379` | 6379 | Queue jobs, caching |
+| PostgreSQL | `postgresql://pulse_postgres:5432/pulse_postgres` | 5432 | Database connections |
+| Playwright | `http://pulse_playwright:3000` | 3000 | Browser automation scraping |
 
 #### External URLs (Host Machine - localhost)
 
@@ -181,14 +181,14 @@ External Services (2):
 | MCP Server | `http://localhost:50107` | 50107 |
 | Webhook Bridge | `http://localhost:50108` | 50108 |
 | Redis | `redis://localhost:50104` | 50104 |
-| PostgreSQL | `postgresql://localhost:50105/firecrawl_db` | 50105 |
+| PostgreSQL | `postgresql://localhost:50105/pulse_postgres` | 50105 |
 | Playwright | `http://localhost:50100` | 50100 |
 
 #### Critical Implementation Note
 
 ```
 IMPORTANT: Use internal Docker network URLs (container names) in code:
-✅ CORRECT:   http://firecrawl_webhook:52100/api/webhook/firecrawl
+✅ CORRECT:   http://pulse_webhook:52100/api/webhook/firecrawl
 ❌ INCORRECT: https://external-domain.com/...
 
 This prevents SSRF errors and external network dependencies.
@@ -208,10 +208,10 @@ All volumes follow the pattern: `${APPDATA_BASE}/firecrawl_<service>_<purpose>`
 
 | Service | Volume | Mount Path | Purpose | Data Type |
 |---------|--------|-----------|---------|-----------|
-| **PostgreSQL** | `firecrawl_postgres` | `/var/lib/postgresql/data` | Database files | Relational data |
-| **Redis** | `firecrawl_redis` | `/data` | RDB snapshots, AOF log | Cache, queue state |
-| **MCP** | `firecrawl_mcp_resources` | `/app/resources` | Cached resources | JSON resources, embeddings |
-| **Webhook** | `firecrawl_webhook` | `/app/data/bm25` | BM25 search index | Inverted index |
+| **PostgreSQL** | `pulse_postgres` | `/var/lib/postgresql/data` | Database files | Relational data |
+| **Redis** | `pulse_redis` | `/data` | RDB snapshots, AOF log | Cache, queue state |
+| **MCP** | `pulse_mcp_resources` | `/app/resources` | Cached resources | JSON resources, embeddings |
+| **Webhook** | `pulse_webhook` | `/app/data/bm25` | BM25 search index | Inverted index |
 | **TEI** (external) | `firecrawl_tei_data` | `/data` | Model cache | Embedding model weights |
 | **Qdrant** (external) | `firecrawl_qdrant_storage` | `/qdrant/storage` | Vector index | Vector embeddings |
 
@@ -273,15 +273,15 @@ All volumes follow the pattern: `${APPDATA_BASE}/firecrawl_<service>_<purpose>`
 
 | Port | Service | Container | Protocol | Status | Next Available |
 |------|---------|-----------|----------|--------|-----------------|
-| 50100 | Playwright Service | firecrawl_playwright | HTTP | **ACTIVE** | — |
+| 50100 | Playwright Service | pulse_playwright | HTTP | **ACTIVE** | — |
 | 50101 | *Reserved* (Internal Firecrawl) | firecrawl | HTTP | Internal only | — |
 | 50102 | Firecrawl API | firecrawl | HTTP | **ACTIVE** | — |
 | 50103 | *Reserved* (Worker) | firecrawl | HTTP | Worker process | — |
-| 50104 | Redis | firecrawl_cache | Redis | **ACTIVE** | — |
-| 50105 | PostgreSQL | firecrawl_db | PostgreSQL | **ACTIVE** | — |
+| 50104 | Redis | pulse_redis | Redis | **ACTIVE** | — |
+| 50105 | PostgreSQL | pulse_postgres | PostgreSQL | **ACTIVE** | — |
 | 50106 | *Reserved* (Extract Worker) | firecrawl | HTTP | Internal | — |
-| 50107 | MCP Server | firecrawl_mcp | HTTP | **ACTIVE** | — |
-| 50108 | Webhook Bridge | firecrawl_webhook | HTTP | **ACTIVE** | — |
+| 50107 | MCP Server | pulse_mcp | HTTP | **ACTIVE** | — |
+| 50108 | Webhook Bridge | pulse_webhook | HTTP | **ACTIVE** | — |
 | 50109 | **AVAILABLE** | — | — | Unallocated | ✅ Next for new service |
 | 50110 | **AVAILABLE** | — | — | Unallocated | ✅ Alternative |
 
@@ -388,7 +388,7 @@ WEBHOOK_SECRET=your-webhook-hmac-secret
 WEBHOOK_CORS_ORIGINS=http://localhost:3000
 
 # Infrastructure URLs
-WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379     # Internal URL
+WEBHOOK_REDIS_URL=redis://pulse_redis:6379     # Internal URL
 WEBHOOK_DATABASE_URL=postgresql+asyncpg://...       # Internal URL
 WEBHOOK_QDRANT_URL=http://qdrant:6333              # Internal or external
 WEBHOOK_TEI_URL=http://tei:80                      # Internal or external
@@ -406,20 +406,20 @@ WEBHOOK_ENABLE_WORKER=true
 ```bash
 POSTGRES_USER=firecrawl
 POSTGRES_PASSWORD=your-secure-password
-POSTGRES_DB=firecrawl_db
+POSTGRES_DB=pulse_postgres
 POSTGRES_PORT=50105
-NUQ_DATABASE_URL=postgres://...@firecrawl_db:5432/...
+NUQ_DATABASE_URL=postgres://...@pulse_postgres:5432/...
 
 REDIS_PORT=50104
-REDIS_URL=redis://firecrawl_cache:6379
-REDIS_RATE_LIMIT_URL=redis://firecrawl_cache:6379
+REDIS_URL=redis://pulse_redis:6379
+REDIS_RATE_LIMIT_URL=redis://pulse_redis:6379
 BULL_AUTH_KEY=@
 ```
 
 #### Playwright & Browser (PLAYWRIGHT_*)
 ```bash
 PLAYWRIGHT_PORT=50100
-PLAYWRIGHT_MICROSERVICE_URL=http://firecrawl_playwright:3000/scrape
+PLAYWRIGHT_MICROSERVICE_URL=http://pulse_playwright:3000/scrape
 BLOCK_MEDIA=true
 ```
 
@@ -490,21 +490,21 @@ ANTHROPIC_API_KEY=your-anthropic-key
 
 ```
                     ┌─────────────────────┐
-                    │  firecrawl_db       │
+                    │  pulse_postgres       │
                     │  (PostgreSQL)       │
                     └──────────┬──────────┘
                                │
                 ┌──────────────┴──────────────┐
                 │                             │
          ┌──────▼──────┐            ┌────────▼─────────┐
-         │ firecrawl    │            │  firecrawl_cache │
+         │ firecrawl    │            │  pulse_redis │
          │ (API)        │◄───────────│  (Redis)         │
          └──────┬───────┘            └──────────────────┘
                 │
         ┌───────┴─────────────┬──────────────┐
         │                     │              │
    ┌────▼──────┐      ┌──────▼───┐   ┌─────▼─────────┐
-   │playwright  │      │firecrawl │   │firecrawl_mcp  │
+   │playwright  │      │firecrawl │   │pulse_mcp  │
    │(Browser)   │      │_webhook  │   │(MCP Server)   │
    └────────────┘      └──────────┘   └───────────────┘
 ```
@@ -513,25 +513,25 @@ ANTHROPIC_API_KEY=your-anthropic-key
 
 **Phase 1: Infrastructure (parallel)**
 ```
-1. firecrawl_db       → Initializes PostgreSQL with pg_cron
+1. pulse_postgres       → Initializes PostgreSQL with pg_cron
    └─ waits for port 5432
    
-2. firecrawl_cache    → Starts Redis
+2. pulse_redis    → Starts Redis
    └─ waits for port 6379
    
-3. firecrawl_playwright → Starts Playwright browser service
+3. pulse_playwright → Starts Playwright browser service
    └─ waits for port 3000
 ```
 
 **Phase 2: Primary Services (sequential)**
 ```
 4. firecrawl          → Starts Firecrawl API
-   depends_on: [firecrawl_db, firecrawl_cache, firecrawl_playwright]
+   depends_on: [pulse_postgres, pulse_redis, pulse_playwright]
    └─ harness.js initializes, connects to DB/Redis/Playwright
    └─ starts workers for job queuing
    
-5. firecrawl_webhook  → Starts Webhook Bridge
-   depends_on: [firecrawl_db, firecrawl_cache]
+5. pulse_webhook  → Starts Webhook Bridge
+   depends_on: [pulse_postgres, pulse_redis]
    └─ initializes BM25 index
    └─ starts background worker thread
    └─ health check passes after 40s startup period
@@ -539,7 +539,7 @@ ANTHROPIC_API_KEY=your-anthropic-key
 
 **Phase 3: Integration Services (sequential)**
 ```
-6. firecrawl_mcp      → Starts MCP Server
+6. pulse_mcp      → Starts MCP Server
    depends_on: [firecrawl]
    └─ connects to Firecrawl API at http://firecrawl:3002
    └─ registers tools (scrape, search, map, crawl, etc.)
@@ -550,7 +550,7 @@ ANTHROPIC_API_KEY=your-anthropic-key
 
 ```yaml
 # docker-compose.yaml pattern
-firecrawl_mcp:
+pulse_mcp:
   depends_on:
     - firecrawl
   healthcheck:
@@ -600,7 +600,7 @@ Subsequent starts:      ~60-70 seconds (playwright cached)
 
 ### Configured Health Checks
 
-#### MCP Server (`firecrawl_mcp`)
+#### MCP Server (`pulse_mcp`)
 ```yaml
 healthcheck:
   test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3060/health || exit 1"]
@@ -622,7 +622,7 @@ healthcheck:
 GET /health → 200 OK if operational, else 5xx
 ```
 
-#### Webhook Bridge (`firecrawl_webhook`)
+#### Webhook Bridge (`pulse_webhook`)
 ```yaml
 healthcheck:
   test: ["CMD", "curl", "-f", "http://localhost:52100/health"]
@@ -650,20 +650,20 @@ async def health() -> dict:
 | Service | Reason | Monitoring |
 |---------|--------|-----------|
 | firecrawl | No explicit check | Assumed healthy if running |
-| firecrawl_db | No explicit check | Assumed healthy if listening on port |
-| firecrawl_cache | No explicit check | Assumed healthy if running |
-| firecrawl_playwright | No explicit check | Assumed healthy if running |
+| pulse_postgres | No explicit check | Assumed healthy if listening on port |
+| pulse_redis | No explicit check | Assumed healthy if running |
+| pulse_playwright | No explicit check | Assumed healthy if running |
 
 **Recommendation:** Add health checks for all services to improve reliability:
 ```yaml
-firecrawl_db:
+pulse_postgres:
   healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U firecrawl -d firecrawl_db"]
+    test: ["CMD-SHELL", "pg_isready -U firecrawl -d pulse_postgres"]
     interval: 30s
     timeout: 5s
     retries: 3
 
-firecrawl_cache:
+pulse_redis:
   healthcheck:
     test: ["CMD", "redis-cli", "ping"]
     interval: 30s
@@ -686,10 +686,10 @@ firecrawl_cache:
 **Shared Access Pattern:**
 ```
 firecrawl API          → public schema (crawl jobs, documents)
-firecrawl_webhook      → webhook schema (indexing metrics)
-firecrawl_mcp          → reads public schema for context
+pulse_webhook      → webhook schema (indexing metrics)
+pulse_mcp          → reads public schema for context
 
-Connection String: postgresql://firecrawl_db:5432/firecrawl_db
+Connection String: postgresql://pulse_postgres:5432/pulse_postgres
 ```
 
 **Extensions:**
@@ -712,7 +712,7 @@ Connection String: postgresql://firecrawl_db:5432/firecrawl_db
 
 **Key Patterns:**
 ```
-Redis Connection: redis://firecrawl_cache:6379
+Redis Connection: redis://pulse_redis:6379
 
 Bull Queue:     firecrawl:* (Firecrawl job queues)
 RQ Queue:       webhook:* (Webhook indexing jobs)
@@ -762,8 +762,8 @@ firecrawl_newservice:
   ports:
     - "${NEWSERVICE_PORT:-50109}:INTERNAL_PORT"
   depends_on:
-    - firecrawl_db                       # if needs DB
-    - firecrawl_cache                    # if needs queue
+    - pulse_postgres                       # if needs DB
+    - pulse_redis                    # if needs queue
   volumes:
     - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_newservice:/app/data
   healthcheck:
@@ -797,8 +797,8 @@ x-common-service: &common-service
 # -----------------
 NEWSERVICE_PORT=50109
 NEWSERVICE_API_KEY=your-api-key
-NEWSERVICE_DATABASE_URL=postgresql+asyncpg://firecrawl_db:5432/firecrawl_db
-NEWSERVICE_REDIS_URL=redis://firecrawl_cache:6379
+NEWSERVICE_DATABASE_URL=postgresql+asyncpg://pulse_postgres:5432/pulse_postgres
+NEWSERVICE_REDIS_URL=redis://pulse_redis:6379
 NEWSERVICE_INTERNAL_URL=http://firecrawl_newservice:INTERNAL_PORT
 NEWSERVICE_LOGGING_LEVEL=INFO
 ```
@@ -821,7 +821,7 @@ NEWSERVICE_LOGGING_LEVEL=INFO
 **Container:** firecrawl_newservice
 **Port:** 50109 (external) → INTERNAL_PORT (internal)
 **Purpose:** [Description of service purpose]
-**Dependencies:** firecrawl_db, firecrawl_cache
+**Dependencies:** pulse_postgres, pulse_redis
 **Health Check:** HTTP GET /health (30s interval, 10s timeout)
 **Volume:** /app/data (persistent storage)
 ```
@@ -837,13 +837,13 @@ FIRECRAWL_BASE_URL=http://firecrawl:3002
 **Connect to Database:**
 ```bash
 # From new service code - use internal Docker URL
-DATABASE_URL=postgresql://firecrawl_db:5432/firecrawl_db
+DATABASE_URL=postgresql://pulse_postgres:5432/pulse_postgres
 ```
 
 **Connect to Redis:**
 ```bash
 # From new service code - use internal Docker URL
-REDIS_URL=redis://firecrawl_cache:6379
+REDIS_URL=redis://pulse_redis:6379
 ```
 
 #### 6. Build Configuration
@@ -966,7 +966,7 @@ cd apps/newservice && uv run uvicorn ...
 **Purpose:** [What does it do?]
 **Port:** 50109
 **Language:** [Python/Node.js/etc]
-**Dependencies:** firecrawl_db, firecrawl_cache
+**Dependencies:** pulse_postgres, pulse_redis
 **Environment Variables:** NEWSERVICE_*
 **Health Check:** HTTP GET /health
 **Integration:** Receives webhooks from firecrawl API
@@ -1022,7 +1022,7 @@ docker compose down
            └─→ Monitors external URLs
            └─→ Periodically scrapes targets
            └─→ Stores diffs in local DB
-           └─→ Sends alerts to firecrawl_webhook
+           └─→ Sends alerts to pulse_webhook
 ```
 
 **Advantages:**
@@ -1074,7 +1074,7 @@ docker compose down
 │ Monitors URLs            │
 │ Posts changes to         │
 │ Webhook Bridge           │
-│ (http://firecrawl_webhook:52100)
+│ (http://pulse_webhook:52100)
 └──────────┬───────────────┘
            │
            ├─→ POST /api/webhook/firecrawl
@@ -1114,22 +1114,22 @@ docker compose down
 
 **Add to docker-compose.yaml:**
 ```yaml
-firecrawl_changedetection:
+pulse_change-detection:
   <<: *common-service
   image: ghcr.io/dgtlmoon/changedetection.io:latest
-  container_name: firecrawl_changedetection
+  container_name: pulse_change-detection
   ports:
     - "${CHANGEDETECTION_PORT:-50111}:5000"
   volumes:
-    - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_changedetection:/datastore
+    - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_change-detection:/datastore
   environment:
     - PORT=5000
     - PUID=1000
     - PGID=1000
-    - PLAYWRIGHT_DRIVER_URL=ws://firecrawl_playwright:3000
+    - PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
     - USE_EXTERNAL_PLAYWRIGHT_INSTANCE=1
   depends_on:
-    - firecrawl_playwright
+    - pulse_playwright
   healthcheck:
     test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/ping"]
     interval: 60s
@@ -1146,8 +1146,8 @@ firecrawl_changedetection:
 # Change Detection Service
 # -----------------
 CHANGEDETECTION_PORT=50111
-CHANGEDETECTION_PLAYWRIGHT_URL=ws://firecrawl_playwright:3000
-CHANGEDETECTION_WEBHOOK_NOTIFY=http://firecrawl_webhook:52100/api/webhook/firecrawl
+CHANGEDETECTION_PLAYWRIGHT_URL=ws://pulse_playwright:3000
+CHANGEDETECTION_WEBHOOK_NOTIFY=http://pulse_webhook:52100/api/webhook/firecrawl
 CHANGEDETECTION_CHECK_INTERVAL=3600     # 1 hour between checks
 CHANGEDETECTION_MAX_REQUESTS=10         # Concurrent requests
 ```
@@ -1159,7 +1159,7 @@ CHANGEDETECTION_MAX_REQUESTS=10         # Concurrent requests
 When content change detected:
 ```python
 # changedetection.io webhook notifier
-POST http://firecrawl_webhook:52100/api/webhook/firecrawl
+POST http://pulse_webhook:52100/api/webhook/firecrawl
 
 {
   "type": "change_detected",
@@ -1180,9 +1180,9 @@ POST http://firecrawl_webhook:52100/api/webhook/firecrawl
 
 **Key Configuration:**
 ```yaml
-firecrawl_changedetection:
+pulse_change-detection:
   environment:
-    - PLAYWRIGHT_DRIVER_URL=ws://firecrawl_playwright:3000
+    - PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
     - USE_EXTERNAL_PLAYWRIGHT_INSTANCE=1
 ```
 
@@ -1195,15 +1195,15 @@ firecrawl_changedetection:
 ### Port Registry Update for changedetection.io
 
 ```markdown
-| 50111 | Change Detection | firecrawl_changedetection | HTTP | Active |
+| 50111 | Change Detection | pulse_change-detection | HTTP | Active |
 | 50112 | (Reserved) | — | — | — |
 
 ## Change Detection Service
 
-**Container:** firecrawl_changedetection
+**Container:** pulse_change-detection
 **Port:** 50111 (external) → 5000 (internal)
 **Purpose:** Monitor websites for changes, alert on updates
-**Dependencies:** firecrawl_playwright (optional), firecrawl_webhook (for indexing)
+**Dependencies:** pulse_playwright (optional), pulse_webhook (for indexing)
 **Health Check:** HTTP GET /api/v1/ping (60s interval, 10s timeout, 30s start period)
 **Volume:** /datastore (change history, monitors configuration)
 
@@ -1224,11 +1224,11 @@ firecrawl_changedetection:
 | Service | CPU Allocation | Memory Typical | Notes |
 |---------|---|---|---|
 | firecrawl | 1.0 (max) | 500MB-2GB | Job queue limits concurrency |
-| firecrawl_mcp | 0.1 | 100MB | Lightweight, mostly idle |
-| firecrawl_webhook | 0.5 | 200MB | Background worker steady-state |
-| firecrawl_playwright | 1.0+ | 500MB-1GB | Per browser instance |
-| firecrawl_db | 0.2-0.5 | 200-500MB | Grows with data volume |
-| firecrawl_cache | 0.1 | 100-300MB | Depends on queue depth |
+| pulse_mcp | 0.1 | 100MB | Lightweight, mostly idle |
+| pulse_webhook | 0.5 | 200MB | Background worker steady-state |
+| pulse_playwright | 1.0+ | 500MB-1GB | Per browser instance |
+| pulse_postgres | 0.2-0.5 | 200-500MB | Grows with data volume |
+| pulse_redis | 0.1 | 100-300MB | Depends on queue depth |
 
 **Limiting:** Set Docker resource limits per service:
 ```yaml
@@ -1270,7 +1270,7 @@ firecrawl:
 
 **Internal:** Container names resolve automatically (Docker DNS)
 - `firecrawl` → service IP in firecrawl network
-- `firecrawl_webhook` → service IP in firecrawl network
+- `pulse_webhook` → service IP in firecrawl network
 
 **External:** Must use localhost + mapped ports
 - `localhost:50102` → Firecrawl API
@@ -1280,7 +1280,7 @@ firecrawl:
 
 **Safe:** Internal Docker network communication
 ```
-http://firecrawl_webhook:52100  ✅ Safe (internal)
+http://pulse_webhook:52100  ✅ Safe (internal)
 http://localhost:50108           ❌ From inside container (DNS failure)
 https://external-domain.com      ❌ External network (allowed only from API)
 ```
@@ -1297,7 +1297,7 @@ https://external-domain.com      ❌ External network (allowed only from API)
 **Testing Service Connectivity:**
 ```bash
 # From host machine (verify internal)
-docker exec firecrawl_mcp curl http://firecrawl:3002/health
+docker exec pulse_mcp curl http://firecrawl:3002/health
 
 # From host machine (test webhook)
 curl http://localhost:50108/health
@@ -1469,14 +1469,14 @@ Redis down
 
 2. **Add Service to Compose**
    ```yaml
-   firecrawl_changedetection:
+   pulse_change-detection:
      image: ghcr.io/dgtlmoon/changedetection.io:latest
      ports:
        - "${CHANGEDETECTION_PORT:-50111}:5000"
      volumes:
-       - ${APPDATA_BASE}/firecrawl_changedetection:/datastore
+       - ${APPDATA_BASE}/pulse_change-detection:/datastore
      depends_on:
-       - firecrawl_playwright
+       - pulse_playwright
    ```
 
 3. **Test Basic Functionality**
@@ -1493,7 +1493,7 @@ Redis down
 #### Phase 2: Webhook Integration (Week 2)
 
 1. **Configure Webhook Notifications**
-   - changedetection → firecrawl_webhook
+   - changedetection → pulse_webhook
    - Set webhook URL environment variable
    - HMAC signature generation
 
@@ -1518,7 +1518,7 @@ Redis down
 #### Phase 3: Advanced Features (Week 3+)
 
 1. **Shared Playwright Instance**
-   - changedetection uses firecrawl_playwright
+   - changedetection uses pulse_playwright
    - Coordinate resource usage
    - Monitor shared usage metrics
 

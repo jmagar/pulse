@@ -594,46 +594,46 @@ git commit -m "refactor(webhook): remove BM25 index reload logic
 
 No test needed - this is infrastructure configuration.
 
-**Step 2: Remove firecrawl_webhook_worker service**
+**Step 2: Remove pulse_webhook_worker service**
 
-In `docker-compose.yaml`, delete lines 94-110 (the entire `firecrawl_webhook_worker` service definition):
+In `docker-compose.yaml`, delete lines 94-110 (the entire `pulse_webhook_worker` service definition):
 
 ```yaml
-  firecrawl_webhook_worker:
+  pulse_webhook_worker:
     <<: *common-service
     build:
       context: ./apps/webhook
       dockerfile: Dockerfile
-    container_name: firecrawl_webhook_worker
+    container_name: pulse_webhook_worker
     command: python -m app.worker
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_webhook_bm25:/app/data/bm25
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_webhook_bm25:/app/data/bm25
     depends_on:
-      - firecrawl_cache
-      - firecrawl_webhook
+      - pulse_redis
+      - pulse_webhook
     healthcheck:
-      test: ["CMD", "python", "-c", "import redis; r = redis.from_url('redis://firecrawl_cache:6379'); r.ping()"]
+      test: ["CMD", "python", "-c", "import redis; r = redis.from_url('redis://pulse_redis:6379'); r.ping()"]
       interval: 30s
       timeout: 10s
       retries: 3
 ```
 
-**Step 3: Remove BM25 volume mount from firecrawl_webhook**
+**Step 3: Remove BM25 volume mount from pulse_webhook**
 
-In `docker-compose.yaml`, in the `firecrawl_webhook` service (around line 76-93), remove the volumes section:
+In `docker-compose.yaml`, in the `pulse_webhook` service (around line 76-93), remove the volumes section:
 
 ```yaml
-  firecrawl_webhook:
+  pulse_webhook:
     <<: *common-service
     build:
       context: ./apps/webhook
       dockerfile: Dockerfile
-    container_name: firecrawl_webhook
+    container_name: pulse_webhook
     ports:
       - "${WEBHOOK_PORT:-52100}:52100"
     depends_on:
-      - firecrawl_db
-      - firecrawl_cache
+      - pulse_postgres
+      - pulse_redis
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:52100/health"]
       interval: 30s
@@ -645,7 +645,7 @@ In `docker-compose.yaml`, in the `firecrawl_webhook` service (around line 76-93)
 Remove this section:
 ```yaml
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_webhook_bm25:/app/data/bm25
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_webhook_bm25:/app/data/bm25
 ```
 
 **Step 4: Verify configuration is valid**
@@ -661,7 +661,7 @@ git add docker-compose.yaml
 git commit -m "refactor(compose): remove separate webhook worker container
 
 - Worker now runs in same container as API
-- Remove firecrawl_webhook_worker service definition
+- Remove pulse_webhook_worker service definition
 - Remove BM25 shared volume (no longer needed)
 - Simplifies deployment to single webhook container"
 ```
@@ -746,17 +746,17 @@ Update deployment instructions to reference single container:
 
 ```yaml
 services:
-  firecrawl_webhook:
+  pulse_webhook:
     build: ./apps/webhook
     ports:
       - "52100:52100"
     environment:
-      WEBHOOK_REDIS_URL: redis://firecrawl_cache:6379
+      WEBHOOK_REDIS_URL: redis://pulse_redis:6379
       WEBHOOK_QDRANT_URL: http://qdrant:6333
       WEBHOOK_TEI_URL: http://tei:80
       WEBHOOK_ENABLE_WORKER: "true"  # Enable background worker
     depends_on:
-      - firecrawl_cache
+      - pulse_redis
       - qdrant
       - tei
 ```
@@ -958,15 +958,15 @@ git commit -m "docs(webhook): deprecate standalone worker module
 
 **Step 1: Update webhook service entry**
 
-Find the firecrawl_webhook entry and update it:
+Find the pulse_webhook entry and update it:
 
 ```markdown
-| firecrawl_webhook | 52100 | Webhook bridge API + background worker | Internal: http://firecrawl_webhook:52100<br>External: http://localhost:52100 |
+| pulse_webhook | 52100 | Webhook bridge API + background worker | Internal: http://pulse_webhook:52100<br>External: http://localhost:52100 |
 ```
 
 **Step 2: Remove webhook worker entry**
 
-Remove the line for `firecrawl_webhook_worker` (if it exists).
+Remove the line for `pulse_webhook_worker` (if it exists).
 
 **Step 3: Commit**
 
@@ -974,8 +974,8 @@ Remove the line for `firecrawl_webhook_worker` (if it exists).
 git add .docs/services-ports.md
 git commit -m "docs: update services-ports for combined webhook service
 
-- Remove firecrawl_webhook_worker entry
-- Update firecrawl_webhook to note embedded worker
+- Remove pulse_webhook_worker entry
+- Update pulse_webhook to note embedded worker
 - Reflects single-container architecture"
 ```
 
@@ -998,7 +998,7 @@ Add a new section after "Health Checks":
 The worker runs as a background thread within the webhook API container. Check logs:
 
 ```bash
-docker logs firecrawl_webhook | grep -i worker
+docker logs pulse_webhook | grep -i worker
 ```
 
 Look for:
@@ -1019,17 +1019,17 @@ WEBHOOK_ENABLE_WORKER=false
 
 Then restart:
 ```bash
-docker compose restart firecrawl_webhook
+docker compose restart pulse_webhook
 ```
 
 **Check worker is processing jobs:**
 
 ```bash
 # Check Redis queue length
-docker exec firecrawl_cache redis-cli LLEN rq:queue:indexing
+docker exec pulse_redis redis-cli LLEN rq:queue:indexing
 
 # Monitor worker processing
-docker logs -f firecrawl_webhook | grep "Indexing job"
+docker logs -f pulse_webhook | grep "Indexing job"
 ```
 ```
 
@@ -1047,15 +1047,15 @@ Firecrawl API → Docker Network → Webhook Bridge (API + Worker Thread) → Re
 ### Services Involved
 
 - **Firecrawl** (`firecrawl`): Web scraper that sends webhooks
-- **Webhook Bridge** (`firecrawl_webhook`): FastAPI service with embedded worker thread
-- **Redis** (`firecrawl_cache`): Job queue
+- **Webhook Bridge** (`pulse_webhook`): FastAPI service with embedded worker thread
+- **Redis** (`pulse_redis`): Job queue
 - **Qdrant**: Vector database for semantic search
 - **TEI**: Text embeddings inference service
 ```
 
 **Step 3: Remove references to separate worker container**
 
-Search for and remove/update references to `firecrawl_webhook_worker` container throughout the document.
+Search for and remove/update references to `pulse_webhook_worker` container throughout the document.
 
 **Step 4: Commit**
 
@@ -1080,20 +1080,20 @@ git commit -m "docs: update troubleshooting guide for combined worker/API
 
 ```bash
 cd /compose/pulse
-docker compose down firecrawl_webhook firecrawl_webhook_worker
+docker compose down pulse_webhook pulse_webhook_worker
 ```
 
 **Step 2: Rebuild and start new container**
 
 ```bash
-docker compose build firecrawl_webhook
-docker compose up -d firecrawl_webhook
+docker compose build pulse_webhook
+docker compose up -d pulse_webhook
 ```
 
 **Step 3: Check logs for successful startup**
 
 ```bash
-docker logs firecrawl_webhook --tail 50
+docker logs pulse_webhook --tail 50
 ```
 
 Look for:
@@ -1127,7 +1127,7 @@ Use the MCP tool to crawl a small site and verify webhooks are processed:
 
 ```bash
 # Monitor logs in real-time
-docker logs -f firecrawl_webhook | grep -E "(Webhook received|Indexing job)"
+docker logs -f pulse_webhook | grep -E "(Webhook received|Indexing job)"
 ```
 
 In another terminal, trigger a crawl via MCP. You should see:

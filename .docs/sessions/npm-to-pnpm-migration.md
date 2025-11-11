@@ -138,7 +138,7 @@ build:
 ### Build Test (Partial Success)
 
 ```bash
-docker compose build firecrawl_mcp
+docker compose build pulse_mcp
 ```
 
 **Result:**

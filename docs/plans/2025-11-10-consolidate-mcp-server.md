@@ -805,11 +805,11 @@ git commit -m "fix(mcp): resolve test import paths
 
 **Step 1: Update MCP service to use new package**
 
-File: `docker-compose.yaml` (firecrawl_mcp service)
+File: `docker-compose.yaml` (pulse_mcp service)
 
 Change:
 ```yaml
-firecrawl_mcp:
+pulse_mcp:
   build:
     context: .
     dockerfile: apps/mcp/Dockerfile  # Old path
@@ -817,7 +817,7 @@ firecrawl_mcp:
 
 To:
 ```yaml
-firecrawl_mcp:
+pulse_mcp:
   build:
     context: .
     dockerfile: apps/mcp/Dockerfile  # New path
@@ -840,7 +840,7 @@ git commit -m "chore(docker): update MCP service to use consolidated package
 **Step 1: Build Docker image**
 
 ```bash
-docker compose build firecrawl_mcp
+docker compose build pulse_mcp
 ```
 
 Expected: Build completes successfully, no module resolution errors.
@@ -848,14 +848,14 @@ Expected: Build completes successfully, no module resolution errors.
 **Step 2: Start container**
 
 ```bash
-docker compose up -d firecrawl_mcp
+docker compose up -d pulse_mcp
 ```
 
 **Step 3: Check container status**
 
 ```bash
 sleep 15
-docker ps --filter "name=firecrawl_mcp"
+docker ps --filter "name=pulse_mcp"
 ```
 
 Expected: Container status shows "Up" (not "Restarting").
@@ -863,7 +863,7 @@ Expected: Container status shows "Up" (not "Restarting").
 **Step 4: Check logs for errors**
 
 ```bash
-docker logs firecrawl_mcp --tail 30
+docker logs pulse_mcp --tail 30
 ```
 
 Expected: Server startup logs, no "Cannot find package" errors.
@@ -890,7 +890,7 @@ docker compose up -d
 **Step 2: Verify MCP container is running**
 
 ```bash
-docker ps --filter "name=firecrawl_mcp"
+docker ps --filter "name=pulse_mcp"
 ```
 
 Expected: Status "Up" for 30+ seconds (not restarting).
@@ -922,7 +922,7 @@ If tools array is empty, this indicates the Zod cross-module hazard has been re-
 **Step 4: Check server logs**
 
 ```bash
-docker logs firecrawl_mcp
+docker logs pulse_mcp
 ```
 
 Expected: Clean startup, no errors.
@@ -979,8 +979,8 @@ pnpm --filter @pulsemcp/mcp-server run build
 
 **Docker:**
 ```bash
-docker compose build firecrawl_mcp
-docker compose up -d firecrawl_mcp
+docker compose build pulse_mcp
+docker compose up -d pulse_mcp
 ```
 ```
 
@@ -1049,9 +1049,9 @@ git commit -m "chore(mcp): remove legacy symlink hack scripts
 
 After completing all tasks, verify:
 
-- [ ] `docker compose up -d firecrawl_mcp` starts successfully
+- [ ] `docker compose up -d pulse_mcp` starts successfully
 - [ ] Container stays "Up" (not restarting)
-- [ ] `docker logs firecrawl_mcp` shows no errors
+- [ ] `docker logs pulse_mcp` shows no errors
 - [ ] `curl http://localhost:3060/health` returns 200
 - [ ] Tool registration verified: `curl -X POST http://localhost:3060/mcp/v1 -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'` returns > 0
 - [ ] `pnpm --filter @pulsemcp/mcp-server run build` completes

@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from domain.models import ChangeEvent
+from tests.utils.service_endpoints import get_changedetection_diff_url
 
 
 @pytest.mark.asyncio
@@ -27,7 +28,7 @@ async def test_changedetection_full_workflow(db_session):
         watch_url="https://example.com/e2e-test",
         detected_at=datetime.fromisoformat("2025-11-10T12:00:00+00:00"),
         diff_summary="Changed content here for testing"[:500],
-        snapshot_url="http://changedetection:5000/diff/e2e-test-watch",
+        snapshot_url=get_changedetection_diff_url("diff/e2e-test-watch"),
         rescrape_status="queued",
         rescrape_job_id="test-job-123",
         extra_metadata={

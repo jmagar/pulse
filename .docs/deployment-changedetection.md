@@ -11,11 +11,11 @@
 - [ ] Backup existing .env file: `cp .env .env.backup.$(date +%Y%m%d-%H%M%S)`
 - [ ] Backup PostgreSQL database:
   ```bash
-  docker compose exec firecrawl_db pg_dump -U firecrawl firecrawl_db > backup_$(date +%Y%m%d-%H%M%S).sql
+  docker compose exec pulse_postgres pg_dump -U firecrawl pulse_postgres > backup_$(date +%Y%m%d-%H%M%S).sql
   ```
 - [ ] Verify all prerequisite services are running:
   ```bash
-  docker compose ps firecrawl_db firecrawl_cache firecrawl_playwright firecrawl_webhook
+  docker compose ps pulse_postgres pulse_redis pulse_playwright pulse_webhook
   ```
 
 ## Configuration Steps
@@ -28,7 +28,7 @@
   # changedetection.io Service
   CHANGEDETECTION_PORT=50109
   CHANGEDETECTION_BASE_URL=http://localhost:50109
-  CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://firecrawl_playwright:3000
+  CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
   CHANGEDETECTION_FETCH_WORKERS=10
   CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME=60
   CHANGEDETECTION_WEBHOOK_SECRET=<your-64-char-hex-string>
@@ -63,15 +63,15 @@
 
 - [ ] Check change_events table exists:
   ```bash
-  docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c "\dt webhook.*"
+  docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres -c "\dt webhook.*"
   ```
 - [ ] Verify table structure:
   ```bash
-  docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c "\d webhook.change_events"
+  docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres -c "\d webhook.change_events"
   ```
 - [ ] Check indexes were created:
   ```bash
-  docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c "\di webhook.*"
+  docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres -c "\di webhook.*"
   ```
   Expected indexes:
   - `idx_change_events_watch_id`
@@ -83,11 +83,11 @@
 
 - [ ] Pull latest changedetection.io image:
   ```bash
-  docker compose pull firecrawl_changedetection
+  docker compose pull pulse_change-detection
   ```
 - [ ] Start changedetection service:
   ```bash
-  docker compose up -d firecrawl_changedetection
+  docker compose up -d pulse_change-detection
   ```
 - [ ] Wait 30 seconds for startup period
 
@@ -95,7 +95,7 @@
 
 - [ ] Restart webhook bridge to load new environment variables:
   ```bash
-  docker compose restart firecrawl_webhook
+  docker compose restart pulse_webhook
   ```
 - [ ] Wait 15 seconds for service initialization
 
@@ -103,7 +103,7 @@
 
 - [ ] Check all containers are running:
   ```bash
-  docker compose ps firecrawl_changedetection firecrawl_webhook firecrawl_playwright
+  docker compose ps pulse_change-detection pulse_webhook pulse_playwright
   ```
 - [ ] Verify no restart loops (Up status, not Restarting)
 
@@ -113,13 +113,13 @@
 
 - [ ] Check container status:
   ```bash
-  docker compose ps firecrawl_changedetection
+  docker compose ps pulse_change-detection
   ```
   Expected: `Up` with healthy status
 
 - [ ] Verify changedetection logs show no errors:
   ```bash
-  docker compose logs firecrawl_changedetection | tail -30
+  docker compose logs pulse_change-detection | tail -30
   ```
   Expected: "Starting server" messages, no errors
 
@@ -136,7 +136,7 @@
 
 - [ ] Check webhook bridge logs:
   ```bash
-  docker compose logs firecrawl_webhook | tail -30
+  docker compose logs pulse_webhook | tail -30
   ```
   Expected: No errors, "Application startup complete" message
 
@@ -148,7 +148,7 @@
 
 - [ ] Check background worker started:
   ```bash
-  docker compose logs firecrawl_webhook | grep -i worker
+  docker compose logs pulse_webhook | grep -i worker
   ```
   Expected: "Starting worker" or "Worker listening" messages
 
@@ -156,11 +156,11 @@
 
 - [ ] Verify Playwright is accessible from changedetection:
   ```bash
-  docker compose exec firecrawl_changedetection wget -O- http://firecrawl_playwright:3000 || echo "Connection test"
+  docker compose exec pulse_change-detection wget -O- http://pulse_playwright:3000 || echo "Connection test"
   ```
 - [ ] Check Playwright logs for connections:
   ```bash
-  docker compose logs firecrawl_playwright | tail -20
+  docker compose logs pulse_playwright | tail -20
   ```
 
 ## Integration Testing
@@ -178,7 +178,7 @@
 
 - [ ] Edit the test watch
 - [ ] Go to "Notifications" tab
-- [ ] Add notification URL: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+- [ ] Add notification URL: `json://pulse_webhook:52100/api/webhook/changedetection`
   ⚠️ **Important:** Use internal Docker network URL, NOT `localhost`
 - [ ] Configure notification body template (Jinja2):
   ```json
@@ -199,20 +199,20 @@
 - [ ] Wait 10 seconds for check to complete
 - [ ] Verify webhook sent in changedetection logs:
   ```bash
-  docker compose logs firecrawl_changedetection | grep -i webhook
+  docker compose logs pulse_change-detection | grep -i webhook
   ```
 
 ### 4. Verify Webhook Received
 
 - [ ] Check webhook bridge logs for incoming webhook:
   ```bash
-  docker compose logs firecrawl_webhook | grep -i changedetection
+  docker compose logs pulse_webhook | grep -i changedetection
   ```
   Expected: "Received changedetection webhook" log entry
 
 - [ ] Verify change event stored in database:
   ```bash
-  docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
+  docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres -c \
     "SELECT watch_id, watch_url, rescrape_status, created_at FROM webhook.change_events ORDER BY created_at DESC LIMIT 1;"
   ```
   Expected: Row with test watch data, status "queued"
@@ -221,7 +221,7 @@
 
 - [ ] Check Redis queue for enqueued job:
   ```bash
-  docker compose exec firecrawl_cache redis-cli LLEN indexing
+  docker compose exec pulse_redis redis-cli LLEN indexing
   ```
   Expected: 1 or more (job queued)
 
@@ -229,14 +229,14 @@
 
 - [ ] Check job completion in database:
   ```bash
-  docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
+  docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres -c \
     "SELECT watch_url, rescrape_status, indexed_at FROM webhook.change_events ORDER BY created_at DESC LIMIT 1;"
   ```
   Expected: `rescrape_status = 'completed'`, `indexed_at` has timestamp
 
 - [ ] Check worker logs for job execution:
   ```bash
-  docker compose logs firecrawl_webhook | grep -i "rescrape"
+  docker compose logs pulse_webhook | grep -i "rescrape"
   ```
   Expected: "Starting rescrape job", "Rescrape completed successfully"
 
@@ -256,7 +256,7 @@
 
 - [ ] Update `.docs/services-ports.md` with deployment timestamp:
   ```markdown
-  | 50109 | Change Detection | firecrawl_changedetection | HTTP | Active (Deployed: YYYY-MM-DD HH:MM) |
+  | 50109 | Change Detection | pulse_change-detection | HTTP | Active (Deployed: YYYY-MM-DD HH:MM) |
   ```
 - [ ] Add deployment entry to `.docs/deployment-log.md`:
   ```markdown
@@ -325,7 +325,7 @@
 - [ ] Remove test watch from changedetection UI
 - [ ] Clean up test change events from database:
   ```bash
-  docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
+  docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres -c \
     "DELETE FROM webhook.change_events WHERE watch_url = 'https://example.com';"
   ```
 
@@ -336,7 +336,7 @@ If deployment fails or issues are encountered:
 ### 1. Stop changedetection Service
 
 ```bash
-docker compose stop firecrawl_changedetection
+docker compose stop pulse_change-detection
 ```
 
 ### 2. Rollback Database Migration
@@ -364,14 +364,14 @@ cp .env.backup.TIMESTAMP .env
 ### 4. Restart Webhook Bridge
 
 ```bash
-docker compose restart firecrawl_webhook
+docker compose restart pulse_webhook
 ```
 
 ### 5. Verify Services
 
 ```bash
 docker compose ps
-docker compose logs firecrawl_webhook | tail -30
+docker compose logs pulse_webhook | tail -30
 ```
 
 ### 6. Remove changedetection Service (Optional)
@@ -380,10 +380,10 @@ If reverting completely:
 
 ```bash
 # Stop and remove container
-docker compose down firecrawl_changedetection
+docker compose down pulse_change-detection
 
 # Remove volume (⚠️ CAUTION: deletes all watch data)
-docker volume rm firecrawl_changedetection_data
+docker volume rm pulse_change-detection_data
 ```
 
 ### 7. Document Rollback
@@ -423,17 +423,17 @@ Run daily or after configuration changes:
 
 ```bash
 # Check service status
-docker compose ps | grep firecrawl_changedetection
+docker compose ps | grep pulse_change-detection
 
 # Check recent logs
-docker compose logs --since 1h firecrawl_changedetection | grep -i error
+docker compose logs --since 1h pulse_change-detection | grep -i error
 
 # Check database health
-docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
+docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres -c \
   "SELECT COUNT(*) as total_events, COUNT(*) FILTER (WHERE rescrape_status = 'completed') as completed FROM webhook.change_events;"
 
 # Check Redis queue depth
-docker compose exec firecrawl_cache redis-cli LLEN indexing
+docker compose exec pulse_redis redis-cli LLEN indexing
 ```
 
 ### Performance Monitoring
@@ -460,35 +460,35 @@ WHERE detected_at > NOW() - INTERVAL '24 hours';
 
 #### Webhooks Not Firing
 
-1. Check changedetection logs: `docker compose logs firecrawl_changedetection | grep webhook`
-2. Verify notification URL uses internal network: `firecrawl_webhook:52100` (NOT `localhost`)
+1. Check changedetection logs: `docker compose logs pulse_change-detection | grep webhook`
+2. Verify notification URL uses internal network: `pulse_webhook:52100` (NOT `localhost`)
 3. Test webhook manually from changedetection container:
    ```bash
-   docker compose exec firecrawl_changedetection curl http://firecrawl_webhook:52100/health
+   docker compose exec pulse_change-detection curl http://pulse_webhook:52100/health
    ```
 
 #### Signature Verification Failures
 
 1. Verify secrets match:
    ```bash
-   docker compose exec firecrawl_changedetection env | grep SECRET
-   docker compose exec firecrawl_webhook env | grep WEBHOOK_SECRET
+   docker compose exec pulse_change-detection env | grep SECRET
+   docker compose exec pulse_webhook env | grep WEBHOOK_SECRET
    ```
 2. Check for whitespace or quote issues in `.env`
 3. Regenerate secrets if needed (see Configuration Steps)
 
 #### Jobs Not Processing
 
-1. Check background worker status: `docker compose logs firecrawl_webhook | grep worker`
-2. Verify Redis connectivity: `docker compose exec firecrawl_webhook redis-cli -h firecrawl_cache ping`
-3. Check for stuck jobs: `docker compose exec firecrawl_cache redis-cli LLEN indexing`
-4. Restart worker: `docker compose restart firecrawl_webhook`
+1. Check background worker status: `docker compose logs pulse_webhook | grep worker`
+2. Verify Redis connectivity: `docker compose exec pulse_webhook redis-cli -h pulse_redis ping`
+3. Check for stuck jobs: `docker compose exec pulse_redis redis-cli LLEN indexing`
+4. Restart worker: `docker compose restart pulse_webhook`
 
 #### High Memory Usage
 
-1. Check Playwright memory: `docker stats firecrawl_playwright`
+1. Check Playwright memory: `docker stats pulse_playwright`
 2. Limit concurrent fetch workers in `.env`: `CHANGEDETECTION_FETCH_WORKERS=5`
-3. Restart Playwright if memory leak suspected: `docker compose restart firecrawl_playwright`
+3. Restart Playwright if memory leak suspected: `docker compose restart pulse_playwright`
 
 ## Deployment Notes
 

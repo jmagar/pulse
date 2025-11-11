@@ -660,8 +660,8 @@ Check for hardcoded `app/` references:
 ```bash
 cd /compose/pulse
 
-# Search for app/ references in firecrawl_webhook service
-grep -A 20 "firecrawl_webhook:" docker-compose.yaml | grep -E "app/|COPY|CMD|WORKDIR|volumes"
+# Search for app/ references in pulse_webhook service
+grep -A 20 "pulse_webhook:" docker-compose.yaml | grep -E "app/|COPY|CMD|WORKDIR|volumes"
 
 # Expected: NO references to app/ in:
 # - volume mounts (currently uses /app/data/bm25 - OK, this is container internal path)
@@ -826,10 +826,10 @@ cd apps/webhook && uv run alembic check
 
 # 6-7. Docker Compose services start + health checks pass
 echo "✓ Testing Docker Compose..."
-cd /compose/pulse && docker compose up -d firecrawl_webhook
+cd /compose/pulse && docker compose up -d pulse_webhook
 sleep 30
-docker compose ps firecrawl_webhook | grep "healthy"
-docker compose logs firecrawl_webhook | grep -i "error" && exit 1 || echo "No errors in logs"
+docker compose ps pulse_webhook | grep "healthy"
+docker compose logs pulse_webhook | grep -i "error" && exit 1 || echo "No errors in logs"
 
 # 8. No circular import errors
 echo "✓ Testing imports..."
@@ -876,8 +876,8 @@ cd apps/webhook && uv run uvicorn main:app --reload
 # From monorepo root
 pnpm services:up
 # Verify:
-# - firecrawl_webhook container starts
-# - firecrawl_webhook_worker container starts
+# - pulse_webhook container starts
+# - pulse_webhook_worker container starts
 # - Health check passes (docker compose ps)
 # - Logs show no import errors
 ```

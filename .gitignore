@@ -169,6 +169,7 @@ apps/test-suite/load-test-results/test-run-report.json
 # Security & Credentials
 # =============================================================================
 gke-key.json
+auth.json
 
 # =============================================================================
 # Legacy / Deprecated (kept for reference)

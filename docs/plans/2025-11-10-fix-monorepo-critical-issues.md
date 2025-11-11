@@ -1435,7 +1435,7 @@ pnpm test:mcp
 docker compose ps
 
 # View service logs
-docker compose logs firecrawl_mcp -f
+docker compose logs pulse_mcp -f
 
 # Test health endpoints
 curl http://localhost:50107/health

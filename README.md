@@ -126,6 +126,7 @@ PostgreSQL is shared across services with schema isolation:
 - Async job queue for non-blocking indexing
 - Rich filtering (domain, language, country, device)
 - Multiple search modes (hybrid, semantic, keyword, BM25)
+- Vector storage backed by Qdrant (`pulse_docs` collection, 1024-dimension embeddings)
 
 **Technology**: Python 3.13+, FastAPI, SQLAlchemy, Redis, Qdrant, HuggingFace TEI
 
@@ -142,7 +143,7 @@ Website change detection and monitoring service.
 
 - **Purpose:** Track content changes on monitored URLs
 - **Web UI:** `http://localhost:50109`
-- **Shared Resources:** Uses firecrawl_playwright for JavaScript rendering
+- **Shared Resources:** Uses pulse_playwright for JavaScript rendering
 - **Storage:** File-based in `/datastore` volume
 - **Integration:** Notifies webhook bridge on change detection
 
@@ -231,7 +232,7 @@ For active development on individual services:
 
    ```bash
    # Start PostgreSQL, Redis, and Playwright
-   docker compose up -d firecrawl_db firecrawl_cache firecrawl_playwright
+   docker compose up -d pulse_postgres pulse_redis pulse_playwright
    ```
 
 4. **Run services in development mode**:
@@ -333,18 +334,18 @@ pnpm clean
 
 **Internal (Docker network)**:
 - Firecrawl API: `http://firecrawl:3002`
-- MCP Server: `http://firecrawl_mcp:3060`
-- Webhook Bridge: `http://firecrawl_webhook:52100`
-- Redis: `redis://firecrawl_cache:6379`
-- PostgreSQL: `postgresql://firecrawl_db:5432/firecrawl_db`
-- Playwright: `http://firecrawl_playwright:3000`
+- MCP Server: `http://pulse_mcp:3060`
+- Webhook Bridge: `http://pulse_webhook:52100`
+- Redis: `redis://pulse_redis:6379`
+- PostgreSQL: `postgresql://pulse_postgres:5432/pulse_postgres`
+- Playwright: `http://pulse_playwright:3000`
 
 **External (Host machine)**:
 - Firecrawl API: `http://localhost:50102`
 - MCP Server: `http://localhost:50107`
 - Webhook Bridge: `http://localhost:50108`
 - Redis: `redis://localhost:50104`
-- PostgreSQL: `postgresql://localhost:50105/firecrawl_db`
+- PostgreSQL: `postgresql://localhost:50105/pulse_postgres`
 - Playwright: `http://localhost:50100`
 
 ### Local Development (Without Docker)
@@ -391,10 +392,10 @@ Deploy specific services:
 
 ```bash
 # Deploy only MCP server
-docker compose up -d firecrawl_mcp
+docker compose up -d pulse_mcp
 
 # Deploy only webhook bridge (API + worker)
-docker compose up -d firecrawl_webhook firecrawl_webhook_worker
+docker compose up -d pulse_webhook pulse_webhook_worker
 
 # Deploy only Firecrawl API
 docker compose up -d firecrawl
@@ -404,26 +405,26 @@ docker compose up -d firecrawl
 
 Start order (handled automatically by Docker Compose):
 
-1. **Infrastructure**: `firecrawl_db`, `firecrawl_cache`, `firecrawl_playwright`
+1. **Infrastructure**: `pulse_postgres`, `pulse_redis`, `pulse_playwright`
 2. **Core API**: `firecrawl`
-3. **Dependent Services**: `firecrawl_mcp`, `firecrawl_webhook`, `firecrawl_webhook_worker`
+3. **Dependent Services**: `pulse_mcp`, `pulse_webhook`, `pulse_webhook_worker`
 
 ### Persistent Data
 
 Data is stored in volumes at `${APPDATA_BASE}/firecrawl_*`:
 
-- `firecrawl_postgres/` - PostgreSQL database
-- `firecrawl_redis/` - Redis persistence
-- `firecrawl_mcp_resources/` - MCP resource storage
+- `pulse_postgres/` - PostgreSQL database
+- `pulse_redis/` - Redis persistence
+- `pulse_mcp_resources/` - MCP resource storage
 
 **Backup recommendations**:
 ```bash
 # Backup PostgreSQL
-docker exec firecrawl_db pg_dump -U firecrawl firecrawl_db > backup.sql
+docker exec pulse_postgres pg_dump -U firecrawl pulse_postgres > backup.sql
 
 # Backup Redis
-docker exec firecrawl_cache redis-cli SAVE
-cp ${APPDATA_BASE}/firecrawl_redis/dump.rdb backup_redis.rdb
+docker exec pulse_redis redis-cli SAVE
+cp ${APPDATA_BASE}/pulse_redis/dump.rdb backup_redis.rdb
 ```
 
 ## Configuration
@@ -463,7 +464,7 @@ All configuration is managed through environment variables. See [`.env.example`]
 
 1. **PostgreSQL**: Tests require PostgreSQL running on localhost:5432
    ```bash
-   docker compose up -d firecrawl_db
+   docker compose up -d pulse_postgres
    ```
 
 2. **Node.js Dependencies**:
@@ -526,10 +527,10 @@ curl -X POST http://localhost:50107/scrape \
 
 # Test Firecrawl → Webhook indexing (if search enabled)
 # Check webhook logs for indexing events
-docker compose logs firecrawl_webhook_worker -f
+docker compose logs pulse_webhook_worker -f
 
 # Verify database schemas
-docker exec -it firecrawl_db psql -U firecrawl -d firecrawl_db -c "\dn"
+docker exec -it pulse_postgres psql -U firecrawl -d pulse_postgres -c "\dn"
 ```
 
 ### Test Coverage
@@ -566,7 +567,7 @@ When changedetection detects a change, it can automatically trigger Firecrawl to
 
 1. In changedetection.io, edit a watch
 2. Go to "Notifications" tab
-3. Add notification URL: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+3. Add notification URL: `json://pulse_webhook:52100/api/webhook/changedetection`
 4. Set notification body template (see docs/CHANGEDETECTION_INTEGRATION.md)
 5. Save configuration
 

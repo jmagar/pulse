@@ -11,7 +11,7 @@ from api.schemas.webhook import (
 )
 
 
-def test_firecrawl_webhook_event_validation() -> None:
+def test_pulse_webhook_event_validation() -> None:
     """Base webhook event should validate required fields."""
 
     event = FirecrawlLifecycleEvent(

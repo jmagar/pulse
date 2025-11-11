@@ -3,6 +3,10 @@
 import os
 
 from config import Settings
+from tests.utils.db_fixtures import (  # noqa: F401
+    cleanup_database_engine,
+    initialize_test_database,
+)
 
 
 def test_webhook_database_url_fallback() -> None:
@@ -30,7 +34,12 @@ def test_webhook_database_url_fallback() -> None:
             "postgresql+asyncpg://legacy:pass@legacy-db:5432/legacy"
         )
 
-        settings = Settings(_env_file=None)
+        from importlib import reload
+
+        import config
+
+        reload(config)
+        settings = config.Settings(_env_file=None)
         assert settings.database_url == "postgresql+asyncpg://webhook:pass@webhook-db:5432/webhook"
 
         # Test 2: DATABASE_URL fallback (shared infrastructure)
@@ -108,6 +117,16 @@ def test_webhook_redis_url_fallback() -> None:
 def test_legacy_search_bridge_variables_work() -> None:
     """Test that all legacy SEARCH_BRIDGE_* variables still work."""
     env_keys = [
+        "WEBHOOK_HOST",
+        "WEBHOOK_PORT",
+        "WEBHOOK_API_SECRET",
+        "WEBHOOK_SECRET",
+        "WEBHOOK_REDIS_URL",
+        "REDIS_URL",
+        "WEBHOOK_DATABASE_URL",
+        "DATABASE_URL",
+        "WEBHOOK_QDRANT_URL",
+        "WEBHOOK_TEI_URL",
         "SEARCH_BRIDGE_API_SECRET",
         "SEARCH_BRIDGE_WEBHOOK_SECRET",
         "SEARCH_BRIDGE_HOST",
@@ -128,6 +147,8 @@ def test_legacy_search_bridge_variables_work() -> None:
         os.environ["SEARCH_BRIDGE_DATABASE_URL"] = "postgresql+asyncpg://legacy:pass@legacy:5432/db"
         os.environ["SEARCH_BRIDGE_QDRANT_URL"] = "http://legacy-qdrant:6333"
         os.environ["SEARCH_BRIDGE_TEI_URL"] = "http://legacy-tei:80"
+        assert "WEBHOOK_API_SECRET" not in os.environ
+        assert "WEBHOOK_SECRET" not in os.environ
 
         settings = Settings(_env_file=None)
 

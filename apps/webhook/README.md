@@ -95,17 +95,17 @@ hostname -I | awk '{print $1}'
 
 ```yaml
 services:
-  firecrawl_webhook:
+  pulse_webhook:
     build: ./apps/webhook
     ports:
       - "52100:52100"
     environment:
-      WEBHOOK_REDIS_URL: redis://firecrawl_cache:6379
+      WEBHOOK_REDIS_URL: redis://pulse_redis:6379
       WEBHOOK_QDRANT_URL: http://qdrant:6333
       WEBHOOK_TEI_URL: http://tei:80
       WEBHOOK_ENABLE_WORKER: "true"  # Enable background worker
     depends_on:
-      - firecrawl_cache
+      - pulse_redis
       - qdrant
       - tei
 ```

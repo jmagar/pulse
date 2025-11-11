@@ -21,7 +21,7 @@ Restarted the service to temporarily halt the loop, but knew the queue would res
 
 Connected to database and found queue tables in `nuq` schema:
 ```bash
-docker exec firecrawl_db psql -U firecrawl -d firecrawl_db -c "SELECT schemaname, tablename FROM pg_tables..."
+docker exec pulse_postgres psql -U firecrawl -d pulse_postgres -c "SELECT schemaname, tablename FROM pg_tables..."
 ```
 
 **Tables Found:**
@@ -42,7 +42,7 @@ TRUNCATE nuq.queue_scrape_backlog CASCADE;
 
 Checked Bull queues in Redis:
 ```bash
-docker exec firecrawl_cache redis-cli KEYS "bull:*"
+docker exec pulse_redis redis-cli KEYS "bull:*"
 ```
 
 Verified all queues were empty:
@@ -66,7 +66,7 @@ MCP server was blocking requests from `tootie:3060` with error:
 
 **Verification:**
 ```bash
-docker exec firecrawl_mcp printenv ALLOWED_HOSTS
+docker exec pulse_mcp printenv ALLOWED_HOSTS
 # Output: localhost:3060,tootie:3060
 ```
 
@@ -86,5 +86,5 @@ docker exec firecrawl_mcp printenv ALLOWED_HOSTS
 ## Database Credentials Used
 
 - User: `firecrawl` (from .env POSTGRES_USER)
-- Database: `firecrawl_db` (from .env POSTGRES_DB)
+- Database: `pulse_postgres` (from .env POSTGRES_DB)
 - Schema: `nuq` (for queue tables), `webhook` (for webhook metrics)

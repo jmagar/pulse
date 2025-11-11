@@ -41,7 +41,7 @@ async def test_handle_crawl_page_event(monkeypatch: pytest.MonkeyPatch) -> None:
 
     queue.enqueue.assert_called_once()
     args, kwargs = queue.enqueue.call_args
-    assert args[0] == "app.worker.index_document_job"
+    assert args[0] == "worker.index_document_job"
     assert args[1]["url"] == "https://example.com"
     assert result["queued_jobs"] == 1
     assert result["job_ids"] == ["job-1"]

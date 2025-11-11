@@ -114,7 +114,7 @@ Database init script only created `nuq` schema, not `webhook` schema
 
 2. Manually created schema in running container:
    ```bash
-   docker exec firecrawl_db psql -U firecrawl -d firecrawl_db -c "CREATE SCHEMA IF NOT EXISTS webhook;"
+   docker exec pulse_postgres psql -U firecrawl -d pulse_postgres -c "CREATE SCHEMA IF NOT EXISTS webhook;"
    ```
 
 **Commit:** Pending (current session)
@@ -130,24 +130,24 @@ All 7 services running and healthy:
 | Service | Status | Port | Health Check |
 |---------|--------|------|--------------|
 | firecrawl | ✅ Running | 4300 (3002 internal) | N/A |
-| firecrawl_cache (Redis) | ✅ Running | 4303 (6379 internal) | N/A |
-| firecrawl_db (PostgreSQL) | ✅ Running | 4304 (5432 internal) | N/A |
-| firecrawl_mcp | ✅ Healthy | 3060 | Passing |
-| firecrawl_playwright | ✅ Running | 4302 (3000 internal) | N/A |
-| firecrawl_webhook | ✅ Healthy | 52100 | Passing |
-| firecrawl_webhook_worker | ✅ Healthy | N/A | Passing |
+| pulse_redis (Redis) | ✅ Running | 4303 (6379 internal) | N/A |
+| pulse_postgres (PostgreSQL) | ✅ Running | 4304 (5432 internal) | N/A |
+| pulse_mcp | ✅ Healthy | 3060 | Passing |
+| pulse_playwright | ✅ Running | 4302 (3000 internal) | N/A |
+| pulse_webhook | ✅ Healthy | 52100 | Passing |
+| pulse_webhook_worker | ✅ Healthy | N/A | Passing |
 
 **Verification:**
 ```bash
 $ docker compose ps
 NAME                       STATUS
 firecrawl                  Up 4 minutes
-firecrawl_cache            Up 4 minutes
-firecrawl_db               Up 4 minutes
-firecrawl_mcp              Up 2 minutes (healthy)
-firecrawl_playwright       Up 4 minutes
-firecrawl_webhook          Up 17 seconds (healthy)
-firecrawl_webhook_worker   Up 17 seconds (healthy)
+pulse_redis            Up 4 minutes
+pulse_postgres               Up 4 minutes
+pulse_mcp              Up 2 minutes (healthy)
+pulse_playwright       Up 4 minutes
+pulse_webhook          Up 17 seconds (healthy)
+pulse_webhook_worker   Up 17 seconds (healthy)
 ```
 
 ---
@@ -188,21 +188,21 @@ ORDER BY schemaname, tablename;
 
 **Test 1: MCP → Firecrawl**
 ```bash
-$ docker exec firecrawl_mcp wget -qO- http://firecrawl:3002
+$ docker exec pulse_mcp wget -qO- http://firecrawl:3002
 SCRAPERS-JS: Hello, world! K8s!
 ```
 ✅ MCP can reach Firecrawl on internal Docker network
 
 **Test 2: MCP → Redis**
 ```bash
-$ docker exec firecrawl_mcp sh -c 'echo "PING" | nc -w 1 firecrawl_cache 6379'
+$ docker exec pulse_mcp sh -c 'echo "PING" | nc -w 1 pulse_redis 6379'
 +PONG
 ```
 ✅ Redis is accessible on port 6379 (internal network)
 
 **Test 3: Webhook → Database**
 ```bash
-$ docker exec firecrawl_webhook python -c "from app.config import settings; print(settings.database_url[:50])"
+$ docker exec pulse_webhook python -c "from app.config import settings; print(settings.database_url[:50])"
 DB: postgresql+asyncpg://firecrawl:zFp9g998BFwHuvsB9Dc...
 ```
 ✅ Webhook service configured with correct PostgreSQL connection
@@ -222,20 +222,20 @@ $ curl -s http://localhost:4300/         # Connection error (expected)
 
 **Internal Hostnames:**
 - `firecrawl` → Main Firecrawl API (port 3002)
-- `firecrawl_cache` → Redis (port 6379)
-- `firecrawl_db` → PostgreSQL (port 5432)
-- `firecrawl_mcp` → MCP HTTP Server (port 3060)
-- `firecrawl_playwright` → Browser service (port 3000)
-- `firecrawl_webhook` → Webhook API (port 52100)
-- `firecrawl_webhook_worker` → Background worker
+- `pulse_redis` → Redis (port 6379)
+- `pulse_postgres` → PostgreSQL (port 5432)
+- `pulse_mcp` → MCP HTTP Server (port 3060)
+- `pulse_playwright` → Browser service (port 3000)
+- `pulse_webhook` → Webhook API (port 52100)
+- `pulse_webhook_worker` → Background worker
 
 **Port Mappings (Host → Container):**
-- 3060 → firecrawl_mcp:3060
+- 3060 → pulse_mcp:3060
 - 4300 → firecrawl:3002
-- 4302 → firecrawl_playwright:3000
-- 4303 → firecrawl_cache:6379
-- 4304 → firecrawl_db:5432
-- 52100 → firecrawl_webhook:52100
+- 4302 → pulse_playwright:3000
+- 4303 → pulse_redis:6379
+- 4304 → pulse_postgres:5432
+- 52100 → pulse_webhook:52100
 
 ---
 

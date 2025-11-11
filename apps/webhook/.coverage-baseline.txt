@@ -238,7 +238,7 @@ tests/unit/test_webhook_handlers.py::test_handle_crawl_completed_event ERROR [ 8
 tests/unit/test_webhook_handlers.py::test_handle_crawl_failed_event ERROR [ 87%]
 tests/unit/test_webhook_handlers.py::test_handle_extract_failed_event ERROR [ 88%]
 tests/unit/test_webhook_handlers.py::test_handle_unknown_event_type ERROR [ 88%]
-tests/unit/test_webhook_models.py::test_firecrawl_webhook_event_validation ERROR [ 88%]
+tests/unit/test_webhook_models.py::test_pulse_webhook_event_validation ERROR [ 88%]
 tests/unit/test_webhook_models.py::test_crawl_page_event_parsing ERROR   [ 89%]
 tests/unit/test_webhook_models.py::test_document_payload_accepts_nested_metadata ERROR [ 89%]
 tests/unit/test_webhook_models.py::test_batch_scrape_page_event_parsing ERROR [ 90%]
@@ -53751,7 +53751,7 @@ host = 'localhost', port = 5432
 E                           OSError: Multiple exceptions: [Errno 111] Connect call failed ('::1', 5432, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 5432)
 
 /usr/lib/python3.12/asyncio/base_events.py:1130: OSError
-__________ ERROR at setup of test_firecrawl_webhook_event_validation ___________
+__________ ERROR at setup of test_pulse_webhook_event_validation ___________
 
 args = (), kwargs = {}
 setup = <function _wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.setup at 0x14a18aa537e0>
@@ -61064,7 +61064,7 @@ ERROR tests/unit/test_webhook_handlers.py::test_handle_crawl_completed_event
 ERROR tests/unit/test_webhook_handlers.py::test_handle_crawl_failed_event - O...
 ERROR tests/unit/test_webhook_handlers.py::test_handle_extract_failed_event
 ERROR tests/unit/test_webhook_handlers.py::test_handle_unknown_event_type - O...
-ERROR tests/unit/test_webhook_models.py::test_firecrawl_webhook_event_validation
+ERROR tests/unit/test_webhook_models.py::test_pulse_webhook_event_validation
 ERROR tests/unit/test_webhook_models.py::test_crawl_page_event_parsing - OSEr...
 ERROR tests/unit/test_webhook_models.py::test_document_payload_accepts_nested_metadata
 ERROR tests/unit/test_webhook_models.py::test_batch_scrape_page_event_parsing

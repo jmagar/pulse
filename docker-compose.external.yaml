@@ -1,46 +1,91 @@
 # docker-compose.external.yaml
-# External GPU-dependent services (TEI, Qdrant)
-# Run this on a machine with GPU support using Docker contexts
+# External GPU-dependent services (TEI, Qdrant, Ollama)
+# Run this on a machine with GPU support using Docker contexts 
+# See docs/external-services.md
 
-name: firecrawl-external
+name: pulse-external
 
 x-common-service: &common-service
+  labels:
+    - "com.centurylinklabs.watchtower.enable=false"
   restart: unless-stopped
   env_file:
     - .env
+  networks:
+    - pulse
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
 
 services:
-  firecrawl_tei:
+  pulse_tei:
     <<: *common-service
     image: ghcr.io/huggingface/text-embeddings-inference:latest
-    container_name: firecrawl_tei
+    container_name: pulse_tei
     ports:
-      - "${TEI_PORT:-50200}:80"
-    environment:
-      - MODEL_ID=${WEBHOOK_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
-      - REVISION=main
-      - MAX_BATCH_SIZE=512
-      - MAX_CLIENT_BATCH_SIZE=32
+      - "${TEI_HTTP_PORT:-52000}:80"
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_tei_data:/data
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    command: --model-id ${WEBHOOK_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B} --port 80
-
-  firecrawl_qdrant:
+      - /home/jmagar/appdata/tei:/data
+    command:
+      - --model-id
+      - ${TEI_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
+      - --dtype
+      - float16
+      - --default-prompt
+      - "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
+      - --max-concurrent-requests
+      - "${TEI_MAX_CONCURRENT_REQUESTS:-80}"
+      - --max-batch-tokens
+      - "${TEI_MAX_BATCH_TOKENS:-163840}"
+      - --max-batch-requests
+      - "${TEI_MAX_BATCH_REQUESTS:-80}"
+      - --max-client-batch-size
+      - "${TEI_MAX_CLIENT_BATCH_SIZE:-128}"
+      - --pooling
+      - ${TEI_POOLING:-last-token}
+      - --tokenization-workers
+      - "${TEI_TOKENIZATION_WORKERS:-8}"
+      - --auto-truncate
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+  pulse_qdrant:
     <<: *common-service
-    image: qdrant/qdrant:latest
-    container_name: firecrawl_qdrant
+    image: qdrant/qdrant:gpu-nvidia-latest
+    container_name: pulse_qdrant
     ports:
-      - "${QDRANT_HTTP_PORT:-50201}:6333"
-      - "${QDRANT_GRPC_PORT:-50202}:6334"
+      - "${QDRANT_HTTP_PORT:-52001}:6333"
+      - "${QDRANT_GRPC_PORT:-52002}:6334"
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_qdrant_storage:/qdrant/storage
-    environment:
-      - QDRANT__SERVICE__HTTP_PORT=6333
-      - QDRANT__SERVICE__GRPC_PORT=6334
+      - /home/jmagar/appdata/qdrant:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo -e 'GET /readyz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' | bash -c 'exec 3<>/dev/tcp/localhost/6333; cat >&3; head -1 <&3' | grep -q '200 OK'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  pulse_ollama:
+    <<: *common-service
+    image: ollama/ollama:latest
+    container_name: pulse_ollama
+    ports:
+      - "${OLLAMA_PORT:-52003}:11434"
+    volumes:
+      - /home/jmagar/appdata/ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  pulse:
+    external: true

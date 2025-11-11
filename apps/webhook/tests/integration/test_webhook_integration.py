@@ -77,7 +77,7 @@ def test_webhook_full_flow_crawl_page(
     queue.enqueue.assert_called_once()
 
     args, _ = queue.enqueue.call_args
-    assert args[0] == "app.worker.index_document_job"
+    assert args[0] == "worker.index_document_job"
     queued_payload = args[1]
     assert queued_payload["url"] == "https://example.com"
     resolved = queued_payload.get("resolved_url") or queued_payload.get("resolvedUrl")

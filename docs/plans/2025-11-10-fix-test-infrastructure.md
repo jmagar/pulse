@@ -119,7 +119,7 @@ echo "Setting up test database: ${DB_NAME}"
 # Check if PostgreSQL is running
 if ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" &>/dev/null; then
     echo -e "${RED}✗ PostgreSQL is not running on ${DB_HOST}:${DB_PORT}${NC}"
-    echo "Start PostgreSQL with: docker compose up -d firecrawl_db"
+    echo "Start PostgreSQL with: docker compose up -d pulse_postgres"
     exit 1
 fi
 
@@ -389,7 +389,7 @@ Tests use dedicated PostgreSQL database:
 
 1. PostgreSQL running on localhost:5432
    ```bash
-   docker compose up -d firecrawl_db
+   docker compose up -d pulse_postgres
    ```
 
 2. Install webhook test dependencies:
@@ -467,7 +467,7 @@ Add to README.md:
 
 1. **PostgreSQL**: Tests require PostgreSQL running on localhost:5432
    ```bash
-   docker compose up -d firecrawl_db
+   docker compose up -d pulse_postgres
    ```
 
 2. **Node.js Dependencies**:

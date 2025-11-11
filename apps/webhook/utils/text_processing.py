@@ -35,7 +35,7 @@ class TextChunker:
         Initialize the text chunker.
 
         Args:
-            model_name: HuggingFace model name (e.g., 'sentence-transformers/all-MiniLM-L6-v2')
+            model_name: HuggingFace model name (e.g., 'Qwen/Qwen3-Embedding-0.6B')
             max_tokens: Maximum tokens per chunk (must match model's max_seq_length)
             overlap_tokens: Overlap between chunks in tokens (typically 10-20% of max_tokens)
         """

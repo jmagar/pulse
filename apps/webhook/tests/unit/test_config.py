@@ -8,6 +8,10 @@ import pytest
 from pydantic import ValidationError
 
 from config import Settings
+from tests.utils.db_fixtures import (  # noqa: F401
+    cleanup_database_engine,
+    initialize_test_database,
+)
 
 
 def test_settings_defaults() -> None:
@@ -15,6 +19,8 @@ def test_settings_defaults() -> None:
     # Create settings with minimal required values
     # Use _env_file=None to prevent loading from .env file
     env_keys = [
+        "WEBHOOK_HOST",
+        "WEBHOOK_PORT",
         "WEBHOOK_API_SECRET",
         "WEBHOOK_SECRET",
         "WEBHOOK_REDIS_URL",
@@ -25,6 +31,8 @@ def test_settings_defaults() -> None:
         # Also check legacy keys
         "SEARCH_BRIDGE_REDIS_URL",
         "SEARCH_BRIDGE_QDRANT_URL",
+        "SEARCH_BRIDGE_HOST",
+        "SEARCH_BRIDGE_PORT",
         "SEARCH_BRIDGE_VECTOR_DIM",
         "SEARCH_BRIDGE_MAX_CHUNK_TOKENS",
         "SEARCH_BRIDGE_CHUNK_OVERLAP_TOKENS",
@@ -33,16 +41,22 @@ def test_settings_defaults() -> None:
 
     try:
         # Set minimal required values via env vars
+        defaults = Settings.model_fields
+        os.environ["WEBHOOK_HOST"] = defaults["host"].default
+        os.environ["WEBHOOK_PORT"] = str(defaults["port"].default)
         os.environ["WEBHOOK_API_SECRET"] = "test-secret"
         os.environ["WEBHOOK_SECRET"] = "test-webhook-secret-1234"
+        os.environ["WEBHOOK_REDIS_URL"] = defaults["redis_url"].default
+        os.environ["WEBHOOK_QDRANT_URL"] = defaults["qdrant_url"].default
 
         settings = Settings(_env_file=None)
 
-        assert settings.host == "0.0.0.0"
-        assert settings.port == 52100
-        assert settings.redis_url == "redis://localhost:52101"
-        assert settings.qdrant_url == "http://localhost:52102"
-        assert settings.vector_dim == 384
+        assert settings.host == defaults["host"].default
+        assert settings.port == defaults["port"].default
+        assert settings.redis_url == defaults["redis_url"].default
+        assert settings.qdrant_url == defaults["qdrant_url"].default
+        assert settings.vector_dim == 1024
+        assert settings.embedding_model == "Qwen/Qwen3-Embedding-0.6B"
         assert settings.max_chunk_tokens == 256
         assert settings.chunk_overlap_tokens == 50
     finally:
@@ -209,8 +223,9 @@ def test_webhook_secret_validation() -> None:
                 os.environ.pop(key, None)
 
 
-def test_enable_worker_default_true() -> None:
+def test_enable_worker_default_true(monkeypatch) -> None:
     """Worker should be enabled by default."""
+    monkeypatch.delenv("WEBHOOK_ENABLE_WORKER", raising=False)
     settings = Settings(
         _env_file=None, WEBHOOK_API_SECRET="test", WEBHOOK_SECRET="test1234567890123456"
     )

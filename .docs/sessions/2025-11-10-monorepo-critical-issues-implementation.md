@@ -203,7 +203,7 @@ openssl rand -hex 32
 **Commit:** `b20cf58b194f68f4c361555947ec20302a9dc1e5`
 **Commit Message:** "docs: update README.md port references to match services-ports.md"
 
-**Key Finding:** Internal Docker network URLs correctly use internal container ports (e.g., `http://firecrawl_mcp:3060`), while external access uses mapped ports (e.g., `http://localhost:50107`). Documentation now clearly distinguishes between these two contexts.
+**Key Finding:** Internal Docker network URLs correctly use internal container ports (e.g., `http://pulse_mcp:3060`), while external access uses mapped ports (e.g., `http://localhost:50107`). Documentation now clearly distinguishes between these two contexts.
 
 ---
 

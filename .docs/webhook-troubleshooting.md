@@ -13,8 +13,8 @@ Firecrawl API → Docker Network → Webhook Bridge (API + Worker Thread) → Re
 ### Services Involved
 
 - **Firecrawl** (`firecrawl`): Web scraper that sends webhooks
-- **Webhook Bridge** (`firecrawl_webhook`): FastAPI service with embedded worker thread
-- **Redis** (`firecrawl_cache`): Job queue
+- **Webhook Bridge** (`pulse_webhook`): FastAPI service with embedded worker thread
+- **Redis** (`pulse_redis`): Job queue
 - **Qdrant**: Vector database for semantic search (persisted)
 - **TEI**: Text embeddings inference service
 - **BM25 Index**: Keyword search index persisted at `/app/data/bm25/index.pkl` via volume mount
@@ -35,7 +35,7 @@ docker exec firecrawl printenv | grep ENABLE_SEARCH_INDEX
 
 # Check webhook URL configuration
 docker exec firecrawl printenv | grep SELF_HOSTED_WEBHOOK_URL
-# Expected: SELF_HOSTED_WEBHOOK_URL=http://firecrawl_webhook:52100/api/webhook/firecrawl
+# Expected: SELF_HOSTED_WEBHOOK_URL=http://pulse_webhook:52100/api/webhook/firecrawl
 
 # Check sampling rate
 docker exec firecrawl printenv | grep SEARCH_INDEX_SAMPLE_RATE
@@ -46,7 +46,7 @@ docker exec firecrawl printenv | grep SEARCH_INDEX_SAMPLE_RATE
 Ensure these environment variables are set in [.env](.env):
 ```bash
 ENABLE_SEARCH_INDEX=true
-SELF_HOSTED_WEBHOOK_URL=http://firecrawl_webhook:52100/api/webhook/firecrawl
+SELF_HOSTED_WEBHOOK_URL=http://pulse_webhook:52100/api/webhook/firecrawl
 SELF_HOSTED_WEBHOOK_HMAC_SECRET=<your-secret>
 SEARCH_INDEX_SAMPLE_RATE=1.0
 ```
@@ -68,7 +68,7 @@ Use internal Docker network URL instead of external URL:
 SELF_HOSTED_WEBHOOK_URL=https://fc-bridge.tootie.tv/api/webhook/firecrawl
 
 # ✅ CORRECT (internal Docker network)
-SELF_HOSTED_WEBHOOK_URL=http://firecrawl_webhook:52100/api/webhook/firecrawl
+SELF_HOSTED_WEBHOOK_URL=http://pulse_webhook:52100/api/webhook/firecrawl
 ```
 
 Then recreate the container:
@@ -117,7 +117,7 @@ HMAC secrets don't match between Firecrawl and Webhook Bridge.
 docker exec firecrawl printenv SELF_HOSTED_WEBHOOK_HMAC_SECRET
 
 # Check Webhook Bridge secret
-docker exec firecrawl_webhook printenv WEBHOOK_SECRET
+docker exec pulse_webhook printenv WEBHOOK_SECRET
 
 # These MUST match exactly
 ```
@@ -140,17 +140,17 @@ WEBHOOK_SECRET=your-shared-secret-here
 **Diagnosis:**
 ```bash
 # Check worker thread is running (look for startup messages)
-docker logs firecrawl_webhook | grep -i worker
+docker logs pulse_webhook | grep -i worker
 
 # Check Redis queue length
-docker exec firecrawl_cache redis-cli LLEN rq:queue:indexing
+docker exec pulse_redis redis-cli LLEN rq:queue:indexing
 ```
 
 **Common Causes:**
 1. Worker disabled in config → check `WEBHOOK_ENABLE_WORKER=true` in .env
-2. Worker thread crashed → restart with `docker compose restart firecrawl_webhook`
-3. Qdrant connection issues → check `docker logs firecrawl_webhook | grep qdrant`
-4. TEI service down → check `docker logs firecrawl_webhook | grep tei`
+2. Worker thread crashed → restart with `docker compose restart pulse_webhook`
+3. Qdrant connection issues → check `docker logs pulse_webhook | grep qdrant`
+4. TEI service down → check `docker logs pulse_webhook | grep tei`
 
 ## Monitoring Webhooks
 
@@ -163,12 +163,12 @@ docker logs -f firecrawl 2>&1 | grep -i webhook
 
 **Watch Webhook Bridge incoming requests:**
 ```bash
-docker logs -f firecrawl_webhook | grep -E "(Webhook received|Webhook processed)"
+docker logs -f pulse_webhook | grep -E "(Webhook received|Webhook processed)"
 ```
 
 **Watch Worker processing (same container as API):**
 ```bash
-docker logs -f firecrawl_webhook | grep -E "(Indexing job|Worker)"
+docker logs -f pulse_webhook | grep -E "(Indexing job|Worker)"
 ```
 
 ### Log Patterns to Look For
@@ -256,7 +256,7 @@ Expected output:
 The worker runs as a background thread within the webhook API container. Check logs:
 
 ```bash
-docker logs firecrawl_webhook | grep -i worker
+docker logs pulse_webhook | grep -i worker
 ```
 
 Look for:
@@ -277,17 +277,17 @@ WEBHOOK_ENABLE_WORKER=false
 
 Then restart:
 ```bash
-docker compose restart firecrawl_webhook
+docker compose restart pulse_webhook
 ```
 
 **Check worker is processing jobs:**
 
 ```bash
 # Check Redis queue length
-docker exec firecrawl_cache redis-cli LLEN rq:queue:indexing
+docker exec pulse_redis redis-cli LLEN rq:queue:indexing
 
 # Monitor worker processing
-docker logs -f firecrawl_webhook | grep "Indexing job"
+docker logs -f pulse_webhook | grep "Indexing job"
 ```
 
 ## Configuration Summary
@@ -297,7 +297,7 @@ docker logs -f firecrawl_webhook | grep "Indexing job"
 **Firecrawl (.env):**
 ```bash
 ENABLE_SEARCH_INDEX=true
-SELF_HOSTED_WEBHOOK_URL=http://firecrawl_webhook:52100/api/webhook/firecrawl
+SELF_HOSTED_WEBHOOK_URL=http://pulse_webhook:52100/api/webhook/firecrawl
 SELF_HOSTED_WEBHOOK_HMAC_SECRET=<secret-min-16-chars>
 ALLOW_LOCAL_WEBHOOKS=true
 SEARCH_INDEX_SAMPLE_RATE=1.0
@@ -310,8 +310,8 @@ WEBHOOK_PORT=52100
 WEBHOOK_SECRET=<same-secret-as-firecrawl>
 WEBHOOK_API_SECRET=<api-key-for-search-endpoints>
 WEBHOOK_LOG_LEVEL=INFO
-WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379
-WEBHOOK_DATABASE_URL=postgresql+asyncpg://firecrawl:password@firecrawl_db:5432/firecrawl_db
+WEBHOOK_REDIS_URL=redis://pulse_redis:6379
+WEBHOOK_DATABASE_URL=postgresql+asyncpg://firecrawl:password@pulse_postgres:5432/pulse_postgres
 WEBHOOK_QDRANT_URL=http://qdrant:6333
 WEBHOOK_TEI_URL=http://tei:80
 ```
@@ -332,7 +332,7 @@ curl -X POST http://localhost:4300/v1/crawl \
 docker logs -f firecrawl 2>&1 | grep -i webhook
 
 # Terminal 2: Webhook Bridge (API + Worker)
-docker logs -f firecrawl_webhook
+docker logs -f pulse_webhook
 ```
 
 3. **Verify indexing:**
@@ -355,7 +355,7 @@ Expected to see:
 When webhooks aren't working, check in this order:
 
 - [ ] `ENABLE_SEARCH_INDEX=true` in Firecrawl
-- [ ] Webhook URL uses internal Docker address (`http://firecrawl_webhook:52100/...`)
+- [ ] Webhook URL uses internal Docker address (`http://pulse_webhook:52100/...`)
 - [ ] `ALLOW_LOCAL_WEBHOOKS=true` to bypass SSRF protection
 - [ ] HMAC secrets match between Firecrawl and Bridge
 - [ ] Webhook Bridge service is running and healthy
@@ -405,7 +405,7 @@ If issues persist:
 2. Collect full logs:
    ```bash
    docker logs firecrawl > firecrawl.log 2>&1
-   docker logs firecrawl_webhook > webhook.log 2>&1
+   docker logs pulse_webhook > webhook.log 2>&1
    ```
 
 3. Check container networking:
@@ -416,5 +416,5 @@ If issues persist:
 4. Verify environment variables are loaded:
    ```bash
    docker exec firecrawl printenv | grep -E "(WEBHOOK|SEARCH_INDEX|ALLOW_LOCAL)"
-   docker exec firecrawl_webhook printenv | grep WEBHOOK
+   docker exec pulse_webhook printenv | grep WEBHOOK
    ```

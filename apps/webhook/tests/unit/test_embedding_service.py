@@ -8,6 +8,11 @@ import httpx
 import pytest
 
 from services.embedding import EmbeddingService
+from tests.utils.db_fixtures import (  # noqa: F401
+    cleanup_database_engine,
+    initialize_test_database,
+)
+from tests.utils.service_endpoints import get_tei_base_url
 
 
 @pytest.fixture
@@ -20,8 +25,8 @@ def mock_httpx_client() -> AsyncMock:
 @pytest.fixture
 def embedding_service(mock_httpx_client: AsyncMock) -> EmbeddingService:
     """Create EmbeddingService with mocked client."""
-    with patch("app.services.embedding.httpx.AsyncClient", return_value=mock_httpx_client):
-        service = EmbeddingService(tei_url="http://localhost:52104")
+    with patch("services.embedding.httpx.AsyncClient", return_value=mock_httpx_client):
+        service = EmbeddingService(tei_url=get_tei_base_url())
         service.client = mock_httpx_client
         return service
 
@@ -36,7 +41,7 @@ async def test_health_check_success(
     result = await embedding_service.health_check()
 
     assert result is True
-    mock_httpx_client.get.assert_called_once_with("http://localhost:52104/health")
+    mock_httpx_client.get.assert_called_once_with(f"{get_tei_base_url()}/health")
 
 
 @pytest.mark.asyncio

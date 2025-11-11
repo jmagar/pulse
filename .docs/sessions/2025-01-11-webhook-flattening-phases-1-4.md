@@ -118,11 +118,11 @@ from apps.webhook.infra.database import async_sessionmaker
 apps/webhook/.venv/bin/python -c "from infra.database import async_sessionmaker; print('✓ OK')"
 
 # Docker build succeeds
-docker compose build firecrawl_webhook
+docker compose build pulse_webhook
 # Output: Built successfully
 
 # Service health check
-docker exec firecrawl_webhook curl -s http://localhost:52100/health
+docker exec pulse_webhook curl -s http://localhost:52100/health
 # Output: {"status":"healthy","services":{...}}
 
 # Test collection
@@ -523,9 +523,9 @@ uv run python -c "from infra.database import async_sessionmaker; print('✓')"
 
 ### Docker Build
 ```bash
-docker compose build firecrawl_webhook
-docker compose up -d firecrawl_webhook
-docker exec firecrawl_webhook curl -s http://localhost:52100/health
+docker compose build pulse_webhook
+docker compose up -d pulse_webhook
+docker exec pulse_webhook curl -s http://localhost:52100/health
 ```
 
 ### Bulk Import Replace

@@ -2,6 +2,11 @@
 
 from api.routers.webhook import _compute_diff_size, _extract_changedetection_metadata
 from api.schemas.webhook import ChangeDetectionPayload
+from tests.utils.db_fixtures import (  # noqa: F401
+    cleanup_database_engine,
+    initialize_test_database,
+)
+from tests.utils.service_endpoints import get_changedetection_diff_url
 
 
 def test_compute_diff_size_with_content():
@@ -31,7 +36,7 @@ def test_extract_changedetection_metadata():
         watch_url="https://example.com/test",
         watch_title="Test Watch",
         detected_at="2025-11-10T12:00:00Z",
-        diff_url="http://changedetection:5000/diff/test-watch-123",
+        diff_url=get_changedetection_diff_url("diff/test-watch-123"),
         snapshot="Test content here",
     )
     signature = "sha256=abc123def456"

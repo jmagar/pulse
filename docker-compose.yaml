@@ -1,20 +1,20 @@
-name: firecrawl
+name: pulse
 
 x-common-service: &common-service
   restart: unless-stopped
   networks:
-    - firecrawl
+    - pulse
   env_file:
     - .env
   labels:
     - "com.centurylinklabs.watchtower.enable=false"
 
 services:
-  firecrawl_playwright:
+  pulse_playwright:
     <<: *common-service
     image: ghcr.io/firecrawl/playwright-service:latest
     # build: apps/playwright-service-ts
-    container_name: firecrawl_playwright
+    container_name: pulse_playwright
     ports:
       - "${PLAYWRIGHT_PORT:-50100}:3000"
 
@@ -28,44 +28,44 @@ services:
         soft: 65535
         hard: 65535
     depends_on:
-      - firecrawl_cache
-      - firecrawl_playwright
-      - firecrawl_db
+      - pulse_redis
+      - pulse_playwright
+      - pulse_postgres
     ports:
       - "${FIRECRAWL_PORT:-50102}:${FIRECRAWL_INTERNAL_PORT:-3002}"
     command: node dist/src/harness.js --start-docker
 
-  firecrawl_cache:
+  pulse_redis:
     <<: *common-service
     image: redis:alpine
-    container_name: firecrawl_cache
+    container_name: pulse_redis
     ports:
       - "${REDIS_PORT:-50104}:6379"
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_redis:/data
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_redis:/data
     command: redis-server --bind 0.0.0.0 --appendonly yes --save 60 1
 
-  firecrawl_db:
+  pulse_postgres:
     <<: *common-service
     build: apps/nuq-postgres
-    container_name: firecrawl_db
+    container_name: pulse_postgres
     ports:
       - "${POSTGRES_PORT:-50105}:5432"
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_postgres:/var/lib/postgresql/data
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_postgres:/var/lib/postgresql/data
 
-  firecrawl_mcp:
+  pulse_mcp:
     <<: *common-service
     # Build context changed from ./apps/mcp to . for monorepo access
     # All environment variables now configured in root .env file
     build:
       context: .
       dockerfile: apps/mcp/Dockerfile
-    container_name: firecrawl_mcp
+    container_name: pulse_mcp
     ports:
       - "${MCP_PORT:-50107}:3060"
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_mcp_resources:/app/resources
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_mcp/resources:/app/resources
     depends_on:
       - firecrawl
     healthcheck:
@@ -75,19 +75,21 @@ services:
       start_period: 5s
       retries: 3
 
-  firecrawl_webhook:
+  pulse_webhook:
     <<: *common-service
     build:
       context: ./apps/webhook
       dockerfile: Dockerfile
-    container_name: firecrawl_webhook
+    container_name: pulse_webhook
     ports:
       - "${WEBHOOK_PORT:-50108}:52100"
+    environment:
+      WEBHOOK_ENABLE_WORKER: "false"  # Disable embedded worker thread
     volumes:
-      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_webhook:/app/data/bm25
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_webhook:/app/data/bm25
     depends_on:
-      - firecrawl_db
-      - firecrawl_cache
+      - pulse_postgres
+      - pulse_redis
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:52100/health"]
       interval: 30s
@@ -95,24 +97,44 @@ services:
       retries: 3
       start_period: 40s
 
-  firecrawl_changedetection:
+  pulse_webhook-worker:
+    <<: *common-service
+    build:
+      context: ./apps/webhook
+      dockerfile: Dockerfile
+    container_name: pulse_webhook-worker
+    command:
+      - "python"
+      - "-m"
+      - "rq.cli"
+      - "worker"
+      - "--url"
+      - "redis://pulse_redis:6379"
+      - "--name"
+      - "search-bridge-worker"
+      - "--worker-ttl"
+      - "600"
+      - "indexing"
+    volumes:
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_webhook/bm25:/app/data/bm25
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_webhook/hf_cache:/app/.cache/huggingface
+    depends_on:
+      - pulse_postgres
+      - pulse_redis
+    # No healthcheck - RQ doesn't expose HTTP endpoint
+    # No ports - worker doesn't serve HTTP
+
+  pulse_change-detection:
     <<: *common-service
     image: ghcr.io/dgtlmoon/changedetection.io:latest
-    container_name: firecrawl_changedetection
+    container_name: pulse_change-detection
     hostname: changedetection
     ports:
       - "${CHANGEDETECTION_PORT:-50109}:5000"
     volumes:
-      - changedetection_data:/datastore
-    environment:
-      - PLAYWRIGHT_DRIVER_URL=${CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL:-ws://firecrawl_playwright:3000}
-      - BASE_URL=${CHANGEDETECTION_BASE_URL:-http://localhost:50109}
-      - FETCH_WORKERS=${CHANGEDETECTION_FETCH_WORKERS:-10}
-      - MINIMUM_SECONDS_RECHECK_TIME=${CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME:-60}
-      - LOGGER_LEVEL=INFO
-      - HIDE_REFERER=true
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_change-detection:/datastore
     depends_on:
-      - firecrawl_playwright
+      - pulse_playwright
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/')\""]
       interval: 60s
@@ -121,10 +143,24 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-networks:
-  firecrawl:
-    driver: bridge
+  pulse_neo4j:
+    <<: *common-service
+    image: neo4j:2025.10.1-community-bullseye
+    container_name: pulse_neo4j
+    ports:
+      - "${GRAPH_DB_HTTP_PORT:-50210}:7474"
+      - "${GRAPH_DB_BOLT_PORT:-50211}:7687"
+    volumes:
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_neo4j/data:/data
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_neo4j/logs:/logs
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_neo4j/plugins:/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-volumes:
-  changedetection_data:
-    name: firecrawl_changedetection_data
+networks:
+  pulse:
+    driver: bridge

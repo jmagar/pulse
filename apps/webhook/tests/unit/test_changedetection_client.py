@@ -7,13 +7,18 @@ import pytest
 
 from clients.changedetection import ChangeDetectionClient
 from config import Settings
+from tests.utils.db_fixtures import (  # noqa: F401
+    cleanup_database_engine,
+    initialize_test_database,
+)
+from tests.utils.service_endpoints import get_changedetection_base_url
 
 
 def test_changedetection_config_defaults():
     """Test changedetection.io config has correct defaults."""
     settings = Settings()
 
-    assert settings.changedetection_api_url == "http://firecrawl_changedetection:5000"
+    assert settings.changedetection_api_url == get_changedetection_base_url()
     assert settings.changedetection_api_key is None
     assert settings.changedetection_default_check_interval == 3600
     assert settings.changedetection_enable_auto_watch is True

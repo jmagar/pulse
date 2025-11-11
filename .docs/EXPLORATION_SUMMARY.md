@@ -75,12 +75,12 @@ Warm start: ~60-70 seconds
 
 | Service | Health Check | Status |
 |---------|---|---|
-| firecrawl_mcp | HTTP GET /health | ✅ Configured |
-| firecrawl_webhook | HTTP GET /health | ✅ Configured |
-| firecrawl_db | None | ⚠️ Recommended |
-| firecrawl_cache | None | ⚠️ Recommended |
+| pulse_mcp | HTTP GET /health | ✅ Configured |
+| pulse_webhook | HTTP GET /health | ✅ Configured |
+| pulse_postgres | None | ⚠️ Recommended |
+| pulse_redis | None | ⚠️ Recommended |
 | firecrawl | None | ⚠️ Recommended |
-| firecrawl_playwright | None | ⚠️ Recommended |
+| pulse_playwright | None | ⚠️ Recommended |
 
 ## changedetection.io Integration
 
@@ -104,8 +104,8 @@ Warm start: ~60-70 seconds
 ### Recommended Approach: A + C Hybrid
 ```
 changedetection.io (Port 50111)
-  ├─ Uses: firecrawl_playwright (shared)
-  └─ Posts: to firecrawl_webhook (indexing)
+  ├─ Uses: pulse_playwright (shared)
+  └─ Posts: to pulse_webhook (indexing)
 ```
 
 ## Data Persistence Summary
@@ -114,10 +114,10 @@ changedetection.io (Port 50111)
 
 ```
 ${APPDATA_BASE:-/mnt/cache/appdata}/
-├── firecrawl_postgres/          (Database files - LOW risk)
-├── firecrawl_redis/             (Cache + AOF log - MEDIUM risk)
-├── firecrawl_mcp_resources/     (Cached content - MEDIUM risk)
-├── firecrawl_webhook/           (BM25 index - MEDIUM risk)
+├── pulse_postgres/          (Database files - LOW risk)
+├── pulse_redis/             (Cache + AOF log - MEDIUM risk)
+├── pulse_mcp_resources/     (Cached content - MEDIUM risk)
+├── pulse_webhook/           (BM25 index - MEDIUM risk)
 ├── firecrawl_tei_data/          (Model cache - EXTERNAL)
 └── firecrawl_qdrant_storage/    (Vector index - EXTERNAL)
 ```
@@ -136,18 +136,18 @@ ${APPDATA_BASE:-/mnt/cache/appdata}/
 
 ### Internal URLs (Container Names - Docker Network)
 - Firecrawl API: `http://firecrawl:3002`
-- MCP Server: `http://firecrawl_mcp:3060`
-- Webhook: `http://firecrawl_webhook:52100`
-- Redis: `redis://firecrawl_cache:6379`
-- PostgreSQL: `postgresql://firecrawl_db:5432/firecrawl_db`
-- Playwright: `http://firecrawl_playwright:3000`
+- MCP Server: `http://pulse_mcp:3060`
+- Webhook: `http://pulse_webhook:52100`
+- Redis: `redis://pulse_redis:6379`
+- PostgreSQL: `postgresql://pulse_postgres:5432/pulse_postgres`
+- Playwright: `http://pulse_playwright:3000`
 
 ### External URLs (Host Machine)
 - Firecrawl API: `http://localhost:50102`
 - MCP Server: `http://localhost:50107`
 - Webhook: `http://localhost:50108`
 - Redis: `redis://localhost:50104`
-- PostgreSQL: `postgresql://localhost:50105/firecrawl_db`
+- PostgreSQL: `postgresql://localhost:50105/pulse_postgres`
 - Playwright: `http://localhost:50100`
 
 **Critical Rule:** Use internal container names in code, NOT localhost or external domains

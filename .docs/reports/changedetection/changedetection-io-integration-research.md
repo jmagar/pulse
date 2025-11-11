@@ -811,7 +811,7 @@ async def webhook(data: dict, background_tasks: BackgroundTasks):
 services:
   changedetection:
     image: dgtlmoon/changedetection.io:latest
-    container_name: firecrawl_changedetection
+    container_name: pulse_change-detection
     ports:
       - "52200:5000"
     volumes:
@@ -881,7 +881,7 @@ async def handle_change(
 **3. Configure Notification in ChangeDetection.io:**
 ```
 # Via Web UI or API:
-Notification URL: post://firecrawl_webhook:52100/changedetection/trigger
+Notification URL: post://pulse_webhook:52100/changedetection/trigger
 Query params: ?watch_url={{ watch_url }}&watch_uuid={{ watch_uuid }}&watch_title={{ watch_title }}
 ```
 
@@ -934,7 +934,7 @@ curl -X POST http://localhost:52200/api/v1/notify/product-monitor \
 # ChangeDetection.io
 CHANGEDETECTION_API_KEY=your-secure-api-key-here
 CHANGEDETECTION_BASE_URL=http://changedetection:5000
-CHANGEDETECTION_WEBHOOK_URL=http://firecrawl_webhook:52100/changedetection/trigger
+CHANGEDETECTION_WEBHOOK_URL=http://pulse_webhook:52100/changedetection/trigger
 
 # Integration
 WEBHOOK_CHANGEDETECTION_ENABLED=true

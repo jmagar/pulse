@@ -56,19 +56,19 @@ pnpm --filter @pulsemcp/mcp-server run test
 **Build:**
 
 ```bash
-docker compose build firecrawl_mcp
+docker compose build pulse_mcp
 ```
 
 **Deploy:**
 
 ```bash
-docker compose up -d firecrawl_mcp
+docker compose up -d pulse_mcp
 ```
 
 **Logs:**
 
 ```bash
-docker compose logs -f firecrawl_mcp
+docker compose logs -f pulse_mcp
 ```
 
 ## Configuration

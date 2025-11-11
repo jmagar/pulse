@@ -97,7 +97,7 @@ async def _handle_page_event(
 
             try:
                 job = queue.enqueue(
-                    "app.worker.index_document_job",
+                    "worker.index_document_job",
                     index_payload,
                     job_timeout="10m",
                 )

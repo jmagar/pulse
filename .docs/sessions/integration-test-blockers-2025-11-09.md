@@ -20,19 +20,19 @@ Integration testing **cannot proceed** due to Docker build failures. All 7 servi
 
 | Service | Port | Purpose | Status |
 |---------|------|---------|--------|
-| firecrawl_playwright | 4302 | Browser scraping | ❌ Not started |
+| pulse_playwright | 4302 | Browser scraping | ❌ Not started |
 | firecrawl | 3002 | Main API | ❌ Not started |
-| firecrawl_cache | 4303 | Redis queue | ❌ Not started |
-| firecrawl_db | 4304 | PostgreSQL | ❌ Not started |
-| firecrawl_mcp | 3060 | MCP server | ❌ Build failed |
-| firecrawl_webhook | 52100 | Webhook API | ❌ Not started |
-| firecrawl_webhook_worker | N/A | Background worker | ❌ Not started |
+| pulse_redis | 4303 | Redis queue | ❌ Not started |
+| pulse_postgres | 4304 | PostgreSQL | ❌ Not started |
+| pulse_mcp | 3060 | MCP server | ❌ Build failed |
+| pulse_webhook | 52100 | Webhook API | ❌ Not started |
+| pulse_webhook_worker | N/A | Background worker | ❌ Not started |
 
 ---
 
 ## Build Failure Details
 
-### Service: `firecrawl_mcp`
+### Service: `pulse_mcp`
 
 **Build Stage:** TypeScript compilation
 **Exit Code:** 2

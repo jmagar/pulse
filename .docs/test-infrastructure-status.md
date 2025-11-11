@@ -77,7 +77,7 @@ Tests use dedicated PostgreSQL database:
 
 1. PostgreSQL running on localhost
    ```bash
-   docker compose up -d firecrawl_db
+   docker compose up -d pulse_postgres
    ```
    - Container binds to host port: 4304
    - Internal Docker network port: 5432

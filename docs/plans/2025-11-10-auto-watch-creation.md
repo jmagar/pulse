@@ -40,7 +40,7 @@ Add to the `Settings` class (after `firecrawl_api_key` field):
 ```python
     # changedetection.io API configuration
     changedetection_api_url: str = Field(
-        default="http://firecrawl_changedetection:5000",
+        default="http://pulse_change-detection:5000",
         validation_alias=AliasChoices(
             "WEBHOOK_CHANGEDETECTION_API_URL",
             "CHANGEDETECTION_API_URL",
@@ -90,7 +90,7 @@ def test_changedetection_config_defaults():
     """Test changedetection.io config has correct defaults."""
     settings = Settings()
 
-    assert settings.changedetection_api_url == "http://firecrawl_changedetection:5000"
+    assert settings.changedetection_api_url == "http://pulse_change-detection:5000"
     assert settings.changedetection_api_key is None
     assert settings.changedetection_default_check_interval == 3600
     assert settings.changedetection_enable_auto_watch is True
@@ -352,7 +352,7 @@ class ChangeDetectionClient:
             httpx.HTTPError: If API request fails
         """
         check_interval = check_interval or settings.changedetection_default_check_interval
-        webhook_url = webhook_url or "json://firecrawl_webhook:52100/api/webhook/changedetection"
+        webhook_url = webhook_url or "json://pulse_webhook:52100/api/webhook/changedetection"
         title = title or url
 
         # Check if watch already exists
@@ -931,7 +931,7 @@ Add to the changedetection.io section:
 # -----------------
 CHANGEDETECTION_PORT=50109
 CHANGEDETECTION_BASE_URL=http://localhost:50109
-CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://firecrawl_playwright:3000
+CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
 CHANGEDETECTION_FETCH_WORKERS=10
 CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME=60
 CHANGEDETECTION_WEBHOOK_SECRET=
@@ -943,7 +943,7 @@ WEBHOOK_FIRECRAWL_API_URL=http://firecrawl:3002
 WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
 
 # Webhook Bridge - automatic watch creation
-WEBHOOK_CHANGEDETECTION_API_URL=http://firecrawl_changedetection:5000
+WEBHOOK_CHANGEDETECTION_API_URL=http://pulse_change-detection:5000
 WEBHOOK_CHANGEDETECTION_API_KEY=
 WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL=3600
 WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=true
@@ -1006,7 +1006,7 @@ WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL=86400 # 24 hours
 
 **API Access:**
 ```bash
-WEBHOOK_CHANGEDETECTION_API_URL=http://firecrawl_changedetection:5000  # Default (internal Docker network)
+WEBHOOK_CHANGEDETECTION_API_URL=http://pulse_change-detection:5000  # Default (internal Docker network)
 WEBHOOK_CHANGEDETECTION_API_KEY=                                        # Optional for authenticated instances
 ```
 
@@ -1016,7 +1016,7 @@ WEBHOOK_CHANGEDETECTION_API_KEY=                                        # Option
 
 1. Open changedetection.io UI: http://localhost:50109
 2. Look for watches tagged with `firecrawl-auto`
-3. Verify webhook URL is configured: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+3. Verify webhook URL is configured: `json://pulse_webhook:52100/api/webhook/changedetection`
 
 **Query via API:**
 ```bash
@@ -1025,7 +1025,7 @@ curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-a
 
 **Check webhook bridge logs:**
 ```bash
-docker compose logs firecrawl_webhook | grep "Auto-created changedetection.io watch"
+docker compose logs pulse_webhook | grep "Auto-created changedetection.io watch"
 ```
 
 ### Idempotency
@@ -1044,7 +1044,7 @@ To disable automatic watch creation:
 WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=false
 
 # Restart webhook service
-docker compose restart firecrawl_webhook
+docker compose restart pulse_webhook
 ```
 
 Existing watches remain active. Only new scrapes will skip watch creation.
@@ -1059,19 +1059,19 @@ Add to the "Troubleshooting" section:
 
 **Check if auto-watch is enabled:**
 ```bash
-docker compose exec firecrawl_webhook env | grep ENABLE_AUTO_WATCH
+docker compose exec pulse_webhook env | grep ENABLE_AUTO_WATCH
 ```
 
 **View watch creation logs:**
 ```bash
-docker compose logs firecrawl_webhook | grep "changedetection.io watch"
+docker compose logs pulse_webhook | grep "changedetection.io watch"
 ```
 
 **Common issues:**
 
 1. **changedetection.io not accessible:**
-   - Verify service is running: `docker compose ps firecrawl_changedetection`
-   - Check internal URL: `docker compose exec firecrawl_webhook curl http://firecrawl_changedetection:5000/`
+   - Verify service is running: `docker compose ps pulse_change-detection`
+   - Check internal URL: `docker compose exec pulse_webhook curl http://pulse_change-detection:5000/`
 
 2. **API authentication required:**
    - Set `WEBHOOK_CHANGEDETECTION_API_KEY` if your instance requires auth
@@ -1301,7 +1301,7 @@ After implementation:
 
 2. **Watch has correct configuration:**
    - Tag: `firecrawl-auto`
-   - Webhook URL: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+   - Webhook URL: `json://pulse_webhook:52100/api/webhook/changedetection`
    - Check interval: from `WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL`
    - Notification template configured
 
@@ -1382,7 +1382,7 @@ Response: [
 
 ```bash
 # changedetection.io API access
-WEBHOOK_CHANGEDETECTION_API_URL=http://firecrawl_changedetection:5000
+WEBHOOK_CHANGEDETECTION_API_URL=http://pulse_change-detection:5000
 WEBHOOK_CHANGEDETECTION_API_KEY=
 
 # Auto-watch configuration

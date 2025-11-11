@@ -468,7 +468,7 @@ Infrastructure Failures: 40 (expected when services not running)
 
 1. **Run Tests with Services**
    ```bash
-   docker compose up -d firecrawl_db firecrawl_cache
+   docker compose up -d pulse_postgres pulse_redis
    cd apps/webhook && uv run pytest -v --cov=app
    ```
    Expected: 258/258 tests passing

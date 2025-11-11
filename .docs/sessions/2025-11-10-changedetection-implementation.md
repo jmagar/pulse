@@ -26,8 +26,8 @@ Successfully integrated changedetection.io into the Pulse monorepo for automated
    - Documented webhook secret requirements
 
 2. **Docker Compose Service Definition** (Task 2)
-   - Added `firecrawl_changedetection` service to docker-compose.yaml
-   - Configured shared Playwright browser (PLAYWRIGHT_DRIVER_URL=ws://firecrawl_playwright:3000)
+   - Added `pulse_change-detection` service to docker-compose.yaml
+   - Configured shared Playwright browser (PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000)
    - Created named volume `changedetection_data` for persistent storage
    - Configured health checks (HTTP GET / every 60s)
    - Set resource limits (10 fetch workers, 60s minimum recheck time)
@@ -40,9 +40,9 @@ Successfully integrated changedetection.io into the Pulse monorepo for automated
 
 **Architecture Decisions:**
 
-- **Shared Playwright:** Reuses firecrawl_playwright container to reduce memory footprint (single browser instance shared by both services)
+- **Shared Playwright:** Reuses pulse_playwright container to reduce memory footprint (single browser instance shared by both services)
 - **File-Based Storage:** Uses volume-mounted /datastore for watch configurations and change history
-- **Docker Network Communication:** Uses internal service names (firecrawl_webhook:52100) instead of localhost
+- **Docker Network Communication:** Uses internal service names (pulse_webhook:52100) instead of localhost
 
 **Files Modified:**
 - `docker-compose.yaml` - Service definition
@@ -396,7 +396,7 @@ cd apps/webhook && uv run pytest --cov=app --cov-report=term-missing
 
 **Port 50109** allocated for changedetection.io web UI:
 - External access: `http://localhost:50109`
-- Internal access: `http://firecrawl_changedetection:5000`
+- Internal access: `http://pulse_change-detection:5000`
 - Status: Active and documented in `.docs/services-ports.md`
 
 ### Environment Variables
@@ -407,7 +407,7 @@ cd apps/webhook && uv run pytest --cov=app --cov-report=term-missing
 # changedetection.io Service
 CHANGEDETECTION_PORT=50109
 CHANGEDETECTION_BASE_URL=http://localhost:50109
-CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://firecrawl_playwright:3000
+CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
 CHANGEDETECTION_FETCH_WORKERS=10
 CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME=60
 CHANGEDETECTION_WEBHOOK_SECRET=<64-char-hex-from-openssl-rand>
@@ -429,18 +429,18 @@ Migration applied: `20251110_000000_add_change_events`
 cd apps/webhook && uv run alembic upgrade head
 
 # Verify table exists
-docker exec -it firecrawl_db psql -U firecrawl -d firecrawl_db \
+docker exec -it pulse_postgres psql -U firecrawl -d pulse_postgres \
   -c "SELECT tablename FROM pg_tables WHERE schemaname = 'webhook';"
 ```
 
 ### Service Dependencies
 
 Startup order (handled by Docker Compose):
-1. `firecrawl_db` - PostgreSQL database
-2. `firecrawl_cache` - Redis queue
-3. `firecrawl_playwright` - Shared browser
-4. `firecrawl_changedetection` - Change detection service
-5. `firecrawl_webhook` - Webhook bridge with embedded worker
+1. `pulse_postgres` - PostgreSQL database
+2. `pulse_redis` - Redis queue
+3. `pulse_playwright` - Shared browser
+4. `pulse_change-detection` - Change detection service
+5. `pulse_webhook` - Webhook bridge with embedded worker
 
 ### Health Checks
 

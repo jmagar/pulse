@@ -58,7 +58,7 @@ class ChangeDetectionClient:
             httpx.HTTPError: If API request fails
         """
         check_interval = check_interval or settings.changedetection_default_check_interval
-        webhook_url = webhook_url or "json://firecrawl_webhook:52100/api/webhook/changedetection"
+        webhook_url = webhook_url or "json://pulse_webhook:52100/api/webhook/changedetection"
         title = title or url
 
         # Check if watch already exists

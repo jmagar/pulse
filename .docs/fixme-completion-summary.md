@@ -168,7 +168,7 @@ RUN echo '#!/bin/sh' > /entrypoint.sh && \
 
 **Added**:
 ```yaml
-firecrawl_mcp:
+pulse_mcp:
   <<: *common-service
   # Build context changed from ./apps/mcp to . for monorepo access
   # All environment variables now configured in root .env file
@@ -204,7 +204,7 @@ SELF_HOSTED_WEBHOOK_URL=http://localhost:52100/api/webhook/firecrawl
 
 **After**:
 ```bash
-SELF_HOSTED_WEBHOOK_URL=http://firecrawl_webhook:52100/api/webhook/firecrawl
+SELF_HOSTED_WEBHOOK_URL=http://pulse_webhook:52100/api/webhook/firecrawl
 ```
 
 **Finding**: Localhost doesn't work in Docker network. Changed to internal container name.

@@ -106,7 +106,7 @@ cd apps/mcp && pnpm test
 
 **What Was Discovered:**
 
-**Critical Blocker:** Docker build failure for `firecrawl_mcp` service
+**Critical Blocker:** Docker build failure for `pulse_mcp` service
 
 **Root Cause:** Architecture mismatch between `@firecrawl/client` package and MCP's expectations
 
@@ -131,13 +131,13 @@ cd apps/mcp && pnpm test
 - Deployment blocked
 
 **Services Defined (all failed):**
-1. firecrawl_playwright (port 4302)
+1. pulse_playwright (port 4302)
 2. firecrawl (port 3002)
-3. firecrawl_cache (port 4303)
-4. firecrawl_db (port 4304)
-5. firecrawl_mcp (port 3060) - BUILD FAILED
-6. firecrawl_webhook (port 52100)
-7. firecrawl_webhook_worker
+3. pulse_redis (port 4303)
+4. pulse_postgres (port 4304)
+5. pulse_mcp (port 3060) - BUILD FAILED
+6. pulse_webhook (port 52100)
+7. pulse_webhook_worker
 
 **Subagent Used:**
 - Integration testing subagent - Attempted service startup, diagnosed build failures

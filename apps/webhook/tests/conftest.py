@@ -3,13 +3,26 @@
 import importlib
 import os
 from collections.abc import Generator
+from pathlib import Path
 from typing import Any, ClassVar
 from uuid import uuid4
 
 import pytest
 import pytest_asyncio
+from dotenv import dotenv_values, load_dotenv
 from fastapi.testclient import TestClient
 from sqlalchemy import JSON
+
+# Ensure monorepo .env values (ports, credentials, service URLs) are available to tests
+# even when running tests directly (outside Docker). python-dotenv returns False when the
+# file is missing, so we also fall back to manually injecting critical values.
+ROOT_DOTENV = Path(__file__).resolve().parents[3] / ".env"
+load_dotenv(ROOT_DOTENV)
+_dotenv_values = dotenv_values(ROOT_DOTENV)
+for _key in ("POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST", "POSTGRES_PORT"):
+    _value = _dotenv_values.get(_key)
+    if _value:
+        os.environ.setdefault(_key, _value)
 
 os.makedirs(".cache", exist_ok=True)
 
@@ -338,6 +351,10 @@ async def cleanup_database_engine():
     preventing event loop conflicts when tests run in different event loops.
     The engine will be recreated on next use.
     """
+    if os.getenv("WEBHOOK_SKIP_DB_FIXTURES") == "1":
+        yield
+        return
+
     yield
     # Clean up after test
     from app import database
@@ -348,7 +365,13 @@ async def cleanup_database_engine():
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def initialize_test_database():
-    """Ensure PostgreSQL schema exists for tests."""
+    """Ensure PostgreSQL schema exists for tests unless explicitly skipped."""
+
+    if os.getenv("WEBHOOK_SKIP_DB_FIXTURES") == "1":
+        # Allow lightweight unit tests to bypass real database setup.
+        yield
+        return
+
     from infra.database import close_database, init_database
 
     await init_database()

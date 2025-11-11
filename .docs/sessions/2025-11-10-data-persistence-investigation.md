@@ -26,7 +26,7 @@
 
 ```yaml
 volumes:
-  - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_webhook:/app/data/bm25
+  - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_webhook:/app/data/bm25
 ```
 
 **Files Modified**:
@@ -53,7 +53,7 @@ volumes:
 
 3. **Database Verification**:
    ```bash
-   docker exec firecrawl_db psql -U firecrawl -d firecrawl_db -c "SELECT schemaname, tablename FROM pg_tables..."
+   docker exec pulse_postgres psql -U firecrawl -d pulse_postgres -c "SELECT schemaname, tablename FROM pg_tables..."
    ```
    Results:
    - `nuq.group_crawl`: 11 rows
@@ -66,25 +66,25 @@ volumes:
 
 4. **Volume Mount Verification**:
    ```bash
-   docker inspect firecrawl_db | grep -A 5 "Mounts"
-   # PostgreSQL: /mnt/cache/appdata/firecrawl_postgres → /var/lib/postgresql/data ✅
+   docker inspect pulse_postgres | grep -A 5 "Mounts"
+   # PostgreSQL: /mnt/cache/appdata/pulse_postgres → /var/lib/postgresql/data ✅
    ```
 
 ## Architecture Summary
 
 ### Stateless Services (No volumes needed)
 - **firecrawl** (API) - Stateless request handler
-- **firecrawl_playwright** - Stateless browser automation
-- **firecrawl_mcp** - Has MCP resources volume for cached scrapes
+- **pulse_playwright** - Stateless browser automation
+- **pulse_mcp** - Has MCP resources volume for cached scrapes
 
 ### Stateful Services (Volumes required)
 
 | Service | Volume Path | Purpose | Status |
 |---------|------------|---------|--------|
-| **firecrawl_db** | `/mnt/cache/appdata/firecrawl_postgres` | PostgreSQL data | ✅ Already configured |
-| **firecrawl_cache** | `/mnt/cache/appdata/firecrawl_redis` | Redis AOF + RDB | ✅ Already configured |
-| **firecrawl_webhook** | `/mnt/cache/appdata/firecrawl_webhook` | BM25 search index | ✅ Just added |
-| **firecrawl_mcp** | `/mnt/cache/appdata/firecrawl_mcp_resources` | MCP resources | ✅ Already configured |
+| **pulse_postgres** | `/mnt/cache/appdata/pulse_postgres` | PostgreSQL data | ✅ Already configured |
+| **pulse_redis** | `/mnt/cache/appdata/pulse_redis` | Redis AOF + RDB | ✅ Already configured |
+| **pulse_webhook** | `/mnt/cache/appdata/pulse_webhook` | BM25 search index | ✅ Just added |
+| **pulse_mcp** | `/mnt/cache/appdata/pulse_mcp_resources` | MCP resources | ✅ Already configured |
 
 ## Data Flow
 

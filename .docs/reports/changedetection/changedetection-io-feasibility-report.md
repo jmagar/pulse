@@ -103,7 +103,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
   - changedetection.io joins existing bridge network
   - Internal service discovery via container names
 
-- ✅ **Webhook Bridge** (`firecrawl_webhook`)
+- ✅ **Webhook Bridge** (`pulse_webhook`)
   - Already handles document ingestion
   - Can receive change notifications
   - Has PostgreSQL schema for metrics
@@ -128,7 +128,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
 | `/api/v1/watch/{uuid}/history` | GET | Get snapshots | Retrieve change history |
 
 **Webhook Integration:**
-- Notification URL: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+- Notification URL: `json://pulse_webhook:52100/api/webhook/changedetection`
 - Custom payload via Jinja2 templates
 - HMAC signature support for security
 
@@ -177,8 +177,8 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
 │  ┌─────────────────────────┼─────────────────────────────────┐ │
 │  │           Shared Infrastructure                            │ │
 │  ├────────────────────────────────────────────────────────────┤ │
-│  │  • PostgreSQL (firecrawl_db:5432)                         │ │
-│  │  • Redis (firecrawl_cache:6379)                           │ │
+│  │  • PostgreSQL (pulse_postgres:5432)                         │ │
+│  │  • Redis (pulse_redis:6379)                           │ │
 │  │  • Playwright (browser-chrome:3000)                       │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                                                                  │
@@ -212,7 +212,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
 │                      │ Webhook POST on change                   │
 │                      ▼                                           │
 │  ┌────────────────────────────────────────────────────────┐    │
-│  │  Webhook Bridge (firecrawl_webhook:52100)             │    │
+│  │  Webhook Bridge (pulse_webhook:52100)             │    │
 │  │  - New endpoint: /api/webhook/changedetection         │    │
 │  │  - Queues job: Trigger Firecrawl rescrape             │    │
 │  │  - Stores: Change metadata in PostgreSQL              │    │
@@ -247,7 +247,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
    └─> Stores snapshots in /datastore volume
 
 3. Change detected
-   └─> Triggers webhook to firecrawl_webhook
+   └─> Triggers webhook to pulse_webhook
    └─> Payload includes: URL, diff, timestamp, watch_id
 
 4. Webhook bridge receives notification
@@ -414,7 +414,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
 **Outbound:**
 - Monitored websites (user-configured, variable)
 - Playwright browser via WebSocket (`ws://browser-chrome:3000`)
-- Webhook bridge via HTTP (`http://firecrawl_webhook:52100`)
+- Webhook bridge via HTTP (`http://pulse_webhook:52100`)
 
 **Bandwidth:**
 - Minimal for static sites (few KB per check)
@@ -530,7 +530,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
 4. ✅ **Configure changedetection.io**
    - Add global notification URL in UI:
      ```
-     json://firecrawl_webhook:52100/api/webhook/changedetection
+     json://pulse_webhook:52100/api/webhook/changedetection
      ```
    - Configure Jinja2 template for payload:
      ```json
@@ -865,7 +865,7 @@ changedetection.io integration with Pulse monorepo is:
 services:
   changedetection:
     image: ghcr.io/dgtlmoon/changedetection.io:latest
-    container_name: firecrawl_changedetection
+    container_name: pulse_change-detection
     hostname: changedetection
     environment:
       - PLAYWRIGHT_DRIVER_URL=ws://browser-chrome:3000
@@ -892,7 +892,7 @@ services:
 
 volumes:
   changedetection_data:
-    name: firecrawl_changedetection_data
+    name: pulse_change-detection_data
 
 networks:
   firecrawl:

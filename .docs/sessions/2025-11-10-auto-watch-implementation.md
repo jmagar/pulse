@@ -42,7 +42,7 @@ Implement automatic changedetection.io watch creation for all URLs scraped by Fi
 **Files Modified:**
 - `apps/webhook/app/config.py` (+37 lines)
   - Added 4 configuration fields to Settings class:
-    - `changedetection_api_url` (default: `http://firecrawl_changedetection:5000`)
+    - `changedetection_api_url` (default: `http://pulse_change-detection:5000`)
     - `changedetection_api_key` (optional, default: `None`)
     - `changedetection_default_check_interval` (default: `3600` seconds)
     - `changedetection_enable_auto_watch` (default: `True`)
@@ -58,7 +58,7 @@ Implement automatic changedetection.io watch creation for all URLs scraped by Fi
 **Key Implementation:**
 ```python
 changedetection_api_url: str = Field(
-    default="http://firecrawl_changedetection:5000",
+    default="http://pulse_change-detection:5000",
     validation_alias=AliasChoices(
         "WEBHOOK_CHANGEDETECTION_API_URL",
         "CHANGEDETECTION_API_URL",
@@ -179,7 +179,7 @@ except Exception as watch_error:
 - `.env.example` (+7 insertions)
   - Added section: "Webhook Bridge - automatic watch creation"
   - Variables added:
-    - `WEBHOOK_CHANGEDETECTION_API_URL=http://firecrawl_changedetection:5000`
+    - `WEBHOOK_CHANGEDETECTION_API_URL=http://pulse_change-detection:5000`
     - `WEBHOOK_CHANGEDETECTION_API_KEY=`
     - `WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL=3600`
     - `WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=true`
@@ -188,7 +188,7 @@ except Exception as watch_error:
 ```bash
 # Webhook Bridge - automatic watch creation
 # Configure automatic creation of changedetection.io watches for scraped URLs
-WEBHOOK_CHANGEDETECTION_API_URL=http://firecrawl_changedetection:5000
+WEBHOOK_CHANGEDETECTION_API_URL=http://pulse_change-detection:5000
 WEBHOOK_CHANGEDETECTION_API_KEY=
 WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL=3600
 WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=true
@@ -232,7 +232,7 @@ http://localhost:50109
 curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-auto")'
 
 # Check logs
-docker compose logs firecrawl_webhook | grep "Auto-created changedetection.io watch"
+docker compose logs pulse_webhook | grep "Auto-created changedetection.io watch"
 ```
 
 ---
@@ -381,7 +381,7 @@ All 5 success criteria from plan met:
 
 2. ✅ **Watch has correct configuration**
    - Tag: `firecrawl-auto`
-   - Webhook URL: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+   - Webhook URL: `json://pulse_webhook:52100/api/webhook/changedetection`
    - Check interval: from `WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL`
    - Verified in API client implementation and tests
 
@@ -416,17 +416,17 @@ All 5 success criteria from plan met:
 ```bash
 # In .env
 WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=true
-WEBHOOK_CHANGEDETECTION_API_URL=http://firecrawl_changedetection:5000
+WEBHOOK_CHANGEDETECTION_API_URL=http://pulse_change-detection:5000
 WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL=3600
 
 # Restart service
-docker compose restart firecrawl_webhook
+docker compose restart pulse_webhook
 ```
 
 ### Verify Operation
 ```bash
 # Check logs
-docker compose logs firecrawl_webhook | grep "Auto-created"
+docker compose logs pulse_webhook | grep "Auto-created"
 
 # Check changedetection.io UI
 http://localhost:50109
@@ -441,7 +441,7 @@ curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-a
 WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=false
 
 # Restart service
-docker compose restart firecrawl_webhook
+docker compose restart pulse_webhook
 ```
 
 ---
@@ -452,20 +452,20 @@ docker compose restart firecrawl_webhook
 **Check:**
 ```bash
 # Verify feature flag
-docker compose exec firecrawl_webhook env | grep ENABLE_AUTO_WATCH
+docker compose exec pulse_webhook env | grep ENABLE_AUTO_WATCH
 
 # Check logs for errors
-docker compose logs firecrawl_webhook | grep "changedetection.io watch"
+docker compose logs pulse_webhook | grep "changedetection.io watch"
 ```
 
 ### Issue: changedetection.io not accessible
 **Check:**
 ```bash
 # Verify service running
-docker compose ps firecrawl_changedetection
+docker compose ps pulse_change-detection
 
 # Test internal connectivity
-docker compose exec firecrawl_webhook curl http://firecrawl_changedetection:5000/
+docker compose exec pulse_webhook curl http://pulse_change-detection:5000/
 ```
 
 ### Issue: API authentication required

@@ -69,7 +69,7 @@ class Settings(BaseSettings):
         description="Qdrant server URL",
     )
     qdrant_collection: str = Field(
-        default="firecrawl_docs",
+        default="pulse_docs",
         validation_alias=AliasChoices(
             "WEBHOOK_QDRANT_COLLECTION", "SEARCH_BRIDGE_QDRANT_COLLECTION"
         ),
@@ -81,7 +81,7 @@ class Settings(BaseSettings):
         description="Qdrant request timeout in seconds",
     )
     vector_dim: int = Field(
-        default=384,
+        default=1024,
         validation_alias=AliasChoices("WEBHOOK_VECTOR_DIM", "SEARCH_BRIDGE_VECTOR_DIM"),
         description="Vector dimensions",
     )
@@ -98,7 +98,7 @@ class Settings(BaseSettings):
         description="TEI API key for authentication",
     )
     embedding_model: str = Field(
-        default="sentence-transformers/all-MiniLM-L6-v2",
+        default="Qwen/Qwen3-Embedding-0.6B",
         validation_alias=AliasChoices("WEBHOOK_EMBEDDING_MODEL", "SEARCH_BRIDGE_EMBEDDING_MODEL"),
         description="HuggingFace embedding model",
     )
@@ -195,7 +195,7 @@ class Settings(BaseSettings):
 
     # changedetection.io API configuration
     changedetection_api_url: str = Field(
-        default="http://firecrawl_changedetection:5000",
+        default="http://pulse_change-detection:5000",
         validation_alias=AliasChoices(
             "WEBHOOK_CHANGEDETECTION_API_URL",
             "CHANGEDETECTION_API_URL",

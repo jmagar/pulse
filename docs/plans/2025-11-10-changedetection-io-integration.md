@@ -44,7 +44,7 @@ Add to `.env.example`:
 # -----------------
 CHANGEDETECTION_PORT=50109
 CHANGEDETECTION_BASE_URL=http://localhost:50109
-CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://firecrawl_playwright:3000
+CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
 CHANGEDETECTION_FETCH_WORKERS=10
 CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME=60
 CHANGEDETECTION_WEBHOOK_SECRET=
@@ -61,20 +61,20 @@ WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
 Add to `.docs/services-ports.md`:
 
 ```markdown
-| 50109 | Change Detection | firecrawl_changedetection | HTTP | Active |
+| 50109 | Change Detection | pulse_change-detection | HTTP | Active |
 
 ## changedetection.io Service
 
-**Container:** firecrawl_changedetection
+**Container:** pulse_change-detection
 **Port:** 50109 (external) → 5000 (internal)
 **Purpose:** Monitor websites for content changes, trigger rescraping on updates
-**Dependencies:** firecrawl_playwright (Playwright), firecrawl_webhook (for notifications)
+**Dependencies:** pulse_playwright (Playwright), pulse_webhook (for notifications)
 **Health Check:** HTTP GET / (60s interval, 10s timeout, 30s start period)
 **Volume:** changedetection_data:/datastore (change history, monitor configs)
 
 **Integration:**
 - Shares Playwright browser with Firecrawl for JavaScript rendering
-- Posts change notifications to webhook bridge at http://firecrawl_webhook:52100/api/webhook/changedetection
+- Posts change notifications to webhook bridge at http://pulse_webhook:52100/api/webhook/changedetection
 - Indexed content searchable via hybrid search (BM25 + vector)
 ```
 
@@ -95,27 +95,27 @@ git commit -m "docs: add changedetection.io port allocation and service document
 
 **Step 1: Add changedetection service to docker-compose.yaml**
 
-Add after `firecrawl_webhook` service:
+Add after `pulse_webhook` service:
 
 ```yaml
-  firecrawl_changedetection:
+  pulse_change-detection:
     <<: *common-service
     image: ghcr.io/dgtlmoon/changedetection.io:latest
-    container_name: firecrawl_changedetection
+    container_name: pulse_change-detection
     hostname: changedetection
     ports:
       - "${CHANGEDETECTION_PORT:-50109}:5000"
     volumes:
       - changedetection_data:/datastore
     environment:
-      - PLAYWRIGHT_DRIVER_URL=${CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL:-ws://firecrawl_playwright:3000}
+      - PLAYWRIGHT_DRIVER_URL=${CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL:-ws://pulse_playwright:3000}
       - BASE_URL=${CHANGEDETECTION_BASE_URL:-http://localhost:50109}
       - FETCH_WORKERS=${CHANGEDETECTION_FETCH_WORKERS:-10}
       - MINIMUM_SECONDS_RECHECK_TIME=${CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME:-60}
       - LOGGER_LEVEL=INFO
       - HIDE_REFERER=true
     depends_on:
-      - firecrawl_playwright
+      - pulse_playwright
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]
       interval: 60s
@@ -132,17 +132,17 @@ Add to `volumes:` section:
 ```yaml
 volumes:
   changedetection_data:
-    name: firecrawl_changedetection_data
+    name: pulse_change-detection_data
 ```
 
 **Step 3: Test deployment**
 
-Run: `docker compose up -d firecrawl_changedetection`
+Run: `docker compose up -d pulse_change-detection`
 Expected: Container starts successfully
 
 **Step 4: Verify service health**
 
-Run: `docker compose logs firecrawl_changedetection`
+Run: `docker compose logs pulse_change-detection`
 Expected: No errors, "Starting server" messages
 
 Run: `curl http://localhost:50109/`
@@ -155,7 +155,7 @@ git add docker-compose.yaml
 git commit -m "feat: add changedetection.io service with shared Playwright
 
 - Deploy as standalone container on port 50109
-- Share firecrawl_playwright Playwright instance with Firecrawl
+- Share pulse_playwright Playwright instance with Firecrawl
 - File-based storage in dedicated volume
 - Health check on root endpoint every 60s"
 ```
@@ -179,7 +179,7 @@ Website change detection and monitoring service.
 
 - **Purpose:** Track content changes on monitored URLs
 - **Web UI:** http://localhost:50109
-- **Shared Resources:** Uses firecrawl_playwright for JavaScript rendering
+- **Shared Resources:** Uses pulse_playwright for JavaScript rendering
 - **Storage:** File-based in `/datastore` volume
 - **Integration:** Notifies webhook bridge on change detection
 ```
@@ -208,7 +208,7 @@ When changedetection detects a change, it can automatically trigger Firecrawl to
 
 1. In changedetection.io, edit a watch
 2. Go to "Notifications" tab
-3. Add notification URL: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+3. Add notification URL: `json://pulse_webhook:52100/api/webhook/changedetection`
 4. Set notification body template (see docs/CHANGEDETECTION_INTEGRATION.md)
 5. Save configuration
 
@@ -225,17 +225,17 @@ Add to the services section:
 **Purpose:** Website change monitoring with automatic rescraping
 **Port:** 50109
 **Language:** Python/Flask
-**Dependencies:** firecrawl_playwright (Playwright), firecrawl_webhook (optional)
+**Dependencies:** pulse_playwright (Playwright), pulse_webhook (optional)
 **Environment Variables:** CHANGEDETECTION_*
 **Health Check:** HTTP GET / (60s interval)
 **Integration:**
 - Shares Playwright browser for JavaScript rendering
-- Posts webhooks to firecrawl_webhook on change detection
+- Posts webhooks to pulse_webhook on change detection
 - Triggers automatic rescraping and re-indexing
 
 **Internal URLs:**
-- Service: `http://firecrawl_changedetection:5000`
-- Webhook: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+- Service: `http://pulse_change-detection:5000`
+- Webhook: `json://pulse_webhook:52100/api/webhook/changedetection`
 ```
 
 **Step 4: Commit**
@@ -1338,7 +1338,7 @@ WEBHOOK_CHANGEDETECTION_HMAC_SECRET=<same-as-above>
 Restart services:
 
 ```bash
-docker compose restart firecrawl_webhook firecrawl_changedetection
+docker compose restart pulse_webhook pulse_change-detection
 ```
 
 ### 2. Create a Watch in changedetection.io
@@ -1355,7 +1355,7 @@ docker compose restart firecrawl_webhook firecrawl_changedetection
 1. Edit your watch in changedetection.io
 2. Go to "Notifications" tab
 3. Click "Add new notification URL"
-4. Enter: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+4. Enter: `json://pulse_webhook:52100/api/webhook/changedetection`
 5. Configure notification body (Jinja2 template):
 
 ```json
@@ -1427,11 +1427,11 @@ curl -X POST http://localhost:50108/api/search \
 **Check changedetection.io logs:**
 
 ```bash
-docker compose logs firecrawl_changedetection | grep webhook
+docker compose logs pulse_change-detection | grep webhook
 ```
 
 **Verify notification URL is correct:**
-- Must use internal Docker network: `firecrawl_webhook:52100`
+- Must use internal Docker network: `pulse_webhook:52100`
 - NOT external: `localhost:50108`
 
 ### Signature Verification Failures
@@ -1440,10 +1440,10 @@ docker compose logs firecrawl_changedetection | grep webhook
 
 ```bash
 # Check changedetection secret
-docker compose exec firecrawl_changedetection env | grep SECRET
+docker compose exec pulse_change-detection env | grep SECRET
 
 # Check webhook bridge secret
-docker compose exec firecrawl_webhook env | grep WEBHOOK_SECRET
+docker compose exec pulse_webhook env | grep WEBHOOK_SECRET
 ```
 
 **Regenerate if needed:**
@@ -1452,7 +1452,7 @@ docker compose exec firecrawl_webhook env | grep WEBHOOK_SECRET
 NEW_SECRET=$(openssl rand -hex 32)
 echo "CHANGEDETECTION_WEBHOOK_SECRET=$NEW_SECRET" >> .env
 echo "WEBHOOK_CHANGEDETECTION_HMAC_SECRET=$NEW_SECRET" >> .env
-docker compose restart firecrawl_webhook firecrawl_changedetection
+docker compose restart pulse_webhook pulse_change-detection
 ```
 
 ### Jobs Not Processing
@@ -1460,13 +1460,13 @@ docker compose restart firecrawl_webhook firecrawl_changedetection
 **Check background worker is running:**
 
 ```bash
-docker compose logs firecrawl_webhook | grep "Starting worker"
+docker compose logs pulse_webhook | grep "Starting worker"
 ```
 
 **Verify Redis queue:**
 
 ```bash
-docker compose exec firecrawl_cache redis-cli
+docker compose exec pulse_redis redis-cli
 > KEYS indexing*
 > LLEN indexing
 ```
@@ -1475,7 +1475,7 @@ docker compose exec firecrawl_cache redis-cli
 
 ```bash
 # Query recent change events
-docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
+docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres -c \
   "SELECT watch_url, rescrape_status, rescrape_job_id FROM webhook.change_events ORDER BY detected_at DESC LIMIT 5;"
 ```
 
@@ -1484,7 +1484,7 @@ docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
 **Check Firecrawl is accessible:**
 
 ```bash
-docker compose exec firecrawl_webhook curl http://firecrawl:3002/health
+docker compose exec pulse_webhook curl http://firecrawl:3002/health
 ```
 
 **View rescrape job errors:**
@@ -1510,7 +1510,7 @@ In changedetection.io:
 4. Configure wait time, viewport size
 5. Save
 
-changedetection.io will use the shared Playwright browser (`firecrawl_playwright:3000`).
+changedetection.io will use the shared Playwright browser (`pulse_playwright:3000`).
 
 ### Filtering Content Changes
 
@@ -1626,7 +1626,7 @@ Create: `.docs/deployment-changedetection.md`
 - [ ] Review feasibility reports in `.docs/reports/changedetection/`
 - [ ] Verify port 50109 is available: `lsof -i :50109`
 - [ ] Backup existing .env file
-- [ ] Backup PostgreSQL database: `docker compose exec firecrawl_db pg_dump ...`
+- [ ] Backup PostgreSQL database: `docker compose exec pulse_postgres pg_dump ...`
 
 ## Configuration
 
@@ -1647,7 +1647,7 @@ Create: `.docs/deployment-changedetection.md`
   ```
 - [ ] Verify change_events table exists:
   ```bash
-  docker compose exec firecrawl_db psql -U firecrawl -d firecrawl_db \
+  docker compose exec pulse_postgres psql -U firecrawl -d pulse_postgres \
     -c "\dt webhook.*"
   ```
 
@@ -1655,11 +1655,11 @@ Create: `.docs/deployment-changedetection.md`
 
 - [ ] Build and start changedetection service:
   ```bash
-  docker compose up -d firecrawl_changedetection
+  docker compose up -d pulse_change-detection
   ```
 - [ ] Restart webhook bridge to load new config:
   ```bash
-  docker compose restart firecrawl_webhook
+  docker compose restart pulse_webhook
   ```
 - [ ] Wait 30 seconds for startup period
 
@@ -1667,11 +1667,11 @@ Create: `.docs/deployment-changedetection.md`
 
 - [ ] Check changedetection container status:
   ```bash
-  docker compose ps firecrawl_changedetection
+  docker compose ps pulse_change-detection
   ```
 - [ ] Verify changedetection logs:
   ```bash
-  docker compose logs firecrawl_changedetection | tail -20
+  docker compose logs pulse_change-detection | tail -20
   ```
 - [ ] Test changedetection web UI:
   ```bash
@@ -1681,7 +1681,7 @@ Create: `.docs/deployment-changedetection.md`
 
 - [ ] Check webhook bridge logs:
   ```bash
-  docker compose logs firecrawl_webhook | tail -20
+  docker compose logs pulse_webhook | tail -20
   ```
 - [ ] Verify webhook endpoint:
   ```bash
@@ -1701,7 +1701,7 @@ Create: `.docs/deployment-changedetection.md`
   ```
 - [ ] Verify rescrape job queued in Redis:
   ```bash
-  docker compose exec firecrawl_cache redis-cli LLEN indexing
+  docker compose exec pulse_redis redis-cli LLEN indexing
   ```
 - [ ] Wait for job to complete (check logs)
 - [ ] Verify content indexed in search
@@ -1723,7 +1723,7 @@ If deployment fails:
 
 1. Stop changedetection service:
    ```bash
-   docker compose stop firecrawl_changedetection
+   docker compose stop pulse_change-detection
    ```
 
 2. Rollback database migration:
@@ -1739,7 +1739,7 @@ If deployment fails:
 
 4. Restart webhook bridge:
    ```bash
-   docker compose restart firecrawl_webhook
+   docker compose restart pulse_webhook
    ```
 
 ## Success Criteria
@@ -1828,7 +1828,7 @@ Successfully integrated changedetection.io into Pulse monorepo for automated web
 ## Architecture Decisions
 
 1. **Embedded Worker Thread:** Webhook bridge runs worker in-process to share BM25 index
-2. **Shared Playwright:** Reuses firecrawl_playwright container to reduce memory
+2. **Shared Playwright:** Reuses pulse_playwright container to reduce memory
 3. **HMAC Signatures:** Webhook security via constant-time signature verification
 4. **PostgreSQL Storage:** change_events in webhook schema for metrics tracking
 
@@ -1959,7 +1959,7 @@ Phase 4 - Testing:
 # changedetection.io Service
 CHANGEDETECTION_PORT=50109
 CHANGEDETECTION_BASE_URL=http://localhost:50109
-CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://firecrawl_playwright:3000
+CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
 CHANGEDETECTION_FETCH_WORKERS=10
 CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME=60
 CHANGEDETECTION_WEBHOOK_SECRET=<64-char-hex>
@@ -1974,19 +1974,19 @@ WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
 
 ```bash
 # Deploy changedetection
-docker compose up -d firecrawl_changedetection
+docker compose up -d pulse_change-detection
 
 # View logs
-docker compose logs -f firecrawl_changedetection
+docker compose logs -f pulse_change-detection
 
 # Restart services
-docker compose restart firecrawl_webhook firecrawl_changedetection
+docker compose restart pulse_webhook pulse_change-detection
 
 # Check health
-docker compose ps firecrawl_changedetection
+docker compose ps pulse_change-detection
 
 # Access changedetection shell
-docker compose exec firecrawl_changedetection sh
+docker compose exec pulse_change-detection sh
 
 # Run migrations
 cd apps/webhook && uv run alembic upgrade head

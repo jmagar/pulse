@@ -23,8 +23,8 @@ RUN uv pip install --system --no-cache -r pyproject.toml
 # Copy application code
 COPY . .
 
-# Create non-root user
-RUN useradd -m -u 1000 bridge && chown -R bridge:bridge /app
+# Create non-root user matching host UID
+RUN useradd -m -u 99 bridge && chown -R bridge:bridge /app
 USER bridge
 
 # Expose API port

@@ -96,7 +96,7 @@ $ pnpm --filter '@pulsemcp/pulse-remote' run build
 **Discovery:**
 ```bash
 $ docker compose up -d
-$ docker logs firecrawl_mcp
+$ docker logs pulse_mcp
 Error [ERR_MODULE_NOT_FOUND]: Cannot find module
 '/app/apps/mcp/remote/dist/remote/shared/config/health-checks.js'
 imported from /app/apps/mcp/remote/dist/remote/index.js
@@ -177,11 +177,11 @@ Target:           /app/apps/mcp/shared/dist/config/health-checks.js ✓
 
 **Verification:**
 ```bash
-$ docker compose build firecrawl_mcp
+$ docker compose build pulse_mcp
 # Build succeeded
 
-$ docker compose up -d firecrawl_mcp
-$ docker logs firecrawl_mcp
+$ docker compose up -d pulse_mcp
+$ docker logs pulse_mcp
 # Still failing, but different error (health check authentication)
 ```
 
@@ -192,7 +192,7 @@ $ docker logs firecrawl_mcp
 
 **Discovery:**
 ```bash
-$ docker logs firecrawl_mcp
+$ docker logs pulse_mcp
 [INFO] healthCheck: Running authentication health checks...
 [ERROR] healthCheck: Authentication health check failures
 {"failures":[{"service":"Firecrawl","error":"Invalid API key - authentication failed"}]}
@@ -211,7 +211,7 @@ Error: Authentication health check failures
 
 2. **Check docker-compose environment:**
    ```bash
-   $ grep -A 20 "firecrawl_mcp:" docker-compose.yaml
+   $ grep -A 20 "pulse_mcp:" docker-compose.yaml
    environment:
      - NODE_ENV=${NODE_ENV:-production}
      - MCP_PORT=3060
@@ -237,9 +237,9 @@ environment:
 
 **Verification:**
 ```bash
-$ docker compose up -d firecrawl_mcp
+$ docker compose up -d pulse_mcp
 $ sleep 10
-$ docker compose ps firecrawl_mcp
+$ docker compose ps pulse_mcp
 # STATUS: Up 10 seconds (healthy) ✓
 ```
 
@@ -250,7 +250,7 @@ $ docker compose ps firecrawl_mcp
 
 **Discovery:**
 ```bash
-$ docker logs firecrawl_webhook_worker
+$ docker logs pulse_webhook_worker
 json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
 
 pydantic_settings.exceptions.SettingsError: error parsing value for
@@ -317,11 +317,11 @@ WEBHOOK_CORS_ORIGINS=["http://localhost:3000"]
 
 **Verification:**
 ```bash
-$ docker compose restart firecrawl_webhook firecrawl_webhook_worker
+$ docker compose restart pulse_webhook pulse_webhook_worker
 $ sleep 10
 $ docker compose ps | grep webhook
-firecrawl_webhook          Up 10 seconds (healthy)
-firecrawl_webhook_worker   Up 10 seconds (healthy)
+pulse_webhook          Up 10 seconds (healthy)
+pulse_webhook_worker   Up 10 seconds (healthy)
 ```
 
 ---
@@ -331,7 +331,7 @@ firecrawl_webhook_worker   Up 10 seconds (healthy)
 
 **Discovery:**
 ```bash
-$ docker logs firecrawl_webhook
+$ docker logs pulse_webhook
 [error] Failed to initialize timing metrics database
 error='(sqlalchemy.dialects.postgresql.asyncpg.Error)
 <class 'asyncpg.exceptions.InvalidSchemaNameError'>:
@@ -342,7 +342,7 @@ schema "webhook" does not exist
 
 1. **Check existing schemas:**
    ```bash
-   $ docker exec firecrawl_db psql -U firecrawl -d firecrawl_db -c "\dn"
+   $ docker exec pulse_postgres psql -U firecrawl -d pulse_postgres -c "\dn"
      Name  |       Owner
    --------+-------------------
     cron   | firecrawl
@@ -363,7 +363,7 @@ schema "webhook" does not exist
 
 3. **Check tables by schema:**
    ```bash
-   $ docker exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
+   $ docker exec pulse_postgres psql -U firecrawl -d pulse_postgres -c \
      "SELECT schemaname, tablename FROM pg_tables
       WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
       ORDER BY schemaname;"
@@ -392,20 +392,20 @@ CREATE SCHEMA IF NOT EXISTS webhook;  # ← Added
 
 **Fix 2:** Manual schema creation (immediate fix for running DB)
 ```bash
-$ docker exec firecrawl_db psql -U firecrawl -d firecrawl_db \
+$ docker exec pulse_postgres psql -U firecrawl -d pulse_postgres \
   -c "CREATE SCHEMA IF NOT EXISTS webhook;"
 CREATE SCHEMA
 ```
 
 **Verification:**
 ```bash
-$ docker compose restart firecrawl_webhook firecrawl_webhook_worker
+$ docker compose restart pulse_webhook pulse_webhook_worker
 $ sleep 10
 $ docker compose ps | grep webhook
-firecrawl_webhook          Up 10 seconds (healthy)
-firecrawl_webhook_worker   Up 10 seconds (healthy)
+pulse_webhook          Up 10 seconds (healthy)
+pulse_webhook_worker   Up 10 seconds (healthy)
 
-$ docker exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
+$ docker exec pulse_postgres psql -U firecrawl -d pulse_postgres -c \
   "SELECT schemaname, tablename FROM pg_tables
    WHERE schemaname IN ('nuq', 'webhook')
    ORDER BY schemaname, tablename;"
@@ -438,12 +438,12 @@ $ docker exec firecrawl_db psql -U firecrawl -d firecrawl_db -c \
 $ docker compose ps
 NAME                       STATUS
 firecrawl                  Up 4 minutes
-firecrawl_cache (Redis)    Up 4 minutes
-firecrawl_db (PostgreSQL)  Up 4 minutes
-firecrawl_mcp              Up 2 minutes (healthy)
-firecrawl_playwright       Up 4 minutes
-firecrawl_webhook          Up 17 seconds (healthy)
-firecrawl_webhook_worker   Up 17 seconds (healthy)
+pulse_redis (Redis)    Up 4 minutes
+pulse_postgres (PostgreSQL)  Up 4 minutes
+pulse_mcp              Up 2 minutes (healthy)
+pulse_playwright       Up 4 minutes
+pulse_webhook          Up 17 seconds (healthy)
+pulse_webhook_worker   Up 17 seconds (healthy)
 ```
 
 **7/7 services running successfully**
@@ -475,21 +475,21 @@ ORDER BY schemaname, tablename;
 
 **Test 1: MCP → Firecrawl**
 ```bash
-$ docker exec firecrawl_mcp wget -qO- http://firecrawl:3002
+$ docker exec pulse_mcp wget -qO- http://firecrawl:3002
 SCRAPERS-JS: Hello, world! K8s!
 ```
 ✅ Success - MCP can reach Firecrawl API
 
 **Test 2: MCP → Redis**
 ```bash
-$ docker exec firecrawl_mcp sh -c 'echo "PING" | nc -w 1 firecrawl_cache 6379'
+$ docker exec pulse_mcp sh -c 'echo "PING" | nc -w 1 pulse_redis 6379'
 +PONG
 ```
 ✅ Success - Redis accessible on internal network
 
 **Test 3: Webhook → PostgreSQL**
 ```bash
-$ docker exec firecrawl_webhook python -c \
+$ docker exec pulse_webhook python -c \
   "from app.config import settings; print(settings.database_url[:50])"
 DB: postgresql+asyncpg://firecrawl:zFp9g998BFwHuvsB9Dc...
 ```
@@ -602,12 +602,12 @@ Dispatched subagent using `Task` tool with `general-purpose` subagent type to ex
    ```bash
    $ grep "^  firecrawl" docker-compose.yaml
    firecrawl:
-   firecrawl_cache:
-   firecrawl_db:
-   firecrawl_playwright:
-   firecrawl_mcp:
-   firecrawl_webhook:
-   firecrawl_webhook_worker:
+   pulse_redis:
+   pulse_postgres:
+   pulse_playwright:
+   pulse_mcp:
+   pulse_webhook:
+   pulse_webhook_worker:
    ```
    ✓ All 7 services present
 
@@ -626,12 +626,12 @@ Dispatched subagent using `Task` tool with `general-purpose` subagent type to ex
    $ docker compose ps
    NAME                       STATUS
    firecrawl                  Up 33 minutes
-   firecrawl_cache            Up 33 minutes
-   firecrawl_db               Up 33 minutes
-   firecrawl_mcp              Up 30 minutes (healthy)
-   firecrawl_playwright       Up 33 minutes
-   firecrawl_webhook          Up 28 minutes (healthy)
-   firecrawl_webhook_worker   Up 28 minutes (healthy)
+   pulse_redis            Up 33 minutes
+   pulse_postgres               Up 33 minutes
+   pulse_mcp              Up 30 minutes (healthy)
+   pulse_playwright       Up 33 minutes
+   pulse_webhook          Up 28 minutes (healthy)
+   pulse_webhook_worker   Up 28 minutes (healthy)
    ```
    ✅ All services still healthy
 
@@ -762,12 +762,12 @@ Dispatched subagent using `Task` tool with `general-purpose` subagent type to ex
 
 **Services Running:** 7/7 healthy
 - firecrawl (port 4300/3002)
-- firecrawl_cache (port 4303/6379)
-- firecrawl_db (port 4304/5432)
-- firecrawl_playwright (port 4302/3000)
-- firecrawl_mcp (port 3060) ✅ healthy
-- firecrawl_webhook (port 52100) ✅ healthy
-- firecrawl_webhook_worker ✅ healthy
+- pulse_redis (port 4303/6379)
+- pulse_postgres (port 4304/5432)
+- pulse_playwright (port 4302/3000)
+- pulse_mcp (port 3060) ✅ healthy
+- pulse_webhook (port 52100) ✅ healthy
+- pulse_webhook_worker ✅ healthy
 
 **Database Schemas:**
 - `nuq` (Firecrawl): 4 tables

@@ -9,6 +9,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from services.vector_store import VectorStore
+from tests.utils.db_fixtures import (  # noqa: F401
+    cleanup_database_engine,
+    initialize_test_database,
+)
+from tests.utils.service_endpoints import get_qdrant_base_url
 
 
 @pytest.fixture
@@ -20,9 +25,9 @@ def mock_qdrant_client() -> AsyncMock:
 @pytest.fixture
 def vector_store(mock_qdrant_client: AsyncMock) -> Generator[VectorStore]:
     """Create VectorStore with mocked client."""
-    with patch("app.services.vector_store.AsyncQdrantClient", return_value=mock_qdrant_client):
+    with patch("services.vector_store.AsyncQdrantClient", return_value=mock_qdrant_client):
         store = VectorStore(
-            url="http://localhost:52102",
+            url=get_qdrant_base_url(),
             collection_name="test_collection",
             vector_dim=384,
         )

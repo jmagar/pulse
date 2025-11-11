@@ -14,14 +14,14 @@
 │  ├──────────────────────────────────────────────────────────────┤      │
 │  │                                                              │      │
 │  │  ┌────────────────┐     ┌────────────────┐                 │      │
-│  │  │ firecrawl_db   │     │ firecrawl_cache│                 │      │
+│  │  │ pulse_postgres   │     │ pulse_redis│                 │      │
 │  │  │ (PostgreSQL)   │     │ (Redis)        │                 │      │
 │  │  │ Port: 5432     │     │ Port: 6379     │                 │      │
 │  │  │ Ext:  50105    │     │ Ext:  50104    │                 │      │
 │  │  └────────────────┘     └────────────────┘                 │      │
 │  │                                                              │      │
 │  │  ┌────────────────────────────────┐                         │      │
-│  │  │ firecrawl_playwright           │                         │      │
+│  │  │ pulse_playwright           │                         │      │
 │  │  │ (Browser Automation)           │                         │      │
 │  │  │ Port: 3000 | Ext: 50100        │                         │      │
 │  │  └────────────────────────────────┘                         │      │
@@ -42,20 +42,20 @@
 │  │  │ Port: 3002              │                             │        │
 │  │  │ Ext:  50102             │                             │        │
 │  │  │ depends_on:             │                             │        │
-│  │  │  - firecrawl_db         │                             │        │
-│  │  │  - firecrawl_cache      │                             │        │
-│  │  │  - firecrawl_playwright │                             │        │
+│  │  │  - pulse_postgres         │                             │        │
+│  │  │  - pulse_redis      │                             │        │
+│  │  │  - pulse_playwright │                             │        │
 │  │  └────────────┬────────────┘                             │        │
 │  │               │                                           │        │
 │  │  ┌────────────▼──────────────┐                            │        │
-│  │  │ firecrawl_webhook         │                            │        │
+│  │  │ pulse_webhook         │                            │        │
 │  │  │ (Webhook Bridge / Search) │                            │        │
 │  │  │ Python 3.13               │                            │        │
 │  │  │ Port: 52100               │                            │        │
 │  │  │ Ext:  50108               │                            │        │
 │  │  │ depends_on:               │                            │        │
-│  │  │  - firecrawl_db           │                            │        │
-│  │  │  - firecrawl_cache        │                            │        │
+│  │  │  - pulse_postgres           │                            │        │
+│  │  │  - pulse_redis        │                            │        │
 │  │  └───────────────────────────┘                            │        │
 │  │                                                            │        │
 │  └────────────────────────────────────────────────────────────┘        │
@@ -68,7 +68,7 @@
 │  ├───────────────────────────────────────────────────────────┤        │
 │  │                                                            │        │
 │  │  ┌───────────────────────────┐                            │        │
-│  │  │ firecrawl_mcp             │                            │        │
+│  │  │ pulse_mcp             │                            │        │
 │  │  │ (MCP Server)              │                            │        │
 │  │  │ Node.js / TypeScript      │                            │        │
 │  │  │ Port: 3060                │                            │        │
@@ -88,15 +88,15 @@
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  ┌──────────────────────────────┐   ┌──────────────────────────────┐   │
-│  │ firecrawl_tei                │   │ firecrawl_qdrant             │   │
+│  │ tei                          │   │ qdrant                      │   │
 │  │ (Embeddings / TEI)           │   │ (Vector Database)            │   │
 │  │ HuggingFace                  │   │ Qdrant                       │   │
 │  │ Port: 80                     │   │ HTTP: 6333 | Ext: 50201      │   │
 │  │ Ext:  50200                  │   │ gRPC: 6334 | Ext: 50202      │   │
 │  │ Requires: GPU (NVIDIA)       │   │                              │   │
 │  │                              │   │                              │   │
-│  │ Model: Qwen/Qwen3-Embedding  │   │ Collection: firecrawl_docs   │   │
-│  │ 0.6B                         │   │                              │   │
+│  │ Model: Qwen/Qwen3-Embedding  │   │ Collection: pulse_docs       │   │
+│  │ 0.6B (1024 dims)             │   │ (1024-dim vectors, cosine)   │   │
 │  └──────────────────────────────┘   └──────────────────────────────┘   │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -106,17 +106,17 @@
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  ┌──────────────────────────────────┐                                  │
-│  │ firecrawl_changedetection        │                                  │
+│  │ pulse_change-detection        │                                  │
 │  │ (Change Detection Monitor)       │                                  │
 │  │ Python / Flask                   │                                  │
 │  │ Port: 5000                       │                                  │
 │  │ Ext:  50111 (RECOMMENDED)        │                                  │
 │  │                                  │                                  │
 │  │ Uses:                            │                                  │
-│  │  - firecrawl_playwright (shared) │                                  │
+│  │  - pulse_playwright (shared) │                                  │
 │  │                                  │                                  │
 │  │ Sends to:                        │                                  │
-│  │  - firecrawl_webhook (indexing)  │                                  │
+│  │  - pulse_webhook (indexing)  │                                  │
 │  └──────────────────────────────────┘                                  │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -175,7 +175,7 @@ External Internet / Firecrawl API Client
                            │
                            ▼
             ┌──────────────────────────────────────┐
-            │ firecrawl_webhook (Search Bridge)    │
+            │ pulse_webhook (Search Bridge)    │
             │ - Receives webhook notifications    │
             │ - Indexes content (BM25 + Vector)   │
             │ - Stores index on disk              │
@@ -192,7 +192,7 @@ External Internet / Firecrawl API Client
                                │
                                ▼
             ┌──────────────────────────────────────┐
-            │ firecrawl_mcp (MCP Server)           │
+            │ pulse_mcp (MCP Server)           │
             │ - Registers scrape, search tools     │
             │ - Calls Firecrawl API                │
             │ - Queries webhook indexes            │
@@ -218,19 +218,19 @@ External Internet / Firecrawl API Client
 │                                                                 │
 │  /mnt/cache/appdata/                                            │
 │  │                                                              │
-│  ├── firecrawl_postgres/         → /var/lib/postgresql/data    │
+│  ├── pulse_postgres/         → /var/lib/postgresql/data    │
 │  │   (Database files)            (PostgreSQL)                   │
 │  │   └─ RISK: LOW (backups)                                    │
 │  │                                                              │
-│  ├── firecrawl_redis/            → /data                       │
+│  ├── pulse_redis/            → /data                       │
 │  │   (RDB + AOF logs)            (Redis)                        │
 │  │   └─ RISK: MEDIUM (ephemeral) │                             │
 │  │                                                              │
-│  ├── firecrawl_mcp_resources/    → /app/resources              │
+│  ├── pulse_mcp_resources/    → /app/resources              │
 │  │   (Cached content)            (MCP Server)                   │
 │  │   └─ RISK: MEDIUM (TTL 24h)                                 │
 │  │                                                              │
-│  ├── firecrawl_webhook/          → /app/data/bm25              │
+│  ├── pulse_webhook/          → /app/data/bm25              │
 │  │   (BM25 index)                (Webhook Bridge)               │
 │  │   └─ RISK: MEDIUM (rebuild)                                 │
 │  │                                                              │
@@ -253,17 +253,17 @@ External Internet / Firecrawl API Client
 ├────────────────────────┬──────────┬──────────────────────────────┤
 │ Service                │ HC       │ Configuration                │
 ├────────────────────────┼──────────┼──────────────────────────────┤
-│ firecrawl_mcp          │ ✅ YES   │ GET /health (5s, 30s int)    │
+│ pulse_mcp          │ ✅ YES   │ GET /health (5s, 30s int)    │
 ├────────────────────────┼──────────┼──────────────────────────────┤
-│ firecrawl_webhook      │ ✅ YES   │ GET /health (40s, 30s int)   │
+│ pulse_webhook      │ ✅ YES   │ GET /health (40s, 30s int)   │
 ├────────────────────────┼──────────┼──────────────────────────────┤
 │ firecrawl              │ ❌ NO    │ ⚠️  RECOMMENDED: Add check    │
 ├────────────────────────┼──────────┼──────────────────────────────┤
-│ firecrawl_db           │ ❌ NO    │ ⚠️  RECOMMENDED: pg_isready   │
+│ pulse_postgres           │ ❌ NO    │ ⚠️  RECOMMENDED: pg_isready   │
 ├────────────────────────┼──────────┼──────────────────────────────┤
-│ firecrawl_cache        │ ❌ NO    │ ⚠️  RECOMMENDED: redis-cli    │
+│ pulse_redis        │ ❌ NO    │ ⚠️  RECOMMENDED: redis-cli    │
 ├────────────────────────┼──────────┼──────────────────────────────┤
-│ firecrawl_playwright   │ ❌ NO    │ ⚠️  RECOMMENDED: Add check    │
+│ pulse_playwright   │ ❌ NO    │ ⚠️  RECOMMENDED: Add check    │
 └────────────────────────┴──────────┴──────────────────────────────┘
 
 Health Check Coverage: 33% (2 of 6 core services)
@@ -280,17 +280,17 @@ Recommended Improvement: Add checks to ALL services
 │  INTERNAL (Docker Network - Use Container Names)            │
 │  ================================================            │
 │                                                              │
-│  From: firecrawl_mcp                                         │
+│  From: pulse_mcp                                         │
 │  To:   firecrawl (API)                                       │
 │  URL:  http://firecrawl:3002  ✅ CORRECT                     │
 │  
 │  From: firecrawl (API)                                       │
-│  To:   firecrawl_webhook (Webhook)                           │
-│  URL:  http://firecrawl_webhook:52100  ✅ CORRECT            │
+│  To:   pulse_webhook (Webhook)                           │
+│  URL:  http://pulse_webhook:52100  ✅ CORRECT            │
 │                                                              │
 │  From: Any service                                           │
 │  To:   PostgreSQL                                            │
-│  URL:  postgresql://firecrawl_db:5432/...  ✅ CORRECT        │
+│  URL:  postgresql://pulse_postgres:5432/...  ✅ CORRECT        │
 │                                                              │
 │  ─────────────────────────────────────────────              │
 │                                                              │

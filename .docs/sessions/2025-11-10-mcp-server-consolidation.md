@@ -146,7 +146,7 @@ apps/mcp/           # Single consolidated package
 - **Issue:** Colors disabled in Docker logs (stdout not a TTY)
 - **Solution:** Added `FORCE_COLOR=1` to [.env.example](../.env.example)
 - **Commit:** `622581e`
-- **Verification:** ANSI color codes now visible in `docker logs firecrawl_mcp`
+- **Verification:** ANSI color codes now visible in `docker logs pulse_mcp`
 
 ---
 
@@ -160,15 +160,15 @@ pnpm --filter @pulsemcp/mcp-server run build
 
 ### Docker Verification
 ```bash
-docker compose build firecrawl_mcp
+docker compose build pulse_mcp
 # ✓ SUCCESS - 8 seconds, mostly cached
 # ✓ 380 packages (build), 181 packages (production)
 
-docker compose up -d firecrawl_mcp
+docker compose up -d pulse_mcp
 # ✓ Container status: Up (not restarting)
 # ✓ Health check: HTTP 200 at localhost:3060/health
 
-docker logs firecrawl_mcp
+docker logs pulse_mcp
 # ✓ Clean startup, no errors
 # ✓ "Server ready to accept connections"
 # ✓ All 4 tools registered with valid schemas

@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from config import settings
 from main import app
+from tests.utils.service_endpoints import get_changedetection_diff_url
 
 
 def test_changedetection_webhook_valid_signature():
@@ -18,7 +19,7 @@ def test_changedetection_webhook_valid_signature():
         "watch_url": "https://example.com/test",
         "watch_title": "Test Watch",
         "detected_at": "2025-11-10T12:00:00Z",
-        "diff_url": "http://changedetection:5000/diff/test-watch-123",
+        "diff_url": get_changedetection_diff_url("diff/test-watch-123"),
         "snapshot": "Content changed here",
     }
 
@@ -89,7 +90,7 @@ async def test_changedetection_webhook_stores_event(db_session):
         "watch_url": "https://example.com/dbtest",
         "watch_title": "DB Test",
         "detected_at": "2025-11-10T12:00:00Z",
-        "diff_url": "http://changedetection:5000/diff/db-test-watch",
+        "diff_url": get_changedetection_diff_url("diff/db-test-watch"),
         "snapshot": "Test content",
     }
 

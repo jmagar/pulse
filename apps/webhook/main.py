@@ -21,6 +21,7 @@ from config import settings
 from infra.database import close_database, init_database
 from api.middleware.timing import TimingMiddleware
 from infra.rate_limit import limiter
+from utils.content_metrics import summarize_firecrawl_payload
 from utils.logging import configure_logging, get_logger
 
 # Configure logging
@@ -149,7 +150,7 @@ app.include_router(api_router)
 
 
 @app.middleware("http")
-async def log_firecrawl_webhook(request: Request, call_next: Any) -> Any:
+async def log_pulse_webhook(request: Request, call_next: Any) -> Any:
     """Log incoming Firecrawl webhook payloads for debugging."""
 
     if request.url.path == "/api/webhook/firecrawl":
@@ -159,9 +160,21 @@ async def log_firecrawl_webhook(request: Request, call_next: Any) -> Any:
         except json.JSONDecodeError:
             payload = None
 
-        logger.warning(
-            "Webhook request received", payload=payload, raw=body.decode("utf-8", errors="replace")
-        )
+        if isinstance(payload, dict):
+            summary = summarize_firecrawl_payload(payload)
+            logger.warning(
+                "Webhook request received",
+                event_type=summary.get("event_type"),
+                event_id=summary.get("event_id"),
+                data_count=summary.get("data_count"),
+                metrics=summary,
+                body_bytes=len(body),
+            )
+        else:
+            logger.warning(
+                "Webhook request received (invalid JSON)",
+                body_bytes=len(body),
+            )
 
         async def receive() -> dict[str, object]:
             return {"type": "http.request", "body": body, "more_body": False}

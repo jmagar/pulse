@@ -34,11 +34,11 @@ pulse uses a **multi-language monorepo**:
 
 **Internal URLs (Docker network):**
 - API: `http://firecrawl:3002`
-- MCP: `http://firecrawl_mcp:3060`
-- Webhook: `http://firecrawl_webhook:52100`
-- changedetection.io: `http://firecrawl_changedetection:5000`
-- Redis: `redis://firecrawl_cache:6379`
-- PostgreSQL: `postgresql://firecrawl_db:5432/firecrawl_db`
+- MCP: `http://pulse_mcp:3060`
+- Webhook: `http://pulse_webhook:52100`
+- changedetection.io: `http://pulse_change-detection:5000`
+- Redis: `redis://pulse_redis:6379`
+- PostgreSQL: `postgresql://pulse_postgres:5432/pulse_postgres`
 
 **Never hardcode external URLs in code!** Use environment variables.
 
@@ -47,17 +47,17 @@ pulse uses a **multi-language monorepo**:
 **Purpose:** Website change monitoring with automatic rescraping
 **Port:** 50109
 **Language:** Python/Flask
-**Dependencies:** firecrawl_playwright (Playwright), firecrawl_webhook (optional)
+**Dependencies:** pulse_playwright (Playwright), pulse_webhook (optional)
 **Environment Variables:** CHANGEDETECTION_*
 **Health Check:** HTTP GET / (60s interval)
 **Integration:**
 - Shares Playwright browser for JavaScript rendering
-- Posts webhooks to firecrawl_webhook on change detection
+- Posts webhooks to pulse_webhook on change detection
 - Triggers automatic rescraping and re-indexing
 
 **Internal URLs:**
-- Service: `http://firecrawl_changedetection:5000`
-- Webhook: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+- Service: `http://pulse_change-detection:5000`
+- Webhook: `json://pulse_webhook:52100/api/webhook/changedetection`
 
 ### Environment Variables
 

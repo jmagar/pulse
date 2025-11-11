@@ -117,7 +117,7 @@ If services don't run from the project root, we need to ensure they use the root
 
 ```yaml
 # Example fix if needed (likely not required):
-firecrawl_mcp:
+pulse_mcp:
   <<: *common-service
   # ... other config ...
   working_dir: /app  # Ensure this matches where .env is mounted
@@ -238,11 +238,11 @@ Add a section to [CLAUDE.md](CLAUDE.md) about environment variable management:
 ```bash
 # Run a test to ensure services start correctly
 docker compose down
-docker compose up -d firecrawl_mcp firecrawl_webhook
+docker compose up -d pulse_mcp pulse_webhook
 
 # Check logs for environment variable loading
-docker compose logs firecrawl_mcp | grep -i "environment\|config\|starting"
-docker compose logs firecrawl_webhook | grep -i "environment\|config\|starting"
+docker compose logs pulse_mcp | grep -i "environment\|config\|starting"
+docker compose logs pulse_webhook | grep -i "environment\|config\|starting"
 
 # Verify health endpoints
 curl http://localhost:3060/health
@@ -472,12 +472,12 @@ Run: Simplify workspace config (already correct if it includes `apps/*` and `pac
 **Step 10: Update docker-compose.yaml**
 
 ```yaml
-firecrawl_mcp:
+pulse_mcp:
   <<: *common-service
   build:
     context: .
     dockerfile: apps/mcp-local/Dockerfile
-  container_name: firecrawl_mcp
+  container_name: pulse_mcp
   # ... rest stays same
 ```
 
@@ -860,7 +860,7 @@ Update docker-compose.yaml:
 
 ```yaml
 services:
-  firecrawl_playwright:
+  pulse_playwright:
     ports:
       - "${PLAYWRIGHT_PORT:-50100}:3000"
 
@@ -868,19 +868,19 @@ services:
     ports:
       - "${FIRECRAWL_PORT:-50102}:${FIRECRAWL_INTERNAL_PORT:-3002}"
 
-  firecrawl_cache:
+  pulse_redis:
     ports:
       - "${REDIS_PORT:-50104}:6379"
 
-  firecrawl_db:
+  pulse_postgres:
     ports:
       - "${POSTGRES_PORT:-50105}:5432"
 
-  firecrawl_mcp:
+  pulse_mcp:
     ports:
       - "${MCP_PORT:-50107}:3060"
 
-  firecrawl_webhook:
+  pulse_webhook:
     ports:
       - "${WEBHOOK_PORT:-50108}:52100"
 ```
@@ -921,16 +921,16 @@ All services use sequential high-numbered ports (50100-50110 range) following se
 
 | Port  | Service                  | Container Name            | Protocol | Status |
 |-------|--------------------------|---------------------------|----------|--------|
-| 50100 | Playwright Service       | firecrawl_playwright      | HTTP     | Active |
+| 50100 | Playwright Service       | pulse_playwright      | HTTP     | Active |
 | 50101 | Firecrawl API (Internal) | firecrawl                 | HTTP     | Active |
 | 50102 | Firecrawl API (External) | firecrawl                 | HTTP     | Active |
 | 50103 | Worker                   | firecrawl                 | HTTP     | Active |
-| 50104 | Redis                    | firecrawl_cache           | Redis    | Active |
-| 50105 | PostgreSQL               | firecrawl_db              | Postgres | Active |
+| 50104 | Redis                    | pulse_redis           | Redis    | Active |
+| 50105 | PostgreSQL               | pulse_postgres              | Postgres | Active |
 | 50106 | Extract Worker           | firecrawl                 | HTTP     | Active |
-| 50107 | MCP Server               | firecrawl_mcp             | HTTP     | Active |
-| 50108 | Webhook Bridge API       | firecrawl_webhook         | HTTP     | Active |
-| N/A   | Webhook Worker           | firecrawl_webhook_worker  | N/A      | Active |
+| 50107 | MCP Server               | pulse_mcp             | HTTP     | Active |
+| 50108 | Webhook Bridge API       | pulse_webhook         | HTTP     | Active |
+| N/A   | Webhook Worker           | pulse_webhook_worker  | N/A      | Active |
 
 ## External Service URLs (Host Access)
 
@@ -938,7 +938,7 @@ All services use sequential high-numbered ports (50100-50110 range) following se
 - **MCP Server**: `http://localhost:50107`
 - **Webhook Bridge**: `http://localhost:50108`
 - **Redis**: `redis://localhost:50104`
-- **PostgreSQL**: `postgresql://localhost:50105/firecrawl_db`
+- **PostgreSQL**: `postgresql://localhost:50105/pulse_postgres`
 - **Playwright**: `http://localhost:50100`
 ```
 
@@ -2130,12 +2130,12 @@ Ensure internal URLs don't reference old ports:
 
 ```bash
 # These should use container names (no port changes needed):
-REDIS_URL=redis://firecrawl_cache:6379
-NUQ_DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@firecrawl_db:5432/${POSTGRES_DB}
-WEBHOOK_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@firecrawl_db:5432/${POSTGRES_DB}
-WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379
-PLAYWRIGHT_MICROSERVICE_URL=http://firecrawl_playwright:3000/scrape
-SELF_HOSTED_WEBHOOK_URL=http://firecrawl_webhook:52100/api/webhook/firecrawl
+REDIS_URL=redis://pulse_redis:6379
+NUQ_DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pulse_postgres:5432/${POSTGRES_DB}
+WEBHOOK_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pulse_postgres:5432/${POSTGRES_DB}
+WEBHOOK_REDIS_URL=redis://pulse_redis:6379
+PLAYWRIGHT_MICROSERVICE_URL=http://pulse_playwright:3000/scrape
+SELF_HOSTED_WEBHOOK_URL=http://pulse_webhook:52100/api/webhook/firecrawl
 ```
 
 **Step 3: Verify external service URLs**

@@ -439,17 +439,17 @@ FIRECRAWL_API_KEY=your-api-key-here
 # PostgreSQL
 POSTGRES_USER=firecrawl
 POSTGRES_PASSWORD=your-secure-password
-POSTGRES_DB=firecrawl_db
+POSTGRES_DB=pulse_postgres
 POSTGRES_PORT=4304
-DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@firecrawl_db:5432/${POSTGRES_DB}
+DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pulse_postgres:5432/${POSTGRES_DB}
 
 # Redis
 REDIS_PORT=4303
-REDIS_URL=redis://firecrawl_cache:6379
+REDIS_URL=redis://pulse_redis:6379
 
 # Playwright
 PLAYWRIGHT_PORT=4302
-PLAYWRIGHT_MICROSERVICE_URL=http://firecrawl_playwright:3000/scrape
+PLAYWRIGHT_MICROSERVICE_URL=http://pulse_playwright:3000/scrape
 
 # -----------------
 # MCP Server
@@ -470,8 +470,8 @@ MCP_DEBUG=false
 # -----------------
 WEBHOOK_PORT=52100
 WEBHOOK_API_SECRET=your-webhook-api-secret
-WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379
-WEBHOOK_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@firecrawl_db:5432/${POSTGRES_DB}
+WEBHOOK_REDIS_URL=redis://pulse_redis:6379
+WEBHOOK_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pulse_postgres:5432/${POSTGRES_DB}
 WEBHOOK_QDRANT_URL=http://qdrant:6333
 WEBHOOK_QDRANT_COLLECTION=firecrawl_docs
 WEBHOOK_TEI_URL=http://tei:80
@@ -573,13 +573,13 @@ In `apps/webhook/app/config.py`, change:
 class Settings(BaseSettings):
     # Use WEBHOOK_DATABASE_URL or fall back to DATABASE_URL (shared)
     database_url: PostgresDsn = Field(
-        default="postgresql+asyncpg://firecrawl:password@firecrawl_db:5432/firecrawl_db",
+        default="postgresql+asyncpg://firecrawl:password@pulse_postgres:5432/pulse_postgres",
         validation_alias=AliasChoices("WEBHOOK_DATABASE_URL", "DATABASE_URL")
     )
 
     # Use WEBHOOK_REDIS_URL or fall back to REDIS_URL (shared)
     redis_url: RedisDsn = Field(
-        default="redis://firecrawl_cache:6379",
+        default="redis://pulse_redis:6379",
         validation_alias=AliasChoices("WEBHOOK_REDIS_URL", "REDIS_URL")
     )
 ```
@@ -628,7 +628,7 @@ git commit -m "feat(webhook): support shared PostgreSQL and environment variable
 - Schema creation is idempotent (`CREATE SCHEMA IF NOT EXISTS`)
 
 **Database Architecture:**
-- Shared PostgreSQL instance (firecrawl_db) with schema isolation
+- Shared PostgreSQL instance (pulse_postgres) with schema isolation
 - `public` schema: Firecrawl API data
 - `webhook` schema: Webhook bridge timing metrics
 - Clean separation of concerns with no cross-schema queries needed
@@ -705,27 +705,27 @@ git commit -m "feat(webhook): use dedicated schema in shared PostgreSQL"
 **Implemented:** Three services added to root docker-compose.yaml with namespaced environment variables
 
 **Services Added:**
-1. **firecrawl_mcp** (port 3060)
+1. **pulse_mcp** (port 3060)
    - MCP_* namespaced environment variables (17 variables configured)
    - Depends on firecrawl API
    - Health check with wget
    - Volume mount for persistent resources
 
-2. **firecrawl_webhook** (port 52100)
+2. **pulse_webhook** (port 52100)
    - WEBHOOK_* namespaced environment variables (18 variables configured)
-   - Depends on shared PostgreSQL (firecrawl_db) and Redis (firecrawl_cache)
+   - Depends on shared PostgreSQL (pulse_postgres) and Redis (pulse_redis)
    - Health check with curl
    - Complete configuration for hybrid vector/BM25 search
 
-3. **firecrawl_webhook_worker**
+3. **pulse_webhook_worker**
    - Background worker configuration (command override)
    - WEBHOOK_* namespaced environment variables (11 variables configured)
    - Depends on Redis and webhook API
    - Redis connection health check
 
 **Infrastructure Consolidation:**
-- All services use shared PostgreSQL (firecrawl_db:5432)
-- All services use shared Redis (firecrawl_cache:6379)
+- All services use shared PostgreSQL (pulse_postgres:5432)
+- All services use shared Redis (pulse_redis:6379)
 - Single Docker network (firecrawl)
 - Proper YAML anchor pattern for DRY configuration
 
@@ -745,11 +745,11 @@ git commit -m "feat(webhook): use dedicated schema in shared PostgreSQL"
 In root `docker-compose.yaml`, add:
 
 ```yaml
-  firecrawl_mcp:
+  pulse_mcp:
     build:
       context: ./apps/mcp
       dockerfile: Dockerfile
-    container_name: firecrawl_mcp
+    container_name: pulse_mcp
     ports:
       - "${MCP_PORT:-3060}:3060"
     environment:
@@ -776,17 +776,17 @@ In root `docker-compose.yaml`, add:
 **Step 2: Add webhook service**
 
 ```yaml
-  firecrawl_webhook:
+  pulse_webhook:
     build:
       context: ./apps/webhook
       dockerfile: Dockerfile
-    container_name: firecrawl_webhook
+    container_name: pulse_webhook
     ports:
       - "${WEBHOOK_PORT:-52100}:52100"
     environment:
       - WEBHOOK_PORT=52100
-      - WEBHOOK_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@firecrawl_db:5432/${POSTGRES_DB}
-      - WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379
+      - WEBHOOK_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pulse_postgres:5432/${POSTGRES_DB}
+      - WEBHOOK_REDIS_URL=redis://pulse_redis:6379
       - WEBHOOK_API_SECRET=${WEBHOOK_API_SECRET}
       - WEBHOOK_QDRANT_URL=${WEBHOOK_QDRANT_URL}
       - WEBHOOK_TEI_URL=${WEBHOOK_TEI_URL}
@@ -794,8 +794,8 @@ In root `docker-compose.yaml`, add:
       - firecrawl
     restart: unless-stopped
     depends_on:
-      - firecrawl_db
-      - firecrawl_cache
+      - pulse_postgres
+      - pulse_redis
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     healthcheck:
@@ -804,23 +804,23 @@ In root `docker-compose.yaml`, add:
       timeout: 10s
       retries: 3
 
-  firecrawl_webhook_worker:
+  pulse_webhook_worker:
     build:
       context: ./apps/webhook
       dockerfile: Dockerfile
-    container_name: firecrawl_webhook_worker
+    container_name: pulse_webhook_worker
     command: python -m app.worker
     environment:
-      - WEBHOOK_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@firecrawl_db:5432/${POSTGRES_DB}
-      - WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379
+      - WEBHOOK_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pulse_postgres:5432/${POSTGRES_DB}
+      - WEBHOOK_REDIS_URL=redis://pulse_redis:6379
       - WEBHOOK_QDRANT_URL=${WEBHOOK_QDRANT_URL}
       - WEBHOOK_TEI_URL=${WEBHOOK_TEI_URL}
     networks:
       - firecrawl
     restart: unless-stopped
     depends_on:
-      - firecrawl_cache
-      - firecrawl_webhook
+      - pulse_redis
+      - pulse_webhook
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
 ```
@@ -835,20 +835,20 @@ Create/update `.docs/services-ports.md`:
 | Port  | Service                  | Container Name            | Protocol |
 |-------|--------------------------|---------------------------|----------|
 | 3002  | Firecrawl API            | firecrawl                 | HTTP     |
-| 3060  | MCP Server               | firecrawl_mcp             | HTTP     |
-| 4302  | Playwright               | firecrawl_playwright      | HTTP     |
-| 4303  | Redis                    | firecrawl_cache           | Redis    |
-| 4304  | PostgreSQL               | firecrawl_db              | Postgres |
-| 52100 | Webhook Bridge API       | firecrawl_webhook         | HTTP     |
-| N/A   | Webhook Worker           | firecrawl_webhook_worker  | N/A      |
+| 3060  | MCP Server               | pulse_mcp             | HTTP     |
+| 4302  | Playwright               | pulse_playwright      | HTTP     |
+| 4303  | Redis                    | pulse_redis           | Redis    |
+| 4304  | PostgreSQL               | pulse_postgres              | Postgres |
+| 52100 | Webhook Bridge API       | pulse_webhook         | HTTP     |
+| N/A   | Webhook Worker           | pulse_webhook_worker  | N/A      |
 
 ## Internal Service URLs
 
 - Firecrawl API: `http://firecrawl:3002`
-- MCP Server: `http://firecrawl_mcp:3060`
-- Redis: `redis://firecrawl_cache:6379`
-- PostgreSQL: `postgresql://firecrawl_db:5432`
-- Webhook Bridge: `http://firecrawl_webhook:52100`
+- MCP Server: `http://pulse_mcp:3060`
+- Redis: `redis://pulse_redis:6379`
+- PostgreSQL: `postgresql://pulse_postgres:5432`
+- Webhook Bridge: `http://pulse_webhook:52100`
 ```
 
 **Step 4: Test docker-compose validation**
@@ -1070,10 +1070,10 @@ pulse uses a **multi-language monorepo**:
 
 **Internal URLs (Docker network):**
 - API: `http://firecrawl:3002`
-- MCP: `http://firecrawl_mcp:3060`
-- Webhook: `http://firecrawl_webhook:52100`
-- Redis: `redis://firecrawl_cache:6379`
-- PostgreSQL: `postgresql://firecrawl_db:5432/firecrawl_db`
+- MCP: `http://pulse_mcp:3060`
+- Webhook: `http://pulse_webhook:52100`
+- Redis: `redis://pulse_redis:6379`
+- PostgreSQL: `postgresql://pulse_postgres:5432/pulse_postgres`
 
 **Never hardcode external URLs in code!** Use environment variables.
 
@@ -1199,7 +1199,7 @@ Configure Firecrawl to send to webhook:
 ```bash
 # In .env, ensure:
 ENABLE_SEARCH_INDEX=true
-SEARCH_SERVICE_URL=http://firecrawl_webhook:52100
+SEARCH_SERVICE_URL=http://pulse_webhook:52100
 ```
 
 Restart services:
@@ -1210,14 +1210,14 @@ docker compose restart firecrawl
 Trigger a scrape and verify webhook receives it:
 ```bash
 # Check webhook logs
-docker compose logs firecrawl_webhook -f
+docker compose logs pulse_webhook -f
 ```
 
 **Step 5: Test database schema isolation**
 
 Connect to PostgreSQL and verify schemas:
 ```bash
-docker exec -it firecrawl_db psql -U firecrawl -d firecrawl_db -c "\dn"
+docker exec -it pulse_postgres psql -U firecrawl -d pulse_postgres -c "\dn"
 ```
 
 Expected: Both `public` and `webhook` schemas exist
@@ -1276,7 +1276,7 @@ In `apps/mcp/README.md`, change deployment instructions:
 
 Run from monorepo root:
 ```bash
-docker compose up -d firecrawl_mcp
+docker compose up -d pulse_mcp
 ```
 
 For standalone deployment, see root `docker-compose.yaml` for service definition.
@@ -1336,7 +1336,7 @@ docker compose up -d
 **New:**
 ```bash
 # From repo root
-docker compose up -d firecrawl_mcp
+docker compose up -d pulse_mcp
 ```
 
 ### Internal URLs
@@ -1367,8 +1367,8 @@ SEARCH_BRIDGE_REDIS_URL=redis://...
 
 **New:**
 ```bash
-WEBHOOK_DATABASE_URL=postgresql://firecrawl:password@firecrawl_db:5432/firecrawl_db
-WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379
+WEBHOOK_DATABASE_URL=postgresql://firecrawl:password@pulse_postgres:5432/pulse_postgres
+WEBHOOK_REDIS_URL=redis://pulse_redis:6379
 ```
 
 **Backward compatibility:** Old `SEARCH_BRIDGE_*` variables still work!
@@ -1384,7 +1384,7 @@ docker compose up -d
 **New:**
 ```bash
 # From repo root
-docker compose up -d firecrawl_webhook firecrawl_webhook_worker
+docker compose up -d pulse_webhook pulse_webhook_worker
 ```
 
 ## Testing Migration

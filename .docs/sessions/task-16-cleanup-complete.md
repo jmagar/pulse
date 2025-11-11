@@ -37,13 +37,13 @@ Successfully removed standalone docker-compose files from apps/mcp and apps/webh
 ### Services Status (All Healthy)
 
 ```
-firecrawl_mcp              - Up 30 minutes (healthy)
-firecrawl_webhook          - Up 28 minutes (healthy)
-firecrawl_webhook_worker   - Up 28 minutes (healthy)
+pulse_mcp              - Up 30 minutes (healthy)
+pulse_webhook          - Up 28 minutes (healthy)
+pulse_webhook_worker   - Up 28 minutes (healthy)
 firecrawl                  - Up 33 minutes
-firecrawl_cache            - Up 33 minutes
-firecrawl_db               - Up 33 minutes
-firecrawl_playwright       - Up 33 minutes
+pulse_redis            - Up 33 minutes
+pulse_postgres               - Up 33 minutes
+pulse_playwright       - Up 33 minutes
 ```
 
 ### Health Check Responses
@@ -82,9 +82,9 @@ firecrawl_playwright       - Up 33 minutes
 
 All services now run from a single root docker-compose.yaml with:
 
-- **7 services total:** firecrawl, firecrawl_cache, firecrawl_db, firecrawl_playwright, firecrawl_mcp, firecrawl_webhook, firecrawl_webhook_worker
-- **Shared PostgreSQL:** firecrawl_db with webhook schema isolation
-- **Shared Redis:** firecrawl_cache for both API and webhook
+- **7 services total:** firecrawl, pulse_redis, pulse_postgres, pulse_playwright, pulse_mcp, pulse_webhook, pulse_webhook_worker
+- **Shared PostgreSQL:** pulse_postgres with webhook schema isolation
+- **Shared Redis:** pulse_redis for both API and webhook
 - **Single network:** firecrawl bridge network
 - **Namespaced environment variables:** MCP_* and WEBHOOK_* prefixes
 

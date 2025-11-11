@@ -46,8 +46,8 @@ COPY --from=builder /app/apps/mcp/package.json ./apps/mcp/
 COPY --from=builder /app/packages/firecrawl-client/dist ./packages/firecrawl-client/dist
 COPY --from=builder /app/apps/mcp/dist ./apps/mcp/dist
 
-# Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
+# Install production dependencies only (skip scripts to avoid husky)
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Create resources directory
 RUN mkdir -p /app/resources && chown -R nodejs:nodejs /app/resources

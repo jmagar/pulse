@@ -59,7 +59,7 @@ async def index_document(
 
         # Enqueue indexing job
         job = queue.enqueue(
-            "app.worker.index_document_job",
+            "worker.index_document_job",
             document.model_dump(),
             job_timeout="10m",
         )

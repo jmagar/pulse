@@ -977,7 +977,7 @@ export const env = {
   // ... existing fields ...
 
   // Webhook service URL for YouTube transcript processing
-  webhookUrl: process.env.MCP_WEBHOOK_URL || process.env.WEBHOOK_URL || "http://firecrawl_webhook:52100",
+  webhookUrl: process.env.MCP_WEBHOOK_URL || process.env.WEBHOOK_URL || "http://pulse_webhook:52100",
 };
 ```
 

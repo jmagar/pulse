@@ -71,7 +71,7 @@ cd apps/webhook && uv run python -c "from tests.conftest import *"
     - `WEBHOOK_TEST_DB_PASSWORD` (default: empty)
     - `WEBHOOK_TEST_DB_NAME` (default: webhook_test)
     - `WEBHOOK_TEST_DB_SCHEMA` (default: webhook)
-    - `WEBHOOK_TEST_DB_CONTAINER` (default: firecrawl_db)
+    - `WEBHOOK_TEST_DB_CONTAINER` (default: pulse_postgres)
   - Color-coded output (green/red)
   - Error handling with actionable messages
   - Made executable (`chmod +x`)
@@ -97,7 +97,7 @@ apps/webhook/scripts/setup-test-db.sh
 # ✓ Test database webhook_test created successfully
 # Connection string: postgresql+asyncpg://firecrawl@localhost:5432/webhook_test
 
-docker exec firecrawl_db psql -U firecrawl -d webhook_test -c "\dn"
+docker exec pulse_postgres psql -U firecrawl -d webhook_test -c "\dn"
 # List of schemas
 #   Name   |       Owner
 # ---------+-------------------
@@ -357,7 +357,7 @@ db_port = os.getenv("POSTGRES_PORT", "4304")  # Match docker-compose.yaml
 **Option C - Update docker-compose.yaml:**
 ```yaml
 services:
-  firecrawl_db:
+  pulse_postgres:
     ports:
       - "5432:5432"  # Use standard PostgreSQL port
 ```
