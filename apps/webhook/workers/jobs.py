@@ -7,7 +7,7 @@ import httpx
 from rq import get_current_job
 from sqlalchemy import select, update
 
-from app.config import settings
+from config import settings
 from infra.database import get_db_context
 from api.schemas.indexing import IndexDocumentRequest
 from domain.models import ChangeEvent

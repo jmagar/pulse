@@ -6,7 +6,7 @@ import httpx
 import pytest
 
 from clients.changedetection import ChangeDetectionClient
-from app.config import Settings
+from config import Settings
 
 
 def test_changedetection_config_defaults():

@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.deps import get_search_orchestrator
-from app.main import app
+from main import app
 
 
 class StubSearchOrchestrator:
@@ -68,7 +68,7 @@ def client() -> TestClient:
 @pytest.fixture
 def api_secret() -> str:
     """Get API secret from settings."""
-    from app.config import settings
+    from config import settings
 
     return settings.api_secret
 

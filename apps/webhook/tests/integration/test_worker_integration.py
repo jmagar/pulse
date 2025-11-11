@@ -24,8 +24,8 @@ def test_worker_starts_with_api_when_enabled(monkeypatch):
 
     with patch("app.worker_thread.WorkerThreadManager._run_worker", mock_run_worker):
         # Import after setting env var and patching
-        from app.config import settings
-        from app.main import app
+        from config import settings
+        from main import app
 
         assert settings.enable_worker is True
 
@@ -54,8 +54,8 @@ def test_worker_does_not_start_when_disabled(monkeypatch):
             del sys.modules[module]
 
     # Import after setting env var
-    from app.config import settings
-    from app.main import app
+    from config import settings
+    from main import app
 
     assert settings.enable_worker is False
 

@@ -17,7 +17,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from api.deps import cleanup_services, get_vector_store
-from app.config import settings
+from config import settings
 from infra.database import close_database, init_database
 from api.middleware.timing import TimingMiddleware
 from infra.rate_limit import limiter
@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # Start background worker thread if enabled
     worker_manager = None
     if settings.enable_worker:
-        from app.worker_thread import WorkerThreadManager
+        from worker_thread import WorkerThreadManager
 
         logger.info("Starting background worker thread...")
         worker_manager = WorkerThreadManager()
@@ -212,7 +212,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "app.main:app",
+        "main:app",
         host=settings.host,
         port=settings.port,
         reload=True,

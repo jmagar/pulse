@@ -5,8 +5,8 @@ from collections.abc import Callable
 from fastapi.testclient import TestClient
 
 from api.deps import get_search_orchestrator
-from app.config import settings
-from app.main import app
+from config import settings
+from main import app
 
 
 def _build_search_orchestrator(

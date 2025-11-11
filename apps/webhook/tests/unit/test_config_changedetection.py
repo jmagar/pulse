@@ -1,6 +1,6 @@
 """Test changedetection configuration."""
 
-from app.config import Settings
+from config import Settings
 
 
 def test_firecrawl_api_url_default():

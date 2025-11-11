@@ -15,7 +15,7 @@ from fastapi import Depends, Header, HTTPException, Request, status
 from redis import Redis
 from rq import Queue
 
-from app.config import settings
+from config import settings
 from services.bm25_engine import BM25Engine
 from services.embedding import EmbeddingService
 from services.indexing import IndexingService

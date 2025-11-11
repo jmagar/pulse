@@ -8,7 +8,7 @@ import threading
 
 from rq import Worker
 
-from app.config import settings
+from config import settings
 from utils.logging import get_logger
 from infra.redis import get_redis_connection
 

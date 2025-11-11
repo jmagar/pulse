@@ -35,7 +35,7 @@ os.environ.setdefault("WEBHOOK_ENABLE_WORKER", "false")
 os.environ.setdefault("WEBHOOK_VECTOR_DIM", "3")
 
 # Reload configuration and database modules so they pick up the test settings.
-import app.config as app_config
+import config as app_config
 
 app_config.settings = app_config.Settings()  # type: ignore[call-arg]
 
@@ -283,12 +283,12 @@ def stub_external_services(
         yield
         return
 
-    import app.api.dependencies as deps
-    import app.api.routes as routes
-    import app.rate_limit as rate_limit_module
-    import app.services.embedding as embedding_module
-    import app.services.vector_store as vector_store_module
-    import app.worker as worker_module
+    import api.deps as deps
+    import api.routers.indexing as routes  # "routes" is a historical name for indexing router
+    import infra.rate_limit as rate_limit_module
+    import services.embedding as embedding_module
+    import services.vector_store as vector_store_module
+    import worker as worker_module
 
     redis_conn = InMemoryRedis()
     InMemoryVectorStore.reset()
@@ -400,7 +400,7 @@ def sample_document_dict() -> dict[str, Any]:
 @pytest.fixture
 def api_secret_header() -> dict[str, str]:
     """Provide API secret header for authenticated requests."""
-    from app.config import settings
+    from config import settings
 
     return {"Authorization": f"Bearer {settings.api_secret}"}
 
@@ -409,7 +409,7 @@ def api_secret_header() -> dict[str, str]:
 def api_secret() -> str:
     """Expose the API secret string for authenticated requests."""
 
-    from app.config import settings
+    from config import settings
 
     return settings.api_secret
 
@@ -418,7 +418,7 @@ def api_secret() -> str:
 def client() -> Generator[TestClient, None, None]:
     """Create a FastAPI test client with application lifespan support."""
 
-    from app.main import app
+    from main import app
 
     with TestClient(app) as test_client:
         yield test_client

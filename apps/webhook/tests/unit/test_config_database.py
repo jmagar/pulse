@@ -9,7 +9,7 @@ def test_database_url_from_env():
     os.environ["SEARCH_BRIDGE_DATABASE_URL"] = "postgresql+asyncpg://test:pass@localhost/testdb"
 
     # Reload settings (this may need adjustment based on your config pattern)
-    from app.config import Settings
+    from config import Settings
 
     test_settings = Settings()
 
@@ -21,7 +21,7 @@ def test_database_url_from_env():
 
 def test_database_url_default():
     """Test database_url has a sensible default."""
-    from app.config import Settings
+    from config import Settings
 
     test_settings = Settings()
 

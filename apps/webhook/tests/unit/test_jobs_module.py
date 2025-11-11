@@ -16,11 +16,11 @@ def test_jobs_module_exports_rescrape_function():
 
 
 def test_jobs_module_has_correct_all():
-    """Test that app.jobs module has correct __all__ export."""
-    import app.jobs
+    """Test that workers.jobs module has correct __all__ export."""
+    import workers.jobs
 
     # Verify __all__ is defined
-    assert hasattr(app.jobs, "__all__")
+    assert hasattr(workers.jobs, "__all__")
 
     # Verify rescrape_changed_url is in __all__
-    assert "rescrape_changed_url" in app.jobs.__all__
+    assert "rescrape_changed_url" in workers.jobs.__all__
