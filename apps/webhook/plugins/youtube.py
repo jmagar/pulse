@@ -69,7 +69,18 @@ class YouTubePlugin(BasePlugin):
         # Fallback: parse query parameters for watch URLs
         try:
             parsed = urlparse(url)
-            if "youtube.com" in parsed.netloc:
+            # Strict check: must be exactly youtube.com or a subdomain (www.youtube.com, m.youtube.com)
+            # or youtu.be to prevent domain confusion attacks like evilyoutube.com
+            netloc_lower = parsed.netloc.lower()
+            is_youtube = (
+                netloc_lower == "youtube.com" or
+                netloc_lower == "www.youtube.com" or
+                netloc_lower == "m.youtube.com" or
+                netloc_lower == "youtu.be" or
+                netloc_lower.endswith(".youtube.com")
+            )
+            
+            if is_youtube:
                 query_params = parse_qs(parsed.query)
                 if "v" in query_params:
                     video_id = query_params["v"][0]
