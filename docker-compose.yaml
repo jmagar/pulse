@@ -75,6 +75,25 @@ services:
       start_period: 5s
       retries: 3
 
+  firecrawl_web:
+    <<: *common-service
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: firecrawl_web
+    ports:
+      - "${WEB_PORT:-50110}:3000"
+    depends_on:
+      - firecrawl
+      - firecrawl_mcp
+      - firecrawl_webhook
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
   firecrawl_webhook:
     <<: *common-service
     build:

@@ -2,7 +2,7 @@
 
 This document tracks all services and their port allocations in the Firecrawl monorepo.
 
-Last Updated: 2025-11-10
+Last Updated: 2025-02-15
 
 ## Port Overview
 
@@ -19,7 +19,8 @@ All services use sequential high-numbered ports (50100-50110 range) following se
 | 50106 | Extract Worker           | firecrawl                 | HTTP     | Active |
 | 50107 | MCP Server               | firecrawl_mcp             | HTTP     | Active |
 | 50108 | Webhook Bridge API       | firecrawl_webhook         | HTTP     | Active |
-| 50109 | Change Detection | firecrawl_changedetection | HTTP | Active |
+| 50109 | Change Detection          | firecrawl_changedetection | HTTP     | Active |
+| 50110 | Web Frontend              | firecrawl_web             | HTTP     | Active |
 | N/A   | Webhook Worker           | firecrawl_webhook         | N/A      | Active |
 
 ## Internal Service URLs (Docker Network)
@@ -29,6 +30,7 @@ These URLs are used for service-to-service communication within the Docker netwo
 - **Firecrawl API**: `http://firecrawl:3002`
 - **MCP Server**: `http://firecrawl_mcp:3060`
 - **Webhook Bridge**: `http://firecrawl_webhook:52100`
+- **Web Frontend**: `http://firecrawl_web:3000`
 - **Redis**: `redis://firecrawl_cache:6379`
 - **PostgreSQL**: `postgresql://firecrawl_db:5432/firecrawl_db`
 - **Playwright**: `http://firecrawl_playwright:3000`
@@ -40,6 +42,7 @@ These URLs are accessible from the host machine:
 - **Firecrawl API**: `http://localhost:50102`
 - **MCP Server**: `http://localhost:50107`
 - **Webhook Bridge**: `http://localhost:50108`
+- **Web Frontend**: `http://localhost:50110`
 - **Redis**: `redis://localhost:50104`
 - **PostgreSQL**: `postgresql://localhost:50105/firecrawl_db`
 - **Playwright**: `http://localhost:50100`
@@ -111,6 +114,14 @@ These URLs are accessible from the host machine:
 - Shares Playwright browser with Firecrawl for JavaScript rendering
 - Posts change notifications to webhook bridge at http://firecrawl_webhook:52100/api/webhook/changedetection
 - Indexed content searchable via hybrid search (BM25 + vector)
+
+### Web Frontend Service
+- **Container**: firecrawl_web
+- **Port**: 50110 (external) → 3000 (internal)
+- **Purpose**: Hosts the Next.js UI for interacting with Firecrawl services
+- **Dependencies**: firecrawl, firecrawl_mcp, firecrawl_webhook
+- **Health Check**: HTTP GET / (interval 30s, timeout 10s, start period 15s)
+- **Static Assets**: Served from `.next/static` and `public` directories built during Docker image creation
 
 ## Port Range Allocation
 
