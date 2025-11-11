@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from app.services.embedding import EmbeddingService
+from services.embedding import EmbeddingService
 
 
 @pytest.fixture

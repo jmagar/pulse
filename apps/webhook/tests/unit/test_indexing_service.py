@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from api.schemas.indexing import IndexDocumentRequest
-from app.services.indexing import IndexingService
+from services.indexing import IndexingService
 
 
 @pytest.fixture

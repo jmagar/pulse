@@ -11,12 +11,12 @@ from app.config import settings
 from infra.database import get_db_context
 from api.schemas.indexing import IndexDocumentRequest
 from domain.models import ChangeEvent
-from app.services.bm25_engine import BM25Engine
-from app.services.embedding import EmbeddingService
-from app.services.indexing import IndexingService
-from app.services.vector_store import VectorStore
-from app.utils.logging import get_logger
-from app.utils.text_processing import TextChunker
+from services.bm25_engine import BM25Engine
+from services.embedding import EmbeddingService
+from services.indexing import IndexingService
+from services.vector_store import VectorStore
+from utils.logging import get_logger
+from utils.text_processing import TextChunker
 
 logger = get_logger(__name__)
 

@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.services.vector_store import VectorStore
+from services.vector_store import VectorStore
 
 
 @pytest.fixture

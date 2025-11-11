@@ -7,7 +7,7 @@ from typing import Any, cast
 import httpx
 
 from app.config import settings
-from app.utils.logging import get_logger
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from app.services.bm25_engine import BM25Engine
+from services.bm25_engine import BM25Engine
 
 
 @pytest.fixture

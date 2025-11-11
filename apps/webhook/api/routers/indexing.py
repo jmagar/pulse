@@ -12,8 +12,8 @@ from rq import Queue
 
 from api.deps import get_indexing_service, get_rq_queue, verify_api_secret
 from api.schemas.indexing import IndexDocumentRequest, IndexDocumentResponse
-from app.services.indexing import IndexingService
-from app.utils.logging import get_logger
+from services.indexing import IndexingService
+from utils.logging import get_logger
 from infra.rate_limit import limiter
 
 logger = get_logger(__name__)

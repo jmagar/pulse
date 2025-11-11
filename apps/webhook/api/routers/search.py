@@ -12,10 +12,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from api.deps import get_bm25_engine, get_search_orchestrator, get_vector_store, verify_api_secret
 from api.schemas.health import IndexStats
 from api.schemas.search import SearchRequest, SearchResponse, SearchResult
-from app.services.bm25_engine import BM25Engine
-from app.services.search import SearchOrchestrator
-from app.services.vector_store import VectorStore
-from app.utils.logging import get_logger
+from services.bm25_engine import BM25Engine
+from services.search import SearchOrchestrator
+from services.vector_store import VectorStore
+from utils.logging import get_logger
 from infra.rate_limit import limiter
 
 logger = get_logger(__name__)

@@ -20,8 +20,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.deps import get_redis_connection, get_rq_queue, verify_webhook_signature
 from api.schemas.webhook import ChangeDetectionPayload, FirecrawlWebhookEvent
 from app.config import settings
-from app.services.webhook_handlers import WebhookHandlerError, handle_firecrawl_event
-from app.utils.logging import get_logger
+from services.webhook_handlers import WebhookHandlerError, handle_firecrawl_event
+from utils.logging import get_logger
 from domain.models import ChangeEvent
 from infra.database import get_db_session
 from infra.rate_limit import limiter

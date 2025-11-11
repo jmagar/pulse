@@ -14,8 +14,8 @@ from api.schemas.webhook import (
     FirecrawlLifecycleEvent,
     FirecrawlPageEvent,
 )
-from app.services.auto_watch import create_watch_for_url
-from app.utils.logging import get_logger
+from services.auto_watch import create_watch_for_url
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

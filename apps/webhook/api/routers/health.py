@@ -11,9 +11,9 @@ from fastapi import APIRouter, Depends
 
 from api.deps import get_embedding_service, get_vector_store
 from api.schemas.health import HealthStatus
-from app.services.embedding import EmbeddingService
-from app.services.vector_store import VectorStore
-from app.utils.logging import get_logger
+from services.embedding import EmbeddingService
+from services.vector_store import VectorStore
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

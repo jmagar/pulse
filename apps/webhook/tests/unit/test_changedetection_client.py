@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from app.clients.changedetection import ChangeDetectionClient
+from clients.changedetection import ChangeDetectionClient
 from app.config import Settings
 
 

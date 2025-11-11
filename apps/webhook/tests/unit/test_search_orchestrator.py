@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from api.schemas.search import SearchMode
-from app.services.search import SearchOrchestrator
+from services.search import SearchOrchestrator
 
 
 @pytest.fixture

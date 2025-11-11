@@ -21,7 +21,7 @@ from app.config import settings
 from infra.database import close_database, init_database
 from api.middleware.timing import TimingMiddleware
 from infra.rate_limit import limiter
-from app.utils.logging import configure_logging, get_logger
+from utils.logging import configure_logging, get_logger
 
 # Configure logging
 configure_logging(settings.log_level)

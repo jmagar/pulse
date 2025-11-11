@@ -8,7 +8,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_timing_context_success():
     """Test timing context tracks duration correctly."""
-    from app.utils.timing import TimingContext
+    from utils.timing import TimingContext
 
     async with TimingContext("test", "test_operation") as ctx:
         # Simulate some work
@@ -22,7 +22,7 @@ async def test_timing_context_success():
 @pytest.mark.asyncio
 async def test_timing_context_failure():
     """Test timing context captures errors."""
-    from app.utils.timing import TimingContext
+    from utils.timing import TimingContext
 
     ctx = TimingContext("test", "test_operation")
 
@@ -38,7 +38,7 @@ async def test_timing_context_failure():
 @pytest.mark.asyncio
 async def test_timing_context_metadata():
     """Test timing context stores metadata."""
-    from app.utils.timing import TimingContext
+    from utils.timing import TimingContext
 
     async with TimingContext("test", "test_operation", metadata={"key": "value"}) as ctx:
         ctx.metadata["added"] = "runtime"

@@ -41,7 +41,7 @@ except ModuleNotFoundError as exc:
 
 from rank_bm25 import BM25Okapi
 
-from app.utils.logging import get_logger
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

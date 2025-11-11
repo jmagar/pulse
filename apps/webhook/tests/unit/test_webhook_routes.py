@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from api import deps
 from api.routers import webhook
 from api.schemas.webhook import FirecrawlPageEvent
-from app.services import webhook_handlers as handlers
+from services import webhook_handlers as handlers
 
 
 @pytest.fixture
