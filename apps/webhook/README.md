@@ -171,7 +171,7 @@ pnpm check
 ### External Integration Tests
 
 Most webhook tests run against in-memory doubles for Redis, Qdrant, and the embedding
-service. To exercise the real infrastructure set the environment flag and target the
+service. To exercise the real infrastructure, set the environment flag and target the
 `external` marker:
 
 ```bash
