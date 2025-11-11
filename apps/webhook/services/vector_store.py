@@ -55,7 +55,9 @@ class VectorStore:
         self.collection_name = collection_name
         self.vector_dim = vector_dim
         self.timeout = timeout
-        self.client = AsyncQdrantClient(url=url, timeout=timeout)
+        
+        # Lazy initialization - client created on first use
+        self._client: AsyncQdrantClient | None = None
 
         logger.info(
             "Vector store initialized",
@@ -64,10 +66,26 @@ class VectorStore:
             dim=vector_dim,
         )
 
+    @property
+    def client(self) -> AsyncQdrantClient:
+        """
+        Get the Qdrant client, creating it lazily if needed.
+        
+        Lazy initialization ensures the client is created in a thread
+        with an active event loop, avoiding potential issues.
+        """
+        if self._client is None:
+            self._client = AsyncQdrantClient(url=self.url, timeout=self.timeout)
+            logger.debug("Qdrant client created on first use")
+        return self._client
+
     async def close(self) -> None:
         """Close the client."""
-        await self.client.close()
-        logger.info("Vector store client closed")
+        if self._client is not None:
+            await self._client.close()
+            logger.info("Vector store client closed")
+        else:
+            logger.debug("Vector store close called but client was never created")
 
     async def health_check(self) -> bool:
         """
