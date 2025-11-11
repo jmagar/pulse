@@ -75,6 +75,9 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --cov=app --cov-report=term-missing"
 cache_dir = ".cache/pytest"
+markers = [
+    "external: requires live infrastructure (Redis, Qdrant, TEI)",
+]
 
 [tool.coverage.run]
 data_file = ".cache/coverage/.coverage"

@@ -59,20 +59,6 @@ def override_search_dependency() -> Generator[None]:
     app.dependency_overrides.pop(get_search_orchestrator, None)
 
 
-@pytest.fixture
-def client() -> TestClient:
-    """Create FastAPI test client."""
-    return TestClient(app)
-
-
-@pytest.fixture
-def api_secret() -> str:
-    """Get API secret from settings."""
-    from app.config import settings
-
-    return settings.api_secret
-
-
 def test_root_endpoint(client: TestClient) -> None:
     """Test root endpoint."""
     response = client.get("/")
