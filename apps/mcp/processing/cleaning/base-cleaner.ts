@@ -1,4 +1,4 @@
-import { ContentCleaner } from './index.js';
+import { ContentCleaner } from "./index.js";
 
 /**
  * Base implementation for content cleaners
@@ -14,7 +14,9 @@ export abstract class BaseCleaner implements ContentCleaner {
    */
   protected truncateIfNeeded(content: string): string {
     if (this.options?.maxLength && content.length > this.options.maxLength) {
-      return content.substring(0, this.options.maxLength) + '\n\n[Content truncated]';
+      return (
+        content.substring(0, this.options.maxLength) + "\n\n[Content truncated]"
+      );
     }
     return content;
   }

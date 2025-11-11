@@ -15,8 +15,9 @@ from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.vector_store import VectorStore
 from app.utils.logging import get_logger
-from app.utils.text_processing import TextChunker, clean_text, extract_domain, normalize_url
+from app.utils.text_processing import TextChunker, clean_text, extract_domain
 from app.utils.timing import TimingContext
+from app.utils.url import normalize_url
 
 logger = get_logger(__name__)
 

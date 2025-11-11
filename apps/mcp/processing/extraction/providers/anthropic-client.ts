@@ -1,7 +1,12 @@
-import Anthropic from '@anthropic-ai/sdk';
-import type { IExtractClient, ExtractOptions, ExtractResult, LLMConfig } from '../types.js';
+import Anthropic from "@anthropic-ai/sdk";
+import type {
+  IExtractClient,
+  ExtractOptions,
+  ExtractResult,
+  LLMConfig,
+} from "../types.js";
 
-const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
+const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 const MAX_TOKENS = 8192; // Maximum we'll use
 
 export class AnthropicExtractClient implements IExtractClient {
@@ -10,7 +15,7 @@ export class AnthropicExtractClient implements IExtractClient {
 
   constructor(config: LLMConfig) {
     if (!config.apiKey) {
-      throw new Error('Anthropic API key is required');
+      throw new Error("Anthropic API key is required");
     }
 
     this.client = new Anthropic({
@@ -20,7 +25,11 @@ export class AnthropicExtractClient implements IExtractClient {
     this.model = config.model || DEFAULT_MODEL;
   }
 
-  async extract(content: string, query: string, _options?: ExtractOptions): Promise<ExtractResult> {
+  async extract(
+    content: string,
+    query: string,
+    _options?: ExtractOptions,
+  ): Promise<ExtractResult> {
     try {
       const systemPrompt = `You are an expert at extracting specific information from web content. 
 When given HTML or text content and a query, extract only the requested information.
@@ -40,7 +49,7 @@ ${query}`;
         system: systemPrompt,
         messages: [
           {
-            role: 'user',
+            role: "user",
             content: userPrompt,
           },
         ],
@@ -48,9 +57,9 @@ ${query}`;
 
       // Extract text content from the response
       const extractedContent = response.content
-        .filter((block) => block.type === 'text')
+        .filter((block) => block.type === "text")
         .map((block) => block.text)
-        .join('\n');
+        .join("\n");
 
       return {
         success: true,

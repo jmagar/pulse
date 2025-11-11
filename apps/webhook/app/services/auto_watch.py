@@ -1,4 +1,5 @@
 """Service for automatically creating changedetection.io watches."""
+
 from __future__ import annotations
 
 from typing import Any

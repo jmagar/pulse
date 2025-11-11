@@ -50,7 +50,13 @@
     "typescript-eslint": "^8.46.3",
     "vitest": "^3.2.3"
   },
-  "keywords": ["mcp", "firecrawl", "http", "streaming", "server"],
+  "keywords": [
+    "mcp",
+    "firecrawl",
+    "http",
+    "streaming",
+    "server"
+  ],
   "author": "PulseMCP",
   "license": "MIT"
 }

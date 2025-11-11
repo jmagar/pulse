@@ -140,21 +140,20 @@ class SearchOrchestrator:
             query=query,
             mode=mode,
             limit=limit,
-            filters={"domain": domain, "language": language, "country": country, "is_mobile": is_mobile},
+            filters={
+                "domain": domain,
+                "language": language,
+                "country": country,
+                "is_mobile": is_mobile,
+            },
         )
 
         if mode == SearchMode.HYBRID:
-            return await self._hybrid_search(
-                query, limit, domain, language, country, is_mobile
-            )
+            return await self._hybrid_search(query, limit, domain, language, country, is_mobile)
         elif mode == SearchMode.SEMANTIC:
-            return await self._semantic_search(
-                query, limit, domain, language, country, is_mobile
-            )
+            return await self._semantic_search(query, limit, domain, language, country, is_mobile)
         elif mode in (SearchMode.KEYWORD, SearchMode.BM25):
-            return self._keyword_search(
-                query, limit, domain, language, country, is_mobile
-            )
+            return self._keyword_search(query, limit, domain, language, country, is_mobile)
         else:
             raise ValueError(f"Unknown search mode: {mode}")
 
@@ -172,10 +171,20 @@ class SearchOrchestrator:
         """
         # Run both searches in parallel
         vector_results = await self._semantic_search(
-            query, limit * 2, domain, language, country, is_mobile  # Get more for fusion
+            query,
+            limit * 2,
+            domain,
+            language,
+            country,
+            is_mobile,  # Get more for fusion
         )
         keyword_results = self._keyword_search(
-            query, limit * 2, domain, language, country, is_mobile  # Get more for fusion
+            query,
+            limit * 2,
+            domain,
+            language,
+            country,
+            is_mobile,  # Get more for fusion
         )
 
         # Apply RRF fusion

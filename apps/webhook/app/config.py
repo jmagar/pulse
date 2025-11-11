@@ -70,7 +70,9 @@ class Settings(BaseSettings):
     )
     qdrant_collection: str = Field(
         default="firecrawl_docs",
-        validation_alias=AliasChoices("WEBHOOK_QDRANT_COLLECTION", "SEARCH_BRIDGE_QDRANT_COLLECTION"),
+        validation_alias=AliasChoices(
+            "WEBHOOK_QDRANT_COLLECTION", "SEARCH_BRIDGE_QDRANT_COLLECTION"
+        ),
         description="Qdrant collection name",
     )
     qdrant_timeout: float = Field(
@@ -109,7 +111,9 @@ class Settings(BaseSettings):
     )
     chunk_overlap_tokens: int = Field(
         default=50,
-        validation_alias=AliasChoices("WEBHOOK_CHUNK_OVERLAP_TOKENS", "SEARCH_BRIDGE_CHUNK_OVERLAP_TOKENS"),
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHUNK_OVERLAP_TOKENS", "SEARCH_BRIDGE_CHUNK_OVERLAP_TOKENS"
+        ),
         description="Overlap between chunks in tokens",
     )
 
@@ -154,12 +158,19 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("WEBHOOK_ENABLE_WORKER", "SEARCH_BRIDGE_ENABLE_WORKER"),
         description="Enable background worker thread for processing indexing jobs",
     )
+    test_mode: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("WEBHOOK_TEST_MODE", "SEARCH_BRIDGE_TEST_MODE"),
+        description="Enable test mode to stub external services",
+    )
 
     # PostgreSQL Database (for timing metrics)
     # Supports WEBHOOK_DATABASE_URL or falls back to DATABASE_URL (shared) or SEARCH_BRIDGE_DATABASE_URL (legacy)
     database_url: str = Field(
         default="postgresql+asyncpg://fc_bridge:changeme@localhost:5432/fc_bridge",
-        validation_alias=AliasChoices("WEBHOOK_DATABASE_URL", "DATABASE_URL", "SEARCH_BRIDGE_DATABASE_URL"),
+        validation_alias=AliasChoices(
+            "WEBHOOK_DATABASE_URL", "DATABASE_URL", "SEARCH_BRIDGE_DATABASE_URL"
+        ),
         description="PostgreSQL connection URL for timing metrics",
     )
 

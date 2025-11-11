@@ -2,8 +2,6 @@
 
 import os
 
-import pytest
-
 from app.config import Settings
 
 
@@ -24,9 +22,13 @@ def test_webhook_database_url_fallback() -> None:
         os.environ["WEBHOOK_SECRET"] = "test-webhook-secret-123456"
 
         # Test 1: WEBHOOK_DATABASE_URL (highest priority)
-        os.environ["WEBHOOK_DATABASE_URL"] = "postgresql+asyncpg://webhook:pass@webhook-db:5432/webhook"
+        os.environ["WEBHOOK_DATABASE_URL"] = (
+            "postgresql+asyncpg://webhook:pass@webhook-db:5432/webhook"
+        )
         os.environ["DATABASE_URL"] = "postgresql+asyncpg://shared:pass@shared-db:5432/shared"
-        os.environ["SEARCH_BRIDGE_DATABASE_URL"] = "postgresql+asyncpg://legacy:pass@legacy-db:5432/legacy"
+        os.environ["SEARCH_BRIDGE_DATABASE_URL"] = (
+            "postgresql+asyncpg://legacy:pass@legacy-db:5432/legacy"
+        )
 
         settings = Settings(_env_file=None)
         assert settings.database_url == "postgresql+asyncpg://webhook:pass@webhook-db:5432/webhook"
@@ -34,17 +36,17 @@ def test_webhook_database_url_fallback() -> None:
         # Test 2: DATABASE_URL fallback (shared infrastructure)
         del os.environ["WEBHOOK_DATABASE_URL"]
         from importlib import reload
+
         import app.config
+
         reload(app.config)
-        Settings2 = app.config.Settings
-        settings2 = Settings2(_env_file=None)
+        settings2 = app.config.Settings(_env_file=None)
         assert settings2.database_url == "postgresql+asyncpg://shared:pass@shared-db:5432/shared"
 
         # Test 3: SEARCH_BRIDGE_DATABASE_URL fallback (legacy naming)
         del os.environ["DATABASE_URL"]
         reload(app.config)
-        Settings3 = app.config.Settings
-        settings3 = Settings3(_env_file=None)
+        settings3 = app.config.Settings(_env_file=None)
         assert settings3.database_url == "postgresql+asyncpg://legacy:pass@legacy-db:5432/legacy"
 
     finally:
@@ -82,17 +84,17 @@ def test_webhook_redis_url_fallback() -> None:
         # Test 2: REDIS_URL fallback (shared infrastructure)
         del os.environ["WEBHOOK_REDIS_URL"]
         from importlib import reload
+
         import app.config
+
         reload(app.config)
-        Settings2 = app.config.Settings
-        settings2 = Settings2(_env_file=None)
+        settings2 = app.config.Settings(_env_file=None)
         assert settings2.redis_url == "redis://shared-redis:6379"
 
         # Test 3: SEARCH_BRIDGE_REDIS_URL fallback (legacy naming)
         del os.environ["REDIS_URL"]
         reload(app.config)
-        Settings3 = app.config.Settings
-        settings3 = Settings3(_env_file=None)
+        settings3 = app.config.Settings(_env_file=None)
         assert settings3.redis_url == "redis://legacy-redis:6379"
 
     finally:

@@ -102,7 +102,9 @@ async def test_index_document_queue_failure(mock_request: MagicMock, mock_queue:
 
 
 @pytest.mark.asyncio
-async def test_search_documents_success(mock_request: MagicMock, mock_search_orchestrator: AsyncMock) -> None:
+async def test_search_documents_success(
+    mock_request: MagicMock, mock_search_orchestrator: AsyncMock
+) -> None:
     """Test successful search."""
     search_request = SearchRequest(
         query="test query",
@@ -122,7 +124,9 @@ async def test_search_documents_success(mock_request: MagicMock, mock_search_orc
 
 
 @pytest.mark.asyncio
-async def test_search_documents_with_filters(mock_request: MagicMock, mock_search_orchestrator: AsyncMock) -> None:
+async def test_search_documents_with_filters(
+    mock_request: MagicMock, mock_search_orchestrator: AsyncMock
+) -> None:
     """Test search with filters."""
     from app.models import SearchFilter
 
@@ -141,7 +145,9 @@ async def test_search_documents_with_filters(mock_request: MagicMock, mock_searc
 
 
 @pytest.mark.asyncio
-async def test_search_documents_failure(mock_request: MagicMock, mock_search_orchestrator: AsyncMock) -> None:
+async def test_search_documents_failure(
+    mock_request: MagicMock, mock_search_orchestrator: AsyncMock
+) -> None:
     """Test search failure handling."""
     mock_search_orchestrator.search.side_effect = Exception("Search error")
 
@@ -156,7 +162,7 @@ async def test_search_documents_failure(mock_request: MagicMock, mock_search_orc
 @pytest.mark.asyncio
 async def test_health_check_all_healthy(mock_services: dict[str, Any]) -> None:
     """Test health check with all services healthy."""
-    with patch('app.api.dependencies.get_redis_connection') as mock_redis:
+    with patch("app.api.dependencies.get_redis_connection") as mock_redis:
         mock_redis_instance = MagicMock()
         mock_redis_instance.ping.return_value = True
         mock_redis.return_value = mock_redis_instance
@@ -177,7 +183,7 @@ async def test_health_check_partial_failure(mock_services: dict[str, Any]) -> No
     """Test health check with some services down."""
     mock_services["embedding"].health_check.return_value = False
 
-    with patch('app.api.dependencies.get_redis_connection') as mock_redis:
+    with patch("app.api.dependencies.get_redis_connection") as mock_redis:
         mock_redis_instance = MagicMock()
         mock_redis_instance.ping.return_value = True
         mock_redis.return_value = mock_redis_instance

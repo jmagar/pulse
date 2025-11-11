@@ -1,7 +1,7 @@
-import { ContentCleaner, CleanerOptions } from './index.js';
-import { HtmlCleaner } from './html-cleaner.js';
-import { PassThroughCleaner } from './pass-through-cleaner.js';
-import { detectContentType } from './content-type-detector.js';
+import { ContentCleaner, CleanerOptions } from "./index.js";
+import { HtmlCleaner } from "./html-cleaner.js";
+import { PassThroughCleaner } from "./pass-through-cleaner.js";
+import { detectContentType } from "./content-type-detector.js";
 
 /**
  * Creates an appropriate cleaner based on content type
@@ -13,17 +13,17 @@ import { detectContentType } from './content-type-detector.js';
 export function createCleaner(
   content: string,
   url: string,
-  options?: CleanerOptions
+  options?: CleanerOptions,
 ): ContentCleaner {
   const contentType = detectContentType(content, url);
 
   // Create cleaners
   const htmlCleaner = new HtmlCleaner(options);
   const structuredDataCleaner = new PassThroughCleaner(
-    ['application/json', 'application/xml'],
-    options
+    ["application/json", "application/xml"],
+    options,
   );
-  const plainTextCleaner = new PassThroughCleaner(['text/plain'], options);
+  const plainTextCleaner = new PassThroughCleaner(["text/plain"], options);
 
   // Select appropriate cleaner
   if (htmlCleaner.canHandle(contentType)) {

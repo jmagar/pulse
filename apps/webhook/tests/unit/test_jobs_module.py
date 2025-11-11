@@ -1,5 +1,4 @@
 """Tests for jobs module exports."""
-import pytest
 
 
 def test_jobs_module_exports_rescrape_function():
@@ -12,6 +11,7 @@ def test_jobs_module_exports_rescrape_function():
 
     # Verify it's the correct function from rescrape module
     from app.jobs.rescrape import rescrape_changed_url as direct_import
+
     assert rescrape_changed_url is direct_import
 
 
@@ -20,7 +20,7 @@ def test_jobs_module_has_correct_all():
     import app.jobs
 
     # Verify __all__ is defined
-    assert hasattr(app.jobs, '__all__')
+    assert hasattr(app.jobs, "__all__")
 
     # Verify rescrape_changed_url is in __all__
-    assert 'rescrape_changed_url' in app.jobs.__all__
+    assert "rescrape_changed_url" in app.jobs.__all__

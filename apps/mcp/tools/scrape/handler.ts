@@ -1,19 +1,27 @@
-import { z } from 'zod';
-import { ExtractClientFactory } from '../../processing/extraction/index.js';
-import type { IScrapingClients, StrategyConfigFactory } from '../../mcp-server.js';
-import { buildScrapeArgsSchema } from './schema.js';
-import { checkCache, scrapeContent, processContent, saveToStorage } from './pipeline.js';
+import { z } from "zod";
+import { ExtractClientFactory } from "../../processing/extraction/index.js";
+import type {
+  IScrapingClients,
+  StrategyConfigFactory,
+} from "../../mcp-server.js";
+import { buildScrapeArgsSchema } from "./schema.js";
+import {
+  checkCache,
+  scrapeContent,
+  processContent,
+  saveToStorage,
+} from "./pipeline.js";
 import {
   buildCachedResponse,
   buildErrorResponse,
   buildSuccessResponse,
   type ToolResponse,
-} from './response.js';
+} from "./response.js";
 
 export async function handleScrapeRequest(
   args: unknown,
   clientsFactory: () => IScrapingClients,
-  strategyConfigFactory: StrategyConfigFactory
+  strategyConfigFactory: StrategyConfigFactory,
 ): Promise<ToolResponse> {
   try {
     const ScrapeArgsSchema = buildScrapeArgsSchema();
@@ -21,23 +29,37 @@ export async function handleScrapeRequest(
     const clients = clientsFactory();
     const configClient = strategyConfigFactory();
 
-    const { url, maxChars, startIndex, timeout, forceRescrape, cleanScrape, resultHandling } =
-      validatedArgs;
+    const {
+      url,
+      maxChars,
+      startIndex,
+      timeout,
+      forceRescrape,
+      cleanScrape,
+      resultHandling,
+    } = validatedArgs;
 
     // Type-safe extraction of optional extract parameter
     let extract: string | undefined;
-    if (ExtractClientFactory.isAvailable() && 'extract' in validatedArgs) {
+    if (ExtractClientFactory.isAvailable() && "extract" in validatedArgs) {
       extract = (validatedArgs as { extract?: string }).extract;
     }
 
     // Check if screenshot is requested
     const formats =
-      ((validatedArgs as Record<string, unknown>).formats as string[] | undefined) || [];
-    const includeScreenshot = formats.includes('screenshot');
+      ((validatedArgs as Record<string, unknown>).formats as
+        | string[]
+        | undefined) || [];
+    const includeScreenshot = formats.includes("screenshot");
 
     // Check for cached resources (skip cache if screenshot requested)
     if (!includeScreenshot) {
-      const cachedResult = await checkCache(url, extract, resultHandling, forceRescrape);
+      const cachedResult = await checkCache(
+        url,
+        extract,
+        resultHandling,
+        forceRescrape,
+      );
       if (cachedResult.found) {
         return buildCachedResponse(
           cachedResult.content,
@@ -49,7 +71,7 @@ export async function handleScrapeRequest(
           cachedResult.timestamp,
           resultHandling,
           startIndex,
-          maxChars
+          maxChars,
         );
       }
     }
@@ -60,11 +82,15 @@ export async function handleScrapeRequest(
       timeout,
       clients,
       configClient,
-      validatedArgs as Record<string, unknown>
+      validatedArgs as Record<string, unknown>,
     );
 
     if (!scrapeResult.success) {
-      return buildErrorResponse(url, scrapeResult.error, scrapeResult.diagnostics);
+      return buildErrorResponse(
+        url,
+        scrapeResult.error,
+        scrapeResult.diagnostics,
+      );
     }
 
     const rawContent = scrapeResult.content!;
@@ -77,14 +103,15 @@ export async function handleScrapeRequest(
       rawContent,
       url,
       cleanScrape,
-      extract
+      extract,
     );
 
     // Save to storage if needed
     let savedUris = null;
-    if (resultHandling === 'saveOnly' || resultHandling === 'saveAndReturn') {
+    if (resultHandling === "saveOnly" || resultHandling === "saveAndReturn") {
       // Need to determine wasTruncated for metadata
-      const wasTruncated = resultHandling !== 'saveOnly' && displayContent.length > maxChars;
+      const wasTruncated =
+        resultHandling !== "saveOnly" && displayContent.length > maxChars;
 
       savedUris = await saveToStorage(
         url,
@@ -95,7 +122,7 @@ export async function handleScrapeRequest(
         source,
         startIndex,
         maxChars,
-        wasTruncated
+        wasTruncated,
       );
     }
 
@@ -113,15 +140,15 @@ export async function handleScrapeRequest(
       maxChars,
       savedUris,
       screenshot,
-      screenshotFormat
+      screenshotFormat,
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
         content: [
           {
-            type: 'text',
-            text: `Invalid arguments: ${error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+            type: "text",
+            text: `Invalid arguments: ${error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ")}`,
           },
         ],
         isError: true,
@@ -131,8 +158,8 @@ export async function handleScrapeRequest(
     return {
       content: [
         {
-          type: 'text',
-          text: `Failed to scrape ${(args as { url?: string })?.url || 'URL'}: ${
+          type: "text",
+          text: `Failed to scrape ${(args as { url?: string })?.url || "URL"}: ${
             error instanceof Error ? error.message : String(error)
           }`,
         },

@@ -77,9 +77,7 @@ async def get_request_metrics(
         func.min(RequestMetric.duration_ms).label("min_duration_ms"),
         func.max(RequestMetric.duration_ms).label("max_duration_ms"),
         func.count().label("total_requests"),
-    ).where(
-        RequestMetric.timestamp >= datetime.now(UTC) - timedelta(hours=hours)
-    )
+    ).where(RequestMetric.timestamp >= datetime.now(UTC) - timedelta(hours=hours))
 
     if path:
         stats_query = stats_query.where(RequestMetric.path == path)
@@ -170,16 +168,18 @@ async def get_operation_metrics(
     metrics = result.scalars().all()
 
     # Calculate summary statistics by operation type
-    stats_query = select(
-        OperationMetric.operation_type,
-        func.avg(OperationMetric.duration_ms).label("avg_duration_ms"),
-        func.min(OperationMetric.duration_ms).label("min_duration_ms"),
-        func.max(OperationMetric.duration_ms).label("max_duration_ms"),
-        func.count().label("total_operations"),
-        func.sum(func.cast(OperationMetric.success, sa.Integer)).label("successful_operations"),
-    ).where(
-        OperationMetric.timestamp >= datetime.now(UTC) - timedelta(hours=hours)
-    ).group_by(OperationMetric.operation_type)
+    stats_query = (
+        select(
+            OperationMetric.operation_type,
+            func.avg(OperationMetric.duration_ms).label("avg_duration_ms"),
+            func.min(OperationMetric.duration_ms).label("min_duration_ms"),
+            func.max(OperationMetric.duration_ms).label("max_duration_ms"),
+            func.count().label("total_operations"),
+            func.sum(func.cast(OperationMetric.success, sa.Integer)).label("successful_operations"),
+        )
+        .where(OperationMetric.timestamp >= datetime.now(UTC) - timedelta(hours=hours))
+        .group_by(OperationMetric.operation_type)
+    )
 
     if operation_type:
         stats_query = stats_query.where(OperationMetric.operation_type == operation_type)
@@ -193,7 +193,9 @@ async def get_operation_metrics(
             "total_operations": row.total_operations,
             "successful_operations": row.successful_operations,
             "failed_operations": row.total_operations - row.successful_operations,
-            "success_rate": round((row.successful_operations / row.total_operations * 100), 2) if row.total_operations > 0 else 0,
+            "success_rate": round((row.successful_operations / row.total_operations * 100), 2)
+            if row.total_operations > 0
+            else 0,
         }
         for row in stats_result.all()
     }
@@ -249,14 +251,16 @@ async def get_metrics_summary(
     request_row = request_stats.one()
 
     # Operation metrics summary by type
-    operation_stats_query = select(
-        OperationMetric.operation_type,
-        func.count().label("total_operations"),
-        func.avg(OperationMetric.duration_ms).label("avg_duration_ms"),
-        func.sum(func.cast(~OperationMetric.success, sa.Integer)).label("error_count"),
-    ).where(
-        OperationMetric.timestamp >= time_cutoff
-    ).group_by(OperationMetric.operation_type)
+    operation_stats_query = (
+        select(
+            OperationMetric.operation_type,
+            func.count().label("total_operations"),
+            func.avg(OperationMetric.duration_ms).label("avg_duration_ms"),
+            func.sum(func.cast(~OperationMetric.success, sa.Integer)).label("error_count"),
+        )
+        .where(OperationMetric.timestamp >= time_cutoff)
+        .group_by(OperationMetric.operation_type)
+    )
 
     operation_stats = await db.execute(operation_stats_query)
     operations_by_type = {
@@ -269,17 +273,17 @@ async def get_metrics_summary(
     }
 
     # Slowest endpoints
-    slowest_query = select(
-        RequestMetric.path,
-        func.avg(RequestMetric.duration_ms).label("avg_duration_ms"),
-        func.count().label("request_count"),
-    ).where(
-        RequestMetric.timestamp >= time_cutoff
-    ).group_by(
-        RequestMetric.path
-    ).order_by(
-        desc(func.avg(RequestMetric.duration_ms))
-    ).limit(10)
+    slowest_query = (
+        select(
+            RequestMetric.path,
+            func.avg(RequestMetric.duration_ms).label("avg_duration_ms"),
+            func.count().label("request_count"),
+        )
+        .where(RequestMetric.timestamp >= time_cutoff)
+        .group_by(RequestMetric.path)
+        .order_by(desc(func.avg(RequestMetric.duration_ms)))
+        .limit(10)
+    )
 
     slowest_result = await db.execute(slowest_query)
     slowest_endpoints = [

@@ -1,8 +1,9 @@
 """Test change_events table schema."""
+
 import pytest
 from sqlalchemy import inspect
+
 from app.database import engine
-from app.models.timing import ChangeEvent
 
 
 @pytest.mark.asyncio
@@ -10,9 +11,7 @@ async def test_change_events_table_exists():
     """Test that change_events table exists in webhook schema."""
     async with engine.begin() as conn:
         inspector = inspect(conn)
-        tables = await conn.run_sync(
-            lambda sync_conn: inspector.get_table_names(schema="webhook")
-        )
+        tables = await conn.run_sync(lambda sync_conn: inspector.get_table_names(schema="webhook"))
         assert "change_events" in tables
 
 
@@ -23,8 +22,7 @@ async def test_change_events_columns():
         inspector = inspect(conn)
         columns = await conn.run_sync(
             lambda sync_conn: [
-                col["name"]
-                for col in inspector.get_columns("change_events", schema="webhook")
+                col["name"] for col in inspector.get_columns("change_events", schema="webhook")
             ]
         )
 

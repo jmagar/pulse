@@ -9,8 +9,8 @@ import type {
   ResourceLinkSchema,
   EmbeddedResourceSchema,
   ToolSchema,
-} from '@modelcontextprotocol/sdk/types.js';
-import type { z } from 'zod';
+} from "@modelcontextprotocol/sdk/types.js";
+import type { z } from "zod";
 
 /**
  * Standard response format for MCP tools
@@ -29,7 +29,7 @@ export interface ToolResponse {
 export interface ScrapeResult {
   success: boolean;
   content?: string;
-  source: 'native' | 'firecrawl';
+  source: "native" | "firecrawl";
   error?: string;
   metadata?: Record<string, unknown>;
 }
@@ -37,7 +37,7 @@ export interface ScrapeResult {
 /**
  * Result handling options for scrape results
  */
-export type ResultHandling = 'saveOnly' | 'saveAndReturn' | 'returnOnly';
+export type ResultHandling = "saveOnly" | "saveAndReturn" | "returnOnly";
 
 /**
  * Scraping options interface
@@ -106,19 +106,21 @@ export type Tool = z.infer<typeof ToolSchema>;
  * Type guard to check if content is TextContent
  */
 export function isTextContent(content: ContentBlock): content is TextContent {
-  return (content as { type: string }).type === 'text';
+  return (content as { type: string }).type === "text";
 }
 
 /**
  * Type guard to check if content is ResourceLink
  */
 export function isResourceLink(content: ContentBlock): content is ResourceLink {
-  return (content as { type: string }).type === 'resource_link';
+  return (content as { type: string }).type === "resource_link";
 }
 
 /**
  * Type guard to check if content is EmbeddedResource
  */
-export function isEmbeddedResource(content: ContentBlock): content is EmbeddedResource {
-  return (content as { type: string }).type === 'resource';
+export function isEmbeddedResource(
+  content: ContentBlock,
+): content is EmbeddedResource {
+  return (content as { type: string }).type === "resource";
 }

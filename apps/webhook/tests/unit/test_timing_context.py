@@ -40,11 +40,7 @@ async def test_timing_context_metadata():
     """Test timing context stores metadata."""
     from app.utils.timing import TimingContext
 
-    async with TimingContext(
-        "test",
-        "test_operation",
-        metadata={"key": "value"}
-    ) as ctx:
+    async with TimingContext("test", "test_operation", metadata={"key": "value"}) as ctx:
         ctx.metadata["added"] = "runtime"
 
     assert ctx.metadata["key"] == "value"

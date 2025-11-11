@@ -1,5 +1,10 @@
-import OpenAI from 'openai';
-import type { IExtractClient, ExtractOptions, ExtractResult, LLMConfig } from '../types.js';
+import OpenAI from "openai";
+import type {
+  IExtractClient,
+  ExtractOptions,
+  ExtractResult,
+  LLMConfig,
+} from "../types.js";
 
 const MAX_TOKENS = 8192; // Maximum we'll use
 
@@ -9,15 +14,17 @@ export class OpenAICompatibleExtractClient implements IExtractClient {
 
   constructor(config: LLMConfig) {
     if (!config.apiKey) {
-      throw new Error('API key is required for OpenAI-compatible provider');
+      throw new Error("API key is required for OpenAI-compatible provider");
     }
 
     if (!config.apiBaseUrl) {
-      throw new Error('API base URL is required for OpenAI-compatible provider');
+      throw new Error(
+        "API base URL is required for OpenAI-compatible provider",
+      );
     }
 
     if (!config.model) {
-      throw new Error('Model name is required for OpenAI-compatible provider');
+      throw new Error("Model name is required for OpenAI-compatible provider");
     }
 
     this.client = new OpenAI({
@@ -28,7 +35,11 @@ export class OpenAICompatibleExtractClient implements IExtractClient {
     this.model = config.model;
   }
 
-  async extract(content: string, query: string, _options?: ExtractOptions): Promise<ExtractResult> {
+  async extract(
+    content: string,
+    query: string,
+    _options?: ExtractOptions,
+  ): Promise<ExtractResult> {
     try {
       const systemPrompt = `You are an expert at extracting specific information from web content. 
 When given HTML or text content and a query, extract only the requested information.
@@ -47,11 +58,11 @@ ${query}`;
         temperature: 0,
         messages: [
           {
-            role: 'system',
+            role: "system",
             content: systemPrompt,
           },
           {
-            role: 'user',
+            role: "user",
             content: userPrompt,
           },
         ],
@@ -62,7 +73,8 @@ ${query}`;
       if (!extractedContent) {
         return {
           success: false,
-          error: 'No content extracted from OpenAI-compatible provider response',
+          error:
+            "No content extracted from OpenAI-compatible provider response",
         };
       }
 

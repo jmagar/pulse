@@ -1,10 +1,10 @@
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import { logDebug } from '../../../utils/logging.js';
-import { env } from '../../../config/environment.js';
+import { promises as fs } from "fs";
+import { join } from "path";
+import { tmpdir } from "os";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import { logDebug } from "../../../utils/logging.js";
+import { env } from "../../../config/environment.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,8 +27,8 @@ export async function getStrategyConfigPath(): Promise<string> {
   }
 
   // Use default temp directory location
-  const tempDir = join(tmpdir(), 'pulse');
-  const tempConfigPath = join(tempDir, 'scraping-strategies.md');
+  const tempDir = join(tmpdir(), "pulse");
+  const tempConfigPath = join(tempDir, "scraping-strategies.md");
 
   // Check if temp config already exists
   try {
@@ -39,12 +39,21 @@ export async function getStrategyConfigPath(): Promise<string> {
     await fs.mkdir(tempDir, { recursive: true });
 
     // Find the default config file in the source
-    const defaultConfigPath = join(__dirname, '..', '..', '..', 'scraping-strategies.md');
+    const defaultConfigPath = join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "scraping-strategies.md",
+    );
 
     try {
-      const defaultContent = await fs.readFile(defaultConfigPath, 'utf-8');
-      await fs.writeFile(tempConfigPath, defaultContent, 'utf-8');
-      logDebug('getStrategyConfigPath', `Initialized strategy config at: ${tempConfigPath}`);
+      const defaultContent = await fs.readFile(defaultConfigPath, "utf-8");
+      await fs.writeFile(tempConfigPath, defaultContent, "utf-8");
+      logDebug(
+        "getStrategyConfigPath",
+        `Initialized strategy config at: ${tempConfigPath}`,
+      );
     } catch {
       // If we can't find the default config, create a minimal one
       const minimalConfig = `# Scraping Strategy Configuration
@@ -54,8 +63,11 @@ This file defines which scraping strategy to use for different URL prefixes (nat
 | prefix        | default_strategy | notes                                      |
 | ------------- | ---------------- | ------------------------------------------ |
 `;
-      await fs.writeFile(tempConfigPath, minimalConfig, 'utf-8');
-      logDebug('getStrategyConfigPath', `Created minimal strategy config at: ${tempConfigPath}`);
+      await fs.writeFile(tempConfigPath, minimalConfig, "utf-8");
+      logDebug(
+        "getStrategyConfigPath",
+        `Created minimal strategy config at: ${tempConfigPath}`,
+      );
     }
 
     return tempConfigPath;

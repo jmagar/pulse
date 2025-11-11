@@ -29,8 +29,8 @@ export interface CleanerOptions {
   maxLength?: number;
 }
 
-export * from './base-cleaner.js';
-export * from './cleaner-factory.js';
-export * from './content-type-detector.js';
-export * from './html-cleaner.js';
-export * from './pass-through-cleaner.js';
+export * from "./base-cleaner.js";
+export * from "./cleaner-factory.js";
+export * from "./content-type-detector.js";
+export * from "./html-cleaner.js";
+export * from "./pass-through-cleaner.js";

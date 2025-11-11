@@ -9,28 +9,28 @@ export function detectContentType(content: string, url?: string): string {
 
   // Check URL extension first if available
   if (url) {
-    const extension = url.split('.').pop()?.toLowerCase();
+    const extension = url.split(".").pop()?.toLowerCase();
     switch (extension) {
-      case 'json':
-        return 'application/json';
-      case 'xml':
-      case 'rss':
-        return 'application/xml';
-      case 'html':
-      case 'htm':
-        return 'text/html';
+      case "json":
+        return "application/json";
+      case "xml":
+      case "rss":
+        return "application/xml";
+      case "html":
+      case "htm":
+        return "text/html";
     }
   }
 
   // Check content patterns
-  if (trimmedContent.startsWith('<?xml') || trimmedContent.startsWith('<rss')) {
-    return 'application/xml';
+  if (trimmedContent.startsWith("<?xml") || trimmedContent.startsWith("<rss")) {
+    return "application/xml";
   }
 
-  if (trimmedContent.startsWith('{') || trimmedContent.startsWith('[')) {
+  if (trimmedContent.startsWith("{") || trimmedContent.startsWith("[")) {
     try {
       JSON.parse(trimmedContent);
-      return 'application/json';
+      return "application/json";
     } catch {
       // Not valid JSON, continue checking
     }
@@ -38,19 +38,19 @@ export function detectContentType(content: string, url?: string): string {
 
   // Check for HTML patterns
   if (
-    trimmedContent.toLowerCase().includes('<!doctype html') ||
-    trimmedContent.toLowerCase().includes('<html') ||
-    (trimmedContent.includes('<head') && trimmedContent.includes('<body')) ||
-    (trimmedContent.includes('<meta') && trimmedContent.includes('<title'))
+    trimmedContent.toLowerCase().includes("<!doctype html") ||
+    trimmedContent.toLowerCase().includes("<html") ||
+    (trimmedContent.includes("<head") && trimmedContent.includes("<body")) ||
+    (trimmedContent.includes("<meta") && trimmedContent.includes("<title"))
   ) {
-    return 'text/html';
+    return "text/html";
   }
 
   // Default to HTML for web content
-  if (trimmedContent.includes('<') && trimmedContent.includes('>')) {
-    return 'text/html';
+  if (trimmedContent.includes("<") && trimmedContent.includes(">")) {
+    return "text/html";
   }
 
   // Plain text as fallback
-  return 'text/plain';
+  return "text/plain";
 }

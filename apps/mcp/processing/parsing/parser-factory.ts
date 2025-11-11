@@ -3,10 +3,10 @@
  * Routes content to appropriate parser based on content type
  */
 
-import { ContentParser, ParsedContent } from './base-parser.js';
-import { PDFParser } from './pdf-parser.js';
-import { HTMLParser } from './html-parser.js';
-import { PassthroughParser } from './passthrough-parser.js';
+import { ContentParser, ParsedContent } from "./base-parser.js";
+import { PDFParser } from "./pdf-parser.js";
+import { HTMLParser } from "./html-parser.js";
+import { PassthroughParser } from "./passthrough-parser.js";
 
 export class ContentParserFactory {
   private parsers: ContentParser[];
@@ -23,12 +23,17 @@ export class ContentParserFactory {
   /**
    * Parse content based on its content type
    */
-  async parse(data: ArrayBuffer | string, contentType: string): Promise<ParsedContent> {
+  async parse(
+    data: ArrayBuffer | string,
+    contentType: string,
+  ): Promise<ParsedContent> {
     // Clean up content type (remove charset, etc.)
-    const cleanContentType = contentType.split(';')[0].trim();
+    const cleanContentType = contentType.split(";")[0].trim();
 
     // Find appropriate parser
-    const parser = this.parsers.find((p) => p.canParse(cleanContentType)) || this.passthroughParser;
+    const parser =
+      this.parsers.find((p) => p.canParse(cleanContentType)) ||
+      this.passthroughParser;
 
     return parser.parse(data, cleanContentType);
   }
@@ -37,17 +42,17 @@ export class ContentParserFactory {
    * Check if content type requires binary handling (ArrayBuffer)
    */
   requiresBinaryHandling(contentType: string): boolean {
-    const cleanContentType = contentType.split(';')[0].trim().toLowerCase();
+    const cleanContentType = contentType.split(";")[0].trim().toLowerCase();
 
     // List of content types that need binary handling
     const binaryTypes = [
-      'application/pdf',
-      'image/',
-      'video/',
-      'audio/',
-      'application/octet-stream',
-      'application/zip',
-      'application/gzip',
+      "application/pdf",
+      "image/",
+      "video/",
+      "audio/",
+      "application/octet-stream",
+      "application/zip",
+      "application/gzip",
     ];
 
     return binaryTypes.some((type) => cleanContentType.includes(type));

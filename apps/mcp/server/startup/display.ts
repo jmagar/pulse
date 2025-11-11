@@ -17,15 +17,21 @@ import {
   createLine,
   Colors,
   colorize,
-} from '../../utils/logging.js';
-import { getAllServiceStatuses, formatServiceStatus } from '../../utils/service-status.js';
-import { formatEnvironmentVariables } from './env-display.js';
-import { formatRegistrationStatus, registrationTracker } from '../../utils/mcp-status.js';
+} from "../../utils/logging.js";
+import {
+  getAllServiceStatuses,
+  formatServiceStatus,
+} from "../../utils/service-status.js";
+import { formatEnvironmentVariables } from "./env-display.js";
+import {
+  formatRegistrationStatus,
+  registrationTracker,
+} from "../../utils/mcp-status.js";
 
 // Display constants
 const BANNER_WIDTH = 80;
 const SECTION_WIDTH = 80;
-const SEPARATOR_CHAR = '═';
+const SEPARATOR_CHAR = "═";
 
 /**
  * Server configuration for display
@@ -46,40 +52,40 @@ export interface ServerConfig {
  */
 function displayBanner(): void {
   const banner = [
-    '',
+    "",
     colorize(
-      '╔═══════════════════════════════════════════════════════════════════════════════╗',
+      "╔═══════════════════════════════════════════════════════════════════════════════╗",
       Colors.cyan,
-      Colors.bold
+      Colors.bold,
     ),
     colorize(
-      '║                                                                               ║',
+      "║                                                                               ║",
       Colors.cyan,
-      Colors.bold
+      Colors.bold,
     ),
-    colorize('║                       ', Colors.cyan, Colors.bold) +
-      colorize('🌊 Pulse Fetch MCP Server', Colors.brightWhite, Colors.bold) +
-      colorize('                        ║', Colors.cyan, Colors.bold),
+    colorize("║                       ", Colors.cyan, Colors.bold) +
+      colorize("🌊 Pulse Fetch MCP Server", Colors.brightWhite, Colors.bold) +
+      colorize("                        ║", Colors.cyan, Colors.bold),
     colorize(
-      '║                                                                               ║',
+      "║                                                                               ║",
       Colors.cyan,
-      Colors.bold
+      Colors.bold,
     ),
-    colorize('║                           ', Colors.cyan, Colors.bold) +
-      colorize('Remote HTTP Transport', Colors.brightCyan) +
-      colorize('                           ║', Colors.cyan, Colors.bold),
+    colorize("║                           ", Colors.cyan, Colors.bold) +
+      colorize("Remote HTTP Transport", Colors.brightCyan) +
+      colorize("                           ║", Colors.cyan, Colors.bold),
     colorize(
-      '║                                                                               ║',
+      "║                                                                               ║",
       Colors.cyan,
-      Colors.bold
+      Colors.bold,
     ),
     colorize(
-      '╚═══════════════════════════════════════════════════════════════════════════════╝',
+      "╚═══════════════════════════════════════════════════════════════════════════════╝",
       Colors.cyan,
-      Colors.bold
+      Colors.bold,
     ),
-    '',
-  ].join('\n');
+    "",
+  ].join("\n");
 
   console.log(banner);
 }
@@ -90,18 +96,18 @@ function displayBanner(): void {
  * Shows MCP endpoint, health check endpoint, and listening port
  */
 function displayEndpoints(config: ServerConfig): void {
-  console.log(createSectionHeader('Server Endpoints', SECTION_WIDTH));
-  console.log('');
+  console.log(createSectionHeader("Server Endpoints", SECTION_WIDTH));
+  console.log("");
   console.log(
-    `  ${colorHelpers.bullet()} MCP Endpoint:    ${colorHelpers.highlight(config.mcpEndpoint)}`
+    `  ${colorHelpers.bullet()} MCP Endpoint:    ${colorHelpers.highlight(config.mcpEndpoint)}`,
   );
   console.log(
-    `  ${colorHelpers.bullet()} Health Endpoint: ${colorHelpers.highlight(config.healthEndpoint)}`
+    `  ${colorHelpers.bullet()} Health Endpoint: ${colorHelpers.highlight(config.healthEndpoint)}`,
   );
   console.log(
-    `  ${colorHelpers.bullet()} Port:            ${colorHelpers.highlight(String(config.port))}`
+    `  ${colorHelpers.bullet()} Port:            ${colorHelpers.highlight(String(config.port))}`,
   );
-  console.log('');
+  console.log("");
 }
 
 /**
@@ -110,31 +116,33 @@ function displayEndpoints(config: ServerConfig): void {
  * Shows CORS origins, allowed hosts, OAuth status, and resumability status
  */
 function displaySecurityConfig(config: ServerConfig): void {
-  console.log(createSectionHeader('Security Configuration', SECTION_WIDTH));
-  console.log('');
+  console.log(createSectionHeader("Security Configuration", SECTION_WIDTH));
+  console.log("");
 
-  const originsDisplay = config.allowedOrigins.includes('*')
-    ? colorHelpers.warning('* (all origins)')
-    : colorHelpers.highlight(config.allowedOrigins.join(', '));
+  const originsDisplay = config.allowedOrigins.includes("*")
+    ? colorHelpers.warning("* (all origins)")
+    : colorHelpers.highlight(config.allowedOrigins.join(", "));
   console.log(`  ${colorHelpers.bullet()} CORS Origins:    ${originsDisplay}`);
 
   if (config.allowedHosts.length > 0) {
     console.log(
-      `  ${colorHelpers.bullet()} Allowed Hosts:   ${colorHelpers.highlight(config.allowedHosts.join(', '))}`
+      `  ${colorHelpers.bullet()} Allowed Hosts:   ${colorHelpers.highlight(config.allowedHosts.join(", "))}`,
     );
   }
 
   const oauthStatus = config.oauthEnabled
-    ? colorHelpers.warning('Enabled (not implemented)')
-    : colorHelpers.dim('Disabled');
+    ? colorHelpers.warning("Enabled (not implemented)")
+    : colorHelpers.dim("Disabled");
   console.log(`  ${colorHelpers.bullet()} OAuth:           ${oauthStatus}`);
 
   const resumabilityStatus = config.resumabilityEnabled
-    ? colorHelpers.success('Enabled')
-    : colorHelpers.dim('Disabled');
-  console.log(`  ${colorHelpers.bullet()} Resumability:    ${resumabilityStatus}`);
+    ? colorHelpers.success("Enabled")
+    : colorHelpers.dim("Disabled");
+  console.log(
+    `  ${colorHelpers.bullet()} Resumability:    ${resumabilityStatus}`,
+  );
 
-  console.log('');
+  console.log("");
 }
 
 /**
@@ -143,8 +151,8 @@ function displaySecurityConfig(config: ServerConfig): void {
  * Shows health status of all external services (Firecrawl, LLM, Storage)
  */
 async function displayServiceStatuses(): Promise<void> {
-  console.log(createSectionHeader('Service Status', SECTION_WIDTH));
-  console.log('');
+  console.log(createSectionHeader("Service Status", SECTION_WIDTH));
+  console.log("");
 
   const statuses = await getAllServiceStatuses();
 
@@ -152,7 +160,7 @@ async function displayServiceStatuses(): Promise<void> {
     console.log(`  ${formatServiceStatus(status)}`);
   }
 
-  console.log('');
+  console.log("");
 }
 
 /**
@@ -161,12 +169,12 @@ async function displayServiceStatuses(): Promise<void> {
  * Shows all configured environment variables with sensitive values masked
  */
 function displayEnvironmentVariables(): void {
-  console.log(createSectionHeader('Environment Configuration', SECTION_WIDTH));
+  console.log(createSectionHeader("Environment Configuration", SECTION_WIDTH));
 
   const envLines = formatEnvironmentVariables();
   envLines.forEach((line) => console.log(line));
 
-  console.log('');
+  console.log("");
 }
 
 /**
@@ -176,15 +184,19 @@ function displayEnvironmentVariables(): void {
  * Note: Tools and resources are registered when clients connect, not at server startup.
  */
 function displayMCPStatus(): void {
-  console.log(createSectionHeader('MCP Registration Status', SECTION_WIDTH));
+  console.log(createSectionHeader("MCP Registration Status", SECTION_WIDTH));
 
   const statusLines = formatRegistrationStatus();
 
   if (statusLines.length === 0) {
-    console.log('');
-    console.log(colorHelpers.dim('  Tools and resources will be registered when clients connect'));
-    console.log(colorHelpers.dim('  Available: scrape, search, map, crawl'));
-    console.log('');
+    console.log("");
+    console.log(
+      colorHelpers.dim(
+        "  Tools and resources will be registered when clients connect",
+      ),
+    );
+    console.log(colorHelpers.dim("  Available: scrape, search, map, crawl"));
+    console.log("");
     return;
   }
 
@@ -195,19 +207,19 @@ function displayMCPStatus(): void {
   const resources = tracker.getResourceRegistrations();
   const hasFailures = tracker.hasFailures();
 
-  console.log('');
-  console.log(colorHelpers.dim('  ─'.repeat(40)));
+  console.log("");
+  console.log(colorHelpers.dim("  ─".repeat(40)));
 
   if (hasFailures) {
-    console.log(`  ${colorHelpers.warning('⚠ Some registrations failed')}`);
+    console.log(`  ${colorHelpers.warning("⚠ Some registrations failed")}`);
   } else {
-    console.log(`  ${colorHelpers.success('✓ All registrations successful')}`);
+    console.log(`  ${colorHelpers.success("✓ All registrations successful")}`);
   }
 
   console.log(
-    `  ${colorHelpers.dim(`Total: ${tools.length} tools, ${resources.length} resources`)}`
+    `  ${colorHelpers.dim(`Total: ${tools.length} tools, ${resources.length} resources`)}`,
   );
-  console.log('');
+  console.log("");
 }
 
 /**
@@ -216,10 +228,10 @@ function displayMCPStatus(): void {
  * Shows status of any active crawl jobs (currently placeholder)
  */
 function displayActiveCrawls(): void {
-  console.log(createSectionHeader('Active Crawls', SECTION_WIDTH));
-  console.log('');
-  console.log(colorHelpers.dim('  No active crawls'));
-  console.log('');
+  console.log(createSectionHeader("Active Crawls", SECTION_WIDTH));
+  console.log("");
+  console.log(colorHelpers.dim("  No active crawls"));
+  console.log("");
 }
 
 /**
@@ -250,8 +262,14 @@ export async function displayStartupInfo(config: ServerConfig): Promise<void> {
   displayMCPStatus();
   displayActiveCrawls();
 
-  console.log(colorize(createLine(BANNER_WIDTH, SEPARATOR_CHAR), Colors.cyan, Colors.bold));
-  console.log('');
-  console.log(colorHelpers.success('  ✓ Server ready to accept connections'));
-  console.log('');
+  console.log(
+    colorize(
+      createLine(BANNER_WIDTH, SEPARATOR_CHAR),
+      Colors.cyan,
+      Colors.bold,
+    ),
+  );
+  console.log("");
+  console.log(colorHelpers.success("  ✓ Server ready to accept connections"));
+  console.log("");
 }

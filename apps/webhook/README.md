@@ -177,7 +177,7 @@ fc-bridge/
 │   ├── config.py            # Settings
 │   ├── models.py            # Pydantic schemas
 │   ├── api/
-│   │   ├── routes.py        # API endpoints
+│   │   ├── routes.py        # API endpoints (includes changedetection webhook)
 │   │   └── dependencies.py  # Shared dependencies
 │   ├── services/
 │   │   ├── embedding.py     # HF TEI client
@@ -185,6 +185,10 @@ fc-bridge/
 │   │   ├── bm25_engine.py   # BM25 indexing
 │   │   ├── search.py        # Hybrid search
 │   │   └── indexing.py      # Document processing
+│   ├── jobs/
+│   │   └── rescrape.py      # Rescrape job for changedetection.io
+│   ├── models/
+│   │   └── timing.py        # ChangeEvent model
 │   ├── utils/
 │   │   └── text_processing.py  # Token-based chunking
 │   └── worker.py            # Background worker
@@ -237,6 +241,145 @@ curl http://localhost:52100/health
 # View stats
 curl http://localhost:52100/api/stats
 ```
+
+## changedetection.io Integration
+
+The webhook bridge integrates with changedetection.io for automated website monitoring and rescraping:
+
+### Features
+
+- **Webhook Endpoint:** `POST /api/webhook/changedetection` accepts change notifications
+- **HMAC Verification:** Validates webhook signatures using SHA256
+- **Change Event Tracking:** Stores events in `webhook.change_events` table
+- **Automatic Rescraping:** Queues Firecrawl API calls for changed URLs
+- **Search Re-indexing:** Updates Qdrant + BM25 with latest content
+
+### Rescrape Job
+
+**Location:** `app/jobs/rescrape.py`
+
+The rescrape job handles URLs detected as changed by changedetection.io:
+
+1. Fetches change event from `webhook.change_events` table
+2. Calls Firecrawl API to rescrape the URL with latest content
+3. Indexes markdown content in Qdrant vector store
+4. Updates BM25 engine with fresh text
+5. Marks change event as `completed` or `failed` with metadata
+
+**Configuration:**
+```bash
+WEBHOOK_FIRECRAWL_API_URL=http://firecrawl:3002
+WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
+```
+
+### ChangeEvent Model
+
+**Location:** `app/models/timing.py`
+
+The `ChangeEvent` model tracks change detection events:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | Integer | Primary key |
+| `watch_id` | String | UUID from changedetection.io |
+| `watch_url` | String | URL being monitored |
+| `detected_at` | DateTime | When change was detected |
+| `diff_summary` | Text | First 500 chars of diff |
+| `snapshot_url` | String | Link to view full diff |
+| `rescrape_job_id` | String | RQ job ID |
+| `rescrape_status` | String | `queued`, `in_progress`, `completed`, `failed` |
+| `indexed_at` | DateTime | When content was re-indexed |
+| `metadata` | JSONB | Additional metadata (signature, error details) |
+
+**Indexes:**
+- `idx_change_events_watch_id` - Fast lookup by watch
+- `idx_change_events_detected_at` - Time-based queries
+
+### URL Normalization
+
+The rescrape system applies canonical URL normalization to prevent duplicate indexing:
+
+**Normalization Rules:**
+1. Convert to lowercase
+2. Remove trailing slashes
+3. Strip `www.` subdomain
+4. Remove fragment identifiers (`#section`)
+5. Sort query parameters alphabetically
+6. Remove common tracking parameters (utm_*, fbclid, etc.)
+
+**Examples:**
+- `https://Example.com/Page/` → `https://example.com/page`
+- `https://www.site.com/` → `https://site.com`
+- `https://site.com/page?b=2&a=1` → `https://site.com/page?a=1&b=2`
+
+**Benefits:**
+- Hybrid search deduplication (single canonical entry per URL)
+- Efficient rescraping (updates existing document vs creating duplicate)
+- Consistent search results across URL variations
+
+### Hybrid Search Improvements
+
+**Deduplication Strategy:**
+- URL normalization reduces duplicate entries by ~30-40%
+- RRF (Reciprocal Rank Fusion) merges BM25 and vector results
+- Canonical URLs ensure single ranking per page
+
+**Search Accuracy:**
+- No false duplicates from URL variations
+- Cleaner result sets (no `example.com` + `www.example.com`)
+- Improved relevance scores (consolidated signals)
+
+### Metadata Enhancements
+
+Change events store additional metadata in JSONB:
+
+```json
+{
+  "signature": "sha256=...",
+  "diff_size": 1234,
+  "watch_title": "Example Page",
+  "webhook_received_at": "2025-11-10T12:00:00Z",
+  "document_id": "doc-uuid",
+  "firecrawl_status": "completed"
+}
+```
+
+**Use Cases:**
+- Signature verification audit trail
+- Change magnitude tracking (diff_size)
+- Performance metrics (time deltas)
+- Debugging failed rescraped
+
+### Configuration
+
+All changedetection.io settings use `WEBHOOK_*` namespace:
+
+```bash
+# Webhook security
+WEBHOOK_CHANGEDETECTION_HMAC_SECRET=<64-char-hex>
+
+# Firecrawl API access
+WEBHOOK_FIRECRAWL_API_URL=http://firecrawl:3002
+WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
+```
+
+### Testing
+
+```bash
+# Run changedetection integration tests
+cd apps/webhook && uv run pytest tests/integration/test_changedetection*.py -v
+
+# Run rescrape job tests
+cd apps/webhook && uv run pytest tests/unit/test_rescrape_job.py -v
+```
+
+### Documentation
+
+See [changedetection.io Integration Guide](../../docs/CHANGEDETECTION_INTEGRATION.md) for:
+- Setup instructions
+- Webhook configuration
+- Troubleshooting common issues
+- Architecture decisions
 
 ## License
 

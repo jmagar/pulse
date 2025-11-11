@@ -49,7 +49,7 @@ LLM_MODEL=claude-sonnet-4-20250514  # Defaults per provider
 ## Usage Pattern
 
 ```typescript
-import { createExtractionClient } from './factory';
+import { createExtractionClient } from "./factory";
 
 const client = createExtractionClient();
 if (!client) {
@@ -59,7 +59,7 @@ if (!client) {
 
 const result = await client.extract({
   content: scrapedContent,
-  query: 'Extract product name, price, and rating',
+  query: "Extract product name, price, and rating",
 });
 ```
 

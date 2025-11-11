@@ -4,7 +4,6 @@ Integration tests for text chunking.
 These tests require downloading the actual tokenizer model.
 """
 
-
 import pytest
 
 from app.utils.text_processing import TextChunker

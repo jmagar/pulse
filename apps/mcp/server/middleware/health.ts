@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 
 /**
  * Health check endpoint handler
@@ -9,9 +9,9 @@ import { Request, Response } from 'express';
  */
 export function healthCheck(_req: Request, res: Response): void {
   res.json({
-    status: 'healthy',
+    status: "healthy",
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || 'unknown',
-    transport: 'http-streaming',
+    version: process.env.npm_package_version || "unknown",
+    transport: "http-streaming",
   });
 }

@@ -8,7 +8,7 @@
  * @module shared/scraping/clients/native
  */
 
-import { ContentParserFactory } from '../../../processing/parsing/index.js';
+import { ContentParserFactory } from "../../../processing/parsing/index.js";
 
 /**
  * Interface for native HTTP scraping client
@@ -17,7 +17,10 @@ import { ContentParserFactory } from '../../../processing/parsing/index.js';
  * native fetch without external service dependencies.
  */
 export interface INativeScrapingClient {
-  scrape(url: string, options?: NativeScrapingOptions): Promise<NativeScrapingResult>;
+  scrape(
+    url: string,
+    options?: NativeScrapingOptions,
+  ): Promise<NativeScrapingResult>;
 }
 
 /**
@@ -29,7 +32,7 @@ export interface INativeScrapingClient {
 export interface NativeScrapingOptions {
   timeout?: number;
   headers?: Record<string, string>;
-  method?: 'GET' | 'POST';
+  method?: "GET" | "POST";
   body?: string;
 }
 
@@ -72,16 +75,20 @@ export interface NativeScrapingResult {
  */
 export class NativeScrapingClient implements INativeScrapingClient {
   private defaultHeaders: Record<string, string> = {
-    'User-Agent': 'Mozilla/5.0 (compatible; PulseMCP/1.0; +https://pulsemcp.com)',
-    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Accept-Encoding': 'gzip, deflate',
-    'Cache-Control': 'no-cache',
+    "User-Agent":
+      "Mozilla/5.0 (compatible; PulseMCP/1.0; +https://pulsemcp.com)",
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Accept-Encoding": "gzip, deflate",
+    "Cache-Control": "no-cache",
   };
 
   private parserFactory = new ContentParserFactory();
 
-  async scrape(url: string, options: NativeScrapingOptions = {}): Promise<NativeScrapingResult> {
+  async scrape(
+    url: string,
+    options: NativeScrapingOptions = {},
+  ): Promise<NativeScrapingResult> {
     try {
       const controller = new AbortController();
       const timeoutId = options.timeout
@@ -89,7 +96,7 @@ export class NativeScrapingClient implements INativeScrapingClient {
         : null;
 
       const response = await fetch(url, {
-        method: options.method || 'GET',
+        method: options.method || "GET",
         headers: {
           ...this.defaultHeaders,
           ...options.headers,
@@ -117,13 +124,15 @@ export class NativeScrapingClient implements INativeScrapingClient {
       }
 
       // Get content type for routing to appropriate parser
-      const contentType = response.headers.get('content-type') || 'text/plain';
+      const contentType = response.headers.get("content-type") || "text/plain";
 
       // Determine if we need binary handling
       const isBinary = this.parserFactory.requiresBinaryHandling(contentType);
 
       // Fetch content as ArrayBuffer or text based on content type
-      const rawData = isBinary ? await response.arrayBuffer() : await response.text();
+      const rawData = isBinary
+        ? await response.arrayBuffer()
+        : await response.text();
 
       // Parse content through appropriate parser
       const parsed = await this.parserFactory.parse(rawData, contentType);
@@ -134,20 +143,21 @@ export class NativeScrapingClient implements INativeScrapingClient {
         statusCode: response.status,
         headers: responseHeaders,
         contentType,
-        contentLength: rawData instanceof ArrayBuffer ? rawData.byteLength : rawData.length,
+        contentLength:
+          rawData instanceof ArrayBuffer ? rawData.byteLength : rawData.length,
         metadata: parsed.metadata,
       };
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === "AbortError") {
         return {
           success: false,
-          error: 'Request timeout',
+          error: "Request timeout",
         };
       }
 
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }

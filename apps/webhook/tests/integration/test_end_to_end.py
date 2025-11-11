@@ -1,10 +1,10 @@
 """
 End-to-end test: webhook → queue → worker → index → search
 """
+
 import asyncio
 import sys
 import time
-import uuid
 from unittest.mock import patch
 
 import pytest
@@ -15,8 +15,6 @@ from redis import Redis
 @pytest.mark.asyncio
 async def test_webhook_to_search_end_to_end(monkeypatch):
     """Test complete flow: receive webhook, index document, search works."""
-    # Enable worker with unique name for this test
-    unique_worker_name = f"test-worker-{uuid.uuid4().hex[:8]}"
     monkeypatch.setenv("WEBHOOK_ENABLE_WORKER", "true")
 
     # Clear cached modules to ensure fresh import with new env vars
@@ -33,11 +31,11 @@ async def test_webhook_to_search_end_to_end(monkeypatch):
 
     def patched_run_worker(self):
         """Run the RQ worker with unique name - manual job processing."""
-        from app.config import settings
-        from app.utils.logging import get_logger
         from rq import Queue
         from rq.job import Job
-        import time
+
+        from app.config import settings
+        from app.utils.logging import get_logger
 
         logger = get_logger(__name__)
 
@@ -56,7 +54,10 @@ async def test_webhook_to_search_end_to_end(monkeypatch):
                 job_id = redis_conn.blpop(queue.key, timeout=1)
                 if job_id:
                     # job_id is tuple: (queue_name, job_id)
-                    job = Job.fetch(job_id[1].decode() if isinstance(job_id[1], bytes) else job_id[1], connection=redis_conn)
+                    job = Job.fetch(
+                        job_id[1].decode() if isinstance(job_id[1], bytes) else job_id[1],
+                        connection=redis_conn,
+                    )
                     logger.info(f"Processing job {job.id}")
                     try:
                         job.perform()
@@ -77,9 +78,9 @@ async def test_webhook_to_search_end_to_end(monkeypatch):
 
     with patch("app.worker_thread.WorkerThreadManager.__init__", patched_worker_init):
         with patch("app.worker_thread.WorkerThreadManager._run_worker", patched_run_worker):
-            from app.main import app
-            from app.config import settings
             from app.api.dependencies import get_rq_queue
+            from app.config import settings
+            from app.main import app
 
             # Clear Redis queue and old workers
             redis_conn = Redis.from_url(settings.redis_url)
@@ -141,7 +142,9 @@ async def test_webhook_to_search_end_to_end(monkeypatch):
                 # Should find the document we just indexed
                 assert search_data["total"] > 0, "No results found"
                 urls = [r["url"] for r in search_data["results"]]
-                assert "https://example.com/test" in urls, f"Expected URL not found in results: {urls}"
+                assert "https://example.com/test" in urls, (
+                    f"Expected URL not found in results: {urls}"
+                )
 
                 # Step 4: Check stats endpoint reflects new document
                 stats_response = client.get("/api/stats")

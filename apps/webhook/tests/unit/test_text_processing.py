@@ -2,9 +2,6 @@
 Tests for text processing utilities.
 """
 
-
-
-
 from app.utils.text_processing import clean_text, extract_domain
 
 

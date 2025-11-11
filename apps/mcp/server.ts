@@ -8,15 +8,15 @@
  * @module shared/server
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { registerResources, registerTools } from './tools/registration.js';
-import { env } from './config/environment.js';
-import type { IStrategyConfigClient } from './scraping/strategies/learned/index.js';
-import { FilesystemStrategyConfigClient } from './scraping/strategies/learned/index.js';
-import { NativeScrapingClient } from './scraping/clients/native/native-scrape-client.js';
-import type { CrawlRequestConfig } from './config/crawl-config.js';
-import { FirecrawlClient as ActualFirecrawlClient } from '@firecrawl/client';
-import type { FirecrawlConfig } from '@firecrawl/client';
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { registerResources, registerTools } from "./tools/registration.js";
+import { env } from "./config/environment.js";
+import type { IStrategyConfigClient } from "./scraping/strategies/learned/index.js";
+import { FilesystemStrategyConfigClient } from "./scraping/strategies/learned/index.js";
+import { NativeScrapingClient } from "./scraping/clients/native/native-scrape-client.js";
+import type { CrawlRequestConfig } from "./config/crawl-config.js";
+import { FirecrawlClient as ActualFirecrawlClient } from "@firecrawl/client";
+import type { FirecrawlConfig } from "@firecrawl/client";
 
 /**
  * Interface for Firecrawl API client
@@ -27,7 +27,7 @@ import type { FirecrawlConfig } from '@firecrawl/client';
 export interface IFirecrawlClient {
   scrape(
     url: string,
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ): Promise<{
     success: boolean;
     data?: {
@@ -57,7 +57,7 @@ export interface IFirecrawlClient {
 export interface INativeFetcher {
   scrape(
     url: string,
-    options?: { timeout?: number } & RequestInit
+    options?: { timeout?: number } & RequestInit,
   ): Promise<{
     success: boolean;
     status?: number;
@@ -86,7 +86,7 @@ export class NativeFetcher implements INativeFetcher {
 
   async scrape(
     url: string,
-    options?: { timeout?: number } & RequestInit
+    options?: { timeout?: number } & RequestInit,
   ): Promise<{
     success: boolean;
     status?: number;
@@ -96,7 +96,7 @@ export class NativeFetcher implements INativeFetcher {
     const result = await this.client.scrape(url, {
       timeout: options?.timeout,
       headers: options?.headers as Record<string, string>,
-      method: options?.method as 'GET' | 'POST',
+      method: options?.method as "GET" | "POST",
       body: options?.body as string,
     });
 
@@ -138,7 +138,7 @@ export class DefaultFirecrawlClient implements IFirecrawlClient {
 
   async scrape(
     url: string,
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ): Promise<{
     success: boolean;
     data?: {
@@ -157,9 +157,9 @@ export class DefaultFirecrawlClient implements IFirecrawlClient {
       success: result.success,
       data: result.data
         ? {
-            content: result.data.markdown || result.data.html || '',
-            markdown: result.data.markdown || '',
-            html: result.data.html || '',
+            content: result.data.markdown || result.data.html || "",
+            markdown: result.data.markdown || "",
+            html: result.data.html || "",
             screenshot: result.data.screenshot,
             links: result.data.links,
             metadata: result.data.metadata || {},
@@ -233,8 +233,8 @@ export type StrategyConfigFactory = () => IStrategyConfigClient;
 export function createMCPServer() {
   const server = new Server(
     {
-      name: '@pulsemcp/pulse',
-      version: '0.0.1',
+      name: "@pulsemcp/pulse",
+      version: "0.0.1",
     },
     {
       capabilities: {
@@ -246,13 +246,13 @@ export function createMCPServer() {
           listChanged: false,
         },
       },
-    }
+    },
   );
 
   const registerHandlers = async (
     server: Server,
     clientFactory?: ClientFactory,
-    strategyConfigFactory?: StrategyConfigFactory
+    strategyConfigFactory?: StrategyConfigFactory,
   ) => {
     // Use provided factory or create default clients
     const factory =
@@ -266,14 +266,18 @@ export function createMCPServer() {
         };
 
         if (firecrawlApiKey) {
-          clients.firecrawl = new DefaultFirecrawlClient(firecrawlApiKey, firecrawlBaseUrl);
+          clients.firecrawl = new DefaultFirecrawlClient(
+            firecrawlApiKey,
+            firecrawlBaseUrl,
+          );
         }
 
         return clients;
       });
 
     // Use provided strategy config factory or create default
-    const configFactory = strategyConfigFactory || (() => new FilesystemStrategyConfigClient());
+    const configFactory =
+      strategyConfigFactory || (() => new FilesystemStrategyConfigClient());
 
     registerResources(server);
     registerTools(server, factory, configFactory);

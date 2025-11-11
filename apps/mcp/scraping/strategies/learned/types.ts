@@ -2,7 +2,7 @@
  * Types for scraping strategy configuration system
  */
 
-export type ScrapingStrategy = 'native' | 'firecrawl';
+export type ScrapingStrategy = "native" | "firecrawl";
 
 export interface StrategyConfigEntry {
   prefix: string;

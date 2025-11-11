@@ -1,7 +1,12 @@
-import OpenAI from 'openai';
-import type { IExtractClient, ExtractOptions, ExtractResult, LLMConfig } from '../types.js';
+import OpenAI from "openai";
+import type {
+  IExtractClient,
+  ExtractOptions,
+  ExtractResult,
+  LLMConfig,
+} from "../types.js";
 
-const DEFAULT_MODEL = 'gpt-4.1-mini';
+const DEFAULT_MODEL = "gpt-4.1-mini";
 const MAX_TOKENS = 4096; // OpenAI models support max 4096 completion tokens
 
 export class OpenAIExtractClient implements IExtractClient {
@@ -10,7 +15,7 @@ export class OpenAIExtractClient implements IExtractClient {
 
   constructor(config: LLMConfig) {
     if (!config.apiKey) {
-      throw new Error('OpenAI API key is required');
+      throw new Error("OpenAI API key is required");
     }
 
     this.client = new OpenAI({
@@ -20,7 +25,11 @@ export class OpenAIExtractClient implements IExtractClient {
     this.model = config.model || DEFAULT_MODEL;
   }
 
-  async extract(content: string, query: string, _options?: ExtractOptions): Promise<ExtractResult> {
+  async extract(
+    content: string,
+    query: string,
+    _options?: ExtractOptions,
+  ): Promise<ExtractResult> {
     try {
       const systemPrompt = `You are an expert at extracting specific information from web content. 
 When given HTML or text content and a query, extract only the requested information.
@@ -39,11 +48,11 @@ ${query}`;
         temperature: 0,
         messages: [
           {
-            role: 'system',
+            role: "system",
             content: systemPrompt,
           },
           {
-            role: 'user',
+            role: "user",
             content: userPrompt,
           },
         ],
@@ -54,7 +63,7 @@ ${query}`;
       if (!extractedContent) {
         return {
           success: false,
-          error: 'No content extracted from OpenAI response',
+          error: "No content extracted from OpenAI response",
         };
       }
 

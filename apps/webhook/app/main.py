@@ -143,8 +143,8 @@ app.add_middleware(
 )
 
 # Include API routes (imported here to avoid circular dependency)
-from app.api.routes import router  # noqa: E402
 from app.api.metrics_routes import router as metrics_router  # noqa: E402
+from app.api.routes import router  # noqa: E402
 
 app.include_router(router)
 app.include_router(metrics_router)
@@ -173,6 +173,7 @@ async def log_firecrawl_webhook(request: Request, call_next: Any) -> Any:
         return response
 
     return await call_next(request)
+
 
 # Root endpoint
 @app.get("/")

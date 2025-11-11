@@ -1,8 +1,10 @@
 """Client for changedetection.io REST API."""
+
 from __future__ import annotations
 
+from typing import Any, cast
+
 import httpx
-from typing import Any
 
 from app.config import settings
 from app.utils.logging import get_logger
@@ -74,7 +76,13 @@ class ChangeDetectionClient:
             "url": url,
             "tag": tag,
             "title": title,
-            "time_between_check": {"weeks": None, "days": None, "hours": None, "minutes": None, "seconds": check_interval},
+            "time_between_check": {
+                "weeks": None,
+                "days": None,
+                "hours": None,
+                "minutes": None,
+                "seconds": check_interval,
+            },
             "notification_urls": [webhook_url],
             "notification_title": "{{ watch_title }} changed",
             "notification_body": """{
@@ -109,7 +117,7 @@ class ChangeDetectionClient:
                     raise httpx.HTTPError(f"Watch exists but couldn't fetch it: {url}")
 
                 response.raise_for_status()
-                watch_data = response.json()
+                watch_data = cast(dict[str, Any], response.json())
 
                 logger.info(
                     "Created changedetection.io watch",
@@ -151,7 +159,7 @@ class ChangeDetectionClient:
                     headers=headers,
                 )
                 response.raise_for_status()
-                watches = response.json()
+                watches = cast(list[dict[str, Any]], response.json())
 
                 # Find watch matching URL
                 for watch in watches:

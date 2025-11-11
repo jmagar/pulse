@@ -29,7 +29,6 @@ from app.services.vector_store import VectorStore
 from app.utils.logging import configure_logging, get_logger
 from app.utils.text_processing import TextChunker
 from app.utils.timing import TimingContext
-from app.jobs.rescrape import rescrape_changed_url
 
 # Configure logging
 configure_logging(settings.log_level)

@@ -5,6 +5,7 @@ Performance monitoring infrastructure for the pulse MCP server.
 ## Overview
 
 Provides comprehensive metrics collection for:
+
 - **Cache operations**: Hit/miss rates, storage size, evictions
 - **Scraping strategies**: Success rates, execution times, fallbacks, errors
 - **Request performance**: Latency percentiles (P50/P95/P99), error rates
@@ -26,7 +27,7 @@ shared/monitoring/
 ### Basic Usage
 
 ```typescript
-import { getMetricsCollector } from './monitoring/index.js';
+import { getMetricsCollector } from "./monitoring/index.js";
 
 const metrics = getMetricsCollector();
 
@@ -37,9 +38,9 @@ metrics.recordCacheWrite(1024);
 metrics.updateStorageSize(totalBytes);
 
 // Record strategy execution
-metrics.recordStrategyExecution('native', true, durationMs);
-metrics.recordFallback('native', 'firecrawl');
-metrics.recordStrategyError('native', errorMessage);
+metrics.recordStrategyExecution("native", true, durationMs);
+metrics.recordFallback("native", "firecrawl");
+metrics.recordStrategyError("native", errorMessage);
 
 // Record requests
 metrics.recordRequest(durationMs, isError);
@@ -51,7 +52,7 @@ const allMetrics = metrics.getAllMetrics();
 ### Exporting Metrics
 
 ```typescript
-import { ConsoleExporter, JSONExporter } from './monitoring/index.js';
+import { ConsoleExporter, JSONExporter } from "./monitoring/index.js";
 
 // Console format (human-readable)
 const consoleExporter = new ConsoleExporter({ includeTimestamp: true });
@@ -84,15 +85,15 @@ curl -X POST http://localhost:3060/metrics/reset
 
 ```typescript
 interface CacheMetrics {
-  hits: number;              // Total cache hits
-  misses: number;            // Total cache misses
-  writes: number;            // Total cache writes
-  evictions: number;         // Total evictions
-  hitRate: number;           // Hit rate (0-1)
-  missRate: number;          // Miss rate (0-1)
-  currentSizeBytes: number;  // Current storage size
+  hits: number; // Total cache hits
+  misses: number; // Total cache misses
+  writes: number; // Total cache writes
+  evictions: number; // Total evictions
+  hitRate: number; // Hit rate (0-1)
+  missRate: number; // Miss rate (0-1)
+  currentSizeBytes: number; // Current storage size
   totalBytesWritten: number; // Total bytes written
-  itemCount: number;         // Number of cached items
+  itemCount: number; // Number of cached items
 }
 ```
 
@@ -100,13 +101,13 @@ interface CacheMetrics {
 
 ```typescript
 interface StrategyMetric {
-  successCount: number;      // Successful executions
-  failureCount: number;      // Failed executions
-  totalExecutions: number;   // Total attempts
-  successRate: number;       // Success rate (0-1)
-  totalDurationMs: number;   // Total execution time
-  avgDurationMs: number;     // Average execution time
-  fallbackCount: number;     // Times this strategy triggered fallback
+  successCount: number; // Successful executions
+  failureCount: number; // Failed executions
+  totalExecutions: number; // Total attempts
+  successRate: number; // Success rate (0-1)
+  totalDurationMs: number; // Total execution time
+  avgDurationMs: number; // Average execution time
+  fallbackCount: number; // Times this strategy triggered fallback
   errors?: Record<string, number>; // Error counts by message
 }
 
@@ -119,13 +120,13 @@ interface StrategyMetrics {
 
 ```typescript
 interface RequestMetrics {
-  totalRequests: number;     // Total number of requests
-  totalErrors: number;       // Total errors
-  errorRate: number;         // Error rate (0-1)
+  totalRequests: number; // Total number of requests
+  totalErrors: number; // Total errors
+  errorRate: number; // Error rate (0-1)
   avgResponseTimeMs: number; // Average response time
-  p50Ms: number;             // Median latency
-  p95Ms: number;             // 95th percentile
-  p99Ms: number;             // 99th percentile
+  p50Ms: number; // Median latency
+  p95Ms: number; // 95th percentile
+  p99Ms: number; // 99th percentile
 }
 ```
 
@@ -136,7 +137,7 @@ interface RequestMetrics {
 Monitoring is integrated in `/shared/scraping/strategies/selector.ts`:
 
 ```typescript
-import { getMetricsCollector } from '../../monitoring/index.js';
+import { getMetricsCollector } from "../../monitoring/index.js";
 
 const metrics = getMetricsCollector();
 
@@ -149,7 +150,7 @@ if (error) {
 }
 
 // When falling back
-metrics.recordFallback('native', 'firecrawl');
+metrics.recordFallback("native", "firecrawl");
 ```
 
 ### Tool Handler
@@ -157,7 +158,7 @@ metrics.recordFallback('native', 'firecrawl');
 Request tracking is integrated in `/shared/mcp/registration.ts`:
 
 ```typescript
-import { getMetricsCollector } from '../monitoring/index.js';
+import { getMetricsCollector } from "../monitoring/index.js";
 
 const metrics = getMetricsCollector();
 const startTime = Date.now();
@@ -179,7 +180,7 @@ try {
 To integrate with storage (when available):
 
 ```typescript
-import { getMetricsCollector } from '../monitoring/index.js';
+import { getMetricsCollector } from "../monitoring/index.js";
 
 class MemoryResourceStorage {
   async read(uri: string) {

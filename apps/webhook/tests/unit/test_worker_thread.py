@@ -1,6 +1,8 @@
 import time
 from unittest.mock import Mock, patch
+
 import pytest
+
 
 def test_worker_thread_manager_start():
     """WorkerThreadManager starts worker in background thread."""
@@ -19,6 +21,7 @@ def test_worker_thread_manager_start():
     # Cleanup
     manager.stop()
 
+
 def test_worker_thread_manager_stop():
     """WorkerThreadManager stops worker gracefully."""
     from app.worker_thread import WorkerThreadManager
@@ -35,14 +38,14 @@ def test_worker_thread_manager_stop():
     time.sleep(0.5)
     assert not manager._thread.is_alive()
 
+
 def test_worker_thread_manager_does_not_start_twice():
     """WorkerThreadManager cannot be started twice."""
     from app.worker_thread import WorkerThreadManager
-    from unittest.mock import Mock, patch
 
     manager = WorkerThreadManager()
 
-    with patch('app.worker_thread.Redis') as mock_redis:
+    with patch("app.worker_thread.Redis") as mock_redis:
         mock_redis.from_url.return_value = Mock()
 
         manager.start()

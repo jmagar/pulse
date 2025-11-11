@@ -1,4 +1,4 @@
-import { CorsOptions } from 'cors';
+import { CorsOptions } from "cors";
 
 /**
  * Get CORS configuration options for the HTTP server
@@ -14,15 +14,17 @@ import { CorsOptions } from 'cors';
  * @returns CORS options object
  */
 export function getCorsOptions(): CorsOptions {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').filter(Boolean) || ['*'];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").filter(
+    Boolean,
+  ) || ["*"];
 
   // CORS spec: can't use credentials: true with origin: '*'
-  const isWildcard = allowedOrigins.length === 1 && allowedOrigins[0] === '*';
+  const isWildcard = allowedOrigins.length === 1 && allowedOrigins[0] === "*";
 
   return {
-    origin: isWildcard ? '*' : allowedOrigins, // Use string '*' for wildcard, not array
-    exposedHeaders: ['Mcp-Session-Id'],
+    origin: isWildcard ? "*" : allowedOrigins, // Use string '*' for wildcard, not array
+    exposedHeaders: ["Mcp-Session-Id"],
     credentials: !isWildcard, // Only enable credentials for specific origins
-    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    methods: ["GET", "POST", "DELETE", "OPTIONS"],
   };
 }

@@ -1,8 +1,11 @@
 """Background job for rescraping changed URLs."""
+
+from datetime import UTC, datetime
+from typing import Any, cast
+
 import httpx
 from rq import get_current_job
 from sqlalchemy import select, update
-from datetime import datetime, timezone
 
 from app.config import settings
 from app.database import get_db_context
@@ -15,14 +18,13 @@ from app.services.vector_store import VectorStore
 from app.utils.logging import get_logger
 from app.utils.text_processing import TextChunker
 
-
 logger = get_logger(__name__)
 
 
 async def _index_document_helper(
     url: str,
     text: str,
-    metadata: dict,
+    metadata: dict[str, Any],
 ) -> str:
     """
     Helper function to index a document using the IndexingService.
@@ -95,7 +97,7 @@ async def _index_document_helper(
         await vector_store.close()
 
 
-async def rescrape_changed_url(change_event_id: int) -> dict:
+async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
     """
     Rescrape URL that was detected as changed by changedetection.io.
 
@@ -116,9 +118,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict:
 
     async with get_db_context() as session:
         # Fetch change event
-        result = await session.execute(
-            select(ChangeEvent).where(ChangeEvent.id == change_event_id)
-        )
+        result = await session.execute(select(ChangeEvent).where(ChangeEvent.id == change_event_id))
         change_event = result.scalar_one_or_none()
 
         if not change_event:
@@ -155,7 +155,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict:
                     headers={"Authorization": f"Bearer {firecrawl_key}"},
                 )
                 response.raise_for_status()
-                scrape_data = response.json()
+                scrape_data = cast(dict[str, Any], response.json())
 
             if not scrape_data.get("success"):
                 raise Exception(f"Firecrawl scrape failed: {scrape_data}")
@@ -182,7 +182,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict:
                 .where(ChangeEvent.id == change_event_id)
                 .values(
                     rescrape_status="completed",
-                    indexed_at=datetime.now(timezone.utc),
+                    indexed_at=datetime.now(UTC),
                     extra_metadata={
                         **(change_event.extra_metadata or {}),
                         "document_id": doc_id,
@@ -221,7 +221,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict:
                     extra_metadata={
                         **(change_event.extra_metadata or {}),
                         "error": str(e),
-                        "failed_at": datetime.now(timezone.utc).isoformat(),
+                        "failed_at": datetime.now(UTC).isoformat(),
                     },
                 )
             )

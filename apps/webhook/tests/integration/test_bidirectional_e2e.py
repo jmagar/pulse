@@ -1,8 +1,11 @@
 """End-to-end test for bidirectional Firecrawl ↔ changedetection.io flow."""
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
+from app.models import FirecrawlDocumentPayload, FirecrawlPageEvent
 from app.services.webhook_handlers import _handle_page_event
-from app.models import FirecrawlPageEvent, FirecrawlDocumentPayload
 
 
 @pytest.mark.asyncio
@@ -43,13 +46,15 @@ async def test_bidirectional_workflow():
     mock_queue.enqueue.return_value = mock_job
 
     # STEP 3: Auto-watch created
-    with patch("app.services.auto_watch.ChangeDetectionClient") as MockClient:
-        mock_client_instance = MockClient.return_value
-        mock_client_instance.create_watch = AsyncMock(return_value={
-            "uuid": "auto-watch-uuid",
-            "url": url,
-            "tag": "firecrawl-auto",
-        })
+    with patch("app.services.auto_watch.ChangeDetectionClient") as mock_client_cls:
+        mock_client_instance = mock_client_cls.return_value
+        mock_client_instance.create_watch = AsyncMock(
+            return_value={
+                "uuid": "auto-watch-uuid",
+                "url": url,
+                "tag": "firecrawl-auto",
+            }
+        )
 
         result = await _handle_page_event(event, mock_queue)
 
@@ -99,13 +104,15 @@ async def test_multiple_urls_create_multiple_watches():
     mock_job = MagicMock()
     mock_queue.enqueue.return_value = mock_job
 
-    with patch("app.services.auto_watch.ChangeDetectionClient") as MockClient:
-        mock_client_instance = MockClient.return_value
-        mock_client_instance.create_watch = AsyncMock(side_effect=[
-            {"uuid": "watch-1", "url": "https://example.com/page1"},
-            {"uuid": "watch-2", "url": "https://example.com/page2"},
-            {"uuid": "watch-3", "url": "https://example.com/page3"},
-        ])
+    with patch("app.services.auto_watch.ChangeDetectionClient") as mock_client_cls:
+        mock_client_instance = mock_client_cls.return_value
+        mock_client_instance.create_watch = AsyncMock(
+            side_effect=[
+                {"uuid": "watch-1", "url": "https://example.com/page1"},
+                {"uuid": "watch-2", "url": "https://example.com/page2"},
+                {"uuid": "watch-3", "url": "https://example.com/page3"},
+            ]
+        )
 
         result = await _handle_page_event(event, mock_queue)
 

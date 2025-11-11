@@ -1,11 +1,14 @@
-import type { MapResult } from '@firecrawl/client';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { DEFAULT_LANGUAGE_EXCLUDES } from '../../config/crawl-config.js';
+import type { MapResult } from "@firecrawl/client";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { DEFAULT_LANGUAGE_EXCLUDES } from "../../config/crawl-config.js";
 
 /**
  * Check if a URL matches any language exclusion pattern
  */
-function shouldExcludeUrl(url: string, excludePatterns: readonly string[]): boolean {
+function shouldExcludeUrl(
+  url: string,
+  excludePatterns: readonly string[],
+): boolean {
   try {
     const parsed = new URL(url);
     const path = parsed.pathname;
@@ -24,18 +27,23 @@ export function formatMapResponse(
   url: string,
   startIndex: number,
   maxResults: number,
-  resultHandling: 'saveOnly' | 'saveAndReturn' | 'returnOnly'
+  resultHandling: "saveOnly" | "saveAndReturn" | "returnOnly",
 ): CallToolResult {
-  const content: CallToolResult['content'] = [];
+  const content: CallToolResult["content"] = [];
 
   // Filter out language-specific paths before processing
   const totalLinksBeforeFilter = result.links.length;
-  const filteredLinks = result.links.filter(link => !shouldExcludeUrl(link.url, DEFAULT_LANGUAGE_EXCLUDES));
+  const filteredLinks = result.links.filter(
+    (link) => !shouldExcludeUrl(link.url, DEFAULT_LANGUAGE_EXCLUDES),
+  );
   const totalLinks = filteredLinks.length;
   const excludedCount = totalLinksBeforeFilter - totalLinks;
 
   // Apply pagination to filtered links
-  const paginatedLinks = filteredLinks.slice(startIndex, startIndex + maxResults);
+  const paginatedLinks = filteredLinks.slice(
+    startIndex,
+    startIndex + maxResults,
+  );
   const hasMore = startIndex + maxResults < totalLinks;
   const endIndex = Math.min(startIndex + maxResults, totalLinks);
 
@@ -45,18 +53,19 @@ export function formatMapResponse(
       try {
         return new URL(link.url).hostname;
       } catch {
-        return 'invalid-url';
+        return "invalid-url";
       }
-    })
+    }),
   );
 
   const linksWithTitles = filteredLinks.filter((l) => l.title).length;
-  const titleCoverage = totalLinks > 0 ? Math.round((linksWithTitles / totalLinks) * 100) : 0;
+  const titleCoverage =
+    totalLinks > 0 ? Math.round((linksWithTitles / totalLinks) * 100) : 0;
 
   // Build summary text
   const summaryLines = [
     `Map Results for ${url}`,
-    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
     `Total URLs discovered: ${totalLinks}`,
   ];
 
@@ -67,17 +76,19 @@ export function formatMapResponse(
   summaryLines.push(
     `Unique domains: ${domains.size}`,
     `URLs with titles: ${titleCoverage}%`,
-    `Showing: ${startIndex + 1}-${endIndex} of ${totalLinks}`
+    `Showing: ${startIndex + 1}-${endIndex} of ${totalLinks}`,
   );
 
   if (hasMore) {
-    summaryLines.push('');
-    summaryLines.push(`[More results available. Use startIndex: ${endIndex} to continue]`);
+    summaryLines.push("");
+    summaryLines.push(
+      `[More results available. Use startIndex: ${endIndex} to continue]`,
+    );
   }
 
   content.push({
-    type: 'text',
-    text: summaryLines.join('\n'),
+    type: "text",
+    text: summaryLines.join("\n"),
   });
 
   // Prepare resource data
@@ -88,35 +99,34 @@ export function formatMapResponse(
   const resourceName = `URL Map: ${url} (${paginatedLinks.length} URLs)`;
 
   // Handle different result modes
-  if (resultHandling === 'saveOnly') {
+  if (resultHandling === "saveOnly") {
     const estimatedChars = resourceData.length;
     const estimatedTokens = Math.ceil(estimatedChars / 4);
 
     content.push({
-      type: 'resource_link',
+      type: "resource_link",
       uri: baseUri,
       name: resourceName,
-      mimeType: 'application/json',
+      mimeType: "application/json",
       description: `URLs ${startIndex + 1}-${endIndex} from ${url}. Estimated ${estimatedTokens} tokens.`,
     });
-  } else if (resultHandling === 'saveAndReturn') {
+  } else if (resultHandling === "saveAndReturn") {
     content.push({
-      type: 'resource',
+      type: "resource",
       resource: {
         uri: baseUri,
         name: resourceName,
-        mimeType: 'application/json',
+        mimeType: "application/json",
         text: resourceData,
       },
     });
   } else {
     // returnOnly
     content.push({
-      type: 'text',
+      type: "text",
       text: resourceData,
     });
   }
 
   return { content, isError: false };
 }
-

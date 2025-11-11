@@ -1,8 +1,8 @@
-import { env } from '../../config/environment.js';
-import type { IExtractClient, LLMConfig } from './types.js';
-import { AnthropicExtractClient } from './providers/anthropic-client.js';
-import { OpenAIExtractClient } from './providers/openai-client.js';
-import { OpenAICompatibleExtractClient } from './providers/openai-compatible-client.js';
+import { env } from "../../config/environment.js";
+import type { IExtractClient, LLMConfig } from "./types.js";
+import { AnthropicExtractClient } from "./providers/anthropic-client.js";
+import { OpenAIExtractClient } from "./providers/openai-client.js";
+import { OpenAICompatibleExtractClient } from "./providers/openai-compatible-client.js";
 
 /**
  * Factory for creating extract clients based on configuration
@@ -13,7 +13,7 @@ export class ExtractClientFactory {
    * Returns null if no configuration is found
    */
   static createFromEnv(): IExtractClient | null {
-    const provider = env.llmProvider as LLMConfig['provider'] | undefined;
+    const provider = env.llmProvider as LLMConfig["provider"] | undefined;
     const apiKey = env.llmApiKey;
 
     if (!provider || !apiKey) {
@@ -35,11 +35,11 @@ export class ExtractClientFactory {
    */
   static create(config: LLMConfig): IExtractClient {
     switch (config.provider) {
-      case 'anthropic':
+      case "anthropic":
         return new AnthropicExtractClient(config);
-      case 'openai':
+      case "openai":
         return new OpenAIExtractClient(config);
-      case 'openai-compatible':
+      case "openai-compatible":
         return new OpenAICompatibleExtractClient(config);
       default:
         throw new Error(`Unsupported LLM provider: ${config.provider}`);

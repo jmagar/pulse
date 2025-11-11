@@ -1,8 +1,11 @@
 """Tests for automatic watch creation service."""
-import pytest
+
 from unittest.mock import AsyncMock, patch
-from app.services.auto_watch import create_watch_for_url
+
+import pytest
+
 from app.clients.changedetection import ChangeDetectionClient
+from app.services.auto_watch import create_watch_for_url
 
 
 @pytest.mark.asyncio

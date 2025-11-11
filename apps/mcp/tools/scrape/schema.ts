@@ -8,9 +8,9 @@
  * @module shared/mcp/tools/scrape/schema
  */
 
-import { z } from 'zod';
-import { ExtractClientFactory } from '../../processing/extraction/index.js';
-import { browserActionsArraySchema } from './action-types.js';
+import { z } from "zod";
+import { ExtractClientFactory } from "../../processing/extraction/index.js";
+import { browserActionsArraySchema } from "./action-types.js";
 
 /**
  * Parameter descriptions for scraping tool options
@@ -21,27 +21,27 @@ import { browserActionsArraySchema } from './action-types.js';
 export const PARAM_DESCRIPTIONS = {
   url: 'The webpage URL to scrape (e.g., "https://example.com/article", "https://api.example.com/docs")',
   timeout:
-    'Maximum time to wait for page load in milliseconds. Increase for slow-loading sites (e.g., 120000 for 2 minutes). Default: 60000 (1 minute)',
+    "Maximum time to wait for page load in milliseconds. Increase for slow-loading sites (e.g., 120000 for 2 minutes). Default: 60000 (1 minute)",
   maxChars:
-    'Maximum number of characters to return from the scraped content. Useful for limiting response size. Default: 100000',
+    "Maximum number of characters to return from the scraped content. Useful for limiting response size. Default: 100000",
   startIndex:
-    'Character position to start reading from. Use with maxChars for pagination through large documents (e.g., startIndex: 100000 to skip first 100k chars). Default: 0',
+    "Character position to start reading from. Use with maxChars for pagination through large documents (e.g., startIndex: 100000 to skip first 100k chars). Default: 0",
   resultHandling:
     'How to handle scraped content and MCP Resources. Options: "saveOnly" (saves as linked resource, no content returned), "saveAndReturn" (saves as embedded resource and returns content - default), "returnOnly" (returns content without saving). Default: "saveAndReturn"',
   forceRescrape:
-    'Force a fresh scrape even if cached content exists for this URL. Useful when you know the content has changed. Default: false',
+    "Force a fresh scrape even if cached content exists for this URL. Useful when you know the content has changed. Default: false",
   cleanScrape:
     "Whether to clean the scraped content by converting HTML to semantic Markdown of what's on the page, removing ads, navigation, and boilerplate. This typically reduces content size by 50-90% while preserving main content. Only disable this for debugging or when you need the exact raw HTML structure. Default: true",
   maxAge:
-    'Cache age threshold in milliseconds. Accept cached content if newer than this age. Set to 0 to always fetch fresh. Default: 172800000 (2 days). Firecrawl claims up to 500% faster responses with caching enabled.',
+    "Cache age threshold in milliseconds. Accept cached content if newer than this age. Set to 0 to always fetch fresh. Default: 172800000 (2 days). Firecrawl claims up to 500% faster responses with caching enabled.",
   proxy:
     'Proxy type for anti-bot bypass. Options: "basic" (fast, standard proxy), "stealth" (slow, 5 credits, advanced anti-bot bypass), "auto" (smart retry - tries basic first, falls back to stealth on failure). Default: "auto"',
   blockAds:
-    'Enable ad-blocking and cookie popup blocking. Removes advertisements and cookie consent popups from scraped content for cleaner extraction. Default: true',
+    "Enable ad-blocking and cookie popup blocking. Removes advertisements and cookie consent popups from scraped content for cleaner extraction. Default: true",
   headers:
     'Custom HTTP headers to send with the request. Useful for authentication, custom user agents, or cookies. Example: { "Cookie": "session=abc123", "User-Agent": "MyBot/1.0" }',
   waitFor:
-    'Milliseconds to wait before scraping. Allows page JavaScript to fully load and execute. Useful for single-page applications (SPAs) that render content dynamically. Example: 3000 (wait 3 seconds)',
+    "Milliseconds to wait before scraping. Allows page JavaScript to fully load and execute. Useful for single-page applications (SPAs) that render content dynamically. Example: 3000 (wait 3 seconds)",
   includeTags:
     'HTML tags, classes, or IDs to include in scraped content. Whitelist filter for surgical content extraction. Examples: ["p", "h1", "h2"], [".article-body", "#main-content"], ["article", ".post"]',
   excludeTags:
@@ -51,7 +51,7 @@ export const PARAM_DESCRIPTIONS = {
   parsers:
     'PDF parsing configuration. Default: [] (disabled). Set to [{ type: "pdf" }] to enable PDF parsing (1 credit per page). Empty array prevents PDF engine from being used on HTML pages.',
   onlyMainContent:
-    'Extract only main content, excluding headers, navigation, footers, and ads. Uses intelligent content detection to identify the primary article/content area. Default: true',
+    "Extract only main content, excluding headers, navigation, footers, and ads. Uses intelligent content detection to identify the primary article/content area. Default: true",
   actions: `Browser automation actions to perform before scraping. Enables interaction with dynamic pages that require user input.
 
 Action types and examples:
@@ -145,7 +145,7 @@ export function preprocessUrl(url: string): string {
 
   // If no protocol is specified, add https://
   if (!url.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:/)) {
-    url = 'https://' + url;
+    url = "https://" + url;
   }
 
   return url;
@@ -177,50 +177,92 @@ export const buildScrapeArgsSchema = () => {
       .transform(preprocessUrl)
       .pipe(z.string().url())
       .describe(PARAM_DESCRIPTIONS.url),
-    timeout: z.number().optional().default(60000).describe(PARAM_DESCRIPTIONS.timeout),
-    maxChars: z.number().optional().default(100000).describe(PARAM_DESCRIPTIONS.maxChars),
-    startIndex: z.number().optional().default(0).describe(PARAM_DESCRIPTIONS.startIndex),
+    timeout: z
+      .number()
+      .optional()
+      .default(60000)
+      .describe(PARAM_DESCRIPTIONS.timeout),
+    maxChars: z
+      .number()
+      .optional()
+      .default(100000)
+      .describe(PARAM_DESCRIPTIONS.maxChars),
+    startIndex: z
+      .number()
+      .optional()
+      .default(0)
+      .describe(PARAM_DESCRIPTIONS.startIndex),
     resultHandling: z
-      .enum(['saveOnly', 'saveAndReturn', 'returnOnly'])
+      .enum(["saveOnly", "saveAndReturn", "returnOnly"])
       .optional()
-      .default('saveAndReturn')
+      .default("saveAndReturn")
       .describe(PARAM_DESCRIPTIONS.resultHandling),
-    forceRescrape: z.boolean().optional().default(false).describe(PARAM_DESCRIPTIONS.forceRescrape),
-    cleanScrape: z.boolean().optional().default(true).describe(PARAM_DESCRIPTIONS.cleanScrape),
-    maxAge: z.number().optional().default(172800000).describe(PARAM_DESCRIPTIONS.maxAge),
-    proxy: z
-      .enum(['basic', 'stealth', 'auto'])
+    forceRescrape: z
+      .boolean()
       .optional()
-      .default('auto')
+      .default(false)
+      .describe(PARAM_DESCRIPTIONS.forceRescrape),
+    cleanScrape: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe(PARAM_DESCRIPTIONS.cleanScrape),
+    maxAge: z
+      .number()
+      .optional()
+      .default(172800000)
+      .describe(PARAM_DESCRIPTIONS.maxAge),
+    proxy: z
+      .enum(["basic", "stealth", "auto"])
+      .optional()
+      .default("auto")
       .describe(PARAM_DESCRIPTIONS.proxy),
-    blockAds: z.boolean().optional().default(true).describe(PARAM_DESCRIPTIONS.blockAds),
-    headers: z.record(z.string(), z.string()).optional().describe(PARAM_DESCRIPTIONS.headers),
-    waitFor: z.number().int().positive().optional().describe(PARAM_DESCRIPTIONS.waitFor),
-    includeTags: z.array(z.string()).optional().describe(PARAM_DESCRIPTIONS.includeTags),
-    excludeTags: z.array(z.string()).optional().describe(PARAM_DESCRIPTIONS.excludeTags),
+    blockAds: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe(PARAM_DESCRIPTIONS.blockAds),
+    headers: z
+      .record(z.string(), z.string())
+      .optional()
+      .describe(PARAM_DESCRIPTIONS.headers),
+    waitFor: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe(PARAM_DESCRIPTIONS.waitFor),
+    includeTags: z
+      .array(z.string())
+      .optional()
+      .describe(PARAM_DESCRIPTIONS.includeTags),
+    excludeTags: z
+      .array(z.string())
+      .optional()
+      .describe(PARAM_DESCRIPTIONS.excludeTags),
     formats: z
       .array(
         z.enum([
-          'markdown',
-          'html',
-          'rawHtml',
-          'links',
-          'images',
-          'screenshot',
-          'summary',
-          'branding',
-          'changeTracking',
-        ])
+          "markdown",
+          "html",
+          "rawHtml",
+          "links",
+          "images",
+          "screenshot",
+          "summary",
+          "branding",
+          "changeTracking",
+        ]),
       )
       .optional()
-      .default(['markdown', 'html'])
+      .default(["markdown", "html"])
       .describe(PARAM_DESCRIPTIONS.formats),
     parsers: z
       .array(
         z.object({
-          type: z.literal('pdf'),
+          type: z.literal("pdf"),
           maxPages: z.number().int().min(1).max(10000).optional(),
-        })
+        }),
       )
       .optional()
       .default([])
@@ -230,7 +272,9 @@ export const buildScrapeArgsSchema = () => {
       .optional()
       .default(true)
       .describe(PARAM_DESCRIPTIONS.onlyMainContent),
-    actions: browserActionsArraySchema.optional().describe(PARAM_DESCRIPTIONS.actions),
+    actions: browserActionsArraySchema
+      .optional()
+      .describe(PARAM_DESCRIPTIONS.actions),
   };
 
   // Only include extract parameter if extraction is available
@@ -265,182 +309,206 @@ export const buildScrapeArgsSchema = () => {
 export const buildInputSchema = () => {
   const baseProperties = {
     url: {
-      type: 'string',
-      format: 'uri',
+      type: "string",
+      format: "uri",
       description: PARAM_DESCRIPTIONS.url,
     },
     timeout: {
-      type: 'number',
+      type: "number",
       default: 60000,
       description: PARAM_DESCRIPTIONS.timeout,
     },
     maxChars: {
-      type: 'number',
+      type: "number",
       default: 100000,
       description: PARAM_DESCRIPTIONS.maxChars,
     },
     startIndex: {
-      type: 'number',
+      type: "number",
       default: 0,
       description: PARAM_DESCRIPTIONS.startIndex,
     },
     resultHandling: {
-      type: 'string',
-      enum: ['saveOnly', 'saveAndReturn', 'returnOnly'],
-      default: 'saveAndReturn',
+      type: "string",
+      enum: ["saveOnly", "saveAndReturn", "returnOnly"],
+      default: "saveAndReturn",
       description: PARAM_DESCRIPTIONS.resultHandling,
     },
     forceRescrape: {
-      type: 'boolean',
+      type: "boolean",
       default: false,
       description: PARAM_DESCRIPTIONS.forceRescrape,
     },
     cleanScrape: {
-      type: 'boolean',
+      type: "boolean",
       default: true,
       description: PARAM_DESCRIPTIONS.cleanScrape,
     },
     maxAge: {
-      type: 'number',
+      type: "number",
       default: 172800000,
       description: PARAM_DESCRIPTIONS.maxAge,
     },
     proxy: {
-      type: 'string',
-      enum: ['basic', 'stealth', 'auto'],
-      default: 'auto',
+      type: "string",
+      enum: ["basic", "stealth", "auto"],
+      default: "auto",
       description: PARAM_DESCRIPTIONS.proxy,
     },
     blockAds: {
-      type: 'boolean',
+      type: "boolean",
       default: true,
       description: PARAM_DESCRIPTIONS.blockAds,
     },
     headers: {
-      type: 'object',
-      additionalProperties: { type: 'string' },
+      type: "object",
+      additionalProperties: { type: "string" },
       description: PARAM_DESCRIPTIONS.headers,
     },
     waitFor: {
-      type: 'number',
+      type: "number",
       description: PARAM_DESCRIPTIONS.waitFor,
     },
     includeTags: {
-      type: 'array',
-      items: { type: 'string' },
+      type: "array",
+      items: { type: "string" },
       description: PARAM_DESCRIPTIONS.includeTags,
     },
     excludeTags: {
-      type: 'array',
-      items: { type: 'string' },
+      type: "array",
+      items: { type: "string" },
       description: PARAM_DESCRIPTIONS.excludeTags,
     },
     formats: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'string',
+        type: "string",
         enum: [
-          'markdown',
-          'html',
-          'rawHtml',
-          'links',
-          'images',
-          'screenshot',
-          'summary',
-          'branding',
-          'changeTracking',
+          "markdown",
+          "html",
+          "rawHtml",
+          "links",
+          "images",
+          "screenshot",
+          "summary",
+          "branding",
+          "changeTracking",
         ],
       },
-      default: ['markdown', 'html'],
+      default: ["markdown", "html"],
       description: PARAM_DESCRIPTIONS.formats,
     },
     parsers: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'object',
+        type: "object",
         properties: {
-          type: { type: 'string', enum: ['pdf'] },
-          maxPages: { type: 'integer', minimum: 1, maximum: 10000 },
+          type: { type: "string", enum: ["pdf"] },
+          maxPages: { type: "integer", minimum: 1, maximum: 10000 },
         },
-        required: ['type'],
+        required: ["type"],
       },
       default: [],
       description: PARAM_DESCRIPTIONS.parsers,
     },
     onlyMainContent: {
-      type: 'boolean',
+      type: "boolean",
       default: true,
       description: PARAM_DESCRIPTIONS.onlyMainContent,
     },
     actions: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'object',
+        type: "object",
         oneOf: [
           {
-            type: 'object',
-            required: ['type', 'milliseconds'],
+            type: "object",
+            required: ["type", "milliseconds"],
             properties: {
-              type: { type: 'string', enum: ['wait'] },
-              milliseconds: { type: 'number', description: 'Time to wait in milliseconds' },
+              type: { type: "string", enum: ["wait"] },
+              milliseconds: {
+                type: "number",
+                description: "Time to wait in milliseconds",
+              },
             },
           },
           {
-            type: 'object',
-            required: ['type', 'selector'],
+            type: "object",
+            required: ["type", "selector"],
             properties: {
-              type: { type: 'string', enum: ['click'] },
-              selector: { type: 'string', description: 'CSS selector of element to click' },
+              type: { type: "string", enum: ["click"] },
+              selector: {
+                type: "string",
+                description: "CSS selector of element to click",
+              },
             },
           },
           {
-            type: 'object',
-            required: ['type', 'selector', 'text'],
+            type: "object",
+            required: ["type", "selector", "text"],
             properties: {
-              type: { type: 'string', enum: ['write'] },
-              selector: { type: 'string', description: 'CSS selector of input field' },
-              text: { type: 'string', description: 'Text to type' },
+              type: { type: "string", enum: ["write"] },
+              selector: {
+                type: "string",
+                description: "CSS selector of input field",
+              },
+              text: { type: "string", description: "Text to type" },
             },
           },
           {
-            type: 'object',
-            required: ['type', 'key'],
+            type: "object",
+            required: ["type", "key"],
             properties: {
-              type: { type: 'string', enum: ['press'] },
-              key: { type: 'string', description: 'Key to press (e.g., "Enter")' },
+              type: { type: "string", enum: ["press"] },
+              key: {
+                type: "string",
+                description: 'Key to press (e.g., "Enter")',
+              },
             },
           },
           {
-            type: 'object',
-            required: ['type', 'direction'],
+            type: "object",
+            required: ["type", "direction"],
             properties: {
-              type: { type: 'string', enum: ['scroll'] },
-              direction: { type: 'string', enum: ['up', 'down'] },
-              amount: { type: 'number', description: 'Pixels to scroll (optional)' },
+              type: { type: "string", enum: ["scroll"] },
+              direction: { type: "string", enum: ["up", "down"] },
+              amount: {
+                type: "number",
+                description: "Pixels to scroll (optional)",
+              },
             },
           },
           {
-            type: 'object',
-            required: ['type'],
+            type: "object",
+            required: ["type"],
             properties: {
-              type: { type: 'string', enum: ['screenshot'] },
-              name: { type: 'string', description: 'Screenshot name (optional)' },
+              type: { type: "string", enum: ["screenshot"] },
+              name: {
+                type: "string",
+                description: "Screenshot name (optional)",
+              },
             },
           },
           {
-            type: 'object',
-            required: ['type'],
+            type: "object",
+            required: ["type"],
             properties: {
-              type: { type: 'string', enum: ['scrape'] },
-              selector: { type: 'string', description: 'CSS selector (optional)' },
+              type: { type: "string", enum: ["scrape"] },
+              selector: {
+                type: "string",
+                description: "CSS selector (optional)",
+              },
             },
           },
           {
-            type: 'object',
-            required: ['type', 'script'],
+            type: "object",
+            required: ["type", "script"],
             properties: {
-              type: { type: 'string', enum: ['executeJavascript'] },
-              script: { type: 'string', description: 'JavaScript code to execute' },
+              type: { type: "string", enum: ["executeJavascript"] },
+              script: {
+                type: "string",
+                description: "JavaScript code to execute",
+              },
             },
           },
         ],
@@ -452,21 +520,21 @@ export const buildInputSchema = () => {
   // Only include extract parameter if extraction is available
   if (ExtractClientFactory.isAvailable()) {
     return {
-      type: 'object' as const,
+      type: "object" as const,
       properties: {
         ...baseProperties,
         extract: {
-          type: 'string',
+          type: "string",
           description: PARAM_DESCRIPTIONS.extract,
         },
       },
-      required: ['url'],
+      required: ["url"],
     };
   }
 
   return {
-    type: 'object' as const,
+    type: "object" as const,
     properties: baseProperties,
-    required: ['url'],
+    required: ["url"],
   };
 };

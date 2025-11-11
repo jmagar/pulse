@@ -7,7 +7,7 @@
  * @module shared/monitoring/exporters/console-exporter
  */
 
-import type { AllMetrics, MetricsExporter } from '../types.js';
+import type { AllMetrics, MetricsExporter } from "../types.js";
 
 /**
  * ConsoleExporter - Formats metrics for console output
@@ -31,41 +31,57 @@ export class ConsoleExporter implements MetricsExporter {
     const lines: string[] = [];
 
     if (this.includeTimestamp) {
-      lines.push(`=== Metrics Report (${new Date(metrics.timestamp).toISOString()}) ===`);
+      lines.push(
+        `=== Metrics Report (${new Date(metrics.timestamp).toISOString()}) ===`,
+      );
     } else {
-      lines.push('=== Metrics Report ===');
+      lines.push("=== Metrics Report ===");
     }
-    lines.push('');
+    lines.push("");
 
     // Cache metrics
-    lines.push('--- Cache Performance ---');
-    lines.push(`  Hit Rate:        ${this.formatPercentage(metrics.cache.hitRate)}`);
-    lines.push(`  Miss Rate:       ${this.formatPercentage(metrics.cache.missRate)}`);
+    lines.push("--- Cache Performance ---");
+    lines.push(
+      `  Hit Rate:        ${this.formatPercentage(metrics.cache.hitRate)}`,
+    );
+    lines.push(
+      `  Miss Rate:       ${this.formatPercentage(metrics.cache.missRate)}`,
+    );
     lines.push(`  Total Hits:      ${metrics.cache.hits.toLocaleString()}`);
     lines.push(`  Total Misses:    ${metrics.cache.misses.toLocaleString()}`);
     lines.push(`  Total Writes:    ${metrics.cache.writes.toLocaleString()}`);
-    lines.push(`  Evictions:       ${metrics.cache.evictions.toLocaleString()}`);
-    lines.push(`  Items in Cache:  ${metrics.cache.itemCount.toLocaleString()}`);
     lines.push(
-      `  Storage Size:    ${this.formatBytes(metrics.cache.currentSizeBytes)} (${metrics.cache.currentSizeBytes.toLocaleString()} bytes)`
+      `  Evictions:       ${metrics.cache.evictions.toLocaleString()}`,
     );
     lines.push(
-      `  Total Written:   ${this.formatBytes(metrics.cache.totalBytesWritten)} (${metrics.cache.totalBytesWritten.toLocaleString()} bytes)`
+      `  Items in Cache:  ${metrics.cache.itemCount.toLocaleString()}`,
     );
-    lines.push('');
+    lines.push(
+      `  Storage Size:    ${this.formatBytes(metrics.cache.currentSizeBytes)} (${metrics.cache.currentSizeBytes.toLocaleString()} bytes)`,
+    );
+    lines.push(
+      `  Total Written:   ${this.formatBytes(metrics.cache.totalBytesWritten)} (${metrics.cache.totalBytesWritten.toLocaleString()} bytes)`,
+    );
+    lines.push("");
 
     // Strategy metrics
     if (Object.keys(metrics.strategies).length > 0) {
-      lines.push('--- Strategy Performance ---');
+      lines.push("--- Strategy Performance ---");
       for (const [name, stats] of Object.entries(metrics.strategies)) {
         lines.push(`  ${name}:`);
-        lines.push(`    Executions:    ${stats.totalExecutions.toLocaleString()}`);
-        lines.push(`    Success Rate:  ${this.formatPercentage(stats.successRate)}`);
+        lines.push(
+          `    Executions:    ${stats.totalExecutions.toLocaleString()}`,
+        );
+        lines.push(
+          `    Success Rate:  ${this.formatPercentage(stats.successRate)}`,
+        );
         lines.push(`    Successes:     ${stats.successCount.toLocaleString()}`);
         lines.push(`    Failures:      ${stats.failureCount.toLocaleString()}`);
         lines.push(`    Avg Duration:  ${stats.avgDurationMs.toFixed(2)}ms`);
         lines.push(`    Total Time:    ${stats.totalDurationMs.toFixed(2)}ms`);
-        lines.push(`    Fallbacks:     ${stats.fallbackCount.toLocaleString()}`);
+        lines.push(
+          `    Fallbacks:     ${stats.fallbackCount.toLocaleString()}`,
+        );
 
         if (stats.errors && Object.keys(stats.errors).length > 0) {
           lines.push(`    Errors:`);
@@ -74,21 +90,29 @@ export class ConsoleExporter implements MetricsExporter {
           }
         }
       }
-      lines.push('');
+      lines.push("");
     }
 
     // Request metrics
-    lines.push('--- Request Performance ---');
-    lines.push(`  Total Requests:  ${metrics.requests.totalRequests.toLocaleString()}`);
-    lines.push(`  Total Errors:    ${metrics.requests.totalErrors.toLocaleString()}`);
-    lines.push(`  Error Rate:      ${this.formatPercentage(metrics.requests.errorRate)}`);
-    lines.push(`  Avg Response:    ${metrics.requests.avgResponseTimeMs.toFixed(2)}ms`);
-    lines.push('  Latency Percentiles:');
+    lines.push("--- Request Performance ---");
+    lines.push(
+      `  Total Requests:  ${metrics.requests.totalRequests.toLocaleString()}`,
+    );
+    lines.push(
+      `  Total Errors:    ${metrics.requests.totalErrors.toLocaleString()}`,
+    );
+    lines.push(
+      `  Error Rate:      ${this.formatPercentage(metrics.requests.errorRate)}`,
+    );
+    lines.push(
+      `  Avg Response:    ${metrics.requests.avgResponseTimeMs.toFixed(2)}ms`,
+    );
+    lines.push("  Latency Percentiles:");
     lines.push(`    P50 (median):  ${metrics.requests.p50Ms.toFixed(2)}ms`);
     lines.push(`    P95:           ${metrics.requests.p95Ms.toFixed(2)}ms`);
     lines.push(`    P99:           ${metrics.requests.p99Ms.toFixed(2)}ms`);
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -102,9 +126,9 @@ export class ConsoleExporter implements MetricsExporter {
    * Format bytes in human-readable format
    */
   private formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) return "0 B";
 
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const units = ["B", "KB", "MB", "GB", "TB"];
     const k = 1024;
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 

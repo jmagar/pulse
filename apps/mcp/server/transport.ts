@@ -1,6 +1,6 @@
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { randomUUID } from 'node:crypto';
-import { InMemoryEventStore } from './eventStore.js';
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { randomUUID } from "node:crypto";
+import { InMemoryEventStore } from "./eventStore.js";
 
 /**
  * Options for creating an HTTP streaming transport
@@ -39,9 +39,11 @@ export interface TransportOptions {
  * });
  * ```
  */
-export function createTransport(options?: TransportOptions): StreamableHTTPServerTransport {
+export function createTransport(
+  options?: TransportOptions,
+): StreamableHTTPServerTransport {
   const {
-    enableResumability = process.env.ENABLE_RESUMABILITY === 'true',
+    enableResumability = process.env.ENABLE_RESUMABILITY === "true",
     onSessionInitialized,
     onSessionClosed,
   } = options || {};
@@ -49,8 +51,8 @@ export function createTransport(options?: TransportOptions): StreamableHTTPServe
   // Parse allowed origins - treat "*" as undefined (allow all)
   const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
   const allowedOrigins =
-    allowedOriginsEnv && allowedOriginsEnv !== '*'
-      ? allowedOriginsEnv.split(',').filter(Boolean)
+    allowedOriginsEnv && allowedOriginsEnv !== "*"
+      ? allowedOriginsEnv.split(",").filter(Boolean)
       : undefined;
 
   return new StreamableHTTPServerTransport({
@@ -68,8 +70,8 @@ export function createTransport(options?: TransportOptions): StreamableHTTPServe
     enableJsonResponse: true,
 
     // DNS rebinding protection (enabled in production)
-    enableDnsRebindingProtection: process.env.NODE_ENV === 'production',
-    allowedHosts: process.env.ALLOWED_HOSTS?.split(',').filter(Boolean),
+    enableDnsRebindingProtection: process.env.NODE_ENV === "production",
+    allowedHosts: process.env.ALLOWED_HOSTS?.split(",").filter(Boolean),
     allowedOrigins,
   });
 }

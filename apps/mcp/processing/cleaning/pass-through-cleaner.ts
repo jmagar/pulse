@@ -1,4 +1,4 @@
-import { BaseCleaner } from './base-cleaner.js';
+import { BaseCleaner } from "./base-cleaner.js";
 
 /**
  * A cleaner that passes content through unchanged

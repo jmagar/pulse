@@ -5,7 +5,6 @@ Runs the RQ worker in a background thread within the FastAPI process.
 """
 
 import threading
-from typing import Optional
 
 from redis import Redis
 from rq import Worker
@@ -27,9 +26,9 @@ class WorkerThreadManager:
 
     def __init__(self) -> None:
         """Initialize the worker thread manager."""
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._running: bool = False
-        self._worker: Optional[Worker] = None
+        self._worker: Worker | None = None
 
     def start(self) -> None:
         """
@@ -61,7 +60,7 @@ class WorkerThreadManager:
 
         # Send stop signal to RQ worker
         if self._worker is not None:
-            self._worker.request_stop()
+            self._worker.request_stop(signum=None, frame=None)  # type: ignore[no-untyped-call]
 
         # Wait for thread to exit (with timeout)
         if self._thread is not None and self._thread.is_alive():

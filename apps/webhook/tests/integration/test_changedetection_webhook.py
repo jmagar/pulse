@@ -1,11 +1,14 @@
 """Integration tests for changedetection.io webhook endpoint."""
-import hmac
+
 import hashlib
+import hmac
 import json
+
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+
 from app.config import settings
+from app.main import app
 
 
 def test_changedetection_webhook_valid_signature():
@@ -20,11 +23,7 @@ def test_changedetection_webhook_valid_signature():
     }
 
     body = json.dumps(payload).encode()
-    signature = hmac.new(
-        settings.webhook_secret.encode(),
-        body,
-        hashlib.sha256
-    ).hexdigest()
+    signature = hmac.new(settings.webhook_secret.encode(), body, hashlib.sha256).hexdigest()
 
     with TestClient(app) as client:
         response = client.post(
@@ -81,8 +80,9 @@ def test_changedetection_webhook_missing_signature():
 @pytest.mark.asyncio
 async def test_changedetection_webhook_stores_event(db_session):
     """Test webhook stores change event in database."""
-    from app.models.timing import ChangeEvent
     from sqlalchemy import select
+
+    from app.models.timing import ChangeEvent
 
     payload = {
         "watch_id": "db-test-watch",
@@ -94,11 +94,7 @@ async def test_changedetection_webhook_stores_event(db_session):
     }
 
     body = json.dumps(payload).encode()
-    signature = hmac.new(
-        settings.webhook_secret.encode(),
-        body,
-        hashlib.sha256
-    ).hexdigest()
+    signature = hmac.new(settings.webhook_secret.encode(), body, hashlib.sha256).hexdigest()
 
     with TestClient(app) as client:
         client.post(

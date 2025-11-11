@@ -18,7 +18,7 @@
 function getEnvVar(
   primary: string,
   fallback?: string,
-  defaultValue?: string
+  defaultValue?: string,
 ): string | undefined {
   const value = process.env[primary];
   if (value !== undefined) {
@@ -41,54 +41,116 @@ function getEnvVar(
  * Provides a single source of truth for all environment variables used by the MCP server.
  * Supports both namespaced (MCP_*) and legacy variable names for backward compatibility.
  */
-export const env = {
-  // Server Configuration
-  port: getEnvVar('MCP_PORT', 'PORT', '3060'),
-  nodeEnv: getEnvVar('NODE_ENV', undefined, 'development'),
-  debug: getEnvVar('MCP_DEBUG', 'DEBUG', 'false'),
-  logFormat: getEnvVar('MCP_LOG_FORMAT', 'LOG_FORMAT', 'text'),
+type EnvConfig = {
+  port: string | undefined;
+  nodeEnv: string | undefined;
+  debug: string | undefined;
+  logFormat: string | undefined;
+  allowedOrigins: string | undefined;
+  allowedHosts: string | undefined;
+  enableOAuth: string | undefined;
+  enableResumability: string | undefined;
+  metricsAuthEnabled: string | undefined;
+  metricsAuthKey: string | undefined;
+  firecrawlApiKey: string | undefined;
+  firecrawlBaseUrl: string | undefined;
+  optimizeFor: string | undefined;
+  llmProvider: string | undefined;
+  llmApiKey: string | undefined;
+  llmApiBaseUrl: string | undefined;
+  llmModel: string | undefined;
+  resourceStorage: string | undefined;
+  resourceFilesystemRoot: string | undefined;
+  resourceTtl: string | undefined;
+  strategyConfigPath: string | undefined;
+  mapDefaultCountry: string | undefined;
+  mapDefaultLanguages: string | undefined;
+  mapMaxResultsPerPage: string | undefined;
+  skipHealthChecks: string | undefined;
+  forceColor: string | undefined;
+  noColor: string | undefined;
+};
 
-  // HTTP Configuration
-  allowedOrigins: getEnvVar('MCP_ALLOWED_ORIGINS', 'ALLOWED_ORIGINS'),
-  allowedHosts: getEnvVar('MCP_ALLOWED_HOSTS', 'ALLOWED_HOSTS'),
-  enableOAuth: getEnvVar('MCP_ENABLE_OAUTH', 'ENABLE_OAUTH', 'false'),
-  enableResumability: getEnvVar('MCP_ENABLE_RESUMABILITY', 'ENABLE_RESUMABILITY', 'false'),
+function buildEnv(): EnvConfig {
+  return {
+    // Server Configuration
+    port: getEnvVar("MCP_PORT", "PORT", "3060"),
+    nodeEnv: getEnvVar("NODE_ENV", undefined, "development"),
+    debug: getEnvVar("MCP_DEBUG", "DEBUG", "false"),
+    logFormat: getEnvVar("MCP_LOG_FORMAT", "LOG_FORMAT", "text"),
 
-  // Metrics Configuration
-  metricsAuthEnabled: getEnvVar('MCP_METRICS_AUTH_ENABLED', 'METRICS_AUTH_ENABLED', 'false'),
-  metricsAuthKey: getEnvVar('MCP_METRICS_AUTH_KEY', 'METRICS_AUTH_KEY'),
+    // HTTP Configuration
+    allowedOrigins: getEnvVar("MCP_ALLOWED_ORIGINS", "ALLOWED_ORIGINS"),
+    allowedHosts: getEnvVar("MCP_ALLOWED_HOSTS", "ALLOWED_HOSTS"),
+    enableOAuth: getEnvVar("MCP_ENABLE_OAUTH", "ENABLE_OAUTH", "false"),
+    enableResumability: getEnvVar(
+      "MCP_ENABLE_RESUMABILITY",
+      "ENABLE_RESUMABILITY",
+      "false",
+    ),
 
-  // Firecrawl Integration
-  firecrawlApiKey: getEnvVar('MCP_FIRECRAWL_API_KEY', 'FIRECRAWL_API_KEY'),
-  firecrawlBaseUrl: getEnvVar('MCP_FIRECRAWL_BASE_URL', 'FIRECRAWL_BASE_URL'),
-  optimizeFor: getEnvVar('MCP_OPTIMIZE_FOR', 'OPTIMIZE_FOR', 'cost'),
+    // Metrics Configuration
+    metricsAuthEnabled: getEnvVar(
+      "MCP_METRICS_AUTH_ENABLED",
+      "METRICS_AUTH_ENABLED",
+      "false",
+    ),
+    metricsAuthKey: getEnvVar("MCP_METRICS_AUTH_KEY", "METRICS_AUTH_KEY"),
 
-  // LLM Provider Configuration
-  llmProvider: getEnvVar('MCP_LLM_PROVIDER', 'LLM_PROVIDER'),
-  llmApiKey: getEnvVar('MCP_LLM_API_KEY', 'LLM_API_KEY'),
-  llmApiBaseUrl: getEnvVar('MCP_LLM_API_BASE_URL', 'LLM_API_BASE_URL'),
-  llmModel: getEnvVar('MCP_LLM_MODEL', 'LLM_MODEL'),
+    // Firecrawl Integration
+    firecrawlApiKey: getEnvVar("MCP_FIRECRAWL_API_KEY", "FIRECRAWL_API_KEY"),
+    firecrawlBaseUrl: getEnvVar("MCP_FIRECRAWL_BASE_URL", "FIRECRAWL_BASE_URL"),
+    optimizeFor: getEnvVar("MCP_OPTIMIZE_FOR", "OPTIMIZE_FOR", "cost"),
 
-  // Storage Configuration
-  resourceStorage: getEnvVar('MCP_RESOURCE_STORAGE', undefined, 'memory'),
-  resourceFilesystemRoot: getEnvVar('MCP_RESOURCE_FILESYSTEM_ROOT'),
-  resourceTtl: getEnvVar('MCP_RESOURCE_TTL'),
+    // LLM Provider Configuration
+    llmProvider: getEnvVar("MCP_LLM_PROVIDER", "LLM_PROVIDER"),
+    llmApiKey: getEnvVar("MCP_LLM_API_KEY", "LLM_API_KEY"),
+    llmApiBaseUrl: getEnvVar("MCP_LLM_API_BASE_URL", "LLM_API_BASE_URL"),
+    llmModel: getEnvVar("MCP_LLM_MODEL", "LLM_MODEL"),
 
-  // Strategy Configuration
-  strategyConfigPath: getEnvVar('MCP_STRATEGY_CONFIG_PATH', 'STRATEGY_CONFIG_PATH'),
+    // Storage Configuration
+    resourceStorage: getEnvVar("MCP_RESOURCE_STORAGE", undefined, "memory"),
+    resourceFilesystemRoot: getEnvVar("MCP_RESOURCE_FILESYSTEM_ROOT"),
+    resourceTtl: getEnvVar("MCP_RESOURCE_TTL"),
 
-  // Map Tool Configuration
-  mapDefaultCountry: getEnvVar('MCP_MAP_DEFAULT_COUNTRY', 'MAP_DEFAULT_COUNTRY'),
-  mapDefaultLanguages: getEnvVar('MCP_MAP_DEFAULT_LANGUAGES', 'MAP_DEFAULT_LANGUAGES'),
-  mapMaxResultsPerPage: getEnvVar('MCP_MAP_MAX_RESULTS_PER_PAGE', 'MAP_MAX_RESULTS_PER_PAGE'),
+    // Strategy Configuration
+    strategyConfigPath: getEnvVar(
+      "MCP_STRATEGY_CONFIG_PATH",
+      "STRATEGY_CONFIG_PATH",
+    ),
 
-  // Health Checks
-  skipHealthChecks: getEnvVar('MCP_SKIP_HEALTH_CHECKS', 'SKIP_HEALTH_CHECKS', 'false'),
+    // Map Tool Configuration
+    mapDefaultCountry: getEnvVar(
+      "MCP_MAP_DEFAULT_COUNTRY",
+      "MAP_DEFAULT_COUNTRY",
+    ),
+    mapDefaultLanguages: getEnvVar(
+      "MCP_MAP_DEFAULT_LANGUAGES",
+      "MAP_DEFAULT_LANGUAGES",
+    ),
+    mapMaxResultsPerPage: getEnvVar(
+      "MCP_MAP_MAX_RESULTS_PER_PAGE",
+      "MAP_MAX_RESULTS_PER_PAGE",
+    ),
 
-  // Color Output Control (for CLI tools)
-  forceColor: getEnvVar('FORCE_COLOR'),
-  noColor: getEnvVar('NO_COLOR'),
-} as const;
+    // Health Checks
+    skipHealthChecks: getEnvVar(
+      "MCP_SKIP_HEALTH_CHECKS",
+      "SKIP_HEALTH_CHECKS",
+      "false",
+    ),
+
+    // Color Output Control (for CLI tools)
+    forceColor: getEnvVar("FORCE_COLOR"),
+    noColor: getEnvVar("NO_COLOR"),
+  };
+}
+
+export const env = buildEnv();
+
+export function getEnvSnapshot(): EnvConfig {
+  return buildEnv();
+}
 
 /**
  * Type-safe boolean conversion helper
@@ -100,7 +162,7 @@ export function parseBoolean(value: string | undefined): boolean {
   if (value === undefined) {
     return false;
   }
-  return value === 'true' || value === '1';
+  return value === "true" || value === "1";
 }
 
 /**
@@ -110,7 +172,10 @@ export function parseBoolean(value: string | undefined): boolean {
  * @param defaultValue - Default value if parsing fails
  * @returns Number value
  */
-export function parseNumber(value: string | undefined, defaultValue: number): number {
+export function parseNumber(
+  value: string | undefined,
+  defaultValue: number,
+): number {
   if (value === undefined) {
     return defaultValue;
   }
@@ -130,70 +195,72 @@ export function getAllEnvVars(): Record<string, string | undefined> {
 
   // Add all variables referenced in env object
   const varNames = [
-    'MCP_PORT',
-    'PORT',
-    'NODE_ENV',
-    'MCP_DEBUG',
-    'DEBUG',
-    'MCP_LOG_FORMAT',
-    'LOG_FORMAT',
-    'MCP_ALLOWED_ORIGINS',
-    'ALLOWED_ORIGINS',
-    'MCP_ALLOWED_HOSTS',
-    'ALLOWED_HOSTS',
-    'MCP_ENABLE_OAUTH',
-    'ENABLE_OAUTH',
-    'MCP_ENABLE_RESUMABILITY',
-    'ENABLE_RESUMABILITY',
-    'MCP_METRICS_AUTH_ENABLED',
-    'METRICS_AUTH_ENABLED',
-    'MCP_METRICS_AUTH_KEY',
-    'METRICS_AUTH_KEY',
-    'MCP_FIRECRAWL_API_KEY',
-    'FIRECRAWL_API_KEY',
-    'MCP_FIRECRAWL_BASE_URL',
-    'FIRECRAWL_BASE_URL',
-    'MCP_OPTIMIZE_FOR',
-    'OPTIMIZE_FOR',
-    'MCP_LLM_PROVIDER',
-    'LLM_PROVIDER',
-    'MCP_LLM_API_KEY',
-    'LLM_API_KEY',
-    'MCP_LLM_API_BASE_URL',
-    'LLM_API_BASE_URL',
-    'MCP_LLM_MODEL',
-    'LLM_MODEL',
-    'MCP_RESOURCE_STORAGE',
-    'MCP_RESOURCE_FILESYSTEM_ROOT',
-    'MCP_RESOURCE_TTL',
-    'MCP_STRATEGY_CONFIG_PATH',
-    'STRATEGY_CONFIG_PATH',
-    'MCP_MAP_DEFAULT_COUNTRY',
-    'MAP_DEFAULT_COUNTRY',
-    'MCP_MAP_DEFAULT_LANGUAGES',
-    'MAP_DEFAULT_LANGUAGES',
-    'MCP_MAP_MAX_RESULTS_PER_PAGE',
-    'MAP_MAX_RESULTS_PER_PAGE',
-    'MCP_SKIP_HEALTH_CHECKS',
-    'SKIP_HEALTH_CHECKS',
-    'FORCE_COLOR',
-    'NO_COLOR',
+    "MCP_PORT",
+    "PORT",
+    "NODE_ENV",
+    "MCP_DEBUG",
+    "DEBUG",
+    "MCP_LOG_FORMAT",
+    "LOG_FORMAT",
+    "MCP_ALLOWED_ORIGINS",
+    "ALLOWED_ORIGINS",
+    "MCP_ALLOWED_HOSTS",
+    "ALLOWED_HOSTS",
+    "MCP_ENABLE_OAUTH",
+    "ENABLE_OAUTH",
+    "MCP_ENABLE_RESUMABILITY",
+    "ENABLE_RESUMABILITY",
+    "MCP_METRICS_AUTH_ENABLED",
+    "METRICS_AUTH_ENABLED",
+    "MCP_METRICS_AUTH_KEY",
+    "METRICS_AUTH_KEY",
+    "MCP_FIRECRAWL_API_KEY",
+    "FIRECRAWL_API_KEY",
+    "MCP_FIRECRAWL_BASE_URL",
+    "FIRECRAWL_BASE_URL",
+    "MCP_OPTIMIZE_FOR",
+    "OPTIMIZE_FOR",
+    "MCP_LLM_PROVIDER",
+    "LLM_PROVIDER",
+    "MCP_LLM_API_KEY",
+    "LLM_API_KEY",
+    "MCP_LLM_API_BASE_URL",
+    "LLM_API_BASE_URL",
+    "MCP_LLM_MODEL",
+    "LLM_MODEL",
+    "MCP_RESOURCE_STORAGE",
+    "MCP_RESOURCE_FILESYSTEM_ROOT",
+    "MCP_RESOURCE_TTL",
+    "MCP_STRATEGY_CONFIG_PATH",
+    "STRATEGY_CONFIG_PATH",
+    "MCP_MAP_DEFAULT_COUNTRY",
+    "MAP_DEFAULT_COUNTRY",
+    "MCP_MAP_DEFAULT_LANGUAGES",
+    "MAP_DEFAULT_LANGUAGES",
+    "MCP_MAP_MAX_RESULTS_PER_PAGE",
+    "MAP_MAX_RESULTS_PER_PAGE",
+    "MCP_SKIP_HEALTH_CHECKS",
+    "SKIP_HEALTH_CHECKS",
+    "FORCE_COLOR",
+    "NO_COLOR",
   ];
 
   const sensitiveVars = [
-    'MCP_FIRECRAWL_API_KEY',
-    'FIRECRAWL_API_KEY',
-    'MCP_LLM_API_KEY',
-    'LLM_API_KEY',
-    'MCP_METRICS_AUTH_KEY',
-    'METRICS_AUTH_KEY',
+    "MCP_FIRECRAWL_API_KEY",
+    "FIRECRAWL_API_KEY",
+    "MCP_LLM_API_KEY",
+    "LLM_API_KEY",
+    "MCP_METRICS_AUTH_KEY",
+    "METRICS_AUTH_KEY",
   ];
 
   for (const varName of varNames) {
     const value = process.env[varName];
     if (value !== undefined) {
       // Mask sensitive values
-      vars[varName] = sensitiveVars.includes(varName) ? '***REDACTED***' : value;
+      vars[varName] = sensitiveVars.includes(varName)
+        ? "***REDACTED***"
+        : value;
     }
   }
 

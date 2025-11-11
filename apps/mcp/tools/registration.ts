@@ -9,25 +9,26 @@
  * @module shared/mcp/registration
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
-import type { ClientFactory, StrategyConfigFactory } from '../server.js';
-import { scrapeTool } from './scrape/index.js';
-import { createSearchTool } from './search/index.js';
-import { createMapTool } from './map/index.js';
-import { createCrawlTool } from './crawl/index.js';
-import { ResourceStorageFactory } from '../storage/index.js';
-import type { FirecrawlConfig } from '../types.js';
-import { logInfo, logError } from '../utils/logging.js';
-import { registrationTracker } from '../utils/mcp-status.js';
-import { getMetricsCollector } from '../monitoring/index.js';
-import { env } from '../config/environment.js';
-import { SELF_HOSTED_NO_AUTH } from '@firecrawl/client';
+} from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
+import type { ClientFactory, StrategyConfigFactory } from "../server.js";
+import { scrapeTool } from "./scrape/index.js";
+import { createSearchTool } from "./search/index.js";
+import { createMapTool } from "./map/index.js";
+import { createCrawlTool } from "./crawl/index.js";
+import { ResourceStorageFactory } from "../storage/index.js";
+import type { FirecrawlConfig } from "../types.js";
+import { logInfo, logError } from "../utils/logging.js";
+import { registrationTracker } from "../utils/mcp-status.js";
+import { getMetricsCollector } from "../monitoring/index.js";
+import { env } from "../config/environment.js";
+import { SELF_HOSTED_NO_AUTH } from "@firecrawl/client";
 
 /**
  * Register MCP tools with the server
@@ -50,24 +51,27 @@ import { SELF_HOSTED_NO_AUTH } from '@firecrawl/client';
 export function registerTools(
   server: Server,
   clientFactory: ClientFactory,
-  strategyConfigFactory: StrategyConfigFactory
+  strategyConfigFactory: StrategyConfigFactory,
 ): void {
   // Create Firecrawl config from centralized environment
   const firecrawlConfig: FirecrawlConfig = {
     apiKey: env.firecrawlApiKey || SELF_HOSTED_NO_AUTH,
-    baseUrl: env.firecrawlBaseUrl || 'http://firecrawl:3002',
+    baseUrl: env.firecrawlBaseUrl || "http://firecrawl:3002",
   };
 
   // Create tool instances with tracking
   // Each tool is wrapped in a factory to enable error handling during registration
   const toolConfigs = [
-    { name: 'scrape', factory: () => scrapeTool(server, clientFactory, strategyConfigFactory) },
-    { name: 'search', factory: () => createSearchTool(firecrawlConfig) },
-    { name: 'map', factory: () => createMapTool(firecrawlConfig) },
-    { name: 'crawl', factory: () => createCrawlTool(firecrawlConfig) },
+    {
+      name: "scrape",
+      factory: () => scrapeTool(server, clientFactory, strategyConfigFactory),
+    },
+    { name: "search", factory: () => createSearchTool(firecrawlConfig) },
+    { name: "map", factory: () => createMapTool(firecrawlConfig) },
+    { name: "crawl", factory: () => createCrawlTool(firecrawlConfig) },
   ];
 
-  const tools: any[] = [];
+  const tools: Tool[] = [];
 
   // Register each tool, tracking success/failure
   // Continue registration even if individual tools fail
@@ -79,42 +83,44 @@ export function registerTools(
       // Record successful registration
       registrationTracker.recordRegistration({
         name: tool.name,
-        type: 'tool',
+        type: "tool",
         success: true,
       });
     } catch (error) {
       // Record failed registration but continue with other tools
       registrationTracker.recordRegistration({
         name,
-        type: 'tool',
+        type: "tool",
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
 
-      logError('tool-registration', error, { tool: name });
+      logError("tool-registration", error, { tool: name });
     }
   }
 
   // Log tool schemas for debugging (only in development or when DEBUG env var is set)
-  if (process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development') {
-    console.error('[pulse] Registered tools:');
+  if (process.env.DEBUG === "true" || process.env.NODE_ENV === "development") {
+    console.error("[pulse] Registered tools:");
     tools.forEach((tool, index) => {
       console.error(`[pulse]   ${index + 1}. ${tool.name}`);
-      console.error(`[pulse]      Schema type: ${tool.inputSchema.type || 'unknown'}`);
+      console.error(
+        `[pulse]      Schema type: ${tool.inputSchema.type || "unknown"}`,
+      );
 
       // Check for problematic top-level schema properties
       const hasProblematicProps = [
-        'oneOf' in tool.inputSchema,
-        'allOf' in tool.inputSchema,
-        'anyOf' in tool.inputSchema,
+        "oneOf" in tool.inputSchema,
+        "allOf" in tool.inputSchema,
+        "anyOf" in tool.inputSchema,
       ];
 
       if (hasProblematicProps.some(Boolean)) {
         console.error(
-          `[pulse]      ⚠️ WARNING: Schema contains oneOf/allOf/anyOf at root level`
+          `[pulse]      ⚠️ WARNING: Schema contains oneOf/allOf/anyOf at root level`,
         );
         console.error(
-          `[pulse]         This may cause issues with some AI providers (like Anthropic)`
+          `[pulse]         This may cause issues with some AI providers (like Anthropic)`,
         );
       }
     });
@@ -135,7 +141,7 @@ export function registerTools(
     const startTime = Date.now();
     const metrics = getMetricsCollector();
 
-    logInfo('tool-call', `Calling tool: ${name}`, { tool: name });
+    logInfo("tool-call", `Calling tool: ${name}`, { tool: name });
 
     try {
       const tool = tools.find((t) => t.name === name);
@@ -143,19 +149,23 @@ export function registerTools(
         throw new Error(`Unknown tool: ${name}`);
       }
 
-      // Cast to any to satisfy MCP SDK type expectations
-      // The ToolResponse interface matches the CallToolResult schema
-      const result = (await (tool.handler as any)(args)) as any;
+      const handler = tool.handler as unknown as (
+        arguments_: unknown,
+      ) => Promise<CallToolResult>;
+      const result = await handler(args);
 
       const duration = Date.now() - startTime;
       metrics.recordRequest(duration, false);
-      logInfo('tool-call', `Tool completed: ${name}`, { tool: name, duration: `${duration}ms` });
+      logInfo("tool-call", `Tool completed: ${name}`, {
+        tool: name,
+        duration: `${duration}ms`,
+      });
 
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
       metrics.recordRequest(duration, true);
-      logError('tool-call', error, { tool: name, duration: `${duration}ms` });
+      logError("tool-call", error, { tool: name, duration: `${duration}ms` });
       throw error;
     }
   });
@@ -181,12 +191,14 @@ export function registerResources(server: Server): void {
   try {
     // Set up resource handlers with error tracking
     server.setRequestHandler(ListResourcesRequestSchema, async () => {
-      logInfo('resources/list', 'Listing resources');
+      logInfo("resources/list", "Listing resources");
 
       const storage = await ResourceStorageFactory.create();
       const resources = await storage.list();
 
-      logInfo('resources/list', `Found ${resources.length} resources`, { count: resources.length });
+      logInfo("resources/list", `Found ${resources.length} resources`, {
+        count: resources.length,
+      });
 
       return {
         resources: resources.map((resource) => ({
@@ -201,13 +213,15 @@ export function registerResources(server: Server): void {
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const { uri } = request.params;
 
-      logInfo('resources/read', `Reading resource: ${uri}`, { uri });
+      logInfo("resources/read", `Reading resource: ${uri}`, { uri });
 
       try {
         const storage = await ResourceStorageFactory.create();
         const resource = await storage.read(uri);
 
-        logInfo('resources/read', `Resource read successfully: ${uri}`, { uri });
+        logInfo("resources/read", `Resource read successfully: ${uri}`, {
+          uri,
+        });
 
         return {
           contents: [
@@ -219,27 +233,27 @@ export function registerResources(server: Server): void {
           ],
         };
       } catch (error) {
-        logError('resources/read', error, { uri });
+        logError("resources/read", error, { uri });
         throw error;
       }
     });
 
     // Record successful resource registration
     registrationTracker.recordRegistration({
-      name: 'Resource Handlers',
-      type: 'resource',
+      name: "Resource Handlers",
+      type: "resource",
       success: true,
     });
   } catch (error) {
     // Record failed resource registration
     registrationTracker.recordRegistration({
-      name: 'Resource Handlers',
-      type: 'resource',
+      name: "Resource Handlers",
+      type: "resource",
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     });
 
-    logError('resource-registration', error);
+    logError("resource-registration", error);
     throw error;
   }
 }

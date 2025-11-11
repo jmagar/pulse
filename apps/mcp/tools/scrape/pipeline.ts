@@ -7,14 +7,22 @@
  * @module shared/mcp/tools/scrape/pipeline
  */
 
-import { ResourceStorageFactory } from '../../storage/index.js';
-import { ExtractClientFactory } from '../../processing/extraction/index.js';
-import { createCleaner } from '../../processing/cleaning/index.js';
-import type { IScrapingClients, StrategyConfigFactory } from '../../mcp-server.js';
-import { scrapeWithStrategy } from '../../scraping/strategies/selector.js';
-import { detectContentType, startBaseUrlCrawl } from './helpers.js';
-import type { ScrapeDiagnostics } from '../../types.js';
-import { logWarning, logError, logDebug, logInfo } from '../../utils/logging.js';
+import { ResourceStorageFactory } from "../../storage/index.js";
+import { ExtractClientFactory } from "../../processing/extraction/index.js";
+import { createCleaner } from "../../processing/cleaning/index.js";
+import type {
+  IScrapingClients,
+  StrategyConfigFactory,
+} from "../../mcp-server.js";
+import { scrapeWithStrategy } from "../../scraping/strategies/selector.js";
+import { detectContentType, startBaseUrlCrawl } from "./helpers.js";
+import type { ScrapeDiagnostics } from "../../types.js";
+import {
+  logWarning,
+  logError,
+  logDebug,
+  logInfo,
+} from "../../utils/logging.js";
 
 /**
  * Configuration options for scraping pipeline
@@ -27,7 +35,7 @@ export interface ScrapePipelineOptions {
   timeout: number;
   maxChars: number;
   startIndex: number;
-  resultHandling: 'saveOnly' | 'saveAndReturn' | 'returnOnly';
+  resultHandling: "saveOnly" | "saveAndReturn" | "returnOnly";
   forceRescrape: boolean;
   cleanScrape: boolean;
   extract?: string;
@@ -55,7 +63,7 @@ export async function checkCache(
   url: string,
   extract: string | undefined,
   resultHandling: string,
-  forceRescrape: boolean
+  forceRescrape: boolean,
 ): Promise<
   | {
       found: true;
@@ -71,50 +79,53 @@ export async function checkCache(
 > {
   // Skip cache if forceRescrape or saveOnly mode
   if (forceRescrape) {
-    logDebug('checkCache', 'Cache bypassed: forceRescrape=true', { url });
+    logDebug("checkCache", "Cache bypassed: forceRescrape=true", { url });
     return { found: false };
   }
 
-  if (resultHandling === 'saveOnly') {
-    logDebug('checkCache', 'Cache bypassed: saveOnly mode', { url });
+  if (resultHandling === "saveOnly") {
+    logDebug("checkCache", "Cache bypassed: saveOnly mode", { url });
     return { found: false };
   }
 
   try {
-    logDebug('checkCache', 'Checking cache for URL', { url, extract: !!extract });
+    logDebug("checkCache", "Checking cache for URL", {
+      url,
+      extract: !!extract,
+    });
     const storage = await ResourceStorageFactory.create();
     const cachedResources = await storage.findByUrlAndExtract(url, extract);
 
     if (cachedResources.length > 0) {
-      logDebug('checkCache', 'Cache hit: found resources', {
+      logDebug("checkCache", "Cache hit: found resources", {
         url,
         count: cachedResources.length,
         tiers: cachedResources.map((r) => {
-          if (r.uri.includes('/cleaned/')) return 'cleaned';
-          if (r.uri.includes('/extracted/')) return 'extracted';
-          if (r.uri.includes('/raw/')) return 'raw';
-          return 'unknown';
+          if (r.uri.includes("/cleaned/")) return "cleaned";
+          if (r.uri.includes("/extracted/")) return "extracted";
+          if (r.uri.includes("/raw/")) return "raw";
+          return "unknown";
         }),
       });
 
       // Prioritize cleaned > extracted > raw
       // Cleaned is most useful (readable markdown), raw is HTML soup
       const preferredResource =
-        cachedResources.find((r) => r.uri.includes('/cleaned/')) ||
-        cachedResources.find((r) => r.uri.includes('/extracted/')) ||
+        cachedResources.find((r) => r.uri.includes("/cleaned/")) ||
+        cachedResources.find((r) => r.uri.includes("/extracted/")) ||
         cachedResources[0];
 
-      const tier = preferredResource.uri.includes('/cleaned/')
-        ? 'cleaned'
-        : preferredResource.uri.includes('/extracted/')
-          ? 'extracted'
-          : preferredResource.uri.includes('/raw/')
-            ? 'raw'
-            : 'unknown';
+      const tier = preferredResource.uri.includes("/cleaned/")
+        ? "cleaned"
+        : preferredResource.uri.includes("/extracted/")
+          ? "extracted"
+          : preferredResource.uri.includes("/raw/")
+            ? "raw"
+            : "unknown";
 
       const cachedContent = await storage.read(preferredResource.uri);
 
-      logInfo('checkCache', 'Cache hit: returning content', {
+      logInfo("checkCache", "Cache hit: returning content", {
         url,
         tier,
         uri: preferredResource.uri,
@@ -123,19 +134,23 @@ export async function checkCache(
 
       return {
         found: true,
-        content: cachedContent.text || '',
+        content: cachedContent.text || "",
         uri: preferredResource.uri,
         name: preferredResource.name,
         mimeType: preferredResource.mimeType,
         description: preferredResource.description,
-        source: (preferredResource.metadata.source as string) || 'unknown',
+        source: (preferredResource.metadata.source as string) || "unknown",
         timestamp: preferredResource.metadata.timestamp as string,
       };
     }
 
-    logDebug('checkCache', 'Cache miss: no resources found', { url });
+    logDebug("checkCache", "Cache miss: no resources found", { url });
   } catch (error) {
-    logWarning('checkCache', 'Cache lookup failed, proceeding with fresh scrape', { url, error });
+    logWarning(
+      "checkCache",
+      "Cache lookup failed, proceeding with fresh scrape",
+      { url, error },
+    );
   }
 
   return { found: false };
@@ -149,7 +164,7 @@ export async function scrapeContent(
   timeout: number,
   clients: IScrapingClients,
   configClient: ReturnType<StrategyConfigFactory>,
-  options?: Record<string, unknown>
+  options?: Record<string, unknown>,
 ): Promise<{
   success: boolean;
   content?: string;
@@ -161,13 +176,14 @@ export async function scrapeContent(
 }> {
   // Check if screenshot format is requested
   const formats = (options?.formats as string[] | undefined) || [];
-  const includeScreenshot = formats.includes('screenshot');
+  const includeScreenshot = formats.includes("screenshot");
 
   // If screenshot is requested without Firecrawl API key, return error
   if (includeScreenshot && !clients.firecrawl) {
     return {
       success: false,
-      error: 'Screenshot format requires FIRECRAWL_API_KEY environment variable',
+      error:
+        "Screenshot format requires FIRECRAWL_API_KEY environment variable",
     };
   }
 
@@ -180,7 +196,10 @@ export async function scrapeContent(
       ...options,
       parsers: (options?.parsers as unknown[]) ?? [],
     };
-    const firecrawlResult = await clients.firecrawl.scrape(url, firecrawlOptions);
+    const firecrawlResult = await clients.firecrawl.scrape(
+      url,
+      firecrawlOptions,
+    );
 
     if (!firecrawlResult.success) {
       return {
@@ -190,12 +209,12 @@ export async function scrapeContent(
     }
 
     // Extract screenshot metadata if available
-    let screenshotFormat = 'png'; // Default format
+    let screenshotFormat = "png"; // Default format
     if (firecrawlResult.data?.metadata?.screenshotMetadata) {
       const metadata = firecrawlResult.data.metadata.screenshotMetadata as {
         format?: string;
       };
-      screenshotFormat = metadata.format || 'png';
+      screenshotFormat = metadata.format || "png";
     }
 
     // Kick off async crawl of base URL
@@ -203,8 +222,9 @@ export async function scrapeContent(
 
     return {
       success: true,
-      content: firecrawlResult.data?.html || firecrawlResult.data?.markdown || '',
-      source: 'firecrawl',
+      content:
+        firecrawlResult.data?.html || firecrawlResult.data?.markdown || "",
+      source: "firecrawl",
       screenshot: firecrawlResult.data?.screenshot,
       screenshotFormat,
     };
@@ -229,7 +249,7 @@ export async function scrapeContent(
 
   return {
     success: true,
-    content: result.content || '',
+    content: result.content || "",
     source: result.source,
   };
 }
@@ -241,7 +261,7 @@ export async function processContent(
   rawContent: string,
   url: string,
   cleanScrape: boolean,
-  extract: string | undefined
+  extract: string | undefined,
 ): Promise<{ cleaned?: string; extracted?: string; displayContent: string }> {
   let cleanedContent: string | undefined;
   let extractedContent: string | undefined;
@@ -256,10 +276,14 @@ export async function processContent(
         displayContent = cleanedContent;
       }
     } catch (cleanError) {
-      logWarning('processContent', 'Content cleaning failed, proceeding with raw content', {
-        url,
-        error: cleanError,
-      });
+      logWarning(
+        "processContent",
+        "Content cleaning failed, proceeding with raw content",
+        {
+          url,
+          error: cleanError,
+        },
+      );
       displayContent = rawContent;
     }
   }
@@ -270,7 +294,10 @@ export async function processContent(
       const extractClient = ExtractClientFactory.createFromEnv();
       if (extractClient) {
         const contentToExtract = cleanedContent || rawContent;
-        const extractResult = await extractClient.extract(contentToExtract, extract);
+        const extractResult = await extractClient.extract(
+          contentToExtract,
+          extract,
+        );
         if (extractResult.success && extractResult.content) {
           extractedContent = extractResult.content;
           displayContent = extractedContent;
@@ -279,7 +306,7 @@ export async function processContent(
         }
       }
     } catch (error) {
-      logError('processContent', error, { url, extract });
+      logError("processContent", error, { url, extract });
       displayContent = `Extraction error: ${error instanceof Error ? error.message : String(error)}\n\n---\nRaw content:\n${displayContent}`;
     }
   }
@@ -303,7 +330,7 @@ export async function saveToStorage(
   source: string,
   startIndex: number,
   maxChars: number,
-  wasTruncated: boolean
+  wasTruncated: boolean,
 ): Promise<{ raw?: string; cleaned?: string; extracted?: string } | null> {
   try {
     const storage = await ResourceStorageFactory.create();
@@ -327,7 +354,7 @@ export async function saveToStorage(
 
     return uris;
   } catch (error) {
-    logError('saveToStorage', error, { url, source });
+    logError("saveToStorage", error, { url, source });
     return null;
   }
 }

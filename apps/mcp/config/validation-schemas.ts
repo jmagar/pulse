@@ -1,12 +1,12 @@
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 /**
  * Create a JSON schema from a Zod schema with standard options
  */
 export function createInputSchema(schema: z.ZodTypeAny): unknown {
-  return zodToJsonSchema(schema as any, {
-    target: 'openApi3',
+  return zodToJsonSchema(schema, {
+    target: "openApi3",
   });
 }
 
@@ -15,15 +15,15 @@ export function createInputSchema(schema: z.ZodTypeAny): unknown {
  */
 export function validateEnvironment<T>(
   schema: z.ZodSchema<T>,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
 ): T {
   try {
     return schema.parse(env);
   } catch (error) {
     if (error instanceof z.ZodError) {
       const issues = error.issues
-        .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
-        .join('\n');
+        .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
+        .join("\n");
       throw new Error(`Environment validation failed:\n${issues}`);
     }
     throw error;
@@ -33,7 +33,10 @@ export function validateEnvironment<T>(
 /**
  * Parse a resource URI with an expected prefix
  */
-export function parseResourceUri(uri: string, expectedPrefix: string): string | null {
+export function parseResourceUri(
+  uri: string,
+  expectedPrefix: string,
+): string | null {
   if (!uri.startsWith(expectedPrefix)) {
     return null;
   }
@@ -43,6 +46,10 @@ export function parseResourceUri(uri: string, expectedPrefix: string): string | 
 /**
  * Build a resource URI with consistent format
  */
-export function buildResourceUri(protocol: string, type: string, id: string): string {
+export function buildResourceUri(
+  protocol: string,
+  type: string,
+  id: string,
+): string {
   return `${protocol}://${type}/${id}`;
 }

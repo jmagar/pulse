@@ -7,8 +7,6 @@ Test-Driven Development approach:
 3. Refactor while keeping tests green (REFACTOR)
 """
 
-import pytest
-
 from app.utils.url import normalize_url
 
 

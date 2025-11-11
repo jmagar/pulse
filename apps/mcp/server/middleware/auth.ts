@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from "express";
 
 /**
  * Placeholder for future authentication middleware
@@ -14,7 +14,11 @@ import { Request, Response, NextFunction } from 'express';
  * @param res - Express response object
  * @param next - Express next function
  */
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   // TODO: Implement authentication logic
   // Example: Check Authorization header, validate token, etc.
   next();
@@ -42,24 +46,24 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 export function metricsAuthMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   // Check if authentication is enabled
-  if (process.env.METRICS_AUTH_ENABLED !== 'true') {
+  if (process.env.METRICS_AUTH_ENABLED !== "true") {
     // Auth disabled, allow access
     return next();
   }
 
   // Get auth key from header or query parameter
-  const authKey = req.headers['x-metrics-key'] || req.query.key;
+  const authKey = req.headers["x-metrics-key"] || req.query.key;
   const expectedKey = process.env.METRICS_AUTH_KEY;
 
   // Validate key exists and matches
   if (!expectedKey) {
     res.status(500).json({
-      error: 'Server misconfiguration',
+      error: "Server misconfiguration",
       message:
-        'METRICS_AUTH_ENABLED is true but METRICS_AUTH_KEY is not set. Please configure METRICS_AUTH_KEY.',
+        "METRICS_AUTH_ENABLED is true but METRICS_AUTH_KEY is not set. Please configure METRICS_AUTH_KEY.",
     });
     return;
   }
@@ -70,8 +74,9 @@ export function metricsAuthMiddleware(
   } else {
     // Invalid or missing key
     res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Valid metrics authentication key required. Provide via X-Metrics-Key header or ?key= query parameter.',
+      error: "Unauthorized",
+      message:
+        "Valid metrics authentication key required. Provide via X-Metrics-Key header or ?key= query parameter.",
     });
   }
 }

@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { logWarning } from '../../utils/logging.js';
+import { Request, Response, NextFunction } from "express";
+import { logWarning } from "../../utils/logging.js";
 
 /**
  * Middleware to log when requests would be blocked by DNS rebinding protection
@@ -13,9 +13,13 @@ import { logWarning } from '../../utils/logging.js';
  * @param res - Express response object
  * @param next - Express next function
  */
-export function hostValidationLogger(req: Request, res: Response, next: NextFunction): void {
+export function hostValidationLogger(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   // Only check if DNS rebinding protection is enabled
-  const isDnsProtectionEnabled = process.env.NODE_ENV === 'production';
+  const isDnsProtectionEnabled = process.env.NODE_ENV === "production";
 
   if (!isDnsProtectionEnabled) {
     next();
@@ -26,18 +30,19 @@ export function hostValidationLogger(req: Request, res: Response, next: NextFunc
   const hostHeader = req.headers.host;
 
   if (!hostHeader) {
-    logWarning('host-validation', 'Request blocked: Missing Host header', {
+    logWarning("host-validation", "Request blocked: Missing Host header", {
       ip: req.ip,
       method: req.method,
       path: req.path,
-      userAgent: req.headers['user-agent'],
+      userAgent: req.headers["user-agent"],
     });
     next();
     return;
   }
 
   // Get allowed hosts from environment
-  const allowedHosts = process.env.ALLOWED_HOSTS?.split(',').filter(Boolean) || [];
+  const allowedHosts =
+    process.env.ALLOWED_HOSTS?.split(",").filter(Boolean) || [];
 
   // If no allowed hosts are configured, all hosts are allowed
   if (allowedHosts.length === 0) {
@@ -53,7 +58,7 @@ export function hostValidationLogger(req: Request, res: Response, next: NextFunc
     }
 
     // Wildcard subdomain match (e.g., *.example.com matches api.example.com)
-    if (allowed.startsWith('*.')) {
+    if (allowed.startsWith("*.")) {
       const domain = allowed.slice(2); // Remove '*.'
       return hostHeader.endsWith(domain);
     }
@@ -62,16 +67,20 @@ export function hostValidationLogger(req: Request, res: Response, next: NextFunc
   });
 
   if (!isAllowed) {
-    logWarning('host-validation', `Request blocked: Invalid Host header: ${hostHeader}`, {
-      blockedHost: hostHeader,
-      allowedHosts: allowedHosts.join(', '),
-      ip: req.ip,
-      method: req.method,
-      path: req.path,
-      userAgent: req.headers['user-agent'],
-      origin: req.headers.origin,
-      referer: req.headers.referer,
-    });
+    logWarning(
+      "host-validation",
+      `Request blocked: Invalid Host header: ${hostHeader}`,
+      {
+        blockedHost: hostHeader,
+        allowedHosts: allowedHosts.join(", "),
+        ip: req.ip,
+        method: req.method,
+        path: req.path,
+        userAgent: req.headers["user-agent"],
+        origin: req.headers.origin,
+        referer: req.headers.referer,
+      },
+    );
   }
 
   next();

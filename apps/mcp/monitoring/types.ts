@@ -134,7 +134,11 @@ export interface IMetricsCollector {
   getCacheMetrics(): CacheMetrics;
 
   // Strategy metrics
-  recordStrategyExecution(strategy: string, success: boolean, durationMs: number): void;
+  recordStrategyExecution(
+    strategy: string,
+    success: boolean,
+    durationMs: number,
+  ): void;
   recordFallback(fromStrategy: string, toStrategy: string): void;
   recordStrategyError(strategy: string, error: string): void;
   getStrategyMetrics(): StrategyMetrics;

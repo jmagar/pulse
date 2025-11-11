@@ -1,6 +1,6 @@
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
-import type { ToolResponse } from '../types.js';
-import { logError } from './logging.js';
+import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import type { ToolResponse } from "../types.js";
+import { logError } from "./logging.js";
 
 /**
  * Safely extract error message from unknown error
@@ -9,21 +9,21 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     return error;
   }
-  return 'Unknown error';
+  return "Unknown error";
 }
 
 /**
  * Create a standardized error response
  */
 export function createErrorResponse(error: unknown): ToolResponse {
-  logError('createErrorResponse', error);
+  logError("createErrorResponse", error);
   return {
     content: [
       {
-        type: 'text',
+        type: "text",
         text: `Error: ${getErrorMessage(error)}`,
       },
     ],
@@ -35,7 +35,10 @@ export function createErrorResponse(error: unknown): ToolResponse {
  * Create a not found MCP error
  */
 export function createNotFoundError(resource: string): McpError {
-  return new McpError(ErrorCode.InvalidRequest, `Resource not found: ${resource}`);
+  return new McpError(
+    ErrorCode.InvalidRequest,
+    `Resource not found: ${resource}`,
+  );
 }
 
 /**
@@ -49,8 +52,11 @@ export function createInvalidRequestError(message: string): McpError {
  * Create an internal MCP error
  */
 export function createInternalError(error: unknown): McpError {
-  logError('createInternalError', error);
-  return new McpError(ErrorCode.InternalError, `Internal error: ${getErrorMessage(error)}`);
+  logError("createInternalError", error);
+  return new McpError(
+    ErrorCode.InternalError,
+    `Internal error: ${getErrorMessage(error)}`,
+  );
 }
 
 /**

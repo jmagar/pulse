@@ -11,45 +11,45 @@ const DEFAULT_MAX_DISCOVERY_DEPTH = 5;
 
 export const DEFAULT_LANGUAGE_EXCLUDES = [
   // European languages
-  '^/de/', // German
-  '^/es/', // Spanish
-  '^/fr/', // French
-  '^/it/', // Italian
-  '^/pt/', // Portuguese
-  '^/nl/', // Dutch
-  '^/pl/', // Polish
-  '^/sv/', // Swedish
-  '^/no/', // Norwegian
-  '^/nb/', // Norwegian Bokmål
-  '^/da/', // Danish
-  '^/fi/', // Finnish
-  '^/cs/', // Czech
-  '^/ru/', // Russian
-  '^/uk/', // Ukrainian
-  '^/tr/', // Turkish
+  "^/de/", // German
+  "^/es/", // Spanish
+  "^/fr/", // French
+  "^/it/", // Italian
+  "^/pt/", // Portuguese
+  "^/nl/", // Dutch
+  "^/pl/", // Polish
+  "^/sv/", // Swedish
+  "^/no/", // Norwegian
+  "^/nb/", // Norwegian Bokmål
+  "^/da/", // Danish
+  "^/fi/", // Finnish
+  "^/cs/", // Czech
+  "^/ru/", // Russian
+  "^/uk/", // Ukrainian
+  "^/tr/", // Turkish
 
   // Middle Eastern languages
-  '^/ar/', // Arabic
-  '^/he/', // Hebrew
+  "^/ar/", // Arabic
+  "^/he/", // Hebrew
 
   // Asian languages
-  '^/ja/', // Japanese
-  '^/ko/', // Korean
-  '^/zh/', // Chinese
-  '^/zh-CN/', // Simplified Chinese
-  '^/zh-TW/', // Traditional Chinese
-  '^/id/', // Indonesian
-  '^/vi/', // Vietnamese
-  '^/th/', // Thai
-  '^/hi/', // Hindi
+  "^/ja/", // Japanese
+  "^/ko/", // Korean
+  "^/zh/", // Chinese
+  "^/zh-CN/", // Simplified Chinese
+  "^/zh-TW/", // Traditional Chinese
+  "^/id/", // Indonesian
+  "^/vi/", // Vietnamese
+  "^/th/", // Thai
+  "^/hi/", // Hindi
 
   // Regional variants
-  '^/pt-BR/', // Brazilian Portuguese
-  '^/es-MX/', // Mexican Spanish
-  '^/fr-CA/', // Canadian French
-  '^/en-GB/', // British English
-  '^/en-UK/', // British English (alternative)
-  '^/en-AU/', // Australian English
+  "^/pt-BR/", // Brazilian Portuguese
+  "^/es-MX/", // Mexican Spanish
+  "^/fr-CA/", // Canadian French
+  "^/en-GB/", // British English
+  "^/en-UK/", // British English (alternative)
+  "^/en-AU/", // Australian English
 ];
 
 /**
@@ -74,7 +74,9 @@ export interface CrawlRequestConfig {
  * @param targetUrl - URL to generate crawl config for
  * @returns Crawl configuration or null if URL is invalid
  */
-export function buildCrawlRequestConfig(targetUrl: string): CrawlRequestConfig | null {
+export function buildCrawlRequestConfig(
+  targetUrl: string,
+): CrawlRequestConfig | null {
   try {
     const parsed = new URL(targetUrl);
     const baseUrl = `${parsed.protocol}//${parsed.host}`;
@@ -100,7 +102,7 @@ export function buildCrawlRequestConfig(targetUrl: string): CrawlRequestConfig |
 export function shouldStartCrawl(targetUrl: string): boolean {
   try {
     const parsed = new URL(targetUrl);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
   }

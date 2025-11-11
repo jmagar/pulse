@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { browserActionsArraySchema } from '../scrape/action-types.js';
+import { z } from "zod";
+import { browserActionsArraySchema } from "../scrape/action-types.js";
 
 /**
  * Flattened schema for crawl tool
@@ -15,10 +15,10 @@ import { browserActionsArraySchema } from '../scrape/action-types.js';
 export const crawlOptionsSchema = z
   .object({
     // Required for starting a new crawl (mutually exclusive with jobId)
-    url: z.string().url('Valid URL is required').optional(),
+    url: z.string().url("Valid URL is required").optional(),
 
     // Required for checking status or canceling (mutually exclusive with url)
-    jobId: z.string().min(1, 'Job ID is required').optional(),
+    jobId: z.string().min(1, "Job ID is required").optional(),
 
     // Operation flag for jobId mode
     cancel: z.boolean().optional().default(false),
@@ -28,14 +28,14 @@ export const crawlOptionsSchema = z
       .string()
       .optional()
       .describe(
-        'Natural language prompt describing the crawl you want to perform. ' +
-          'Firecrawl will automatically generate optimal crawl parameters based on your description. ' +
-          'Examples: ' +
+        "Natural language prompt describing the crawl you want to perform. " +
+          "Firecrawl will automatically generate optimal crawl parameters based on your description. " +
+          "Examples: " +
           '"Find all blog posts about AI from the past year", ' +
           '"Crawl the documentation section and extract API endpoints", ' +
           '"Get all product pages with pricing information", ' +
           '"Map the entire site but exclude admin pages". ' +
-          'When provided, this takes precedence over manual parameters.'
+          "When provided, this takes precedence over manual parameters.",
       ),
 
     // Crawl configuration options (only used with url)
@@ -47,7 +47,7 @@ export const crawlOptionsSchema = z
     includePaths: z.array(z.string()).optional(),
     excludePaths: z.array(z.string()).optional(),
     ignoreQueryParameters: z.boolean().optional().default(true),
-    sitemap: z.enum(['include', 'skip']).optional().default('include'),
+    sitemap: z.enum(["include", "skip"]).optional().default("include"),
     delay: z.number().int().min(0).optional(),
     maxConcurrency: z.number().int().min(1).optional(),
     scrapeOptions: z
@@ -55,32 +55,32 @@ export const crawlOptionsSchema = z
         formats: z
           .array(
             z.enum([
-              'markdown',
-              'html',
-              'rawHtml',
-              'links',
-              'images',
-              'screenshot',
-              'summary',
-              'branding',
-              'changeTracking',
-            ])
+              "markdown",
+              "html",
+              "rawHtml",
+              "links",
+              "images",
+              "screenshot",
+              "summary",
+              "branding",
+              "changeTracking",
+            ]),
           )
           .optional()
-          .default(['markdown', 'html']),
+          .default(["markdown", "html"]),
         parsers: z
           .array(
             z.object({
-              type: z.literal('pdf'),
+              type: z.literal("pdf"),
               maxPages: z.number().int().min(1).max(10000).optional(),
-            })
+            }),
           )
           .optional()
           .default([])
           .describe(
-            'PDF parsing configuration. Default: [] (disabled). ' +
+            "PDF parsing configuration. Default: [] (disabled). " +
               'Set to [{ type: "pdf" }] to enable PDF parsing (1 credit per page). ' +
-              'Empty array prevents PDF engine from being used on HTML pages.'
+              "Empty array prevents PDF engine from being used on HTML pages.",
           ),
         onlyMainContent: z.boolean().optional().default(true),
         includeTags: z.array(z.string()).optional(),
@@ -88,9 +88,9 @@ export const crawlOptionsSchema = z
         actions: browserActionsArraySchema
           .optional()
           .describe(
-            'Browser actions to perform on each page before scraping. ' +
-              'Same action types as scrape tool: wait, click, write, press, scroll, screenshot, scrape, executeJavascript. ' +
-              'Applied to every page in the crawl.'
+            "Browser actions to perform on each page before scraping. " +
+              "Same action types as scrape tool: wait, click, write, press, scroll, screenshot, scrape, executeJavascript. " +
+              "Applied to every page in the crawl.",
           ),
       })
       .optional(),
@@ -105,8 +105,9 @@ export const crawlOptionsSchema = z
       return hasUrl !== hasJobId; // XOR: one must be true, the other false
     },
     {
-      message: 'Provide either "url" to start a crawl, or "jobId" to check status/cancel',
-    }
+      message:
+        'Provide either "url" to start a crawl, or "jobId" to check status/cancel',
+    },
   );
 
 export type CrawlOptions = z.infer<typeof crawlOptionsSchema>;
@@ -120,146 +121,146 @@ export type CrawlOptions = z.infer<typeof crawlOptionsSchema>;
  */
 export const buildCrawlInputSchema = () => {
   return {
-    type: 'object' as const,
+    type: "object" as const,
     properties: {
       url: {
-        type: 'string',
-        format: 'uri',
-        description: 'URL to start crawling from (for starting new crawl)',
+        type: "string",
+        format: "uri",
+        description: "URL to start crawling from (for starting new crawl)",
       },
       jobId: {
-        type: 'string',
+        type: "string",
         minLength: 1,
-        description: 'Crawl job ID (for checking status or canceling)',
+        description: "Crawl job ID (for checking status or canceling)",
       },
       cancel: {
-        type: 'boolean',
+        type: "boolean",
         default: false,
-        description: 'Set to true with jobId to cancel a running crawl',
+        description: "Set to true with jobId to cancel a running crawl",
       },
       prompt: {
-        type: 'string',
+        type: "string",
         description:
-          'Natural language prompt describing the crawl you want to perform. ' +
-          'Firecrawl will automatically generate optimal crawl parameters based on your description. ' +
-          'Examples: ' +
+          "Natural language prompt describing the crawl you want to perform. " +
+          "Firecrawl will automatically generate optimal crawl parameters based on your description. " +
+          "Examples: " +
           '"Find all blog posts about AI from the past year", ' +
           '"Crawl the documentation section and extract API endpoints", ' +
           '"Get all product pages with pricing information", ' +
           '"Map the entire site but exclude admin pages". ' +
-          'When provided, this takes precedence over manual parameters.',
+          "When provided, this takes precedence over manual parameters.",
       },
       limit: {
-        type: 'integer',
+        type: "integer",
         minimum: 1,
         maximum: 100000,
         default: 100,
-        description: 'Maximum pages to crawl (1-100000, default 100)',
+        description: "Maximum pages to crawl (1-100000, default 100)",
       },
       maxDiscoveryDepth: {
-        type: 'integer',
+        type: "integer",
         minimum: 1,
         description:
-          'Maximum depth to crawl based on discovery order. ' +
-          'The root site and sitemapped pages have a discovery depth of 0. ' +
+          "Maximum depth to crawl based on discovery order. " +
+          "The root site and sitemapped pages have a discovery depth of 0. " +
           'For example, if set to 1 with sitemap: "skip", only the entered URL and directly linked pages will be crawled.',
       },
       crawlEntireDomain: {
-        type: 'boolean',
+        type: "boolean",
         default: false,
-        description: 'Crawl the entire domain (not just the starting path)',
+        description: "Crawl the entire domain (not just the starting path)",
       },
       allowSubdomains: {
-        type: 'boolean',
+        type: "boolean",
         default: false,
-        description: 'Include URLs from subdomains of the base domain',
+        description: "Include URLs from subdomains of the base domain",
       },
       allowExternalLinks: {
-        type: 'boolean',
+        type: "boolean",
         default: false,
-        description: 'Allow following links to external domains',
+        description: "Allow following links to external domains",
       },
       includePaths: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'URL patterns to include in crawl (whitelist)',
+        type: "array",
+        items: { type: "string" },
+        description: "URL patterns to include in crawl (whitelist)",
       },
       excludePaths: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'URL patterns to exclude from crawl',
+        type: "array",
+        items: { type: "string" },
+        description: "URL patterns to exclude from crawl",
       },
       ignoreQueryParameters: {
-        type: 'boolean',
+        type: "boolean",
         default: true,
-        description: 'Ignore URL query parameters when determining uniqueness',
+        description: "Ignore URL query parameters when determining uniqueness",
       },
       sitemap: {
-        type: 'string',
-        enum: ['include', 'skip'],
-        default: 'include',
-        description: 'How to handle sitemap URLs: include or skip',
+        type: "string",
+        enum: ["include", "skip"],
+        default: "include",
+        description: "How to handle sitemap URLs: include or skip",
       },
       delay: {
-        type: 'integer',
+        type: "integer",
         minimum: 0,
-        description: 'Delay in milliseconds between requests',
+        description: "Delay in milliseconds between requests",
       },
       maxConcurrency: {
-        type: 'integer',
+        type: "integer",
         minimum: 1,
-        description: 'Maximum number of concurrent requests',
+        description: "Maximum number of concurrent requests",
       },
       scrapeOptions: {
-        type: 'object',
+        type: "object",
         properties: {
           formats: {
-            type: 'array',
-            items: { type: 'string' },
-            default: ['markdown', 'html'],
-            description: 'Content formats to extract (markdown, html, etc.)',
+            type: "array",
+            items: { type: "string" },
+            default: ["markdown", "html"],
+            description: "Content formats to extract (markdown, html, etc.)",
           },
           parsers: {
-            type: 'array',
+            type: "array",
             items: {
-              type: 'object',
+              type: "object",
               properties: {
-                type: { type: 'string', enum: ['pdf'] },
-                maxPages: { type: 'integer', minimum: 1, maximum: 10000 },
+                type: { type: "string", enum: ["pdf"] },
+                maxPages: { type: "integer", minimum: 1, maximum: 10000 },
               },
-              required: ['type'],
+              required: ["type"],
             },
             default: [],
             description:
-              'PDF parsing configuration. Default: [] (disabled). ' +
+              "PDF parsing configuration. Default: [] (disabled). " +
               'Set to [{ type: "pdf" }] to enable PDF parsing (1 credit per page). ' +
-              'Empty array prevents PDF engine from being used on HTML pages.',
+              "Empty array prevents PDF engine from being used on HTML pages.",
           },
           onlyMainContent: {
-            type: 'boolean',
+            type: "boolean",
             default: true,
-            description: 'Extract only main content, excluding nav/ads',
+            description: "Extract only main content, excluding nav/ads",
           },
           includeTags: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'HTML tags to include in extraction',
+            type: "array",
+            items: { type: "string" },
+            description: "HTML tags to include in extraction",
           },
           excludeTags: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'HTML tags to exclude from extraction',
+            type: "array",
+            items: { type: "string" },
+            description: "HTML tags to exclude from extraction",
           },
           actions: {
-            type: 'array',
-            items: { type: 'object' },
+            type: "array",
+            items: { type: "object" },
             description:
-              'Browser actions to perform on each page before scraping. ' +
-              'Same action types as scrape tool: wait, click, write, press, scroll, screenshot, scrape, executeJavascript. ' +
-              'Applied to every page in the crawl.',
+              "Browser actions to perform on each page before scraping. " +
+              "Same action types as scrape tool: wait, click, write, press, scroll, screenshot, scrape, executeJavascript. " +
+              "Applied to every page in the crawl.",
           },
         },
-        description: 'Options for scraping crawled pages',
+        description: "Options for scraping crawled pages",
       },
     },
     // Note: url and jobId are mutually exclusive, but JSON Schema

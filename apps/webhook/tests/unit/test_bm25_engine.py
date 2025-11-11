@@ -2,8 +2,6 @@
 Unit tests for BM25Engine.
 """
 
-
-
 from pathlib import Path
 
 import pytest

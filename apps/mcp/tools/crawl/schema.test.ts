@@ -1,87 +1,93 @@
-import { describe, it, expect } from 'vitest';
-import { crawlOptionsSchema } from './schema.js';
+import { describe, it, expect } from "vitest";
+import { crawlOptionsSchema } from "./schema.js";
 
-describe('Crawl Options Schema', () => {
-  describe('Basic validation', () => {
-    it('accepts valid url', () => {
+describe("Crawl Options Schema", () => {
+  describe("Basic validation", () => {
+    it("accepts valid url", () => {
       const result = crawlOptionsSchema.parse({
-        url: 'https://example.com',
+        url: "https://example.com",
       });
-      expect(result.url).toBe('https://example.com');
+      expect(result.url).toBe("https://example.com");
     });
 
-    it('accepts valid jobId', () => {
+    it("accepts valid jobId", () => {
       const result = crawlOptionsSchema.parse({
-        jobId: 'test-job-123',
+        jobId: "test-job-123",
       });
-      expect(result.jobId).toBe('test-job-123');
+      expect(result.jobId).toBe("test-job-123");
     });
 
-    it('requires either url or jobId', () => {
+    it("requires either url or jobId", () => {
       expect(() => crawlOptionsSchema.parse({})).toThrow();
     });
 
-    it('rejects both url and jobId together', () => {
+    it("rejects both url and jobId together", () => {
       expect(() =>
         crawlOptionsSchema.parse({
-          url: 'https://example.com',
-          jobId: 'test-job-123',
-        })
+          url: "https://example.com",
+          jobId: "test-job-123",
+        }),
       ).toThrow();
     });
   });
 
-  describe('prompt parameter', () => {
-    it('accepts natural language prompt', () => {
+  describe("prompt parameter", () => {
+    it("accepts natural language prompt", () => {
       const result = crawlOptionsSchema.parse({
-        url: 'https://example.com',
-        prompt: 'Find all blog posts about AI',
+        url: "https://example.com",
+        prompt: "Find all blog posts about AI",
       });
-      expect(result.prompt).toBe('Find all blog posts about AI');
+      expect(result.prompt).toBe("Find all blog posts about AI");
     });
 
-    it('is optional', () => {
+    it("is optional", () => {
       const result = crawlOptionsSchema.parse({
-        url: 'https://example.com',
+        url: "https://example.com",
       });
       expect(result.prompt).toBeUndefined();
     });
 
-    it('works with manual parameters', () => {
+    it("works with manual parameters", () => {
       const result = crawlOptionsSchema.parse({
-        url: 'https://example.com',
-        prompt: 'Find documentation pages',
+        url: "https://example.com",
+        prompt: "Find documentation pages",
         limit: 50,
         maxDiscoveryDepth: 3,
       });
-      expect(result.prompt).toBe('Find documentation pages');
+      expect(result.prompt).toBe("Find documentation pages");
       expect(result.limit).toBe(50);
       expect(result.maxDiscoveryDepth).toBe(3);
     });
   });
 
-  describe('scrapeOptions.actions', () => {
-    it('accepts browser actions in scrapeOptions', () => {
+  describe("scrapeOptions.actions", () => {
+    it("accepts browser actions in scrapeOptions", () => {
       const result = crawlOptionsSchema.parse({
-        url: 'https://example.com',
+        url: "https://example.com",
         scrapeOptions: {
           actions: [
-            { type: 'wait', milliseconds: 1000 },
-            { type: 'click', selector: '.load-more' },
+            { type: "wait", milliseconds: 1000 },
+            { type: "click", selector: ".load-more" },
           ],
         },
       });
       expect(result.scrapeOptions?.actions).toHaveLength(2);
-      expect(result.scrapeOptions?.actions?.[0]).toEqual({ type: 'wait', milliseconds: 1000 });
-      expect(result.scrapeOptions?.actions?.[1]).toEqual({ type: 'click', selector: '.load-more' });
+      expect(result.scrapeOptions?.actions?.[0]).toEqual({
+        type: "wait",
+        milliseconds: 1000,
+      });
+      expect(result.scrapeOptions?.actions?.[1]).toEqual({
+        type: "click",
+        selector: ".load-more",
+      });
     });
 
-    it('applies actions to all pages in crawl', () => {
+    it("applies actions to all pages in crawl", () => {
       const result = crawlOptionsSchema.parse({
-        url: 'https://example.com',
+        url: "https://example.com",
         limit: 10,
         scrapeOptions: {
-          actions: [{ type: 'scroll', direction: 'down' }],
+          actions: [{ type: "scroll", direction: "down" }],
         },
       });
       expect(result.scrapeOptions?.actions).toBeDefined();
@@ -89,27 +95,27 @@ describe('Crawl Options Schema', () => {
       expect(result.limit).toBe(10);
     });
 
-    it('accepts multiple action types', () => {
+    it("accepts multiple action types", () => {
       const result = crawlOptionsSchema.parse({
-        url: 'https://example.com',
+        url: "https://example.com",
         scrapeOptions: {
           actions: [
-            { type: 'wait', milliseconds: 500 },
-            { type: 'click', selector: '#cookie-accept' },
-            { type: 'write', selector: '#search', text: 'test' },
-            { type: 'press', key: 'Enter' },
-            { type: 'screenshot', name: 'after-search' },
+            { type: "wait", milliseconds: 500 },
+            { type: "click", selector: "#cookie-accept" },
+            { type: "write", selector: "#search", text: "test" },
+            { type: "press", key: "Enter" },
+            { type: "screenshot", name: "after-search" },
           ],
         },
       });
       expect(result.scrapeOptions?.actions).toHaveLength(5);
     });
 
-    it('is optional', () => {
+    it("is optional", () => {
       const result = crawlOptionsSchema.parse({
-        url: 'https://example.com',
+        url: "https://example.com",
         scrapeOptions: {
-          formats: ['markdown'],
+          formats: ["markdown"],
         },
       });
       expect(result.scrapeOptions?.actions).toBeUndefined();

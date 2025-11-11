@@ -1,12 +1,12 @@
-import { promises as fs } from 'fs';
-import { dirname } from 'path';
-import { getStrategyConfigPath } from './default-config.js';
+import { promises as fs } from "fs";
+import { dirname } from "path";
+import { getStrategyConfigPath } from "./default-config.js";
 import type {
   IStrategyConfigClient,
   StrategyConfigEntry,
   StrategyConfigOptions,
   ScrapingStrategy,
-} from './types.js';
+} from "./types.js";
 
 /**
  * Filesystem-based implementation of strategy config client
@@ -43,10 +43,10 @@ export class FilesystemStrategyConfigClient implements IStrategyConfigClient {
   async loadConfig(): Promise<StrategyConfigEntry[]> {
     try {
       const configPath = await this.getConfigPath();
-      const content = await fs.readFile(configPath, 'utf-8');
+      const content = await fs.readFile(configPath, "utf-8");
       return this.parseMarkdownTable(content);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
         // File doesn't exist, return empty config
         return [];
       }
@@ -61,7 +61,7 @@ export class FilesystemStrategyConfigClient implements IStrategyConfigClient {
     // Ensure directory exists
     await fs.mkdir(dirname(configPath), { recursive: true });
 
-    await fs.writeFile(configPath, markdownContent, 'utf-8');
+    await fs.writeFile(configPath, markdownContent, "utf-8");
   }
 
   async upsertEntry(entry: StrategyConfigEntry): Promise<void> {
@@ -109,19 +109,29 @@ export class FilesystemStrategyConfigClient implements IStrategyConfigClient {
     return null;
   }
 
-  private matchesPrefix(hostname: string, pathname: string, prefix: string): boolean {
+  private matchesPrefix(
+    hostname: string,
+    pathname: string,
+    prefix: string,
+  ): boolean {
     // If prefix contains slash, match hostname + path
-    if (prefix.includes('/')) {
+    if (prefix.includes("/")) {
       const fullPath = hostname + pathname;
-      return fullPath.startsWith(prefix) || fullPath.startsWith('www.' + prefix);
+      return (
+        fullPath.startsWith(prefix) || fullPath.startsWith("www." + prefix)
+      );
     }
 
     // Otherwise just match hostname
-    return hostname === prefix || hostname === 'www.' + prefix || hostname.endsWith('.' + prefix);
+    return (
+      hostname === prefix ||
+      hostname === "www." + prefix ||
+      hostname.endsWith("." + prefix)
+    );
   }
 
   private parseMarkdownTable(content: string): StrategyConfigEntry[] {
-    const lines = content.split('\n');
+    const lines = content.split("\n");
     const entries: StrategyConfigEntry[] = [];
 
     let inTable = false;
@@ -134,13 +144,13 @@ export class FilesystemStrategyConfigClient implements IStrategyConfigClient {
       if (!trimmed) continue;
 
       // Check if this is a table row
-      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
         if (!headerFound) {
           // Check if this is the header row
           if (
-            trimmed.toLowerCase().includes('prefix') &&
-            trimmed.toLowerCase().includes('default_strategy') &&
-            trimmed.toLowerCase().includes('notes')
+            trimmed.toLowerCase().includes("prefix") &&
+            trimmed.toLowerCase().includes("default_strategy") &&
+            trimmed.toLowerCase().includes("notes")
           ) {
             headerFound = true;
             inTable = true;
@@ -149,7 +159,7 @@ export class FilesystemStrategyConfigClient implements IStrategyConfigClient {
         }
 
         // Skip separator row
-        if (trimmed.includes('---')) {
+        if (trimmed.includes("---")) {
           continue;
         }
 
@@ -172,7 +182,7 @@ export class FilesystemStrategyConfigClient implements IStrategyConfigClient {
     // Remove leading/trailing pipes and split
     const cells = row
       .slice(1, -1)
-      .split('|')
+      .split("|")
       .map((cell) => cell.trim());
 
     if (cells.length < 2) return null;
@@ -182,7 +192,7 @@ export class FilesystemStrategyConfigClient implements IStrategyConfigClient {
     const notes = cells[2] || undefined;
 
     // Validate strategy
-    if (!['native', 'firecrawl'].includes(strategy)) {
+    if (!["native", "firecrawl"].includes(strategy)) {
       return null;
     }
 
@@ -202,10 +212,10 @@ This file defines which scraping strategy to use for different URL prefixes (nat
 | ------ | ---------------- | ----- |`;
 
     const rows = config.map((entry) => {
-      const notes = entry.notes || '';
+      const notes = entry.notes || "";
       return `| ${entry.prefix} | ${entry.default_strategy} | ${notes} |`;
     });
 
-    return [header, ...rows, ''].join('\n');
+    return [header, ...rows, ""].join("\n");
   }
 }

@@ -1,10 +1,12 @@
 """Tests for changedetection.io API client."""
-import httpx
-import pytest
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.config import Settings
+import httpx
+import pytest
+
 from app.clients.changedetection import ChangeDetectionClient
+from app.config import Settings
 
 
 def test_changedetection_config_defaults():

@@ -1,7 +1,5 @@
 """Unit tests for timing models."""
 
-
-
 from app.models.timing import OperationMetric, RequestMetric
 
 

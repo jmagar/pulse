@@ -177,7 +177,15 @@ class VectorStore:
             }
 
             # Add optional metadata
-            for key in ["canonical_url", "title", "description", "domain", "language", "country", "isMobile"]:
+            for key in [
+                "canonical_url",
+                "title",
+                "description",
+                "domain",
+                "language",
+                "country",
+                "isMobile",
+            ]:
                 if key in chunk:
                     payload[key] = chunk[key]
 

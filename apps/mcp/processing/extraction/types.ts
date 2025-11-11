@@ -6,7 +6,7 @@
  * Configuration for LLM providers
  */
 export interface LLMConfig {
-  provider: 'anthropic' | 'openai' | 'openai-compatible';
+  provider: "anthropic" | "openai" | "openai-compatible";
   apiKey: string;
   model?: string;
   apiBaseUrl?: string; // For OpenAI-compatible providers
@@ -40,5 +40,9 @@ export interface IExtractClient {
    * @param options Optional extraction options
    * @returns The extracted information or an error
    */
-  extract(content: string, query: string, options?: ExtractOptions): Promise<ExtractResult>;
+  extract(
+    content: string,
+    query: string,
+    options?: ExtractOptions,
+  ): Promise<ExtractResult>;
 }

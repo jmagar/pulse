@@ -4,7 +4,6 @@ Integration tests for the API.
 These tests require running services (Redis, Qdrant, TEI).
 """
 
-
 from collections.abc import Generator
 from typing import Any
 
@@ -70,6 +69,7 @@ def client() -> TestClient:
 def api_secret() -> str:
     """Get API secret from settings."""
     from app.config import settings
+
     return settings.api_secret
 
 

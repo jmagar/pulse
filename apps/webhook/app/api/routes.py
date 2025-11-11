@@ -7,8 +7,9 @@ Implements the REST API endpoints for document indexing and search.
 import hashlib
 import hmac
 import time
-from datetime import datetime, timezone
-from typing import Annotated, Any
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -56,6 +57,12 @@ logger = get_logger(__name__)
 WEBHOOK_EVENT_ADAPTER: TypeAdapter[FirecrawlWebhookEvent] = TypeAdapter(FirecrawlWebhookEvent)
 
 router = APIRouter()
+RouteCallable = Callable[..., Any]
+
+
+def limiter_exempt(route_fn: RouteCallable) -> RouteCallable:
+    """Typed wrapper around limiter.exempt to satisfy mypy."""
+    return cast(RouteCallable, limiter.exempt(route_fn))  # type: ignore[no-untyped-call]
 
 
 @router.post(
@@ -172,7 +179,9 @@ async def search_documents(
     try:
         # Extract filters
         filter_start = time.perf_counter()
-        filters: dict[str, Any] = search_request.filters.model_dump() if search_request.filters else {}
+        filters: dict[str, Any] = (
+            search_request.filters.model_dump() if search_request.filters else {}
+        )
         filter_duration_ms = round((time.perf_counter() - filter_start) * 1000, 2)
 
         logger.debug(
@@ -267,7 +276,7 @@ async def search_documents(
     "/api/webhook/firecrawl",
     dependencies=[Depends(verify_webhook_signature)],
 )
-@limiter.exempt
+@limiter_exempt
 async def webhook_firecrawl(
     request: Request,
     queue: Annotated[Queue, Depends(get_rq_queue)],
@@ -403,7 +412,7 @@ def _extract_changedetection_metadata(
     """
     return {
         "watch_title": payload.watch_title,
-        "webhook_received_at": datetime.now(timezone.utc).isoformat(),
+        "webhook_received_at": datetime.now(UTC).isoformat(),
         "signature": signature,
         "diff_size": snapshot_size,
         "raw_payload_version": "1.0",
@@ -412,13 +421,13 @@ def _extract_changedetection_metadata(
 
 
 @router.post("/api/webhook/changedetection", status_code=202)
-@limiter.exempt
+@limiter_exempt
 async def handle_changedetection_webhook(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db_session)],
     queue: Annotated[Queue, Depends(get_rq_queue)],
     signature: str | None = Header(None, alias="X-Signature"),
-) -> dict:
+) -> dict[str, Any]:
     """
     Handle webhook notifications from changedetection.io.
 
@@ -435,11 +444,7 @@ async def handle_changedetection_webhook(
         raise HTTPException(401, "Missing X-Signature header")
 
     body = await request.body()
-    expected_sig = hmac.new(
-        settings.webhook_secret.encode(),
-        body,
-        hashlib.sha256
-    ).hexdigest()
+    expected_sig = hmac.new(settings.webhook_secret.encode(), body, hashlib.sha256).hexdigest()
 
     provided_sig = signature.replace("sha256=", "")
 
@@ -452,6 +457,7 @@ async def handle_changedetection_webhook(
     # Parse and validate payload AFTER signature verification
     try:
         import json
+
         payload_dict = json.loads(body)
         payload = ChangeDetectionPayload(**payload_dict)
     except Exception as e:

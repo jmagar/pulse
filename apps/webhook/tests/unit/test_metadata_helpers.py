@@ -1,6 +1,5 @@
 """Unit tests for metadata helper functions."""
-import pytest
-from datetime import datetime, timezone
+
 from app.api.routes import _compute_diff_size, _extract_changedetection_metadata
 from app.models import ChangeDetectionPayload
 

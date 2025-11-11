@@ -6,9 +6,9 @@
  * them for display in server startup logs.
  */
 
-import { env, parseBoolean } from '../config/environment.js';
-import { colorHelpers } from './logging.js';
-import { SELF_HOSTED_NO_AUTH } from '@firecrawl/client';
+import { getEnvSnapshot, parseBoolean } from "../config/environment.js";
+import { colorHelpers } from "./logging.js";
+import { SELF_HOSTED_NO_AUTH } from "@firecrawl/client";
 
 /**
  * Service configuration and status information
@@ -44,29 +44,30 @@ export interface ServiceStatus {
  * }
  */
 export async function checkFirecrawlStatus(): Promise<ServiceStatus> {
-  const apiKey = env.firecrawlApiKey;
-  const baseUrl = env.firecrawlBaseUrl || 'https://api.firecrawl.dev';
+  const currentEnv = getEnvSnapshot();
+  const apiKey = currentEnv.firecrawlApiKey;
+  const baseUrl = currentEnv.firecrawlBaseUrl || "https://api.firecrawl.dev";
 
   // Not configured if API key is missing
   if (!apiKey) {
     return {
-      name: 'Firecrawl',
+      name: "Firecrawl",
       configured: false,
     };
   }
 
   // Self-hosted instances or health check skip mode
   const isSelfHosted = apiKey === SELF_HOSTED_NO_AUTH;
-  const skipHealthCheck = parseBoolean(env.skipHealthChecks);
+  const skipHealthCheck = parseBoolean(currentEnv.skipHealthChecks);
 
   if (isSelfHosted || skipHealthCheck) {
     return {
-      name: 'Firecrawl',
+      name: "Firecrawl",
       configured: true,
       healthy: true,
       baseUrl,
       details: {
-        mode: isSelfHosted ? 'self-hosted' : undefined,
+        mode: isSelfHosted ? "self-hosted" : undefined,
         healthCheckSkipped: skipHealthCheck,
       },
     };
@@ -74,7 +75,7 @@ export async function checkFirecrawlStatus(): Promise<ServiceStatus> {
 
   // TODO: Implement actual health check for cloud instances
   return {
-    name: 'Firecrawl',
+    name: "Firecrawl",
     configured: true,
     healthy: true,
     baseUrl,
@@ -96,19 +97,20 @@ export async function checkFirecrawlStatus(): Promise<ServiceStatus> {
  * }
  */
 export function checkLLMProviderStatus(): ServiceStatus {
-  const provider = env.llmProvider;
-  const apiKey = env.llmApiKey;
+  const currentEnv = getEnvSnapshot();
+  const provider = currentEnv.llmProvider;
+  const apiKey = currentEnv.llmApiKey;
 
   // Not configured if provider or API key is missing
   if (!provider || !apiKey) {
     return {
-      name: 'LLM Provider',
+      name: "LLM Provider",
       configured: false,
     };
   }
 
-  const baseUrl = env.llmApiBaseUrl;
-  const model = env.llmModel;
+  const baseUrl = currentEnv.llmApiBaseUrl;
+  const model = currentEnv.llmModel;
 
   return {
     name: `LLM Provider (${provider})`,
@@ -117,7 +119,7 @@ export function checkLLMProviderStatus(): ServiceStatus {
     baseUrl,
     details: {
       provider,
-      model: model || 'default',
+      model: model || "default",
     },
   };
 }
@@ -135,20 +137,21 @@ export function checkLLMProviderStatus(): ServiceStatus {
  * console.log(`Using ${status.details?.type} storage`);
  */
 export function checkStorageStatus(): ServiceStatus {
-  const storageType = env.resourceStorage;
-  const fsRoot = env.resourceFilesystemRoot;
+  const currentEnv = getEnvSnapshot();
+  const storageType = currentEnv.resourceStorage || "memory";
+  const fsRoot = currentEnv.resourceFilesystemRoot;
 
   const details: Record<string, unknown> = {
     type: storageType,
   };
 
   // Add filesystem root if configured
-  if (storageType === 'filesystem' && fsRoot) {
+  if (storageType === "filesystem" && fsRoot) {
     details.root = fsRoot;
   }
 
   return {
-    name: 'Resource Storage',
+    name: "Resource Storage",
     configured: true,
     healthy: true,
     details,
@@ -172,13 +175,16 @@ export function checkStorageStatus(): ServiceStatus {
 export function formatServiceStatus(status: ServiceStatus): string {
   // Not configured services
   if (!status.configured) {
-    return `${colorHelpers.dim('○')} ${status.name}: ${colorHelpers.dim('Not configured')}`;
+    return `${colorHelpers.dim("○")} ${status.name}: ${colorHelpers.dim("Not configured")}`;
   }
 
   // Icon and status text based on health
-  const icon = status.healthy === false ? colorHelpers.cross() : colorHelpers.checkmark();
+  const icon =
+    status.healthy === false ? colorHelpers.cross() : colorHelpers.checkmark();
   const statusText =
-    status.healthy === false ? colorHelpers.error('Failed') : colorHelpers.success('Ready');
+    status.healthy === false
+      ? colorHelpers.error("Failed")
+      : colorHelpers.success("Ready");
 
   let line = `${icon} ${status.name}: ${statusText}`;
 
@@ -197,7 +203,7 @@ export function formatServiceStatus(status: ServiceStatus): string {
     const detailsString = Object.entries(status.details)
       .filter(([_, value]) => value !== undefined)
       .map(([key, value]) => `${key}=${value}`)
-      .join(', ');
+      .join(", ");
 
     if (detailsString) {
       line += `\n    ${colorHelpers.dim(detailsString)}`;

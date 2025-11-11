@@ -7,7 +7,7 @@
  * @module shared/monitoring/exporters/json-exporter
  */
 
-import type { AllMetrics, MetricsExporter } from '../types.js';
+import type { AllMetrics, MetricsExporter } from "../types.js";
 
 /**
  * JSONExporter - Formats metrics as JSON

@@ -2,14 +2,14 @@
  * MCP registration status tracking and display
  */
 
-import { colorHelpers } from './logging.js';
+import { colorHelpers } from "./logging.js";
 
 /**
  * Registration status for a single item
  */
 export interface RegistrationStatus {
   name: string;
-  type: 'tool' | 'resource';
+  type: "tool" | "resource";
   success: boolean;
   error?: string;
   timestamp: number;
@@ -31,7 +31,7 @@ class RegistrationTracker {
     return RegistrationTracker.instance;
   }
 
-  recordRegistration(status: Omit<RegistrationStatus, 'timestamp'>): void {
+  recordRegistration(status: Omit<RegistrationStatus, "timestamp">): void {
     this.registrations.push({
       ...status,
       timestamp: Date.now(),
@@ -43,11 +43,11 @@ class RegistrationTracker {
   }
 
   getToolRegistrations(): RegistrationStatus[] {
-    return this.registrations.filter((r) => r.type === 'tool');
+    return this.registrations.filter((r) => r.type === "tool");
   }
 
   getResourceRegistrations(): RegistrationStatus[] {
-    return this.registrations.filter((r) => r.type === 'resource');
+    return this.registrations.filter((r) => r.type === "resource");
   }
 
   hasFailures(): boolean {
@@ -77,12 +77,16 @@ export function formatRegistrationStatus(): string[] {
 
   // Tools section
   if (tools.length > 0) {
-    lines.push('');
+    lines.push("");
     lines.push(colorHelpers.info(`  Tools (${tools.length}):`));
 
     for (const tool of tools) {
-      const icon = tool.success ? colorHelpers.checkmark() : colorHelpers.cross();
-      const name = tool.success ? colorHelpers.highlight(tool.name) : colorHelpers.error(tool.name);
+      const icon = tool.success
+        ? colorHelpers.checkmark()
+        : colorHelpers.cross();
+      const name = tool.success
+        ? colorHelpers.highlight(tool.name)
+        : colorHelpers.error(tool.name);
 
       lines.push(`    ${icon} ${name}`);
 
@@ -94,11 +98,13 @@ export function formatRegistrationStatus(): string[] {
 
   // Resources section
   if (resources.length > 0) {
-    lines.push('');
+    lines.push("");
     lines.push(colorHelpers.info(`  Resources (${resources.length}):`));
 
     for (const resource of resources) {
-      const icon = resource.success ? colorHelpers.checkmark() : colorHelpers.cross();
+      const icon = resource.success
+        ? colorHelpers.checkmark()
+        : colorHelpers.cross();
       const name = resource.success
         ? colorHelpers.highlight(resource.name)
         : colorHelpers.error(resource.name);

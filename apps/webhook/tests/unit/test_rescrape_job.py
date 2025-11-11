@@ -1,9 +1,12 @@
 """Unit tests for rescrape job."""
+
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from app.jobs.rescrape import rescrape_changed_url
 from app.models.timing import ChangeEvent
-from datetime import datetime, timezone
 
 
 @pytest.mark.asyncio
@@ -14,7 +17,7 @@ async def test_rescrape_changed_url_success():
         id=123,
         watch_id="test-watch",
         watch_url="https://example.com/test",
-        detected_at=datetime.now(timezone.utc),
+        detected_at=datetime.now(UTC),
         rescrape_status="queued",
         extra_metadata={
             "watch_title": "Test Watch",
@@ -59,7 +62,9 @@ async def test_rescrape_changed_url_success():
             mock_client.post.return_value = mock_response
 
             # Mock indexing helper
-            with patch("app.jobs.rescrape._index_document_helper", new_callable=AsyncMock) as mock_index:
+            with patch(
+                "app.jobs.rescrape._index_document_helper", new_callable=AsyncMock
+            ) as mock_index:
                 mock_index.return_value = "https://example.com/test"
 
                 result = await rescrape_changed_url(123)
@@ -77,7 +82,7 @@ async def test_rescrape_changed_url_firecrawl_error():
         id=123,
         watch_id="test-watch",
         watch_url="https://example.com/test",
-        detected_at=datetime.now(timezone.utc),
+        detected_at=datetime.now(UTC),
         rescrape_status="queued",
         extra_metadata={},
     )

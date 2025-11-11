@@ -9,10 +9,13 @@
  * @module shared/mcp/tools/scrape
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import type { IScrapingClients, StrategyConfigFactory } from '../../mcp-server.js';
-import { buildInputSchema } from './schema.js';
-import { handleScrapeRequest } from './handler.js';
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import type {
+  IScrapingClients,
+  StrategyConfigFactory,
+} from "../../mcp-server.js";
+import { buildInputSchema } from "./schema.js";
+import { handleScrapeRequest } from "./handler.js";
 
 /**
  * Create scrape tool definition for MCP server registration
@@ -42,10 +45,10 @@ import { handleScrapeRequest } from './handler.js';
 export function scrapeTool(
   _server: Server,
   clientsFactory: () => IScrapingClients,
-  strategyConfigFactory: StrategyConfigFactory
+  strategyConfigFactory: StrategyConfigFactory,
 ) {
   return {
-    name: 'scrape',
+    name: "scrape",
     description: `Scrape webpage content using intelligent automatic strategy selection with built-in caching. This tool fetches content from any URL with flexible result handling options.
 
 Result handling modes:
@@ -106,7 +109,11 @@ The tool automatically:
 4. Remembers successful strategies for future requests`,
     inputSchema: buildInputSchema(),
     handler: async (args: unknown) => {
-      return await handleScrapeRequest(args, clientsFactory, strategyConfigFactory);
+      return await handleScrapeRequest(
+        args,
+        clientsFactory,
+        strategyConfigFactory,
+      );
     },
   };
 }

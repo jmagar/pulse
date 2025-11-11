@@ -1,12 +1,10 @@
 """End-to-end test for changedetection.io integration."""
-import pytest
-import hmac
-import hashlib
-import json
-from unittest.mock import patch, AsyncMock, MagicMock
-from datetime import datetime, timezone
 
-from app.config import settings
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from app.models.timing import ChangeEvent
 
 
@@ -34,7 +32,7 @@ async def test_changedetection_full_workflow(db_session):
         rescrape_job_id="test-job-123",
         extra_metadata={
             "watch_title": "E2E Test Watch",
-            "webhook_received_at": datetime.now(timezone.utc).isoformat(),
+            "webhook_received_at": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -82,6 +80,7 @@ async def test_changedetection_full_workflow(db_session):
 
             # Execute the rescrape job
             from app.jobs.rescrape import rescrape_changed_url
+
             result = await rescrape_changed_url(change_event.id)
 
             assert result["status"] == "success"

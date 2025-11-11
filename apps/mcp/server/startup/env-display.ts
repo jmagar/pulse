@@ -5,8 +5,8 @@
  * proper masking of sensitive values (API keys) and categorization.
  */
 
-import { env } from '../../config/environment.js';
-import { colorHelpers, maskSensitiveValue } from '../../utils/logging.js';
+import { getEnvSnapshot } from "../../config/environment.js";
+import { colorHelpers, maskSensitiveValue } from "../../utils/logging.js";
 
 /**
  * Represents an environment variable for display purposes
@@ -23,26 +23,6 @@ export interface EnvVarDisplay {
 }
 
 /**
- * Helper function to add an environment variable if it exists
- *
- * @param vars - Array to add the variable to
- * @param name - Environment variable name
- * @param category - Display category
- * @param sensitive - Whether the value is sensitive and should be masked
- */
-function addEnvVarIfExists(
-  vars: EnvVarDisplay[],
-  name: string,
-  category: string,
-  sensitive: boolean = false
-): void {
-  const value = process.env[name];
-  if (value) {
-    vars.push({ name, value, sensitive, category });
-  }
-}
-
-/**
  * Collect all relevant environment variables for display
  *
  * Gathers server configuration, HTTP settings, scraping service configuration,
@@ -52,129 +32,140 @@ function addEnvVarIfExists(
  * @returns Array of environment variables with display metadata
  */
 export function getEnvironmentVariables(): EnvVarDisplay[] {
+  const env = getEnvSnapshot();
   const vars: EnvVarDisplay[] = [];
 
   // Server configuration - always shown with defaults
   vars.push(
-    { name: 'PORT', value: env.port || '3060', sensitive: false, category: 'Server' },
     {
-      name: 'NODE_ENV',
-      value: env.nodeEnv || 'development',
+      name: "PORT",
+      value: env.port || "3060",
       sensitive: false,
-      category: 'Server',
+      category: "Server",
     },
     {
-      name: 'LOG_FORMAT',
-      value: env.logFormat || 'text',
+      name: "NODE_ENV",
+      value: env.nodeEnv || "development",
       sensitive: false,
-      category: 'Server',
+      category: "Server",
     },
-    { name: 'DEBUG', value: env.debug || 'false', sensitive: false, category: 'Server' }
+    {
+      name: "LOG_FORMAT",
+      value: env.logFormat || "text",
+      sensitive: false,
+      category: "Server",
+    },
+    {
+      name: "DEBUG",
+      value: env.debug || "false",
+      sensitive: false,
+      category: "Server",
+    },
   );
 
   // HTTP configuration - conditional display
   if (env.allowedOrigins) {
     vars.push({
-      name: 'ALLOWED_ORIGINS',
+      name: "ALLOWED_ORIGINS",
       value: env.allowedOrigins,
       sensitive: false,
-      category: 'HTTP',
+      category: "HTTP",
     });
   }
   if (env.allowedHosts) {
     vars.push({
-      name: 'ALLOWED_HOSTS',
+      name: "ALLOWED_HOSTS",
       value: env.allowedHosts,
       sensitive: false,
-      category: 'HTTP',
+      category: "HTTP",
     });
   }
   vars.push(
     {
-      name: 'ENABLE_OAUTH',
-      value: env.enableOAuth || 'false',
+      name: "ENABLE_OAUTH",
+      value: env.enableOAuth || "false",
       sensitive: false,
-      category: 'HTTP',
+      category: "HTTP",
     },
     {
-      name: 'ENABLE_RESUMABILITY',
-      value: env.enableResumability || 'false',
+      name: "ENABLE_RESUMABILITY",
+      value: env.enableResumability || "false",
       sensitive: false,
-      category: 'HTTP',
-    }
+      category: "HTTP",
+    },
   );
 
   // Scraping services - API key is sensitive
   if (env.firecrawlApiKey) {
     vars.push({
-      name: 'FIRECRAWL_API_KEY',
+      name: "FIRECRAWL_API_KEY",
       value: env.firecrawlApiKey,
       sensitive: true,
-      category: 'Scraping',
+      category: "Scraping",
     });
   }
   if (env.firecrawlBaseUrl) {
     vars.push({
-      name: 'FIRECRAWL_BASE_URL',
+      name: "FIRECRAWL_BASE_URL",
       value: env.firecrawlBaseUrl,
       sensitive: false,
-      category: 'Scraping',
+      category: "Scraping",
     });
   }
   vars.push({
-    name: 'OPTIMIZE_FOR',
-    value: env.optimizeFor || 'cost',
+    name: "OPTIMIZE_FOR",
+    value: env.optimizeFor || "cost",
     sensitive: false,
-    category: 'Scraping',
+    category: "Scraping",
   });
 
   // LLM provider - conditional display, API key is sensitive
   if (env.llmProvider) {
     vars.push({
-      name: 'LLM_PROVIDER',
+      name: "LLM_PROVIDER",
       value: env.llmProvider,
       sensitive: false,
-      category: 'LLM',
+      category: "LLM",
     });
   }
   if (env.llmApiKey) {
     vars.push({
-      name: 'LLM_API_KEY',
+      name: "LLM_API_KEY",
       value: env.llmApiKey,
       sensitive: true,
-      category: 'LLM',
+      category: "LLM",
     });
   }
   if (env.llmApiBaseUrl) {
     vars.push({
-      name: 'LLM_API_BASE_URL',
+      name: "LLM_API_BASE_URL",
       value: env.llmApiBaseUrl,
       sensitive: false,
-      category: 'LLM',
+      category: "LLM",
     });
   }
   if (env.llmModel) {
     vars.push({
-      name: 'LLM_MODEL',
+      name: "LLM_MODEL",
       value: env.llmModel,
       sensitive: false,
-      category: 'LLM',
+      category: "LLM",
     });
   }
 
   // Storage configuration
   vars.push({
-    name: 'MCP_RESOURCE_STORAGE',
-    value: env.resourceStorage || 'memory',
+    name: "MCP_RESOURCE_STORAGE",
+    value: env.resourceStorage || "memory",
     sensitive: false,
-    category: 'Storage',
+    category: "Storage",
   });
   if (env.resourceFilesystemRoot) {
     vars.push({
-      name: 'MCP_RESOURCE_FILESYSTEM_ROOT',
+      name: "MCP_RESOURCE_FILESYSTEM_ROOT",
       value: env.resourceFilesystemRoot,
       sensitive: false,
-      category: 'Storage',
+      category: "Storage",
     });
   }
 
@@ -199,7 +190,7 @@ export function formatEnvironmentVariables(): string[] {
 
   for (const category of categories) {
     const categoryVars = vars.filter((v) => v.category === category);
-    lines.push('');
+    lines.push("");
     lines.push(colorHelpers.info(`  ${category}:`));
 
     for (const envVar of categoryVars) {

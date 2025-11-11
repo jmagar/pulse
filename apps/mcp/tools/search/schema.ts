@@ -1,12 +1,12 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const searchOptionsSchema = z.object({
-  query: z.string().min(1, 'Query is required'),
+  query: z.string().min(1, "Query is required"),
   limit: z.number().int().min(1).max(100).optional().default(5),
-  sources: z.array(z.enum(['web', 'images', 'news'])).optional(),
-  categories: z.array(z.enum(['github', 'research', 'pdf'])).optional(),
+  sources: z.array(z.enum(["web", "images", "news"])).optional(),
+  categories: z.array(z.enum(["github", "research", "pdf"])).optional(),
   country: z.string().optional(),
-  lang: z.string().optional().default('en'),
+  lang: z.string().optional().default("en"),
   location: z.string().optional(),
   timeout: z.number().int().positive().optional(),
   ignoreInvalidURLs: z.boolean().optional().default(false),
@@ -14,11 +14,11 @@ export const searchOptionsSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Time-based search filter. Filters results by date range. ' +
-        'Valid values: ' +
-        'qdr:h (past hour), qdr:d (past day), qdr:w (past week), qdr:m (past month), qdr:y (past year), ' +
-        'or custom range: cdr:a,cd_min:MM/DD/YYYY,cd_max:MM/DD/YYYY. ' +
-        'Examples: "qdr:d" (past 24 hours), "qdr:w" (past week), "cdr:a,cd_min:01/01/2024,cd_max:12/31/2024" (custom range)'
+      "Time-based search filter. Filters results by date range. " +
+        "Valid values: " +
+        "qdr:h (past hour), qdr:d (past day), qdr:w (past week), qdr:m (past month), qdr:y (past year), " +
+        "or custom range: cdr:a,cd_min:MM/DD/YYYY,cd_max:MM/DD/YYYY. " +
+        'Examples: "qdr:d" (past 24 hours), "qdr:w" (past week), "cdr:a,cd_min:01/01/2024,cd_max:12/31/2024" (custom range)',
     ),
   scrapeOptions: z
     .object({
@@ -43,103 +43,104 @@ export type SearchOptions = z.infer<typeof searchOptionsSchema>;
  */
 export const buildSearchInputSchema = () => {
   return {
-    type: 'object' as const,
+    type: "object" as const,
     properties: {
       query: {
-        type: 'string',
+        type: "string",
         minLength: 1,
-        description: 'Search query (required)',
+        description: "Search query (required)",
       },
       limit: {
-        type: 'integer',
+        type: "integer",
         minimum: 1,
         maximum: 100,
         default: 5,
-        description: 'Maximum number of results to return per source',
+        description: "Maximum number of results to return per source",
       },
       sources: {
-        type: 'array',
+        type: "array",
         items: {
-          type: 'string',
-          enum: ['web', 'images', 'news'],
+          type: "string",
+          enum: ["web", "images", "news"],
         },
-        description: 'Which search sources to query (web, images, news)',
+        description: "Which search sources to query (web, images, news)",
       },
       categories: {
-        type: 'array',
+        type: "array",
         items: {
-          type: 'string',
-          enum: ['github', 'research', 'pdf'],
+          type: "string",
+          enum: ["github", "research", "pdf"],
         },
-        description: 'Filter results by category (GitHub repos, research papers, PDFs)',
+        description:
+          "Filter results by category (GitHub repos, research papers, PDFs)",
       },
       country: {
-        type: 'string',
+        type: "string",
         description: 'Country code for localized results (e.g., "us", "gb")',
       },
       lang: {
-        type: 'string',
-        default: 'en',
+        type: "string",
+        default: "en",
         description: 'Language code for results (e.g., "en", "es")',
       },
       location: {
-        type: 'string',
-        description: 'Geographic location for localized results',
+        type: "string",
+        description: "Geographic location for localized results",
       },
       timeout: {
-        type: 'integer',
+        type: "integer",
         minimum: 1,
-        description: 'Request timeout in milliseconds',
+        description: "Request timeout in milliseconds",
       },
       ignoreInvalidURLs: {
-        type: 'boolean',
+        type: "boolean",
         default: false,
-        description: 'Skip results with invalid URLs',
+        description: "Skip results with invalid URLs",
       },
       tbs: {
-        type: 'string',
+        type: "string",
         description:
-          'Time-based search filter. Filters results by date range. ' +
-          'Valid values: ' +
-          'qdr:h (past hour), qdr:d (past day), qdr:w (past week), qdr:m (past month), qdr:y (past year), ' +
-          'or custom range: cdr:a,cd_min:MM/DD/YYYY,cd_max:MM/DD/YYYY. ' +
+          "Time-based search filter. Filters results by date range. " +
+          "Valid values: " +
+          "qdr:h (past hour), qdr:d (past day), qdr:w (past week), qdr:m (past month), qdr:y (past year), " +
+          "or custom range: cdr:a,cd_min:MM/DD/YYYY,cd_max:MM/DD/YYYY. " +
           'Examples: "qdr:d" (past 24 hours), "qdr:w" (past week), "cdr:a,cd_min:01/01/2024,cd_max:12/31/2024" (custom range)',
       },
       scrapeOptions: {
-        type: 'object',
+        type: "object",
         properties: {
           formats: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Content formats to extract (markdown, html, etc.)',
+            type: "array",
+            items: { type: "string" },
+            description: "Content formats to extract (markdown, html, etc.)",
           },
           onlyMainContent: {
-            type: 'boolean',
-            description: 'Extract only main content, excluding nav/ads',
+            type: "boolean",
+            description: "Extract only main content, excluding nav/ads",
           },
           removeBase64Images: {
-            type: 'boolean',
+            type: "boolean",
             default: true,
-            description: 'Remove base64-encoded images from output',
+            description: "Remove base64-encoded images from output",
           },
           blockAds: {
-            type: 'boolean',
+            type: "boolean",
             default: true,
-            description: 'Block advertisements and trackers',
+            description: "Block advertisements and trackers",
           },
           waitFor: {
-            type: 'integer',
-            description: 'Milliseconds to wait for page load',
+            type: "integer",
+            description: "Milliseconds to wait for page load",
           },
           parsers: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Custom parsers to apply',
+            type: "array",
+            items: { type: "string" },
+            description: "Custom parsers to apply",
           },
         },
-        description: 'Options for scraping search result pages',
+        description: "Options for scraping search result pages",
       },
     },
-    required: ['query'],
+    required: ["query"],
   };
 };

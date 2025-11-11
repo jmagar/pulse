@@ -2,21 +2,32 @@
 Pytest configuration and fixtures.
 """
 
+import importlib
 import os
 from typing import Any
 
 import pytest
 import pytest_asyncio
 
-# Set test environment variables before any imports
-# Use localhost instead of postgres (Docker service name)
-# Use the same database as dev for simplicity - metrics tables are separate
+os.makedirs(".cache", exist_ok=True)
+
+# Configure deterministic test environment before importing app modules.
+os.environ.setdefault("SEARCH_BRIDGE_DATABASE_URL", "sqlite+aiosqlite:///./.cache/test_webhook.db")
+os.environ.setdefault("SEARCH_BRIDGE_API_SECRET", "test-api-secret-for-testing-only")
 os.environ.setdefault(
-    "SEARCH_BRIDGE_DATABASE_URL",
-    "postgresql+asyncpg://fc_bridge:password@localhost:5432/fc_bridge"
+    "SEARCH_BRIDGE_WEBHOOK_SECRET", "test-webhook-secret-for-testing-hmac-verification"
 )
-os.environ.setdefault("WEBHOOK_API_SECRET", "test-api-secret-for-testing-only")
-os.environ.setdefault("WEBHOOK_SECRET", "test-webhook-secret-for-testing-hmac-verification")
+os.environ.setdefault("WEBHOOK_TEST_MODE", "true")
+os.environ.setdefault("WEBHOOK_ENABLE_WORKER", "false")
+
+# Reload configuration and database modules so they pick up the test settings.
+import app.config as app_config
+
+app_config.settings = app_config.Settings()  # type: ignore[call-arg]
+
+import app.database as app_database
+
+importlib.reload(app_database)
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -31,8 +42,19 @@ async def cleanup_database_engine():
     yield
     # Clean up after test
     from app import database
+
     if database.engine:
         await database.engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def initialize_test_database():
+    """Ensure SQLite schema exists for tests."""
+    from app.database import close_database, init_database
+
+    await init_database()
+    yield
+    await close_database()
 
 
 @pytest.fixture
@@ -80,6 +102,7 @@ def sample_document_dict() -> dict[str, Any]:
 def api_secret_header() -> dict[str, str]:
     """Provide API secret header for authenticated requests."""
     from app.config import settings
+
     return {"Authorization": f"Bearer {settings.api_secret}"}
 
 
@@ -108,6 +131,7 @@ def test_queue():
     Returns a MagicMock that can be used to verify queue.enqueue calls.
     """
     from unittest.mock import MagicMock
+
     queue = MagicMock()
     # Configure enqueue to return a job with an ID
     job = MagicMock()

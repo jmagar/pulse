@@ -290,10 +290,7 @@ def test_rrf_mixed_sources_with_text_snippets() -> None:
     # Verify text is preserved in both results
     for r in result:
         # Text should be accessible either from payload or top-level
-        has_text = (
-            ("payload" in r and "text" in r["payload"])
-            or ("text" in r)
-        )
+        has_text = ("payload" in r and "text" in r["payload"]) or ("text" in r)
         assert has_text, f"Result missing text field: {r}"
 
 
@@ -357,5 +354,5 @@ def test_rrf_duplicate_canonical_urls_accumulate_scores() -> None:
     assert result[0]["rrf_score"] > result[1]["rrf_score"]
 
     # Verify specific score calculation
-    expected_article_score = 1/61 + 1/61 + 1/62
+    expected_article_score = 1 / 61 + 1 / 61 + 1 / 62
     assert abs(result[0]["rrf_score"] - expected_article_score) < 0.0001

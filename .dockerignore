@@ -15,17 +15,35 @@
 .gitattributes
 
 # -----------------
+# Accidental Directories
+# -----------------
+--*/
+
+# -----------------
 # Dependencies
 # -----------------
 **/node_modules/
 **/.pnp
 **/.pnp.js
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/versions
 **/.venv/
 **/venv/
+**/ENV/
 **/__pycache__/
 **/*.pyc
 **/*.pyo
 **/*.pyd
+**/*.py[cod]
+**/*$py.class
+.Python
+**/*.egg
+**/*.egg-info/
+MANIFEST
+**/*.whl
 
 # -----------------
 # Build Artifacts
@@ -39,8 +57,11 @@
 **/.pytest_cache/
 **/.mypy_cache/
 **/.ruff_cache/
+**/.tox/
 **/coverage/
 **/.nyc_output/
+htmlcov/
+coverage.xml
 
 # -----------------
 # IDE & Editors
@@ -52,18 +73,19 @@
 *~
 .DS_Store
 *.sublime-*
+.ipynb_checkpoints
 
 # -----------------
 # Environment & Secrets
 # -----------------
-.env
-.env.local
-.env.*.local
+.env*
+!.env.example
 *.key
 *.pem
 *.cert
 *.crt
 secrets/
+gke-key.json
 
 # -----------------
 # Documentation
@@ -92,6 +114,8 @@ jest.config.js
 jest.config.ts
 pytest.ini
 .coverage
+coverage.xml
+htmlcov/
 
 # -----------------
 # CI/CD
@@ -118,6 +142,7 @@ tmp/
 temp/
 *.tmp
 *.temp
+*.bak
 
 # -----------------
 # Docker
@@ -142,3 +167,30 @@ poetry.lock
 # -----------------
 scripts/
 Makefile
+
+# -----------------
+# Databases
+# -----------------
+dump.rdb
+*.rdb
+*.db
+*.sqlite3
+/mongo-data
+
+# -----------------
+# Data Files
+# -----------------
+*.csv
+data/
+
+# -----------------
+# Machine Learning / AI Models
+# -----------------
+*.bin
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.pickle
+*.bm25

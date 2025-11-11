@@ -2,21 +2,24 @@
  * PDF content parser using pdf-parse
  */
 
-import { BaseContentParser, ParsedContent } from './base-parser.js';
+import { BaseContentParser, ParsedContent } from "./base-parser.js";
 
 export class PDFParser extends BaseContentParser {
   constructor() {
-    super(['application/pdf']);
+    super(["application/pdf"]);
   }
 
-  async parse(data: ArrayBuffer | string, contentType: string): Promise<ParsedContent> {
-    if (typeof data === 'string') {
-      throw new Error('PDF parser requires ArrayBuffer, not string data');
+  async parse(
+    data: ArrayBuffer | string,
+    contentType: string,
+  ): Promise<ParsedContent> {
+    if (typeof data === "string") {
+      throw new Error("PDF parser requires ArrayBuffer, not string data");
     }
 
     try {
       // Import the actual parser module
-      const pdfParse = (await import('pdf-parse')).default;
+      const pdfParse = (await import("pdf-parse")).default;
 
       // Convert ArrayBuffer to Buffer for pdf-parse
       const buffer = Buffer.from(data);
@@ -38,7 +41,7 @@ export class PDFParser extends BaseContentParser {
       };
     } catch (error) {
       throw new Error(
-        `Failed to parse PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to parse PDF: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -53,10 +56,10 @@ export class PDFParser extends BaseContentParser {
       return pages
         .map((pageText, index) => {
           const processed = this.processText(pageText.trim());
-          return processed ? `## Page ${index + 1}\n\n${processed}` : '';
+          return processed ? `## Page ${index + 1}\n\n${processed}` : "";
         })
         .filter((page) => page)
-        .join('\n\n---\n\n');
+        .join("\n\n---\n\n");
     }
 
     // Otherwise, just process the entire text
@@ -66,7 +69,7 @@ export class PDFParser extends BaseContentParser {
   private processText(text: string): string {
     // Split into lines for processing
     const lines = text
-      .split('\n')
+      .split("\n")
       .map((line) => line.trim())
       .filter((line) => line);
     const processed: string[] = [];
@@ -78,11 +81,13 @@ export class PDFParser extends BaseContentParser {
       // Detect potential headers (short lines followed by longer content or blank lines)
       if (
         line.length < 60 &&
-        !line.endsWith('.') &&
-        !line.endsWith(',') &&
-        !line.endsWith(':') &&
+        !line.endsWith(".") &&
+        !line.endsWith(",") &&
+        !line.endsWith(":") &&
         /^[A-Z]/.test(line) && // Starts with capital letter
-        (!nextLine || nextLine.length === 0 || nextLine.length > line.length * 1.5)
+        (!nextLine ||
+          nextLine.length === 0 ||
+          nextLine.length > line.length * 1.5)
       ) {
         processed.push(`\n### ${line}\n`);
       }
@@ -100,27 +105,27 @@ export class PDFParser extends BaseContentParser {
         const lastProcessed = processed[processed.length - 1];
         if (
           lastProcessed &&
-          !lastProcessed.startsWith('#') &&
-          !lastProcessed.startsWith('-') &&
+          !lastProcessed.startsWith("#") &&
+          !lastProcessed.startsWith("-") &&
           !lastProcessed.match(/^\d+[.)]\s+/) &&
-          !lastProcessed.endsWith('\n') &&
+          !lastProcessed.endsWith("\n") &&
           line.length > 20 && // Not a short standalone line
           !line.match(/^[A-Z].*[.!?]$/)
         ) {
           // Not a complete sentence
           // Join with previous line
-          processed[processed.length - 1] = lastProcessed + ' ' + line;
+          processed[processed.length - 1] = lastProcessed + " " + line;
         } else {
           processed.push(line);
         }
       }
 
       // Add paragraph breaks after sentences that end with period
-      if (line.endsWith('.') && nextLine && !nextLine.match(/^[a-z]/)) {
-        processed.push('');
+      if (line.endsWith(".") && nextLine && !nextLine.match(/^[a-z]/)) {
+        processed.push("");
       }
     }
 
-    return processed.join('\n').trim();
+    return processed.join("\n").trim();
   }
 }

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from rq import Queue
 
@@ -78,9 +78,7 @@ async def _handle_page_event(
             error_type=type(e).__name__,
             data_sample=str(getattr(event, "data", [])[:1]),
         )
-        raise WebhookHandlerError(
-            status_code=422, detail=f"Invalid document structure: {str(e)}"
-        )
+        raise WebhookHandlerError(status_code=422, detail=f"Invalid document structure: {str(e)}")
 
     if not documents:
         logger.info(
@@ -269,7 +267,7 @@ def _document_to_index_payload(document: FirecrawlDocumentPayload) -> dict[str, 
             markdown_length=len(document.markdown) if document.markdown else 0,
         )
 
-        return normalized.model_dump(by_alias=True)
+        return cast(dict[str, Any], normalized.model_dump(by_alias=True))
 
     except AttributeError as e:
         logger.error(

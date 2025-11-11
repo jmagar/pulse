@@ -15,7 +15,7 @@ import type {
   RequestMetrics,
   AllMetrics,
   IMetricsCollector,
-} from './types.js';
+} from "./types.js";
 
 /**
  * Calculates percentile from a sorted array of numbers
@@ -143,7 +143,11 @@ export class MetricsCollector implements IMetricsCollector {
    * @param success Whether the execution succeeded
    * @param durationMs Execution duration in milliseconds
    */
-  recordStrategyExecution(strategy: string, success: boolean, durationMs: number): void {
+  recordStrategyExecution(
+    strategy: string,
+    success: boolean,
+    durationMs: number,
+  ): void {
     if (!this.strategyStats.has(strategy)) {
       this.strategyStats.set(strategy, {
         successCount: 0,
@@ -168,7 +172,7 @@ export class MetricsCollector implements IMetricsCollector {
    * @param fromStrategy Strategy that failed
    * @param toStrategy Strategy that was used instead
    */
-  recordFallback(fromStrategy: string, toStrategy: string): void {
+  recordFallback(fromStrategy: string, _toStrategy: string): void {
     if (!this.strategyStats.has(fromStrategy)) {
       this.strategyStats.set(fromStrategy, {
         successCount: 0,
@@ -213,8 +217,10 @@ export class MetricsCollector implements IMetricsCollector {
 
     for (const [strategy, stats] of this.strategyStats) {
       const totalExecutions = stats.successCount + stats.failureCount;
-      const successRate = totalExecutions > 0 ? stats.successCount / totalExecutions : 0;
-      const avgDurationMs = totalExecutions > 0 ? stats.totalDurationMs / totalExecutions : 0;
+      const successRate =
+        totalExecutions > 0 ? stats.successCount / totalExecutions : 0;
+      const avgDurationMs =
+        totalExecutions > 0 ? stats.totalDurationMs / totalExecutions : 0;
 
       const metric: StrategyMetric = {
         successCount: stats.successCount,
@@ -265,9 +271,12 @@ export class MetricsCollector implements IMetricsCollector {
    * @returns Request performance metrics
    */
   getRequestMetrics(): RequestMetrics {
-    const errorRate = this.totalRequests > 0 ? this.totalErrors / this.totalRequests : 0;
+    const errorRate =
+      this.totalRequests > 0 ? this.totalErrors / this.totalRequests : 0;
     const avgResponseTimeMs =
-      this.totalRequests > 0 ? this.totalResponseTimeMs / this.totalRequests : 0;
+      this.totalRequests > 0
+        ? this.totalResponseTimeMs / this.totalRequests
+        : 0;
 
     // Calculate percentiles
     const sortedLatencies = [...this.requestLatencies].sort((a, b) => a - b);
@@ -309,9 +318,9 @@ export class MetricsCollector implements IMetricsCollector {
     const strategies = this.getStrategyMetrics();
 
     const lines: string[] = [
-      '=== Performance Metrics ===',
-      '',
-      '--- Cache ---',
+      "=== Performance Metrics ===",
+      "",
+      "--- Cache ---",
       `Cache Hit Rate: ${(cache.hitRate * 100).toFixed(2)}%`,
       `Cache Miss Rate: ${(cache.missRate * 100).toFixed(2)}%`,
       `Total Hits: ${cache.hits}`,
@@ -320,8 +329,8 @@ export class MetricsCollector implements IMetricsCollector {
       `Evictions: ${cache.evictions}`,
       `Items in Cache: ${cache.itemCount}`,
       `Storage Size: ${(cache.currentSizeBytes / 1024 / 1024).toFixed(2)} MB`,
-      '',
-      '--- Requests ---',
+      "",
+      "--- Requests ---",
       `Total Requests: ${requests.totalRequests}`,
       `Error Rate: ${(requests.errorRate * 100).toFixed(2)}%`,
       `Avg Response Time: ${requests.avgResponseTimeMs.toFixed(2)}ms`,
@@ -331,15 +340,15 @@ export class MetricsCollector implements IMetricsCollector {
     ];
 
     if (Object.keys(strategies).length > 0) {
-      lines.push('', '--- Strategies ---');
+      lines.push("", "--- Strategies ---");
       for (const [name, stats] of Object.entries(strategies)) {
         lines.push(
-          `${name}: ${stats.totalExecutions} executions, ${(stats.successRate * 100).toFixed(2)}% success, ${stats.avgDurationMs.toFixed(2)}ms avg`
+          `${name}: ${stats.totalExecutions} executions, ${(stats.successRate * 100).toFixed(2)}% success, ${stats.avgDurationMs.toFixed(2)}ms avg`,
         );
       }
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**

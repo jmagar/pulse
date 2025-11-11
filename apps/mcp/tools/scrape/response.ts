@@ -1,6 +1,6 @@
-import { detectContentType } from './helpers.js';
-import type { ScrapeDiagnostics } from '../../types.js';
-import { logError } from '../../utils/logging.js';
+import { detectContentType } from "./helpers.js";
+import type { ScrapeDiagnostics } from "../../types.js";
+import { logError } from "../../utils/logging.js";
 
 export interface ResponseContent {
   type: string;
@@ -30,7 +30,7 @@ export interface ToolResponse {
 export function applyPagination(
   content: string,
   startIndex: number,
-  maxChars: number
+  maxChars: number,
 ): { processedContent: string; wasTruncated: boolean } {
   let processedContent = content;
   let wasTruncated = false;
@@ -60,9 +60,13 @@ export function buildCachedResponse(
   cachedTimestamp: string,
   resultHandling: string,
   startIndex: number,
-  maxChars: number
+  maxChars: number,
 ): ToolResponse {
-  const { processedContent, wasTruncated } = applyPagination(cachedContent, startIndex, maxChars);
+  const { processedContent, wasTruncated } = applyPagination(
+    cachedContent,
+    startIndex,
+    maxChars,
+  );
 
   // Format output
   let resultText = processedContent;
@@ -72,20 +76,20 @@ export function buildCachedResponse(
   resultText += `\n\n---\nServed from cache (originally scraped using: ${cachedSource})\nCached at: ${cachedTimestamp}`;
 
   // Return based on resultHandling mode
-  if (resultHandling === 'returnOnly') {
+  if (resultHandling === "returnOnly") {
     return {
       content: [
         {
-          type: 'text',
+          type: "text",
           text: resultText,
         },
       ],
     };
-  } else if (resultHandling === 'saveAndReturn') {
+  } else if (resultHandling === "saveAndReturn") {
     return {
       content: [
         {
-          type: 'resource',
+          type: "resource",
           resource: {
             uri: cachedUri,
             name: cachedName,
@@ -97,8 +101,8 @@ export function buildCachedResponse(
       ],
     };
   } else {
-    const error = new Error('Invalid state: saveOnly mode should bypass cache');
-    logError('buildCachedResponse', error, { resultHandling, cachedUri });
+    const error = new Error("Invalid state: saveOnly mode should bypass cache");
+    logError("buildCachedResponse", error, { resultHandling, cachedUri });
     throw error;
   }
 }
@@ -109,17 +113,19 @@ export function buildCachedResponse(
 export function buildErrorResponse(
   url: string,
   error: string | undefined,
-  diagnostics: ScrapeDiagnostics | undefined
+  diagnostics: ScrapeDiagnostics | undefined,
 ): ToolResponse {
   let errorMessage = `Failed to scrape ${url}`;
 
   if (diagnostics) {
     errorMessage += `\n\nDiagnostics:\n`;
-    errorMessage += `- Strategies attempted: ${diagnostics.strategiesAttempted.join(', ')}\n`;
+    errorMessage += `- Strategies attempted: ${diagnostics.strategiesAttempted.join(", ")}\n`;
 
     if (Object.keys(diagnostics.strategyErrors).length > 0) {
       errorMessage += `- Strategy errors:\n`;
-      for (const [strategy, strategyError] of Object.entries(diagnostics.strategyErrors)) {
+      for (const [strategy, strategyError] of Object.entries(
+        diagnostics.strategyErrors,
+      )) {
         errorMessage += `  - ${strategy}: ${strategyError}\n`;
       }
     }
@@ -131,13 +137,13 @@ export function buildErrorResponse(
       }
     }
   } else {
-    errorMessage += `: ${error || 'All scraping strategies failed'}`;
+    errorMessage += `: ${error || "All scraping strategies failed"}`;
   }
 
   return {
     content: [
       {
-        type: 'text',
+        type: "text",
         text: errorMessage,
       },
     ],
@@ -150,7 +156,7 @@ export function buildErrorResponse(
  */
 function detectImageMimeType(
   screenshot: string,
-  screenshotFormat?: string
+  screenshotFormat?: string,
 ): string {
   // If format is explicitly provided from metadata
   if (screenshotFormat) {
@@ -158,44 +164,44 @@ function detectImageMimeType(
   }
 
   // Check if it's a URL
-  if (screenshot.startsWith('http://') || screenshot.startsWith('https://')) {
+  if (screenshot.startsWith("http://") || screenshot.startsWith("https://")) {
     // Try to detect from URL extension
-    if (screenshot.endsWith('.jpg') || screenshot.endsWith('.jpeg')) {
-      return 'image/jpeg';
+    if (screenshot.endsWith(".jpg") || screenshot.endsWith(".jpeg")) {
+      return "image/jpeg";
     }
-    if (screenshot.endsWith('.png')) {
-      return 'image/png';
+    if (screenshot.endsWith(".png")) {
+      return "image/png";
     }
-    if (screenshot.endsWith('.webp')) {
-      return 'image/webp';
+    if (screenshot.endsWith(".webp")) {
+      return "image/webp";
     }
-    if (screenshot.endsWith('.gif')) {
-      return 'image/gif';
+    if (screenshot.endsWith(".gif")) {
+      return "image/gif";
     }
     // Default for URLs
-    return 'image/png';
+    return "image/png";
   }
 
   // For base64, try to detect from data
   // PNG signature: starts with 'iVBOR'
-  if (screenshot.startsWith('iVBOR')) {
-    return 'image/png';
+  if (screenshot.startsWith("iVBOR")) {
+    return "image/png";
   }
   // JPEG signature: starts with '/9j/'
-  if (screenshot.startsWith('/9j/')) {
-    return 'image/jpeg';
+  if (screenshot.startsWith("/9j/")) {
+    return "image/jpeg";
   }
   // WebP signature: starts with 'UklGR'
-  if (screenshot.startsWith('UklGR')) {
-    return 'image/webp';
+  if (screenshot.startsWith("UklGR")) {
+    return "image/webp";
   }
   // GIF signature: starts with 'R0lGOD'
-  if (screenshot.startsWith('R0lGOD')) {
-    return 'image/gif';
+  if (screenshot.startsWith("R0lGOD")) {
+    return "image/gif";
   }
 
   // Default to PNG
-  return 'image/png';
+  return "image/png";
 }
 
 /**
@@ -214,7 +220,7 @@ export function buildSuccessResponse(
   maxChars: number,
   savedUris: { raw?: string; cleaned?: string; extracted?: string } | null,
   screenshot?: string,
-  screenshotFormat?: string
+  screenshotFormat?: string,
 ): ToolResponse {
   const response: ToolResponse = {
     content: [],
@@ -224,15 +230,19 @@ export function buildSuccessResponse(
   let processedContent = displayContent;
   let wasTruncated = false;
 
-  if (resultHandling !== 'saveOnly') {
-    const paginationResult = applyPagination(displayContent, startIndex, maxChars);
+  if (resultHandling !== "saveOnly") {
+    const paginationResult = applyPagination(
+      displayContent,
+      startIndex,
+      maxChars,
+    );
     processedContent = paginationResult.processedContent;
     wasTruncated = paginationResult.wasTruncated;
   }
 
   // Format output for return options
-  let resultText = '';
-  if (resultHandling !== 'saveOnly') {
+  let resultText = "";
+  if (resultHandling !== "saveOnly") {
     resultText = processedContent;
     if (wasTruncated) {
       resultText += `\n\n[Content truncated at ${maxChars} characters. Use startIndex parameter to continue reading from character ${startIndex + maxChars}]`;
@@ -241,9 +251,9 @@ export function buildSuccessResponse(
   }
 
   // Add text content for returnOnly option
-  if (resultHandling === 'returnOnly') {
+  if (resultHandling === "returnOnly") {
     response.content.push({
-      type: 'text',
+      type: "text",
       text: resultText,
     });
   }
@@ -253,14 +263,15 @@ export function buildSuccessResponse(
     const mimeType = detectImageMimeType(screenshot, screenshotFormat);
 
     response.content.push({
-      type: 'image',
+      type: "image",
       data: screenshot,
       mimeType,
     });
   }
 
   // Save as a resource for save options
-  const shouldSaveResource = resultHandling === 'saveOnly' || resultHandling === 'saveAndReturn';
+  const shouldSaveResource =
+    resultHandling === "saveOnly" || resultHandling === "saveAndReturn";
   if (shouldSaveResource && savedUris) {
     // Use the most processed version
     const primaryUri = extractedContent
@@ -275,19 +286,21 @@ export function buildSuccessResponse(
 
     // Determine MIME type based on what content we're actually storing/returning
     const contentMimeType =
-      extractedContent || cleanedContent ? 'text/markdown' : detectContentType(rawContent);
+      extractedContent || cleanedContent
+        ? "text/markdown"
+        : detectContentType(rawContent);
 
-    if (resultHandling === 'saveOnly') {
+    if (resultHandling === "saveOnly") {
       response.content.push({
-        type: 'resource_link',
+        type: "resource_link",
         uri: primaryUri!,
         name: url,
         mimeType: contentMimeType,
         description: resourceDescription,
       });
-    } else if (resultHandling === 'saveAndReturn') {
+    } else if (resultHandling === "saveAndReturn") {
       response.content.push({
-        type: 'resource',
+        type: "resource",
         resource: {
           uri: primaryUri!,
           name: url,
@@ -299,15 +312,17 @@ export function buildSuccessResponse(
     }
   } else if (shouldSaveResource && !savedUris) {
     // Fallback: if saving failed, return content as text for saveAndReturn
-    if (resultHandling === 'saveAndReturn') {
+    if (resultHandling === "saveAndReturn") {
       response.content.push({
-        type: 'text',
-        text: resultText + '\n\n[Note: Resource storage failed, returning content as text]',
+        type: "text",
+        text:
+          resultText +
+          "\n\n[Note: Resource storage failed, returning content as text]",
       });
     } else {
       // For saveOnly, we must return an error if we couldn't save
       response.content.push({
-        type: 'text',
+        type: "text",
         text: `Failed to save resource for ${url}. Storage may be unavailable.`,
       });
       response.isError = true;
@@ -316,4 +331,3 @@ export function buildSuccessResponse(
 
   return response;
 }
-

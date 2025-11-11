@@ -12,7 +12,10 @@ export interface ParsedContent {
 
 export interface ContentParser {
   canParse(contentType: string): boolean;
-  parse(data: ArrayBuffer | string, contentType: string): Promise<ParsedContent>;
+  parse(
+    data: ArrayBuffer | string,
+    contentType: string,
+  ): Promise<ParsedContent>;
 }
 
 export abstract class BaseContentParser implements ContentParser {
@@ -24,9 +27,12 @@ export abstract class BaseContentParser implements ContentParser {
 
   canParse(contentType: string): boolean {
     return this.supportedTypes.some((type) =>
-      contentType.toLowerCase().includes(type.toLowerCase())
+      contentType.toLowerCase().includes(type.toLowerCase()),
     );
   }
 
-  abstract parse(data: ArrayBuffer | string, contentType: string): Promise<ParsedContent>;
+  abstract parse(
+    data: ArrayBuffer | string,
+    contentType: string,
+  ): Promise<ParsedContent>;
 }

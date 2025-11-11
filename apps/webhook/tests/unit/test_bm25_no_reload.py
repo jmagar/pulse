@@ -21,7 +21,7 @@ def test_search_does_not_reload_index():
         engine.index_document("test document", {"url": "http://example.com"})
 
         # Mock _load_index to ensure it's never called
-        with patch.object(engine, '_load_index') as mock_load:
+        with patch.object(engine, "_load_index") as mock_load:
             results = engine.search("test", limit=5)
 
             # Should not reload
@@ -42,7 +42,7 @@ def test_get_document_count_does_not_reload_index():
         engine.index_document("test document", {"url": "http://example.com"})
 
         # Mock _load_index to ensure it's never called
-        with patch.object(engine, '_load_index') as mock_load:
+        with patch.object(engine, "_load_index") as mock_load:
             count = engine.get_document_count()
 
             # Should not reload

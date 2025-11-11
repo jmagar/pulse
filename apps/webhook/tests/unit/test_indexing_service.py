@@ -292,7 +292,10 @@ async def test_canonical_url_normalization(
     )
 
     # Original URL should be preserved
-    assert chunker_metadata["url"] == "https://Example.COM/page?id=123&utm_source=twitter&utm_medium=social#section"
+    assert (
+        chunker_metadata["url"]
+        == "https://Example.COM/page?id=123&utm_source=twitter&utm_medium=social#section"
+    )
 
     # Canonical URL should be normalized (lowercase, no fragment, no tracking)
     assert chunker_metadata["canonical_url"] == "https://example.com/page?id=123"
