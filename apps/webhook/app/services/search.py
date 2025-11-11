@@ -6,7 +6,7 @@ Combines vector similarity and BM25 keyword search using Reciprocal Rank Fusion 
 
 from typing import Any
 
-from app.models import SearchMode
+from api.schemas.search import SearchMode
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.vector_store import VectorStore
@@ -25,6 +25,10 @@ def reciprocal_rank_fusion(
     Formula: score = sum(1 / (k + rank_i))
     where rank_i is the position in the i-th ranking (1-indexed)
 
+    Deduplication uses canonical_url when available (from payload or metadata),
+    falling back to url, then id. This ensures documents with different tracking
+    parameters but same canonical URL are merged into a single result.
+
     Args:
         ranked_lists: List of ranked result lists (each with 'id' or unique identifier)
         k: Constant (60 is standard from original RRF paper by Cormack et al.)
@@ -37,8 +41,18 @@ def reciprocal_rank_fusion(
 
     for ranked_list in ranked_lists:
         for rank, result in enumerate(ranked_list, start=1):
-            # Use URL as unique identifier
-            doc_id = result.get("metadata", {}).get("url") or result.get("id", str(rank))
+            # Extract canonical URL from vector search (payload) or BM25 (metadata)
+            payload = result.get("payload", {})
+            metadata = result.get("metadata", {})
+
+            # Prefer canonical_url for deduplication, fallback to url, then id
+            doc_id = (
+                payload.get("canonical_url")
+                or metadata.get("canonical_url")
+                or payload.get("url")
+                or metadata.get("url")
+                or result.get("id", str(rank))
+            )
 
             # Calculate RRF score
             rrf_score = 1.0 / (k + rank)
@@ -126,21 +140,20 @@ class SearchOrchestrator:
             query=query,
             mode=mode,
             limit=limit,
-            filters={"domain": domain, "language": language, "country": country, "is_mobile": is_mobile},
+            filters={
+                "domain": domain,
+                "language": language,
+                "country": country,
+                "is_mobile": is_mobile,
+            },
         )
 
         if mode == SearchMode.HYBRID:
-            return await self._hybrid_search(
-                query, limit, domain, language, country, is_mobile
-            )
+            return await self._hybrid_search(query, limit, domain, language, country, is_mobile)
         elif mode == SearchMode.SEMANTIC:
-            return await self._semantic_search(
-                query, limit, domain, language, country, is_mobile
-            )
+            return await self._semantic_search(query, limit, domain, language, country, is_mobile)
         elif mode in (SearchMode.KEYWORD, SearchMode.BM25):
-            return self._keyword_search(
-                query, limit, domain, language, country, is_mobile
-            )
+            return self._keyword_search(query, limit, domain, language, country, is_mobile)
         else:
             raise ValueError(f"Unknown search mode: {mode}")
 
@@ -158,10 +171,20 @@ class SearchOrchestrator:
         """
         # Run both searches in parallel
         vector_results = await self._semantic_search(
-            query, limit * 2, domain, language, country, is_mobile  # Get more for fusion
+            query,
+            limit * 2,
+            domain,
+            language,
+            country,
+            is_mobile,  # Get more for fusion
         )
         keyword_results = self._keyword_search(
-            query, limit * 2, domain, language, country, is_mobile  # Get more for fusion
+            query,
+            limit * 2,
+            domain,
+            language,
+            country,
+            is_mobile,  # Get more for fusion
         )
 
         # Apply RRF fusion

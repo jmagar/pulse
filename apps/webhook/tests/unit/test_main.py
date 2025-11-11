@@ -2,8 +2,6 @@
 Unit tests for main.py FastAPI application.
 """
 
-
-
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -39,7 +37,7 @@ def test_cors_middleware_configured() -> None:
 @pytest.mark.asyncio
 async def test_lifespan_startup_success() -> None:
     """Test lifespan startup with successful collection creation."""
-    with patch('app.main.get_vector_store') as mock_get_vs:
+    with patch("app.main.get_vector_store") as mock_get_vs:
         mock_vs = AsyncMock()
         mock_vs.ensure_collection = AsyncMock()
         mock_get_vs.return_value = mock_vs
@@ -55,7 +53,7 @@ async def test_lifespan_startup_success() -> None:
 @pytest.mark.asyncio
 async def test_lifespan_startup_failure_non_fatal() -> None:
     """Test lifespan handles collection creation failure gracefully."""
-    with patch('app.main.get_vector_store') as mock_get_vs:
+    with patch("app.main.get_vector_store") as mock_get_vs:
         mock_vs = AsyncMock()
         mock_vs.ensure_collection.side_effect = Exception("Collection error")
         mock_get_vs.return_value = mock_vs
@@ -105,11 +103,7 @@ def test_routes_included() -> None:
     from app.main import app
 
     # Get all route paths - filter for APIRoute objects which have path attribute
-    routes = [
-        cast(APIRoute, route).path
-        for route in app.routes
-        if hasattr(route, "path")
-    ]
+    routes = [cast(APIRoute, route).path for route in app.routes if hasattr(route, "path")]
 
     # Verify expected routes exist
     assert "/api/index" in routes

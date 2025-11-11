@@ -55,8 +55,15 @@ def test_settings_defaults() -> None:
 
 def test_settings_custom_values() -> None:
     """Test Settings with custom values using WEBHOOK_* variables."""
-    env_keys = ["WEBHOOK_HOST", "WEBHOOK_PORT", "WEBHOOK_API_SECRET", "WEBHOOK_SECRET",
-                "WEBHOOK_REDIS_URL", "WEBHOOK_MAX_CHUNK_TOKENS", "WEBHOOK_CHUNK_OVERLAP_TOKENS"]
+    env_keys = [
+        "WEBHOOK_HOST",
+        "WEBHOOK_PORT",
+        "WEBHOOK_API_SECRET",
+        "WEBHOOK_SECRET",
+        "WEBHOOK_REDIS_URL",
+        "WEBHOOK_MAX_CHUNK_TOKENS",
+        "WEBHOOK_CHUNK_OVERLAP_TOKENS",
+    ]
     backups = {key: os.environ.pop(key, None) for key in env_keys}
 
     try:
@@ -147,7 +154,12 @@ def test_settings_missing_api_secret() -> None:
 
 def test_webhook_secret_required() -> None:
     """Webhook secret must be provided."""
-    env_keys = ["WEBHOOK_API_SECRET", "WEBHOOK_SECRET", "SEARCH_BRIDGE_API_SECRET", "SEARCH_BRIDGE_WEBHOOK_SECRET"]
+    env_keys = [
+        "WEBHOOK_API_SECRET",
+        "WEBHOOK_SECRET",
+        "SEARCH_BRIDGE_API_SECRET",
+        "SEARCH_BRIDGE_WEBHOOK_SECRET",
+    ]
     backups = {key: os.environ.pop(key, None) for key in env_keys}
 
     try:
@@ -195,3 +207,22 @@ def test_webhook_secret_validation() -> None:
                 os.environ[key] = value
             else:
                 os.environ.pop(key, None)
+
+
+def test_enable_worker_default_true() -> None:
+    """Worker should be enabled by default."""
+    settings = Settings(
+        _env_file=None, WEBHOOK_API_SECRET="test", WEBHOOK_SECRET="test1234567890123456"
+    )
+    assert settings.enable_worker is True
+
+
+def test_enable_worker_can_be_disabled() -> None:
+    """Worker can be disabled via environment variable."""
+    settings = Settings(
+        _env_file=None,
+        WEBHOOK_API_SECRET="test",
+        WEBHOOK_SECRET="test1234567890123456",
+        WEBHOOK_ENABLE_WORKER="false",
+    )
+    assert settings.enable_worker is False

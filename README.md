@@ -31,8 +31,8 @@ All applications share common infrastructure (PostgreSQL, Redis, Docker network)
 ```
 pulse/
 ├── apps/
-│   ├── api/              # Firecrawl API (Node.js/TypeScript) - Deleted, using official image
 │   ├── mcp/              # MCP Server (Node.js/TypeScript)
+│   ├── nuq-postgres/     # Custom PostgreSQL with Nuqs extension
 │   ├── web/              # Web Interface (Next.js)
 │   └── webhook/          # Search Bridge (Python/FastAPI)
 ├── packages/
@@ -51,7 +51,7 @@ pulse/
 ```
 ┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
 │   MCP Server    │─────▶│  Firecrawl API   │◀────▶│ Webhook Bridge  │
-│  (Port 3060)    │      │   (Port 4300)    │      │  (Port 52100)   │
+│  (Port 50107)   │      │  (Port 50102)    │      │  (Port 50108)   │
 └─────────────────┘      └──────────────────┘      └─────────────────┘
         │                         │                          │
         │                         │                          │
@@ -90,10 +90,9 @@ PostgreSQL is shared across services with schema isolation:
 **Documentation**: Uses official Firecrawl image - see [Firecrawl Documentation](https://docs.firecrawl.dev)
 
 **Ports**:
-- External API: `4300`
-- Internal API: `3002`
-- Worker: `4301`
-- Extract Worker: `4305`
+- External API: `50102` (internal: `3002`)
+- Worker: `50103`
+- Extract Worker: `50106`
 
 ### MCP Server
 
@@ -112,7 +111,9 @@ PostgreSQL is shared across services with schema isolation:
 
 **Documentation**: See [apps/mcp/README.md](apps/mcp/README.md)
 
-**Port**: `3060`
+**Ports**:
+- External: `50107`
+- Internal: `3060`
 
 ### Webhook Bridge
 
@@ -131,37 +132,36 @@ PostgreSQL is shared across services with schema isolation:
 **Documentation**: See [apps/webhook/README.md](apps/webhook/README.md)
 
 **Ports**:
-- API: `52100`
+- External: `50108`
+- Internal: `52100`
 - Worker: Background process (no port)
+
+### changedetection.io (Port 50109)
+
+Website change detection and monitoring service.
+
+- **Purpose:** Track content changes on monitored URLs
+- **Web UI:** `http://localhost:50109`
+- **Shared Resources:** Uses firecrawl_playwright for JavaScript rendering
+- **Storage:** File-based in `/datastore` volume
+- **Integration:** Notifies webhook bridge on change detection
 
 ## Quick Start
 
-### Prerequisites
+### Using Docker Compose (Recommended)
 
-- **Docker** and **Docker Compose** (v2.0+)
-- **Node.js** 20+ and **pnpm** 10+ (for development)
-- **Python** 3.13+ and **uv** (for webhook development)
-- **Git**
+**Prerequisites**:
+- Docker and Docker Compose (v2.0+)
+- Git
 
-### Installation
+**Steps**:
 
-1. **Clone the repository**:
+1. **Clone and configure**:
+
    ```bash
    git clone <repository-url>
    cd pulse
-   ```
 
-2. **Install dependencies**:
-   ```bash
-   # Install Node.js workspace dependencies
-   pnpm install
-
-   # Install Python webhook dependencies
-   pnpm run install:webhook
-   ```
-
-3. **Configure environment**:
-   ```bash
    # Copy environment template
    cp .env.example .env
 
@@ -170,46 +170,99 @@ PostgreSQL is shared across services with schema isolation:
    # - POSTGRES_PASSWORD
    # - WEBHOOK_API_SECRET
    # - MCP_LLM_API_BASE_URL (if using LLM extraction)
-   # - WEBHOOK_QDRANT_URL (if using search indexing)
-   # - WEBHOOK_TEI_URL (if using search indexing)
    ```
 
-4. **Start all services**:
+2. **Start all services**:
+
    ```bash
    docker compose up -d
    ```
 
-5. **Verify services are running**:
+3. **Verify services**:
+
    ```bash
    # Check container status
    docker compose ps
 
+   # View logs
+   docker compose logs -f
+
    # Verify health endpoints
-   curl http://localhost:4300/health     # Firecrawl API
-   curl http://localhost:3060/health     # MCP Server
-   curl http://localhost:52100/health    # Webhook Bridge
+   curl http://localhost:50102/health     # Firecrawl API
+   curl http://localhost:50107/health     # MCP Server
+   curl http://localhost:50108/health    # Webhook Bridge
+   ```
+
+Services will be available at:
+
+- Firecrawl API: `http://localhost:50102`
+- MCP Server: `http://localhost:50107`
+- Webhook Bridge: `http://localhost:50108`
+
+### Local Development
+
+For active development on individual services:
+
+**Prerequisites**:
+- Node.js 20+ and pnpm 10+
+- Python 3.12+ and uv
+- Docker (for infrastructure services)
+
+**Steps**:
+
+1. **Install dependencies**:
+
+   ```bash
+   # Install Node.js workspace dependencies
+   pnpm install
+
+   # Install Python webhook dependencies
+   pnpm install:webhook
+   ```
+
+2. **Configure environment**:
+
+   ```bash
+   # Copy and edit .env
+   cp .env.example .env
+   ```
+
+3. **Start infrastructure services**:
+
+   ```bash
+   # Start PostgreSQL, Redis, and Playwright
+   docker compose up -d firecrawl_db firecrawl_cache firecrawl_playwright
+   ```
+
+4. **Run services in development mode**:
+
+   ```bash
+   # See Development section below for pnpm dev commands
    ```
 
 ### First Test
 
 **Test Firecrawl API**:
+
 ```bash
-curl -X POST http://localhost:4300/v1/scrape \
+curl -X POST http://localhost:50102/v1/scrape \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${FIRECRAWL_API_KEY}" \
   -d '{"url": "https://example.com"}'
 ```
 
 **Test MCP Server**:
+
 ```bash
-curl -X POST http://localhost:3060/scrape \
+curl -X POST http://localhost:50107/scrape \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com", "cleanScrape": true}'
 ```
 
 **Test Webhook Bridge**:
+
 ```bash
-curl http://localhost:52100/api/stats \
+curl http://localhost:50108/api/stats \
   -H "X-API-Secret: ${WEBHOOK_API_SECRET}"
 ```
 
@@ -220,6 +273,7 @@ curl http://localhost:52100/api/stats \
 The monorepo uses **pnpm workspaces** for Node.js apps and **uv** for Python apps.
 
 **Build commands**:
+
 ```bash
 # Build all Node.js apps and packages
 pnpm build
@@ -249,15 +303,26 @@ pnpm test:webhook
 
 **Development mode**:
 ```bash
-# Run MCP in dev mode with hot reload
+# Run MCP server in development mode
 pnpm dev:mcp
 
-# Run webhook in dev mode with hot reload
+# Run web interface in development mode
+pnpm dev:web
+
+# Run webhook bridge in development mode
 pnpm dev:webhook
 
-# Run both in parallel
+# Run webhook worker
+pnpm worker:webhook
+
+# Run MCP and web together
 pnpm dev
+
+# Run all services together (MCP, web, webhook)
+pnpm dev:all
 ```
+
+**Note**: External services (TEI, Qdrant) must be running separately. See `docs/external-services.md`.
 
 **Clean build artifacts**:
 ```bash
@@ -275,12 +340,12 @@ pnpm clean
 - Playwright: `http://firecrawl_playwright:3000`
 
 **External (Host machine)**:
-- Firecrawl API: `http://localhost:4300`
-- MCP Server: `http://localhost:3060`
-- Webhook Bridge: `http://localhost:52100`
-- Redis: `redis://localhost:4303`
-- PostgreSQL: `postgresql://localhost:4304/firecrawl_db`
-- Playwright: `http://localhost:4302`
+- Firecrawl API: `http://localhost:50102`
+- MCP Server: `http://localhost:50107`
+- Webhook Bridge: `http://localhost:50108`
+- Redis: `redis://localhost:50104`
+- PostgreSQL: `postgresql://localhost:50105/firecrawl_db`
+- Playwright: `http://localhost:50100`
 
 ### Local Development (Without Docker)
 
@@ -394,18 +459,37 @@ All configuration is managed through environment variables. See [`.env.example`]
 
 ## Testing
 
+### Prerequisites
+
+1. **PostgreSQL**: Tests require PostgreSQL running on localhost:5432
+   ```bash
+   docker compose up -d firecrawl_db
+   ```
+
+2. **Node.js Dependencies**:
+   ```bash
+   pnpm install
+   ```
+
+3. **Python Dependencies**:
+   ```bash
+   cd apps/webhook && uv sync --extra dev
+   ```
+
 ### Running Tests
 
 **All tests**:
 ```bash
-# Node.js apps
+# All test suites
 pnpm test
 
-# Python apps
-pnpm test:webhook
+# Individual test suites
+pnpm test:mcp      # MCP server (Vitest)
+pnpm test:web      # Web UI (no-op currently)
+pnpm test:webhook  # Webhook service (pytest)
 ```
 
-**Individual test suites**:
+**Individual test suites with more control**:
 ```bash
 # MCP Server tests
 cd apps/mcp
@@ -420,6 +504,10 @@ cd apps/webhook
 uv run pytest --cov=app --cov-report=html
 ```
 
+### Test Database
+
+Webhook tests use a dedicated PostgreSQL database (`webhook_test`) that is automatically created and reset before each test run. This ensures hermetic, reproducible tests.
+
 ### Integration Testing
 
 Test cross-service communication:
@@ -432,7 +520,7 @@ docker compose up -d
 docker compose ps
 
 # Test MCP → Firecrawl
-curl -X POST http://localhost:3060/scrape \
+curl -X POST http://localhost:50107/scrape \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com"}'
 
@@ -459,11 +547,37 @@ uv run pytest --cov=app --cov-report=term --cov-report=html
 open htmlcov/index.html  # View coverage report
 ```
 
+## Monitoring Websites for Changes
+
+### Adding a Watch
+
+1. Open changedetection.io UI: `http://localhost:50109`
+2. Click "Add new change detection watch"
+3. Enter URL to monitor
+4. (Optional) Configure:
+   - Check interval (default: 1 hour)
+   - CSS selector for specific content
+   - Playwright for JavaScript-heavy sites
+5. Save watch
+
+### Configuring Automatic Rescraping
+
+When changedetection detects a change, it can automatically trigger Firecrawl to rescrape and re-index the content:
+
+1. In changedetection.io, edit a watch
+2. Go to "Notifications" tab
+3. Add notification URL: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+4. Set notification body template (see docs/CHANGEDETECTION_INTEGRATION.md)
+5. Save configuration
+
+Changed content will be automatically indexed for search within minutes.
+
 ## Documentation
 
 ### Project Documentation
 
 - **[.docs/services-ports.md](.docs/services-ports.md)** - Service port allocation and URLs
+- **[.docs/webhook-troubleshooting.md](.docs/webhook-troubleshooting.md)** - Webhook debugging and troubleshooting guide
 - **[.env.example](.env.example)** - Comprehensive environment variable reference
 - **[docker-compose.yaml](docker-compose.yaml)** - Service definitions and infrastructure
 
@@ -473,15 +587,17 @@ open htmlcov/index.html  # View coverage report
 - **[apps/webhook/README.md](apps/webhook/README.md)** - Webhook Bridge documentation
 - **[apps/web/README.md](apps/web/README.md)** - Web interface documentation
 
-### Development Guides
-
-- **[apps/mcp/docs/GETTING_STARTED.md](apps/mcp/docs/GETTING_STARTED.md)** - MCP setup and usage
-- **[apps/mcp/docs/CONFIGURATION.md](apps/mcp/docs/CONFIGURATION.md)** - MCP configuration reference
-- **[apps/mcp/docs/tools/](apps/mcp/docs/tools/)** - Detailed tool documentation
-
 ### Architecture Documents
 
 See `.docs/sessions/` for detailed session logs documenting architectural decisions and implementation details.
+
+### Troubleshooting
+
+**Webhooks not working?** See **[.docs/webhook-troubleshooting.md](.docs/webhook-troubleshooting.md)** for:
+- Common webhook issues and solutions
+- SSRF protection bypass configuration
+- Real-time log monitoring commands
+- End-to-end testing procedures
 
 ## License
 

@@ -2,22 +2,25 @@
 
 This document tracks all services and their port allocations in the Firecrawl monorepo.
 
-Last Updated: 2025-11-09
+Last Updated: 2025-11-10
 
 ## Port Overview
 
+All services use sequential high-numbered ports (50100-50110 range) following service lifecycle guidelines.
+
 | Port  | Service                  | Container Name            | Protocol | Status |
 |-------|--------------------------|---------------------------|----------|--------|
-| 3002  | Firecrawl API (Internal) | firecrawl                 | HTTP     | Active |
-| 3060  | MCP Server               | firecrawl_mcp             | HTTP     | Active |
-| 4300  | Firecrawl API (External) | firecrawl                 | HTTP     | Active |
-| 4301  | Worker                   | firecrawl                 | HTTP     | Active |
-| 4302  | Playwright Service       | firecrawl_playwright      | HTTP     | Active |
-| 4303  | Redis                    | firecrawl_cache           | Redis    | Active |
-| 4304  | PostgreSQL               | firecrawl_db              | Postgres | Active |
-| 4305  | Extract Worker           | firecrawl                 | HTTP     | Active |
-| 52100 | Webhook Bridge API       | firecrawl_webhook         | HTTP     | Active |
-| N/A   | Webhook Worker           | firecrawl_webhook_worker  | N/A      | Active |
+| 50100 | Playwright Service       | firecrawl_playwright      | HTTP     | Active |
+| 50101 | Firecrawl API (Internal) | firecrawl                 | HTTP     | Active |
+| 50102 | Firecrawl API (External) | firecrawl                 | HTTP     | Active |
+| 50103 | Worker                   | firecrawl                 | HTTP     | Active |
+| 50104 | Redis                    | firecrawl_cache           | Redis    | Active |
+| 50105 | PostgreSQL               | firecrawl_db              | Postgres | Active |
+| 50106 | Extract Worker           | firecrawl                 | HTTP     | Active |
+| 50107 | MCP Server               | firecrawl_mcp             | HTTP     | Active |
+| 50108 | Webhook Bridge API       | firecrawl_webhook         | HTTP     | Active |
+| 50109 | Change Detection | firecrawl_changedetection | HTTP | Active |
+| N/A   | Webhook Worker           | firecrawl_webhook         | N/A      | Active |
 
 ## Internal Service URLs (Docker Network)
 
@@ -34,18 +37,18 @@ These URLs are used for service-to-service communication within the Docker netwo
 
 These URLs are accessible from the host machine:
 
-- **Firecrawl API**: `http://localhost:4300`
-- **MCP Server**: `http://localhost:3060`
-- **Webhook Bridge**: `http://localhost:52100`
-- **Redis**: `redis://localhost:4303`
-- **PostgreSQL**: `postgresql://localhost:4304/firecrawl_db`
-- **Playwright**: `http://localhost:4302`
+- **Firecrawl API**: `http://localhost:50102`
+- **MCP Server**: `http://localhost:50107`
+- **Webhook Bridge**: `http://localhost:50108`
+- **Redis**: `redis://localhost:50104`
+- **PostgreSQL**: `postgresql://localhost:50105/firecrawl_db`
+- **Playwright**: `http://localhost:50100`
 
 ## Service Descriptions
 
 ### Firecrawl API
 - **Container**: firecrawl
-- **External Port**: 4300
+- **External Port**: 50102
 - **Internal Port**: 3002
 - **Purpose**: Main Firecrawl web scraping API
 - **Dependencies**: firecrawl_db, firecrawl_cache, firecrawl_playwright
@@ -53,7 +56,7 @@ These URLs are accessible from the host machine:
 
 ### MCP Server
 - **Container**: firecrawl_mcp
-- **Port**: 3060
+- **Port**: 50107
 - **Purpose**: Model Context Protocol server for Claude integration with web scraping capabilities
 - **Dependencies**: firecrawl
 - **Health Check**: HTTP GET /health
@@ -61,14 +64,14 @@ These URLs are accessible from the host machine:
 
 ### Playwright Service
 - **Container**: firecrawl_playwright
-- **Port**: 4302 (mapped to internal 3000)
+- **Port**: 50100 (mapped to internal 3000)
 - **Purpose**: Browser automation service for dynamic content scraping
 - **Dependencies**: None
 - **Health Check**: None configured
 
 ### Redis
 - **Container**: firecrawl_cache
-- **Port**: 4303 (mapped to internal 6379)
+- **Port**: 50104 (mapped to internal 6379)
 - **Purpose**: Caching and message queue for Firecrawl and webhook services
 - **Dependencies**: None
 - **Health Check**: None configured
@@ -76,7 +79,7 @@ These URLs are accessible from the host machine:
 
 ### PostgreSQL
 - **Container**: firecrawl_db
-- **Port**: 4304 (mapped to internal 5432)
+- **Port**: 50105 (mapped to internal 5432)
 - **Purpose**: Primary database for Firecrawl API and webhook metrics
 - **Dependencies**: None
 - **Health Check**: None configured
@@ -85,37 +88,47 @@ These URLs are accessible from the host machine:
   - `public`: Firecrawl API data
   - `webhook`: Webhook bridge timing metrics (future)
 
-### Webhook Bridge API
+### Webhook Bridge API + Worker
 - **Container**: firecrawl_webhook
-- **Port**: 52100
-- **Purpose**: FastAPI server providing search indexing webhook endpoint with hybrid vector/BM25 search
+- **Port**: 50108
+- **Purpose**: FastAPI server with embedded background worker thread for search indexing with hybrid vector/BM25 search
 - **Dependencies**: firecrawl_db, firecrawl_cache
 - **Health Check**: HTTP GET /health
 - **External Services**: Qdrant (vector store), TEI (text embeddings)
+- **Worker**: RQ worker runs as background thread within the same process
+- **Volume**: `/app/data/bm25` for BM25 keyword search index persistence
 
-### Webhook Worker
-- **Container**: firecrawl_webhook_worker
-- **Port**: N/A (background worker)
-- **Purpose**: Background job processor for indexing scraped content into Qdrant
-- **Dependencies**: firecrawl_cache, firecrawl_webhook
-- **Health Check**: Redis connection test
+### changedetection.io Service
+
+**Container:** firecrawl_changedetection
+**Port:** 50109 (external) → 5000 (internal)
+**Purpose:** Monitor websites for content changes, trigger rescraping on updates
+**Dependencies:** firecrawl_playwright (Playwright), firecrawl_webhook (for notifications)
+**Health Check:** HTTP GET / (60s interval, 10s timeout, 30s start period)
+**Volume:** changedetection_data:/datastore (change history, monitor configs)
+
+**Integration:**
+- Shares Playwright browser with Firecrawl for JavaScript rendering
+- Posts change notifications to webhook bridge at http://firecrawl_webhook:52100/api/webhook/changedetection
+- Indexed content searchable via hybrid search (BM25 + vector)
 
 ## Port Range Allocation
 
-- **3000-3999**: Internal services and MCP
-- **4300-4399**: Firecrawl API and core infrastructure
-- **52000-52999**: Webhook and search services
+- **50100-50110**: All external services (sequential high-numbered ports)
+  - Follows service lifecycle guidelines for port management
+  - Easy to remember and manage
+  - Avoids conflicts with common services
 
 ## Environment Variable Mapping
 
 ### MCP Server
-- `MCP_PORT`: External/internal port (default: 3060)
+- `MCP_PORT`: External port (default: 50107)
 - `MCP_FIRECRAWL_BASE_URL`: Points to `http://firecrawl:3002` (internal)
 - `MCP_LLM_PROVIDER`: LLM provider for extraction (default: openai-compatible)
 - `MCP_OPTIMIZE_FOR`: Optimization mode (default: cost)
 
 ### Webhook Bridge
-- `WEBHOOK_PORT`: External/internal port (default: 52100)
+- `WEBHOOK_PORT`: External port (default: 50108)
 - `WEBHOOK_REDIS_URL`: Points to `redis://firecrawl_cache:6379` (internal)
 - `WEBHOOK_DATABASE_URL`: Points to `postgresql+asyncpg://firecrawl_db:5432/firecrawl_db` (internal)
 - `WEBHOOK_QDRANT_URL`: Qdrant vector database URL

@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     # CORS Configuration
     # SECURITY: In production, NEVER use "*" - always specify exact origins
-    # Example: ["https://app.example.com", "https://admin.example.com"]
+    # Example: WEBHOOK_CORS_ORIGINS='["https://app.example.com", "https://admin.example.com"]'
     cors_origins: list[str] = Field(
         default=["http://localhost:3000"],
         validation_alias=AliasChoices("WEBHOOK_CORS_ORIGINS", "SEARCH_BRIDGE_CORS_ORIGINS"),
@@ -70,7 +70,9 @@ class Settings(BaseSettings):
     )
     qdrant_collection: str = Field(
         default="firecrawl_docs",
-        validation_alias=AliasChoices("WEBHOOK_QDRANT_COLLECTION", "SEARCH_BRIDGE_QDRANT_COLLECTION"),
+        validation_alias=AliasChoices(
+            "WEBHOOK_QDRANT_COLLECTION", "SEARCH_BRIDGE_QDRANT_COLLECTION"
+        ),
         description="Qdrant collection name",
     )
     qdrant_timeout: float = Field(
@@ -109,7 +111,9 @@ class Settings(BaseSettings):
     )
     chunk_overlap_tokens: int = Field(
         default=50,
-        validation_alias=AliasChoices("WEBHOOK_CHUNK_OVERLAP_TOKENS", "SEARCH_BRIDGE_CHUNK_OVERLAP_TOKENS"),
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHUNK_OVERLAP_TOKENS", "SEARCH_BRIDGE_CHUNK_OVERLAP_TOKENS"
+        ),
         description="Overlap between chunks in tokens",
     )
 
@@ -148,12 +152,82 @@ class Settings(BaseSettings):
         description="RRF k constant (standard is 60)",
     )
 
+    # Worker Configuration
+    enable_worker: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("WEBHOOK_ENABLE_WORKER", "SEARCH_BRIDGE_ENABLE_WORKER"),
+        description="Enable background worker thread for processing indexing jobs",
+    )
+    test_mode: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("WEBHOOK_TEST_MODE", "SEARCH_BRIDGE_TEST_MODE"),
+        description="Enable test mode to stub external services",
+    )
+
     # PostgreSQL Database (for timing metrics)
     # Supports WEBHOOK_DATABASE_URL or falls back to DATABASE_URL (shared) or SEARCH_BRIDGE_DATABASE_URL (legacy)
     database_url: str = Field(
         default="postgresql+asyncpg://fc_bridge:changeme@localhost:5432/fc_bridge",
-        validation_alias=AliasChoices("WEBHOOK_DATABASE_URL", "DATABASE_URL", "SEARCH_BRIDGE_DATABASE_URL"),
+        validation_alias=AliasChoices(
+            "WEBHOOK_DATABASE_URL", "DATABASE_URL", "SEARCH_BRIDGE_DATABASE_URL"
+        ),
         description="PostgreSQL connection URL for timing metrics",
+    )
+
+    # changedetection.io integration
+    firecrawl_api_url: str = Field(
+        default="http://firecrawl:3002",
+        validation_alias=AliasChoices(
+            "WEBHOOK_FIRECRAWL_API_URL",
+            "FIRECRAWL_API_URL",
+        ),
+        description="Firecrawl API base URL for rescraping",
+    )
+
+    firecrawl_api_key: str = Field(
+        default="self-hosted-no-auth",
+        validation_alias=AliasChoices(
+            "WEBHOOK_FIRECRAWL_API_KEY",
+            "FIRECRAWL_API_KEY",
+        ),
+        description="Firecrawl API key",
+    )
+
+    # changedetection.io API configuration
+    changedetection_api_url: str = Field(
+        default="http://firecrawl_changedetection:5000",
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHANGEDETECTION_API_URL",
+            "CHANGEDETECTION_API_URL",
+        ),
+        description="changedetection.io API base URL",
+    )
+
+    changedetection_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHANGEDETECTION_API_KEY",
+            "CHANGEDETECTION_API_KEY",
+        ),
+        description="changedetection.io API key (optional for self-hosted)",
+    )
+
+    changedetection_default_check_interval: int = Field(
+        default=3600,
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHANGEDETECTION_CHECK_INTERVAL",
+            "CHANGEDETECTION_CHECK_INTERVAL",
+        ),
+        description="Default check interval in seconds (default: 1 hour)",
+    )
+
+    changedetection_enable_auto_watch: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH",
+            "CHANGEDETECTION_ENABLE_AUTO_WATCH",
+        ),
+        description="Enable automatic watch creation for scraped URLs",
     )
 
     @field_validator("webhook_secret")

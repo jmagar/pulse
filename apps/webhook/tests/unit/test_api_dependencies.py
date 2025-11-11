@@ -36,7 +36,7 @@ def reset_singletons() -> Generator[None]:
 
 def test_get_text_chunker_singleton() -> None:
     """Test TextChunker is a singleton."""
-    with patch('app.api.dependencies.TextChunker') as mock_chunker:
+    with patch("app.api.dependencies.TextChunker") as mock_chunker:
         mock_instance = MagicMock()
         mock_chunker.return_value = mock_instance
 
@@ -53,7 +53,7 @@ def test_get_text_chunker_singleton() -> None:
 
 def test_get_embedding_service_singleton() -> None:
     """Test EmbeddingService is a singleton."""
-    with patch('app.api.dependencies.EmbeddingService') as mock_service:
+    with patch("app.api.dependencies.EmbeddingService") as mock_service:
         mock_instance = MagicMock()
         mock_service.return_value = mock_instance
 
@@ -66,7 +66,7 @@ def test_get_embedding_service_singleton() -> None:
 
 def test_get_vector_store_singleton() -> None:
     """Test VectorStore is a singleton."""
-    with patch('app.api.dependencies.VectorStore') as mock_store:
+    with patch("app.api.dependencies.VectorStore") as mock_store:
         mock_instance = MagicMock()
         mock_store.return_value = mock_instance
 
@@ -79,7 +79,7 @@ def test_get_vector_store_singleton() -> None:
 
 def test_get_bm25_engine_singleton() -> None:
     """Test BM25Engine is a singleton."""
-    with patch('app.api.dependencies.BM25Engine') as mock_engine:
+    with patch("app.api.dependencies.BM25Engine") as mock_engine:
         mock_instance = MagicMock()
         mock_engine.return_value = mock_instance
 
@@ -92,7 +92,7 @@ def test_get_bm25_engine_singleton() -> None:
 
 def test_get_redis_connection_singleton() -> None:
     """Test Redis connection is a singleton."""
-    with patch('app.api.dependencies.Redis') as mock_redis:
+    with patch("app.api.dependencies.Redis") as mock_redis:
         mock_instance = MagicMock()
         mock_redis.from_url.return_value = mock_instance
 
@@ -105,9 +105,10 @@ def test_get_redis_connection_singleton() -> None:
 
 def test_get_rq_queue_singleton() -> None:
     """Test RQ queue is a singleton."""
-    with patch('app.api.dependencies.Redis') as mock_redis, \
-         patch('app.api.dependencies.Queue') as mock_queue:
-
+    with (
+        patch("app.api.dependencies.Redis") as mock_redis,
+        patch("app.api.dependencies.Queue") as mock_queue,
+    ):
         mock_redis_instance = MagicMock()
         mock_queue_instance = MagicMock()
         mock_redis.from_url.return_value = mock_redis_instance
@@ -126,12 +127,13 @@ def test_get_rq_queue_singleton() -> None:
 
 def test_get_indexing_service_wiring() -> None:
     """Test IndexingService dependency wiring."""
-    with patch('app.api.dependencies.TextChunker'), \
-         patch('app.api.dependencies.EmbeddingService'), \
-         patch('app.api.dependencies.VectorStore'), \
-         patch('app.api.dependencies.BM25Engine'), \
-         patch('app.api.dependencies.IndexingService') as mock_indexing:
-
+    with (
+        patch("app.api.dependencies.TextChunker"),
+        patch("app.api.dependencies.EmbeddingService"),
+        patch("app.api.dependencies.VectorStore"),
+        patch("app.api.dependencies.BM25Engine"),
+        patch("app.api.dependencies.IndexingService") as mock_indexing,
+    ):
         mock_service = MagicMock()
         mock_indexing.return_value = mock_service
 
@@ -153,11 +155,12 @@ def test_get_indexing_service_wiring() -> None:
 
 def test_get_search_orchestrator_wiring() -> None:
     """Test SearchOrchestrator dependency wiring."""
-    with patch('app.api.dependencies.EmbeddingService'), \
-         patch('app.api.dependencies.VectorStore'), \
-         patch('app.api.dependencies.BM25Engine'), \
-         patch('app.api.dependencies.SearchOrchestrator') as mock_orchestrator:
-
+    with (
+        patch("app.api.dependencies.EmbeddingService"),
+        patch("app.api.dependencies.VectorStore"),
+        patch("app.api.dependencies.BM25Engine"),
+        patch("app.api.dependencies.SearchOrchestrator") as mock_orchestrator,
+    ):
         mock_orch = MagicMock()
         mock_orchestrator.return_value = mock_orch
 
@@ -174,7 +177,7 @@ def test_get_search_orchestrator_wiring() -> None:
 @pytest.mark.asyncio
 async def test_verify_api_secret_valid() -> None:
     """Test API secret verification with valid secret (Bearer format)."""
-    with patch('app.api.dependencies.settings') as mock_settings:
+    with patch("app.api.dependencies.settings") as mock_settings:
         mock_settings.api_secret = "test-secret"
 
         # Should not raise - Bearer format
@@ -197,7 +200,7 @@ async def test_verify_api_secret_missing() -> None:
 @pytest.mark.asyncio
 async def test_verify_api_secret_invalid() -> None:
     """Test API secret verification with wrong secret."""
-    with patch('app.api.dependencies.settings') as mock_settings:
+    with patch("app.api.dependencies.settings") as mock_settings:
         mock_settings.api_secret = "correct-secret"
 
         with pytest.raises(HTTPException) as exc_info:

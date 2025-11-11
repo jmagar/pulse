@@ -2,8 +2,6 @@
 Unit tests for EmbeddingService.
 """
 
-
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -29,7 +27,9 @@ def embedding_service(mock_httpx_client: AsyncMock) -> EmbeddingService:
 
 
 @pytest.mark.asyncio
-async def test_health_check_success(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_health_check_success(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test successful health check."""
     mock_httpx_client.get.return_value = MagicMock(status_code=200)
 
@@ -40,7 +40,9 @@ async def test_health_check_success(embedding_service: EmbeddingService, mock_ht
 
 
 @pytest.mark.asyncio
-async def test_health_check_failure(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_health_check_failure(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test failed health check."""
     mock_httpx_client.get.side_effect = httpx.RequestError("Connection failed")
 
@@ -50,7 +52,9 @@ async def test_health_check_failure(embedding_service: EmbeddingService, mock_ht
 
 
 @pytest.mark.asyncio
-async def test_embed_single_success(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_embed_single_success(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test successful single text embedding."""
     mock_response = MagicMock()
     mock_response.json.return_value = [[0.1, 0.2, 0.3]]
@@ -63,7 +67,9 @@ async def test_embed_single_success(embedding_service: EmbeddingService, mock_ht
 
 
 @pytest.mark.asyncio
-async def test_embed_single_empty_text(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_embed_single_empty_text(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test embedding empty text raises ValueError."""
     with pytest.raises(ValueError, match="Empty text provided"):
         await embedding_service.embed_single("")
@@ -72,7 +78,9 @@ async def test_embed_single_empty_text(embedding_service: EmbeddingService, mock
 
 
 @pytest.mark.asyncio
-async def test_embed_batch_success(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_embed_batch_success(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test successful batch embedding."""
     mock_response = MagicMock()
     mock_response.json.return_value = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]
@@ -85,7 +93,9 @@ async def test_embed_batch_success(embedding_service: EmbeddingService, mock_htt
 
 
 @pytest.mark.asyncio
-async def test_embed_batch_empty_list(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_embed_batch_empty_list(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test batch embedding with empty list raises ValueError."""
     with pytest.raises(ValueError, match="Empty text list provided"):
         await embedding_service.embed_batch([])
@@ -94,7 +104,9 @@ async def test_embed_batch_empty_list(embedding_service: EmbeddingService, mock_
 
 
 @pytest.mark.asyncio
-async def test_embed_batch_filters_empty_texts(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_embed_batch_filters_empty_texts(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test batch embedding filters out empty texts."""
     mock_response = MagicMock()
     mock_response.json.return_value = [[0.1, 0.2]]
@@ -108,7 +120,9 @@ async def test_embed_batch_filters_empty_texts(embedding_service: EmbeddingServi
 
 
 @pytest.mark.asyncio
-async def test_embed_dispatcher_single(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_embed_dispatcher_single(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test embed() dispatcher with single string."""
     mock_response = MagicMock()
     mock_response.json.return_value = [[0.1, 0.2, 0.3]]
@@ -121,7 +135,9 @@ async def test_embed_dispatcher_single(embedding_service: EmbeddingService, mock
 
 
 @pytest.mark.asyncio
-async def test_embed_dispatcher_batch(embedding_service: EmbeddingService, mock_httpx_client: AsyncMock) -> None:
+async def test_embed_dispatcher_batch(
+    embedding_service: EmbeddingService, mock_httpx_client: AsyncMock
+) -> None:
     """Test embed() dispatcher with list."""
     mock_response = MagicMock()
     mock_response.json.return_value = [[0.1], [0.2]]

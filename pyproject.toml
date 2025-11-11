@@ -1,0 +1,7 @@
+[project]
+name = "pulse-monorepo"
+version = "0.1.0"
+description = "Firecrawl Pulse monorepo - MCP server, webhook bridge, and shared packages"
+
+[tool.uv.workspace]
+members = ["apps/webhook"]

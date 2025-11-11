@@ -4,14 +4,18 @@ API route handlers.
 Implements the REST API endpoints for document indexing and search.
 """
 
+import hashlib
+import hmac
 import time
-from datetime import datetime
-from typing import Annotated, Any
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Annotated, Any, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import TypeAdapter, ValidationError
 from rq import Queue
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import (
     get_bm25_engine,
@@ -23,17 +27,13 @@ from app.api.dependencies import (
     verify_api_secret,
     verify_webhook_signature,
 )
-from app.models import (
-    FirecrawlWebhookEvent,
-    HealthStatus,
-    IndexDocumentRequest,
-    IndexDocumentResponse,
-    IndexStats,
-    SearchRequest,
-    SearchResponse,
-    SearchResult,
-)
-from app.rate_limit import limiter
+from app.config import settings
+from infra.database import get_db_session
+from api.schemas.health import HealthStatus, IndexStats
+from api.schemas.indexing import IndexDocumentRequest, IndexDocumentResponse
+from api.schemas.search import SearchRequest, SearchResponse, SearchResult
+from api.schemas.webhook import ChangeDetectionPayload, FirecrawlWebhookEvent
+from infra.rate_limit import limiter
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.indexing import IndexingService
@@ -50,6 +50,12 @@ logger = get_logger(__name__)
 WEBHOOK_EVENT_ADAPTER: TypeAdapter[FirecrawlWebhookEvent] = TypeAdapter(FirecrawlWebhookEvent)
 
 router = APIRouter()
+RouteCallable = Callable[..., Any]
+
+
+def limiter_exempt(route_fn: RouteCallable) -> RouteCallable:
+    """Typed wrapper around limiter.exempt to satisfy mypy."""
+    return cast(RouteCallable, limiter.exempt(route_fn))  # type: ignore[no-untyped-call]
 
 
 @router.post(
@@ -166,7 +172,9 @@ async def search_documents(
     try:
         # Extract filters
         filter_start = time.perf_counter()
-        filters: dict[str, Any] = search_request.filters.model_dump() if search_request.filters else {}
+        filters: dict[str, Any] = (
+            search_request.filters.model_dump() if search_request.filters else {}
+        )
         filter_duration_ms = round((time.perf_counter() - filter_start) * 1000, 2)
 
         logger.debug(
@@ -200,12 +208,16 @@ async def search_documents(
         for result in raw_results:
             payload = result.get("payload") or result.get("metadata", {})
 
+            # Extract text from both vector (payload) and BM25 (top-level) results
+            # Vector results have text in payload, BM25 results have it at top-level
+            text = payload.get("text") or result.get("text", "")
+
             results.append(
                 SearchResult(
                     url=payload.get("url", ""),
                     title=payload.get("title"),
                     description=payload.get("description"),
-                    text=payload.get("text", ""),
+                    text=text,
                     score=result.get("score") or result.get("rrf_score", 0.0),
                     metadata=payload,
                 )
@@ -257,11 +269,19 @@ async def search_documents(
     "/api/webhook/firecrawl",
     dependencies=[Depends(verify_webhook_signature)],
 )
+@limiter_exempt
 async def webhook_firecrawl(
     request: Request,
     queue: Annotated[Queue, Depends(get_rq_queue)],
 ) -> JSONResponse:
-    """Process Firecrawl webhook with comprehensive logging."""
+    """
+    Process Firecrawl webhook with comprehensive logging.
+
+    Note: Rate limiting is disabled for this endpoint because:
+    - It's an internal service within the Docker network
+    - Signature verification provides security
+    - Large crawls can send hundreds of webhooks rapidly
+    """
 
     request_start = time.perf_counter()
 
@@ -349,6 +369,150 @@ async def webhook_firecrawl(
     )
 
     return JSONResponse(status_code=status_code, content=result)
+
+
+def _compute_diff_size(snapshot: str | None) -> int:
+    """
+    Compute the size of the snapshot content in bytes.
+
+    <summary>
+    Helper function to calculate diff size from snapshot content.
+    </summary>
+
+    <param name="snapshot">The snapshot content string</param>
+    <returns>Size in bytes, or 0 if snapshot is None</returns>
+    """
+    return len(snapshot) if snapshot else 0
+
+
+def _extract_changedetection_metadata(
+    payload: ChangeDetectionPayload,
+    signature: str,
+    snapshot_size: int,
+) -> dict[str, Any]:
+    """
+    Extract and structure metadata from changedetection webhook payload.
+
+    <summary>
+    Builds a comprehensive metadata dictionary with webhook signature,
+    payload version, timestamps, and computed metrics.
+    </summary>
+
+    <param name="payload">The validated changedetection payload</param>
+    <param name="signature">HMAC signature from X-Signature header</param>
+    <param name="snapshot_size">Computed size of snapshot content</param>
+    <returns>Structured metadata dictionary</returns>
+    """
+    return {
+        "watch_title": payload.watch_title,
+        "webhook_received_at": datetime.now(UTC).isoformat(),
+        "signature": signature,
+        "diff_size": snapshot_size,
+        "raw_payload_version": "1.0",
+        "detected_at": payload.detected_at,
+    }
+
+
+@router.post("/api/webhook/changedetection", status_code=202)
+@limiter_exempt
+async def handle_changedetection_webhook(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+    queue: Annotated[Queue, Depends(get_rq_queue)],
+    signature: str | None = Header(None, alias="X-Signature"),
+) -> dict[str, Any]:
+    """
+    Handle webhook notifications from changedetection.io.
+
+    Verifies HMAC signature, stores change event, and enqueues
+    Firecrawl rescrape job for updated content.
+
+    Note: Rate limiting is disabled for this endpoint because:
+    - It's an internal service within the Docker network
+    - Signature verification provides security
+    - Change detection events are naturally rate-limited
+    """
+    # Verify HMAC signature BEFORE parsing payload
+    if not signature:
+        raise HTTPException(401, "Missing X-Signature header")
+
+    body = await request.body()
+    expected_sig = hmac.new(settings.webhook_secret.encode(), body, hashlib.sha256).hexdigest()
+
+    provided_sig = signature.replace("sha256=", "")
+
+    if not hmac.compare_digest(expected_sig, provided_sig):
+        logger.warning(
+            "Invalid changedetection webhook signature",
+        )
+        raise HTTPException(401, "Invalid signature")
+
+    # Parse and validate payload AFTER signature verification
+    try:
+        import json
+
+        payload_dict = json.loads(body)
+        payload = ChangeDetectionPayload(**payload_dict)
+    except Exception as e:
+        logger.error("Failed to parse changedetection payload", error=str(e))
+        raise HTTPException(400, f"Invalid payload: {str(e)}")
+
+    logger.info(
+        "Received changedetection webhook",
+        watch_id=payload.watch_id,
+        watch_url=payload.watch_url,
+    )
+
+    # Store change event in database
+    from domain.models import ChangeEvent
+
+    # Compute metadata
+    snapshot_size = _compute_diff_size(payload.snapshot)
+    metadata = _extract_changedetection_metadata(payload, signature, snapshot_size)
+
+    change_event = ChangeEvent(
+        watch_id=payload.watch_id,
+        watch_url=payload.watch_url,
+        detected_at=datetime.fromisoformat(payload.detected_at.replace("Z", "+00:00")),
+        diff_summary=payload.snapshot[:500] if payload.snapshot else None,
+        snapshot_url=payload.diff_url,
+        rescrape_status="queued",
+        extra_metadata=metadata,
+    )
+
+    db.add(change_event)
+    await db.commit()
+    await db.refresh(change_event)
+
+    # Enqueue rescrape job
+    from app.api.dependencies import get_redis_connection
+
+    redis_client = get_redis_connection()
+    rescrape_queue = Queue("indexing", connection=redis_client)
+
+    job = rescrape_queue.enqueue(
+        "app.jobs.rescrape.rescrape_changed_url",
+        change_event.id,
+        job_timeout="10m",
+    )
+
+    # Update event with job ID
+    change_event.rescrape_job_id = job.id
+    await db.commit()
+
+    logger.info(
+        "Enqueued rescrape job for changed URL",
+        job_id=job.id,
+        watch_url=payload.watch_url,
+        change_event_id=change_event.id,
+    )
+
+    return {
+        "status": "queued",
+        "job_id": job.id,
+        "change_event_id": change_event.id,
+        "url": payload.watch_url,
+    }
 
 
 @router.get("/health", response_model=HealthStatus)

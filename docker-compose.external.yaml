@@ -1,0 +1,46 @@
+# docker-compose.external.yaml
+# External GPU-dependent services (TEI, Qdrant)
+# Run this on a machine with GPU support using Docker contexts
+
+name: firecrawl-external
+
+x-common-service: &common-service
+  restart: unless-stopped
+  env_file:
+    - .env
+
+services:
+  firecrawl_tei:
+    <<: *common-service
+    image: ghcr.io/huggingface/text-embeddings-inference:latest
+    container_name: firecrawl_tei
+    ports:
+      - "${TEI_PORT:-50200}:80"
+    environment:
+      - MODEL_ID=${WEBHOOK_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
+      - REVISION=main
+      - MAX_BATCH_SIZE=512
+      - MAX_CLIENT_BATCH_SIZE=32
+    volumes:
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_tei_data:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: --model-id ${WEBHOOK_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B} --port 80
+
+  firecrawl_qdrant:
+    <<: *common-service
+    image: qdrant/qdrant:latest
+    container_name: firecrawl_qdrant
+    ports:
+      - "${QDRANT_HTTP_PORT:-50201}:6333"
+      - "${QDRANT_GRPC_PORT:-50202}:6334"
+    volumes:
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_qdrant_storage:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334

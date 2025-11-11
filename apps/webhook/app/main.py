@@ -18,9 +18,9 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.dependencies import cleanup_services, get_vector_store
 from app.config import settings
-from app.database import close_database, init_database
+from infra.database import close_database, init_database
 from app.middleware.timing import TimingMiddleware
-from app.rate_limit import limiter
+from infra.rate_limit import limiter
 from app.utils.logging import configure_logging, get_logger
 
 # Configure logging
@@ -65,12 +65,37 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         logger.error("Failed to ensure Qdrant collection", error=str(e))
         # Don't fail startup - collection might be created later
 
+    # Start background worker thread if enabled
+    worker_manager = None
+    if settings.enable_worker:
+        from app.worker_thread import WorkerThreadManager
+
+        logger.info("Starting background worker thread...")
+        worker_manager = WorkerThreadManager()
+        try:
+            worker_manager.start()
+            app.state.worker_manager = worker_manager
+            logger.info("Background worker started successfully")
+        except Exception as e:
+            logger.error("Failed to start background worker", error=str(e))
+            # Don't fail startup - API can run without worker
+    else:
+        logger.info("Background worker disabled (WEBHOOK_ENABLE_WORKER=false)")
+
     logger.info("Search Bridge API ready")
 
     yield
 
     # Shutdown
     logger.info("Shutting down Search Bridge API")
+
+    # Stop background worker if running
+    if worker_manager is not None:
+        try:
+            worker_manager.stop()
+            logger.info("Background worker stopped successfully")
+        except Exception:
+            logger.exception("Failed to stop background worker")
 
     # Clean up async resources
     try:
@@ -118,8 +143,8 @@ app.add_middleware(
 )
 
 # Include API routes (imported here to avoid circular dependency)
-from app.api.routes import router  # noqa: E402
 from app.api.metrics_routes import router as metrics_router  # noqa: E402
+from app.api.routes import router  # noqa: E402
 
 app.include_router(router)
 app.include_router(metrics_router)
@@ -148,6 +173,7 @@ async def log_firecrawl_webhook(request: Request, call_next: Any) -> Any:
         return response
 
     return await call_next(request)
+
 
 # Root endpoint
 @app.get("/")

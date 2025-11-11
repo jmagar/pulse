@@ -77,7 +77,7 @@ export class FirecrawlClient {
     url: string,
     options: FirecrawlScrapingOptions = {}
   ): Promise<FirecrawlScrapingResult> {
-    return scrapeOp(this.apiKey, url, options);
+    return scrapeOp(this.apiKey, this.baseUrl, url, options);
   }
 
   /**

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.models import FirecrawlLifecycleEvent, FirecrawlPageEvent
+from api.schemas.webhook import FirecrawlLifecycleEvent, FirecrawlPageEvent
 from app.services import webhook_handlers as handlers
 
 

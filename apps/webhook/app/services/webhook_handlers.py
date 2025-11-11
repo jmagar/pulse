@@ -4,16 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from rq import Queue
 
-from app.models import (
+from api.schemas.indexing import IndexDocumentRequest
+from api.schemas.webhook import (
     FirecrawlDocumentPayload,
     FirecrawlLifecycleEvent,
     FirecrawlPageEvent,
-    IndexDocumentRequest,
 )
+from app.services.auto_watch import create_watch_for_url
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -77,9 +78,7 @@ async def _handle_page_event(
             error_type=type(e).__name__,
             data_sample=str(getattr(event, "data", [])[:1]),
         )
-        raise WebhookHandlerError(
-            status_code=422, detail=f"Invalid document structure: {str(e)}"
-        )
+        raise WebhookHandlerError(status_code=422, detail=f"Invalid document structure: {str(e)}")
 
     if not documents:
         logger.info(
@@ -113,6 +112,18 @@ async def _handle_page_event(
                     url=document.metadata.url,
                     document_index=idx,
                 )
+
+                # Attempt to create auto-watch for this URL
+                try:
+                    await create_watch_for_url(document.metadata.url)
+                except Exception as watch_error:
+                    logger.warning(
+                        "Auto-watch creation failed but indexing continues",
+                        url=document.metadata.url,
+                        error=str(watch_error),
+                        error_type=type(watch_error).__name__,
+                    )
+
             except Exception as queue_error:
                 logger.error(
                     "Failed to enqueue document",
@@ -256,7 +267,7 @@ def _document_to_index_payload(document: FirecrawlDocumentPayload) -> dict[str, 
             markdown_length=len(document.markdown) if document.markdown else 0,
         )
 
-        return normalized.model_dump(by_alias=True)
+        return cast(dict[str, Any], normalized.model_dump(by_alias=True))
 
     except AttributeError as e:
         logger.error(

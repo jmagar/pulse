@@ -1,13 +1,16 @@
-Firecrawl is a web scraper API. The directory you have access to is a monorepo:
- - `apps/api` has the actual API and worker code
- - `apps/js-sdk`, `apps/python-sdk`, and `apps/rust-sdk` are various SDKs
+# Agent Documentation
+
+This file references available agent documentation for the Pulse project.
+
+CLAUDE.md
 
 ## Monorepo Structure
 
 pulse uses a **multi-language monorepo**:
 
 ### Node.js Apps (pnpm workspace)
-- `apps/mcp` - MCP server (has internal workspace: local/remote/shared)
+
+- `apps/mcp` - MCP server (consolidated single package)
 - `apps/web` - Web UI
 - `packages/*` - Shared libraries
 
@@ -33,10 +36,47 @@ pulse uses a **multi-language monorepo**:
 - API: `http://firecrawl:3002`
 - MCP: `http://firecrawl_mcp:3060`
 - Webhook: `http://firecrawl_webhook:52100`
+- changedetection.io: `http://firecrawl_changedetection:5000`
 - Redis: `redis://firecrawl_cache:6379`
 - PostgreSQL: `postgresql://firecrawl_db:5432/firecrawl_db`
 
 **Never hardcode external URLs in code!** Use environment variables.
+
+### changedetection.io
+
+**Purpose:** Website change monitoring with automatic rescraping
+**Port:** 50109
+**Language:** Python/Flask
+**Dependencies:** firecrawl_playwright (Playwright), firecrawl_webhook (optional)
+**Environment Variables:** CHANGEDETECTION_*
+**Health Check:** HTTP GET / (60s interval)
+**Integration:**
+- Shares Playwright browser for JavaScript rendering
+- Posts webhooks to firecrawl_webhook on change detection
+- Triggers automatic rescraping and re-indexing
+
+**Internal URLs:**
+- Service: `http://firecrawl_changedetection:5000`
+- Webhook: `json://firecrawl_webhook:52100/api/webhook/changedetection`
+
+### Environment Variables
+
+**Single Source of Truth:** The root `.env` file contains ALL environment variables for ALL services.
+
+- `MCP_*` - MCP server variables (namespaced for monorepo)
+- `WEBHOOK_*` - Webhook bridge variables (namespaced for monorepo)
+- `FIRECRAWL_*` - Firecrawl API variables
+- Shared infrastructure: `DATABASE_URL`, `REDIS_URL`
+
+**Docker Compose:** The `env_file: - .env` directive in the common service anchor ensures all containers receive the root `.env`.
+
+**Standalone Deployments:** Individual apps have `.env.example` files for standalone use, but these should NOT be used in monorepo deployments.
+
+**Adding New Variables:**
+1. Add to root `.env` and `.env.example`
+2. Use namespaced prefixes (`MCP_*`, `WEBHOOK_*`, etc.)
+3. Update app-specific code to read from environment
+4. Document in this CLAUDE.md
 
 ### Adding New Services
 

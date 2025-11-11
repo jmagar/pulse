@@ -2,10 +2,6 @@
 
 import os
 
-import pytest
-
-from app.config import settings
-
 
 def test_database_url_from_env():
     """Test database_url can be loaded from environment."""
@@ -14,6 +10,7 @@ def test_database_url_from_env():
 
     # Reload settings (this may need adjustment based on your config pattern)
     from app.config import Settings
+
     test_settings = Settings()
 
     assert test_settings.database_url == "postgresql+asyncpg://test:pass@localhost/testdb"
@@ -25,6 +22,7 @@ def test_database_url_from_env():
 def test_database_url_default():
     """Test database_url has a sensible default."""
     from app.config import Settings
+
     test_settings = Settings()
 
     assert "postgresql+asyncpg://" in test_settings.database_url

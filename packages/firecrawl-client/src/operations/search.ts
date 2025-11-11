@@ -8,6 +8,7 @@
 
 import type { SearchOptions, SearchResult } from '../types.js';
 import { categorizeFirecrawlError } from '../errors.js';
+import { buildHeaders } from '../utils/headers.js';
 
 /**
  * Search using Firecrawl API
@@ -22,12 +23,11 @@ export async function search(
   baseUrl: string,
   options: SearchOptions
 ): Promise<SearchResult> {
+  const headers = buildHeaders(apiKey, true);
+
   const response = await fetch(`${baseUrl}/search`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify(options),
   });
 

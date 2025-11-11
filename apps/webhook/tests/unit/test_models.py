@@ -5,12 +5,8 @@ Tests for Pydantic models.
 import pytest
 from pydantic import ValidationError
 
-from app.models import (
-    IndexDocumentRequest,
-    SearchFilter,
-    SearchMode,
-    SearchRequest,
-)
+from api.schemas.indexing import IndexDocumentRequest
+from api.schemas.search import SearchFilter, SearchMode, SearchRequest
 
 
 def test_index_document_request_valid() -> None:

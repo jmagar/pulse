@@ -8,6 +8,7 @@
 
 import type { MapOptions, MapResult } from '../types.js';
 import { categorizeFirecrawlError } from '../errors.js';
+import { buildHeaders } from '../utils/headers.js';
 
 /**
  * Map website URLs using Firecrawl API
@@ -27,12 +28,11 @@ export async function map(
     JSON.stringify({ url: `${baseUrl}/map`, body: options }, null, 2)
   );
 
+  const headers = buildHeaders(apiKey, true);
+
   const response = await fetch(`${baseUrl}/map`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify(options),
   });
 

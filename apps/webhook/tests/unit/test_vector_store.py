@@ -2,7 +2,6 @@
 Unit tests for VectorStore.
 """
 
-
 from collections.abc import Generator
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -32,7 +31,9 @@ def vector_store(mock_qdrant_client: AsyncMock) -> Generator[VectorStore]:
 
 
 @pytest.mark.asyncio
-async def test_health_check_success(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_health_check_success(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test successful health check."""
     mock_qdrant_client.get_collections.return_value = MagicMock(collections=[])
 
@@ -42,7 +43,9 @@ async def test_health_check_success(vector_store: VectorStore, mock_qdrant_clien
 
 
 @pytest.mark.asyncio
-async def test_health_check_failure(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_health_check_failure(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test failed health check."""
     mock_qdrant_client.get_collections.side_effect = Exception("Connection failed")
 
@@ -52,7 +55,9 @@ async def test_health_check_failure(vector_store: VectorStore, mock_qdrant_clien
 
 
 @pytest.mark.asyncio
-async def test_ensure_collection_creates_new(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_ensure_collection_creates_new(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test creating new collection."""
     mock_qdrant_client.get_collections.return_value = MagicMock(collections=[])
 
@@ -62,13 +67,13 @@ async def test_ensure_collection_creates_new(vector_store: VectorStore, mock_qdr
 
 
 @pytest.mark.asyncio
-async def test_ensure_collection_exists(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_ensure_collection_exists(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test when collection already exists."""
     existing_collection = MagicMock()
     existing_collection.name = "test_collection"
-    mock_qdrant_client.get_collections.return_value = MagicMock(
-        collections=[existing_collection]
-    )
+    mock_qdrant_client.get_collections.return_value = MagicMock(collections=[existing_collection])
 
     await vector_store.ensure_collection()
 
@@ -76,7 +81,9 @@ async def test_ensure_collection_exists(vector_store: VectorStore, mock_qdrant_c
 
 
 @pytest.mark.asyncio
-async def test_index_chunks_success(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_index_chunks_success(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test successful chunk indexing."""
     chunks: list[dict[str, Any]] = [
         {"text": "chunk1", "chunk_index": 0, "token_count": 100, "title": "Test"},
@@ -99,7 +106,9 @@ async def test_index_chunks_success(vector_store: VectorStore, mock_qdrant_clien
 
 
 @pytest.mark.asyncio
-async def test_index_chunks_mismatch_error(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_index_chunks_mismatch_error(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test error when chunk/embedding count mismatch."""
     chunks: list[dict[str, Any]] = [{"text": "chunk1", "chunk_index": 0, "token_count": 100}]
     embeddings = [[0.1], [0.2]]  # More embeddings than chunks
@@ -109,7 +118,9 @@ async def test_index_chunks_mismatch_error(vector_store: VectorStore, mock_qdran
 
 
 @pytest.mark.asyncio
-async def test_search_without_filters(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_search_without_filters(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test search without filters."""
     mock_result = MagicMock()
     mock_result.id = "id1"
@@ -129,7 +140,9 @@ async def test_search_without_filters(vector_store: VectorStore, mock_qdrant_cli
 
 
 @pytest.mark.asyncio
-async def test_search_with_domain_filter(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_search_with_domain_filter(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test search with domain filter."""
     mock_qdrant_client.search.return_value = []
 
@@ -142,7 +155,9 @@ async def test_search_with_domain_filter(vector_store: VectorStore, mock_qdrant_
 
 
 @pytest.mark.asyncio
-async def test_search_with_multiple_filters(vector_store: VectorStore, mock_qdrant_client: AsyncMock) -> None:
+async def test_search_with_multiple_filters(
+    vector_store: VectorStore, mock_qdrant_client: AsyncMock
+) -> None:
     """Test search with multiple filters."""
     mock_qdrant_client.search.return_value = []
 

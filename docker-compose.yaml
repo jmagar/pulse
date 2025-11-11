@@ -16,7 +16,7 @@ services:
     # build: apps/playwright-service-ts
     container_name: firecrawl_playwright
     ports:
-      - "${PLAYWRIGHT_PORT:-4302}:3000"
+      - "${PLAYWRIGHT_PORT:-50100}:3000"
 
   firecrawl:
     <<: *common-service
@@ -32,7 +32,7 @@ services:
       - firecrawl_playwright
       - firecrawl_db
     ports:
-      - "${FIRECRAWL_PORT:-3002}:${FIRECRAWL_INTERNAL_PORT:-3002}"
+      - "${FIRECRAWL_PORT:-50102}:${FIRECRAWL_INTERNAL_PORT:-3002}"
     command: node dist/src/harness.js --start-docker
 
   firecrawl_cache:
@@ -40,7 +40,7 @@ services:
     image: redis:alpine
     container_name: firecrawl_cache
     ports:
-      - "${REDIS_PORT:-4303}:6379"
+      - "${REDIS_PORT:-50104}:6379"
     volumes:
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_redis:/data
     command: redis-server --bind 0.0.0.0 --appendonly yes --save 60 1
@@ -50,38 +50,20 @@ services:
     build: apps/nuq-postgres
     container_name: firecrawl_db
     ports:
-      - "${POSTGRES_PORT:-4304}:5432"
+      - "${POSTGRES_PORT:-50105}:5432"
     volumes:
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_postgres:/var/lib/postgresql/data
 
   firecrawl_mcp:
     <<: *common-service
+    # Build context changed from ./apps/mcp to . for monorepo access
+    # All environment variables now configured in root .env file
     build:
-      context: ./apps/mcp
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/mcp/Dockerfile
     container_name: firecrawl_mcp
     ports:
-      - "${MCP_PORT:-3060}:3060"
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - MCP_PORT=3060
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost:3060}
-      - ENABLE_RESUMABILITY=${ENABLE_RESUMABILITY:-true}
-      - MCP_OPTIMIZE_FOR=${MCP_OPTIMIZE_FOR:-cost}
-      - MCP_RESOURCE_STORAGE=${MCP_RESOURCE_STORAGE:-filesystem}
-      - MCP_RESOURCE_FILESYSTEM_ROOT=/app/resources
-      - MCP_RESOURCE_TTL=${MCP_RESOURCE_TTL:-86400}
-      - DEBUG=${DEBUG:-false}
-      - MCP_FIRECRAWL_API_KEY=${MCP_FIRECRAWL_API_KEY:-self-hosted-no-auth}
-      - MCP_FIRECRAWL_BASE_URL=http://firecrawl:${FIRECRAWL_INTERNAL_PORT:-3002}
-      - MCP_LLM_PROVIDER=${MCP_LLM_PROVIDER:-openai-compatible}
-      - MCP_LLM_API_BASE_URL=${MCP_LLM_API_BASE_URL:-${OPENAI_BASE_URL}}
-      - MCP_LLM_MODEL=${MCP_LLM_MODEL:-${MODEL_NAME}}
-      - MCP_MAP_DEFAULT_COUNTRY=${MCP_MAP_DEFAULT_COUNTRY:-US}
-      - MCP_MAP_DEFAULT_LANGUAGES=${MCP_MAP_DEFAULT_LANGUAGES:-en-US}
-      - MCP_MAP_MAX_RESULTS_PER_PAGE=${MCP_MAP_MAX_RESULTS_PER_PAGE:-200}
-      - FORCE_COLOR=1
+      - "${MCP_PORT:-50107}:3060"
     volumes:
       - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_mcp_resources:/app/resources
     depends_on:
@@ -100,27 +82,9 @@ services:
       dockerfile: Dockerfile
     container_name: firecrawl_webhook
     ports:
-      - "${WEBHOOK_PORT:-52100}:52100"
-    environment:
-      - WEBHOOK_HOST=${WEBHOOK_HOST:-0.0.0.0}
-      - WEBHOOK_PORT=52100
-      - WEBHOOK_API_SECRET=${WEBHOOK_API_SECRET}
-      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-      - WEBHOOK_CORS_ORIGINS=${WEBHOOK_CORS_ORIGINS:-http://localhost:3000}
-      - WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379
-      - WEBHOOK_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-firecrawl}:${POSTGRES_PASSWORD}@firecrawl_db:5432/${POSTGRES_DB:-firecrawl_db}
-      - WEBHOOK_QDRANT_URL=${WEBHOOK_QDRANT_URL}
-      - WEBHOOK_QDRANT_COLLECTION=${WEBHOOK_QDRANT_COLLECTION:-firecrawl_docs}
-      - WEBHOOK_VECTOR_DIM=${WEBHOOK_VECTOR_DIM:-1024}
-      - WEBHOOK_TEI_URL=${WEBHOOK_TEI_URL}
-      - WEBHOOK_EMBEDDING_MODEL=${WEBHOOK_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
-      - WEBHOOK_MAX_CHUNK_TOKENS=${WEBHOOK_MAX_CHUNK_TOKENS:-256}
-      - WEBHOOK_CHUNK_OVERLAP_TOKENS=${WEBHOOK_CHUNK_OVERLAP_TOKENS:-50}
-      - WEBHOOK_HYBRID_ALPHA=${WEBHOOK_HYBRID_ALPHA:-0.5}
-      - WEBHOOK_BM25_K1=${WEBHOOK_BM25_K1:-1.5}
-      - WEBHOOK_BM25_B=${WEBHOOK_BM25_B:-0.75}
-      - WEBHOOK_RRF_K=${WEBHOOK_RRF_K:-60}
-      - WEBHOOK_LOG_LEVEL=${WEBHOOK_LOG_LEVEL:-INFO}
+      - "${WEBHOOK_PORT:-50108}:52100"
+    volumes:
+      - ${APPDATA_BASE:-/mnt/cache/appdata}/firecrawl_webhook:/app/data/bm25
     depends_on:
       - firecrawl_db
       - firecrawl_cache
@@ -131,33 +95,36 @@ services:
       retries: 3
       start_period: 40s
 
-  firecrawl_webhook_worker:
+  firecrawl_changedetection:
     <<: *common-service
-    build:
-      context: ./apps/webhook
-      dockerfile: Dockerfile
-    container_name: firecrawl_webhook_worker
-    command: python -m app.worker
+    image: ghcr.io/dgtlmoon/changedetection.io:latest
+    container_name: firecrawl_changedetection
+    hostname: changedetection
+    ports:
+      - "${CHANGEDETECTION_PORT:-50109}:5000"
+    volumes:
+      - changedetection_data:/datastore
     environment:
-      - WEBHOOK_REDIS_URL=redis://firecrawl_cache:6379
-      - WEBHOOK_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-firecrawl}:${POSTGRES_PASSWORD}@firecrawl_db:5432/${POSTGRES_DB:-firecrawl_db}
-      - WEBHOOK_QDRANT_URL=${WEBHOOK_QDRANT_URL}
-      - WEBHOOK_QDRANT_COLLECTION=${WEBHOOK_QDRANT_COLLECTION:-firecrawl_docs}
-      - WEBHOOK_VECTOR_DIM=${WEBHOOK_VECTOR_DIM:-1024}
-      - WEBHOOK_TEI_URL=${WEBHOOK_TEI_URL}
-      - WEBHOOK_EMBEDDING_MODEL=${WEBHOOK_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
-      - WEBHOOK_MAX_CHUNK_TOKENS=${WEBHOOK_MAX_CHUNK_TOKENS:-256}
-      - WEBHOOK_CHUNK_OVERLAP_TOKENS=${WEBHOOK_CHUNK_OVERLAP_TOKENS:-50}
-      - WEBHOOK_LOG_LEVEL=${WEBHOOK_LOG_LEVEL:-INFO}
+      - PLAYWRIGHT_DRIVER_URL=${CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL:-ws://firecrawl_playwright:3000}
+      - BASE_URL=${CHANGEDETECTION_BASE_URL:-http://localhost:50109}
+      - FETCH_WORKERS=${CHANGEDETECTION_FETCH_WORKERS:-10}
+      - MINIMUM_SECONDS_RECHECK_TIME=${CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME:-60}
+      - LOGGER_LEVEL=INFO
+      - HIDE_REFERER=true
     depends_on:
-      - firecrawl_cache
-      - firecrawl_webhook
+      - firecrawl_playwright
     healthcheck:
-      test: ["CMD", "python", "-c", "import redis; r = redis.from_url('redis://firecrawl_cache:6379'); r.ping()"]
-      interval: 30s
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/')\""]
+      interval: 60s
       timeout: 10s
       retries: 3
+      start_period: 30s
+    restart: unless-stopped
 
 networks:
   firecrawl:
     driver: bridge
+
+volumes:
+  changedetection_data:
+    name: firecrawl_changedetection_data

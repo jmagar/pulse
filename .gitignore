@@ -1,52 +1,187 @@
+# =============================================================================
+# Pulse Monorepo - Root .gitignore
+# Consolidated from all sub-directories | 2025-01-10
+# =============================================================================
+
+# =============================================================================
+# Operating System
+# =============================================================================
 .DS_Store
-/node_modules/
-/dist/
+Thumbs.db
+
+# Accidental directories from command-line parsing
+--*/
+
+# =============================================================================
+# IDEs and Editors
+# =============================================================================
+.vscode/
+.idea/
+
+# =============================================================================
+# Node.js / JavaScript / TypeScript
+# =============================================================================
+node_modules/
+dist/
+build/
+out/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+package-lock.json
+
+# Yarn
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js
+.next/
+
+# Testing
+coverage/
+
+# Vercel
+.vercel
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.so
+.Python
+*.egg-info/
+*.egg
+MANIFEST
+*.whl
+
+# Virtual environments
 .env
-*.csv
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+/.venv
+
+# Python build directories
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+.installed.cfg
+
+# Python cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+.env*
+!.env.example
+
+# =============================================================================
+# Databases
+# =============================================================================
 dump.rdb
 *.rdb
+*.db
+*.sqlite3
 /mongo-data
-apps/js-sdk/node_modules/
 
-apps/api/.env.local
+# Data files
+*.csv
+data/
 
-apps/test-suite/node_modules/
+# =============================================================================
+# Machine Learning / AI Models
+# =============================================================================
+*.bin
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.pickle
+*.bm25
 
+# =============================================================================
+# Documentation & Notes
+# =============================================================================
+.docs/tmp/
+.docs/sessions/tmp/
+FIXME.md
+FIXME-TASKS.md
+CLAUDE.local.md
+llm-links.txt
+mapped-links.txt
+CRAWL_CLAUDE_DOCS.md
 
-apps/test-suite/.env
+# =============================================================================
+# Logs & Debug
+# =============================================================================
+*.log
+/apps/api/logs/*
+/apps/api/debug/*
+/apps/api/running-docs/
 apps/test-suite/logs
 apps/test-suite/load-test-results/test-run-report.json
 
-apps/playwright-service-ts/node_modules/
-apps/playwright-service-ts/package-lock.json
+# =============================================================================
+# Backup Files
+# =============================================================================
+*.bak
+*.swp
+*.swo
+*~
+*.pem
 
+# =============================================================================
+# Security & Credentials
+# =============================================================================
+gke-key.json
 
-/examples/o1_web_crawler/venv
-*.pyc
-.rdb
-
+# =============================================================================
+# Legacy / Deprecated (kept for reference)
+# =============================================================================
+apps/js-sdk/node_modules/
 apps/js-sdk/firecrawl/dist
-
+apps/test-suite/node_modules/
+apps/playwright-service-ts/node_modules/
+apps/python-sdk/.venv/
+/examples/o1_web_crawler/venv
 /examples/o1_web_crawler/firecrawl_env
 /examples/crm_lead_enrichment/crm_lead_enrichment_env
-/.venv
 /examples/claude_web_crawler/firecrawl_env
 /examples/haiku_web_crawler/firecrawl_env
 /examples/sonnet_web_crawler/firecrawl_env
 /examples/internal_link_assitant/firecrawl_env
-
-/apps/api/logs/*
-/apps/api/debug/*
-
-.vscode
-llm-links.txt
-mapped-links.txt
-gke-key.json
-
-CLAUDE.local.md
-
-*.egg-info/
-# local SDK venv
-apps/python-sdk/.venv/
-
-/apps/api/running-docs/

@@ -2,13 +2,11 @@
 Unit tests for SearchOrchestrator.
 """
 
-
-
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.models import SearchMode
+from api.schemas.search import SearchMode
 from app.services.search import SearchOrchestrator
 
 
@@ -44,9 +42,7 @@ def mock_bm25_engine() -> MagicMock:
 
 @pytest.fixture
 def orchestrator(
-    mock_embedding_service: AsyncMock,
-    mock_vector_store: AsyncMock,
-    mock_bm25_engine: MagicMock
+    mock_embedding_service: AsyncMock, mock_vector_store: AsyncMock, mock_bm25_engine: MagicMock
 ) -> SearchOrchestrator:
     """Create SearchOrchestrator with mocked dependencies."""
     return SearchOrchestrator(
@@ -70,7 +66,7 @@ async def test_search_hybrid_mode(
     orchestrator: SearchOrchestrator,
     mock_embedding_service: AsyncMock,
     mock_vector_store: AsyncMock,
-    mock_bm25_engine: MagicMock
+    mock_bm25_engine: MagicMock,
 ) -> None:
     """Test hybrid search mode calls both sources."""
     results = await orchestrator.search("test query", mode=SearchMode.HYBRID, limit=10)
@@ -90,7 +86,7 @@ async def test_search_semantic_mode(
     orchestrator: SearchOrchestrator,
     mock_embedding_service: AsyncMock,
     mock_vector_store: AsyncMock,
-    mock_bm25_engine: MagicMock
+    mock_bm25_engine: MagicMock,
 ) -> None:
     """Test semantic search mode only uses vector search."""
     results = await orchestrator.search("test query", mode=SearchMode.SEMANTIC, limit=10)
@@ -108,7 +104,7 @@ async def test_search_keyword_mode(
     orchestrator: SearchOrchestrator,
     mock_embedding_service: AsyncMock,
     mock_vector_store: AsyncMock,
-    mock_bm25_engine: MagicMock
+    mock_bm25_engine: MagicMock,
 ) -> None:
     """Test keyword search mode only uses BM25."""
     results = await orchestrator.search("test query", mode=SearchMode.KEYWORD, limit=10)
@@ -123,8 +119,7 @@ async def test_search_keyword_mode(
 
 @pytest.mark.asyncio
 async def test_search_bm25_mode(
-    orchestrator: SearchOrchestrator,
-    mock_bm25_engine: MagicMock
+    orchestrator: SearchOrchestrator, mock_bm25_engine: MagicMock
 ) -> None:
     """Test BM25 mode (alias for keyword)."""
     results = await orchestrator.search("test query", mode=SearchMode.BM25, limit=10)
@@ -135,17 +130,10 @@ async def test_search_bm25_mode(
 
 @pytest.mark.asyncio
 async def test_search_with_domain_filter(
-    orchestrator: SearchOrchestrator,
-    mock_vector_store: AsyncMock,
-    mock_bm25_engine: MagicMock
+    orchestrator: SearchOrchestrator, mock_vector_store: AsyncMock, mock_bm25_engine: MagicMock
 ) -> None:
     """Test domain filter is propagated."""
-    await orchestrator.search(
-        "test query",
-        mode=SearchMode.HYBRID,
-        limit=10,
-        domain="example.com"
-    )
+    await orchestrator.search("test query", mode=SearchMode.HYBRID, limit=10, domain="example.com")
 
     # Check vector store received filter
     vector_call = mock_vector_store.search.call_args
@@ -158,9 +146,7 @@ async def test_search_with_domain_filter(
 
 @pytest.mark.asyncio
 async def test_search_with_all_filters(
-    orchestrator: SearchOrchestrator,
-    mock_vector_store: AsyncMock,
-    mock_bm25_engine: MagicMock
+    orchestrator: SearchOrchestrator, mock_vector_store: AsyncMock, mock_bm25_engine: MagicMock
 ) -> None:
     """Test all filters are propagated."""
     await orchestrator.search(
@@ -183,8 +169,7 @@ async def test_search_with_all_filters(
 
 @pytest.mark.asyncio
 async def test_search_empty_query(
-    orchestrator: SearchOrchestrator,
-    mock_embedding_service: AsyncMock
+    orchestrator: SearchOrchestrator, mock_embedding_service: AsyncMock
 ) -> None:
     """Test search with empty query."""
     mock_embedding_service.embed_single.return_value = []
@@ -197,9 +182,7 @@ async def test_search_empty_query(
 
 @pytest.mark.asyncio
 async def test_search_no_results(
-    orchestrator: SearchOrchestrator,
-    mock_vector_store: AsyncMock,
-    mock_bm25_engine: MagicMock
+    orchestrator: SearchOrchestrator, mock_vector_store: AsyncMock, mock_bm25_engine: MagicMock
 ) -> None:
     """Test search with no results from either source."""
     mock_vector_store.search.return_value = []
@@ -219,9 +202,7 @@ async def test_search_invalid_mode(orchestrator: SearchOrchestrator) -> None:
 
 @pytest.mark.asyncio
 async def test_hybrid_search_limit_expansion(
-    orchestrator: SearchOrchestrator,
-    mock_vector_store: AsyncMock,
-    mock_bm25_engine: MagicMock
+    orchestrator: SearchOrchestrator, mock_vector_store: AsyncMock, mock_bm25_engine: MagicMock
 ) -> None:
     """Test hybrid search gets more results for fusion."""
     await orchestrator.search("test", mode=SearchMode.HYBRID, limit=10)

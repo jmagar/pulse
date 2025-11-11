@@ -7,6 +7,7 @@
  */
 
 import type { CrawlOptions, StartCrawlResult, CrawlStatusResult, CancelResult } from '../types.js';
+import { buildHeaders, debugLog } from '../utils/headers.js';
 
 /**
  * Start a crawl job using Firecrawl API
@@ -21,12 +22,16 @@ export async function startCrawl(
   baseUrl: string,
   options: CrawlOptions
 ): Promise<StartCrawlResult> {
-  const response = await fetch(`${baseUrl}/crawl`, {
+  debugLog('startCrawl called', { baseUrl, targetUrl: options.url });
+
+  const headers = buildHeaders(apiKey, true);
+
+  const fetchUrl = `${baseUrl}/crawl`;
+  debugLog('Fetching', { url: fetchUrl, hasAuth: !!headers['Authorization'] });
+
+  const response = await fetch(fetchUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify(options),
   });
 
@@ -57,11 +62,11 @@ export async function getCrawlStatus(
   baseUrl: string,
   jobId: string
 ): Promise<CrawlStatusResult> {
+  const headers = buildHeaders(apiKey);
+
   const response = await fetch(`${baseUrl}/crawl/${jobId}`, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
   });
 
   if (!response.ok) {
@@ -91,11 +96,11 @@ export async function cancelCrawl(
   baseUrl: string,
   jobId: string
 ): Promise<CancelResult> {
+  const headers = buildHeaders(apiKey);
+
   const response = await fetch(`${baseUrl}/crawl/${jobId}`, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
   });
 
   if (!response.ok) {

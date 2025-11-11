@@ -4,11 +4,20 @@ A semantic search service that bridges Firecrawl web scraping with vector search
 
 ## Architecture
 
+The Search Bridge runs as a single FastAPI application with an embedded background worker thread:
+
+- **API Server**: FastAPI application handling HTTP requests (webhooks, search, stats)
+- **Background Worker**: RQ worker thread processing indexing jobs from Redis queue
+- **BM25 Engine**: Shared in-memory instance used by both API and worker
+- **Vector Store**: Qdrant for semantic search
+- **Embedding Service**: TEI for generating text embeddings
+
+The worker thread starts automatically during FastAPI startup and shares all services with the API, eliminating file synchronization complexity.
+
 ```
-Firecrawl (steamy-wsl) → Search Bridge API → Redis Queue → Background Worker
-                                                              ├─> HuggingFace TEI (embeddings)
-                                                              ├─> Qdrant (vector storage)
-                                                              └─> BM25 (keyword search)
+Firecrawl → Search Bridge (API + Worker Thread) → Redis Queue → HuggingFace TEI (embeddings)
+                                                                 ├─> Qdrant (vector storage)
+                                                                 └─> BM25 (keyword search)
 ```
 
 ## Features
@@ -23,36 +32,27 @@ Firecrawl (steamy-wsl) → Search Bridge API → Redis Queue → Background Work
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - Docker & Docker Compose
 - UV package manager
 
 ### Installation
 
-```bash
-# Clone repository
-git clone https://github.com/jmagar/fc-bridge.git
-cd fc-bridge
+Run from monorepo root:
 
+```bash
 # Copy environment template
 cp .env.example .env
 # Edit .env with your configuration
 
 # Install dependencies
-make install
+pnpm install:webhook
 
-# Check port availability
-make ports
-
-# Start Docker services (Redis, Qdrant, TEI)
-make services
-
-# Run API server (in one terminal)
-make dev
-
-# Run background worker (in another terminal)
-make worker
+# Start all services via Docker Compose
+pnpm services:up
 ```
+
+For standalone deployment, see root `docker-compose.yaml` for service definition.
 
 ### API Endpoints
 
@@ -89,24 +89,98 @@ To find this machine's IP:
 hostname -I | awk '{print $1}'
 ```
 
+## Deployment
+
+### Docker Compose (Recommended)
+
+```yaml
+services:
+  firecrawl_webhook:
+    build: ./apps/webhook
+    ports:
+      - "52100:52100"
+    environment:
+      WEBHOOK_REDIS_URL: redis://firecrawl_cache:6379
+      WEBHOOK_QDRANT_URL: http://qdrant:6333
+      WEBHOOK_TEI_URL: http://tei:80
+      WEBHOOK_ENABLE_WORKER: "true"  # Enable background worker
+    depends_on:
+      - firecrawl_cache
+      - qdrant
+      - tei
+```
+
+### Disable Worker (API Only)
+
+To run only the API without the background worker:
+
+```bash
+WEBHOOK_ENABLE_WORKER=false uvicorn app.main:app --host 0.0.0.0 --port 52100
+```
+
+This is useful for:
+- Development/testing the API independently
+- Scaling API and worker separately (run worker in separate process)
+- Debugging API without worker interference
+
 ## Development
+
+### Setup
+
+```bash
+# Install all dependencies (Node.js and Python)
+pnpm install
+pnpm install:webhook
+```
+
+### Running Services
+
+```bash
+# Start all Docker services
+pnpm services:up
+
+# Run API server in development mode
+pnpm dev:webhook
+
+# Run background worker (deprecated - now embedded in API)
+pnpm worker:webhook
+
+# Stop all services
+pnpm services:down
+```
+
+### Code Quality
 
 ```bash
 # Run tests
-make test
+pnpm test:webhook
 
 # Format code
-make format
+pnpm format:webhook
 
 # Lint code
-make lint
+pnpm lint:webhook
 
 # Type check
-make type-check
+pnpm typecheck:webhook
 
-# Run all checks
-make check
+# Run all checks (format, lint, typecheck)
+pnpm check
 ```
+
+### External Integration Tests
+
+Most webhook tests run against in-memory doubles for Redis, Qdrant, and the embedding
+service. To exercise the real infrastructure, set the environment flag and target the
+`external` marker:
+
+```bash
+export WEBHOOK_RUN_EXTERNAL_TESTS=1
+cd apps/webhook && uv run pytest -m external
+```
+
+Tests marked with `@pytest.mark.external` will be skipped automatically unless the
+`WEBHOOK_RUN_EXTERNAL_TESTS` variable is truthy ("1", "true", "yes", or "on").
 
 ## Project Structure
 
@@ -117,7 +191,7 @@ fc-bridge/
 │   ├── config.py            # Settings
 │   ├── models.py            # Pydantic schemas
 │   ├── api/
-│   │   ├── routes.py        # API endpoints
+│   │   ├── routes.py        # API endpoints (includes changedetection webhook)
 │   │   └── dependencies.py  # Shared dependencies
 │   ├── services/
 │   │   ├── embedding.py     # HF TEI client
@@ -125,6 +199,10 @@ fc-bridge/
 │   │   ├── bm25_engine.py   # BM25 indexing
 │   │   ├── search.py        # Hybrid search
 │   │   └── indexing.py      # Document processing
+│   ├── jobs/
+│   │   └── rescrape.py      # Rescrape job for changedetection.io
+│   ├── models/
+│   │   └── timing.py        # ChangeEvent model
 │   ├── utils/
 │   │   └── text_processing.py  # Token-based chunking
 │   └── worker.py            # Background worker
@@ -169,7 +247,7 @@ Traditional keyword search:
 
 ```bash
 # View service logs
-make services-logs
+pnpm services:logs
 
 # Check health
 curl http://localhost:52100/health
@@ -177,6 +255,145 @@ curl http://localhost:52100/health
 # View stats
 curl http://localhost:52100/api/stats
 ```
+
+## changedetection.io Integration
+
+The webhook bridge integrates with changedetection.io for automated website monitoring and rescraping:
+
+### Features
+
+- **Webhook Endpoint:** `POST /api/webhook/changedetection` accepts change notifications
+- **HMAC Verification:** Validates webhook signatures using SHA256
+- **Change Event Tracking:** Stores events in `webhook.change_events` table
+- **Automatic Rescraping:** Queues Firecrawl API calls for changed URLs
+- **Search Re-indexing:** Updates Qdrant + BM25 with latest content
+
+### Rescrape Job
+
+**Location:** `app/jobs/rescrape.py`
+
+The rescrape job handles URLs detected as changed by changedetection.io:
+
+1. Fetches change event from `webhook.change_events` table
+2. Calls Firecrawl API to rescrape the URL with latest content
+3. Indexes markdown content in Qdrant vector store
+4. Updates BM25 engine with fresh text
+5. Marks change event as `completed` or `failed` with metadata
+
+**Configuration:**
+```bash
+WEBHOOK_FIRECRAWL_API_URL=http://firecrawl:3002
+WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
+```
+
+### ChangeEvent Model
+
+**Location:** `app/models/timing.py`
+
+The `ChangeEvent` model tracks change detection events:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | Integer | Primary key |
+| `watch_id` | String | UUID from changedetection.io |
+| `watch_url` | String | URL being monitored |
+| `detected_at` | DateTime | When change was detected |
+| `diff_summary` | Text | First 500 chars of diff |
+| `snapshot_url` | String | Link to view full diff |
+| `rescrape_job_id` | String | RQ job ID |
+| `rescrape_status` | String | `queued`, `in_progress`, `completed`, `failed` |
+| `indexed_at` | DateTime | When content was re-indexed |
+| `metadata` | JSONB | Additional metadata (signature, error details) |
+
+**Indexes:**
+- `idx_change_events_watch_id` - Fast lookup by watch
+- `idx_change_events_detected_at` - Time-based queries
+
+### URL Normalization
+
+The rescrape system applies canonical URL normalization to prevent duplicate indexing:
+
+**Normalization Rules:**
+1. Convert to lowercase
+2. Remove trailing slashes
+3. Strip `www.` subdomain
+4. Remove fragment identifiers (`#section`)
+5. Sort query parameters alphabetically
+6. Remove common tracking parameters (utm_*, fbclid, etc.)
+
+**Examples:**
+- `https://Example.com/Page/` → `https://example.com/page`
+- `https://www.site.com/` → `https://site.com`
+- `https://site.com/page?b=2&a=1` → `https://site.com/page?a=1&b=2`
+
+**Benefits:**
+- Hybrid search deduplication (single canonical entry per URL)
+- Efficient rescraping (updates existing document vs creating duplicate)
+- Consistent search results across URL variations
+
+### Hybrid Search Improvements
+
+**Deduplication Strategy:**
+- URL normalization reduces duplicate entries by ~30-40%
+- RRF (Reciprocal Rank Fusion) merges BM25 and vector results
+- Canonical URLs ensure single ranking per page
+
+**Search Accuracy:**
+- No false duplicates from URL variations
+- Cleaner result sets (no `example.com` + `www.example.com`)
+- Improved relevance scores (consolidated signals)
+
+### Metadata Enhancements
+
+Change events store additional metadata in JSONB:
+
+```json
+{
+  "signature": "sha256=...",
+  "diff_size": 1234,
+  "watch_title": "Example Page",
+  "webhook_received_at": "2025-11-10T12:00:00Z",
+  "document_id": "doc-uuid",
+  "firecrawl_status": "completed"
+}
+```
+
+**Use Cases:**
+- Signature verification audit trail
+- Change magnitude tracking (diff_size)
+- Performance metrics (time deltas)
+- Debugging failed rescraped
+
+### Configuration
+
+All changedetection.io settings use `WEBHOOK_*` namespace:
+
+```bash
+# Webhook security
+WEBHOOK_CHANGEDETECTION_HMAC_SECRET=<64-char-hex>
+
+# Firecrawl API access
+WEBHOOK_FIRECRAWL_API_URL=http://firecrawl:3002
+WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
+```
+
+### Testing
+
+```bash
+# Run changedetection integration tests
+cd apps/webhook && uv run pytest tests/integration/test_changedetection*.py -v
+
+# Run rescrape job tests
+cd apps/webhook && uv run pytest tests/unit/test_rescrape_job.py -v
+```
+
+### Documentation
+
+See [changedetection.io Integration Guide](../../docs/CHANGEDETECTION_INTEGRATION.md) for:
+- Setup instructions
+- Webhook configuration
+- Troubleshooting common issues
+- Architecture decisions
 
 ## License
 

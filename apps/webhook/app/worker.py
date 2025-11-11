@@ -1,7 +1,15 @@
 """
 Background worker for async document indexing.
 
-This module runs as a separate process via RQ (Redis Queue).
+DEPRECATED: This module is kept for backward compatibility only.
+The worker now runs as a background thread within the FastAPI process.
+See app.worker_thread.WorkerThreadManager for the new implementation.
+
+To run worker standalone (not recommended):
+    python -m app.worker
+
+To run worker embedded in API (recommended):
+    WEBHOOK_ENABLE_WORKER=true uvicorn app.main:app
 """
 
 import asyncio
@@ -9,11 +17,11 @@ import sys
 from typing import Any
 from uuid import uuid4
 
-from redis import Redis
 from rq import Worker
 
 from app.config import settings
-from app.models import IndexDocumentRequest
+from infra.redis import get_redis_connection
+from api.schemas.indexing import IndexDocumentRequest
 from app.services.bm25_engine import BM25Engine
 from app.services.embedding import EmbeddingService
 from app.services.indexing import IndexingService
@@ -243,7 +251,7 @@ def run_worker() -> None:
     logger.info("All external services validated successfully")
 
     # Connect to Redis
-    redis_conn = Redis.from_url(settings.redis_url)
+    redis_conn = get_redis_connection()
 
     # Create worker with specific queues
     worker = Worker(

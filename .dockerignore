@@ -1,0 +1,196 @@
+# ============================================================================
+# Firecrawl Monorepo .dockerignore
+# ============================================================================
+# Prevents unnecessary files from being copied into Docker build context,
+# reducing build time and image size.
+#
+# This applies to all Dockerfiles in the repository.
+# ============================================================================
+
+# -----------------
+# Version Control
+# -----------------
+.git/
+.gitignore
+.gitattributes
+
+# -----------------
+# Accidental Directories
+# -----------------
+--*/
+
+# -----------------
+# Dependencies
+# -----------------
+**/node_modules/
+**/.pnp
+**/.pnp.js
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/versions
+**/.venv/
+**/venv/
+**/ENV/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/*.py[cod]
+**/*$py.class
+.Python
+**/*.egg
+**/*.egg-info/
+MANIFEST
+**/*.whl
+
+# -----------------
+# Build Artifacts
+# -----------------
+**/dist/
+**/build/
+**/.next/
+**/out/
+**/.cache/
+**/*.egg-info/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.tox/
+**/coverage/
+**/.nyc_output/
+htmlcov/
+coverage.xml
+
+# -----------------
+# IDE & Editors
+# -----------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-*
+.ipynb_checkpoints
+
+# -----------------
+# Environment & Secrets
+# -----------------
+.env*
+!.env.example
+*.key
+*.pem
+*.cert
+*.crt
+secrets/
+gke-key.json
+
+# -----------------
+# Documentation
+# -----------------
+*.md
+!README.md
+docs/
+.docs/
+LICENSE
+CLAUDE.md
+AGENTS.md
+
+# -----------------
+# Testing
+# -----------------
+**/tests/
+**/test/
+**/__tests__/
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+**/*.test.py
+**/*.spec.py
+jest.config.js
+jest.config.ts
+pytest.ini
+.coverage
+coverage.xml
+htmlcov/
+
+# -----------------
+# CI/CD
+# -----------------
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# -----------------
+# Logs
+# -----------------
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -----------------
+# Temporary Files
+# -----------------
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+
+# -----------------
+# Docker
+# -----------------
+Dockerfile*
+docker-compose*.yml
+docker-compose*.yaml
+.dockerignore
+
+# -----------------
+# Package Manager Metadata (selective exclusion)
+# -----------------
+# Keep pnpm-lock.yaml for reproducible builds
+# Keep uv.lock for reproducible Python builds
+package-lock.json
+yarn.lock
+Pipfile.lock
+poetry.lock
+
+# -----------------
+# Scripts & Tools
+# -----------------
+scripts/
+Makefile
+
+# -----------------
+# Databases
+# -----------------
+dump.rdb
+*.rdb
+*.db
+*.sqlite3
+/mongo-data
+
+# -----------------
+# Data Files
+# -----------------
+*.csv
+data/
+
+# -----------------
+# Machine Learning / AI Models
+# -----------------
+*.bin
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.pickle
+*.bm25

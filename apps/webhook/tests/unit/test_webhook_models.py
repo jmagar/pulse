@@ -3,7 +3,7 @@
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
-from app.models import (
+from api.schemas.webhook import (
     FirecrawlDocumentPayload,
     FirecrawlLifecycleEvent,
     FirecrawlPageEvent,
