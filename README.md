@@ -459,18 +459,37 @@ All configuration is managed through environment variables. See [`.env.example`]
 
 ## Testing
 
+### Prerequisites
+
+1. **PostgreSQL**: Tests require PostgreSQL running on localhost:5432
+   ```bash
+   docker compose up -d firecrawl_db
+   ```
+
+2. **Node.js Dependencies**:
+   ```bash
+   pnpm install
+   ```
+
+3. **Python Dependencies**:
+   ```bash
+   cd apps/webhook && uv sync --extra dev
+   ```
+
 ### Running Tests
 
 **All tests**:
 ```bash
-# Node.js apps
+# All test suites
 pnpm test
 
-# Python apps
-pnpm test:webhook
+# Individual test suites
+pnpm test:mcp      # MCP server (Vitest)
+pnpm test:web      # Web UI (no-op currently)
+pnpm test:webhook  # Webhook service (pytest)
 ```
 
-**Individual test suites**:
+**Individual test suites with more control**:
 ```bash
 # MCP Server tests
 cd apps/mcp
@@ -484,6 +503,10 @@ uv run pytest
 cd apps/webhook
 uv run pytest --cov=app --cov-report=html
 ```
+
+### Test Database
+
+Webhook tests use a dedicated PostgreSQL database (`webhook_test`) that is automatically created and reset before each test run. This ensures hermetic, reproducible tests.
 
 ### Integration Testing
 
