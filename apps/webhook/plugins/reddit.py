@@ -111,7 +111,7 @@ class RedditPlugin(BasePlugin):
         self,
         url: str,
         **kwargs: Any,
-    ) -> IndexDocumentRequest:
+    ) -> "IndexDocumentRequest":
         """Fetch a single Reddit post with comments."""
         try:
             import praw
@@ -225,7 +225,7 @@ class RedditPlugin(BasePlugin):
         self,
         url: str,
         **kwargs: Any,
-    ) -> IndexDocumentRequest:
+    ) -> "IndexDocumentRequest":
         """Fetch top posts from a subreddit."""
         try:
             import praw
