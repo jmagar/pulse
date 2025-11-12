@@ -35,9 +35,9 @@ export function formatQueryResponse(
   }
 
   // Format each result as an embedded resource
-  const content = response.results.map((result) => {
-    // Generate URI based on URL and timestamp
-    const uri = `scraped://${new URL(result.url).hostname}/${Date.now()}`;
+  const content = response.results.map((result, index) => {
+    // Generate URI based on URL, timestamp, and index for uniqueness
+    const uri = `scraped://${new URL(result.url).hostname}/${Date.now()}-${index}`;
 
     // Build formatted text with metadata
     const lines = [

@@ -94,4 +94,54 @@ describe("Query Response Formatter", () => {
     expect(resource.text).toContain("**Language:** en");
     expect(resource.text).toContain("**Country:** US");
   });
+
+  it("should generate unique URIs for multiple results processed simultaneously", () => {
+    const searchResponse = {
+      results: [
+        {
+          url: "https://example.com/page1",
+          title: "Page 1",
+          description: null,
+          text: "Content 1",
+          score: 0.9,
+          metadata: {},
+        },
+        {
+          url: "https://example.com/page2",
+          title: "Page 2",
+          description: null,
+          text: "Content 2",
+          score: 0.8,
+          metadata: {},
+        },
+        {
+          url: "https://example.com/page3",
+          title: "Page 3",
+          description: null,
+          text: "Content 3",
+          score: 0.7,
+          metadata: {},
+        },
+      ],
+      total: 3,
+      query: "test",
+      mode: "hybrid",
+    };
+
+    const result = formatQueryResponse(searchResponse, "test");
+
+    expect(result.content).toHaveLength(3);
+
+    // Extract all URIs
+    const uris = result.content.map((item) => item.resource.uri);
+
+    // Check that all URIs are unique
+    const uniqueUris = new Set(uris);
+    expect(uniqueUris.size).toBe(3);
+
+    // Verify URIs follow expected pattern with index
+    expect(uris[0]).toMatch(/scraped:\/\/example\.com\/\d+-0/);
+    expect(uris[1]).toMatch(/scraped:\/\/example\.com\/\d+-1/);
+    expect(uris[2]).toMatch(/scraped:\/\/example\.com\/\d+-2/);
+  });
 });
