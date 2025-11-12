@@ -84,9 +84,7 @@ class PluginInfo(BaseModel):
 class PluginHealthResponse(BaseModel):
     """Health status of registered plugins."""
 
-    plugins: dict[str, bool] = Field(
-        description="Map of plugin names to health status"
-    )
+    plugins: dict[str, bool] = Field(description="Map of plugin names to health status")
 
 
 # Create a singleton service instance
@@ -96,7 +94,7 @@ _plugin_service: PluginIngestionService | None = None
 def get_plugin_service() -> PluginIngestionService:
     """
     Get or create the plugin ingestion service instance.
-    
+
     Returns:
         PluginIngestionService instance
     """
@@ -125,10 +123,10 @@ async def ingest_url(
 ) -> IngestURLResponse:
     """
     Ingest content from a single URL.
-    
+
     The system automatically detects the source type and uses the appropriate
     plugin to fetch and index the content.
-    
+
     Examples:
     - YouTube: `https://youtube.com/watch?v=VIDEO_ID`
     - Reddit post: `https://reddit.com/r/SUBREDDIT/comments/POST_ID/...`
@@ -148,7 +146,7 @@ async def ingest_url(
             queue=queue,
             **request.options,
         )
-        
+
         return IngestURLResponse(**result)
 
     except ValueError as e:
@@ -192,7 +190,7 @@ async def ingest_urls(
 ) -> IngestURLsResponse:
     """
     Ingest content from multiple URLs in batch.
-    
+
     Each URL is processed independently. Failures for individual URLs
     do not prevent other URLs from being processed.
     """
@@ -207,7 +205,7 @@ async def ingest_urls(
             queue=queue,
             **request.options,
         )
-        
+
         return IngestURLsResponse(**result)
 
     except Exception as e:
@@ -234,7 +232,7 @@ async def list_plugins(
 ) -> list[PluginInfo]:
     """
     List all registered plugins with their metadata.
-    
+
     Returns:
         List of plugin information including name, priority, and supported patterns
     """
@@ -253,10 +251,10 @@ async def check_plugin_health(
 ) -> PluginHealthResponse:
     """
     Check health status of all registered plugins.
-    
+
     This validates that plugin dependencies (e.g., youtube-transcript-api, praw)
     are available and working.
-    
+
     Returns:
         Dictionary mapping plugin names to health status (True = healthy)
     """

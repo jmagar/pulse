@@ -16,16 +16,18 @@ if TYPE_CHECKING:
 
 try:
     from utils.logging import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
 
 
 class YouTubePlugin(BasePlugin):
     """
     Plugin for fetching YouTube video transcripts.
-    
+
     Supports:
     - youtube.com/watch?v=VIDEO_ID
     - youtu.be/VIDEO_ID
@@ -41,10 +43,10 @@ class YouTubePlugin(BasePlugin):
     def can_handle(self, url: str) -> bool:
         """
         Check if URL is a YouTube video.
-        
+
         Args:
             url: URL to check
-            
+
         Returns:
             True if URL matches YouTube video patterns
         """
@@ -53,10 +55,10 @@ class YouTubePlugin(BasePlugin):
     def _extract_video_id(self, url: str) -> str | None:
         """
         Extract YouTube video ID from URL.
-        
+
         Args:
             url: YouTube URL
-            
+
         Returns:
             Video ID if found, None otherwise
         """
@@ -73,13 +75,13 @@ class YouTubePlugin(BasePlugin):
             # or youtu.be to prevent domain confusion attacks like evilyoutube.com
             netloc_lower = parsed.netloc.lower()
             is_youtube = (
-                netloc_lower == "youtube.com" or
-                netloc_lower == "www.youtube.com" or
-                netloc_lower == "m.youtube.com" or
-                netloc_lower == "youtu.be" or
-                netloc_lower.endswith(".youtube.com")
+                netloc_lower == "youtube.com"
+                or netloc_lower == "www.youtube.com"
+                or netloc_lower == "m.youtube.com"
+                or netloc_lower == "youtu.be"
+                or netloc_lower.endswith(".youtube.com")
             )
-            
+
             if is_youtube:
                 query_params = parse_qs(parsed.query)
                 if "v" in query_params:
@@ -99,16 +101,16 @@ class YouTubePlugin(BasePlugin):
     ) -> "IndexDocumentRequest":
         """
         Fetch YouTube video transcript and metadata.
-        
+
         Args:
             url: YouTube video URL
             **kwargs: Additional options
                 - languages: List of language codes to try (default: ['en'])
                 - include_generated: Include auto-generated captions (default: True)
-            
+
         Returns:
             IndexDocumentRequest with transcript as markdown
-            
+
         Raises:
             ValueError: If video ID cannot be extracted
             Exception: If transcript fetching fails
@@ -144,7 +146,7 @@ class YouTubePlugin(BasePlugin):
         try:
             # Fetch transcript
             transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-            
+
             # Try to find transcript in preferred languages
             transcript = None
             for lang in languages:
@@ -162,7 +164,7 @@ class YouTubePlugin(BasePlugin):
                 available = transcript_list._manually_created_transcripts
                 if include_generated and not available:
                     available = transcript_list._generated_transcripts
-                    
+
                 if available:
                     transcript = list(available.values())[0]
                 else:
@@ -174,7 +176,7 @@ class YouTubePlugin(BasePlugin):
 
             # Fetch the actual transcript data
             transcript_data = transcript.fetch()
-            
+
             # Format transcript as markdown
             markdown_lines = ["# YouTube Video Transcript\n"]
             markdown_lines.append(f"**Video ID:** {video_id}\n")
@@ -182,7 +184,7 @@ class YouTubePlugin(BasePlugin):
             markdown_lines.append(f"**Language:** {transcript.language}\n")
             markdown_lines.append(f"**Is Auto-Generated:** {transcript.is_generated}\n")
             markdown_lines.append("\n## Transcript\n")
-            
+
             # Combine transcript segments
             for segment in transcript_data:
                 text = segment["text"].strip()
@@ -247,9 +249,7 @@ class YouTubePlugin(BasePlugin):
                 languages=languages,
                 error=str(e),
             )
-            raise ValueError(
-                f"No transcript found for video {video_id} in languages: {languages}"
-            )
+            raise ValueError(f"No transcript found for video {video_id} in languages: {languages}")
 
         except Exception as e:
             logger.error(
@@ -264,7 +264,7 @@ class YouTubePlugin(BasePlugin):
     def get_priority(self) -> int:
         """
         Return high priority for YouTube URLs.
-        
+
         Returns:
             Priority of 90 (high priority for specific source)
         """
@@ -273,7 +273,7 @@ class YouTubePlugin(BasePlugin):
     def get_name(self) -> str:
         """
         Return plugin name.
-        
+
         Returns:
             Plugin name
         """
@@ -282,7 +282,7 @@ class YouTubePlugin(BasePlugin):
     def get_supported_patterns(self) -> list[str]:
         """
         Get supported URL patterns.
-        
+
         Returns:
             List of supported YouTube URL patterns
         """
@@ -296,16 +296,17 @@ class YouTubePlugin(BasePlugin):
     async def health_check(self) -> bool:
         """
         Check if youtube-transcript-api is available.
-        
+
         Returns:
             True if library is importable, False otherwise
         """
-        try:
-            import youtube_transcript_api
+        import importlib.util
+
+        if importlib.util.find_spec("youtube_transcript_api") is not None:
             return True
-        except ImportError:
-            logger.warning(
-                "youtube-transcript-api not available",
-                plugin=self.get_name(),
-            )
-            return False
+
+        logger.warning(
+            "youtube-transcript-api not available",
+            plugin=self.get_name(),
+        )
+        return False

@@ -15,16 +15,18 @@ if TYPE_CHECKING:
 
 try:
     from utils.logging import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
 
 
 class RedditPlugin(BasePlugin):
     """
     Plugin for fetching Reddit posts and subreddit content.
-    
+
     Supports:
     - reddit.com/r/SUBREDDIT/comments/POST_ID/*
     - reddit.com/r/SUBREDDIT (fetch top posts)
@@ -42,7 +44,7 @@ class RedditPlugin(BasePlugin):
     ) -> None:
         """
         Initialize Reddit plugin.
-        
+
         Args:
             client_id: Reddit API client ID (optional, falls back to env)
             client_secret: Reddit API client secret (optional, falls back to env)
@@ -55,10 +57,10 @@ class RedditPlugin(BasePlugin):
     def can_handle(self, url: str) -> bool:
         """
         Check if URL is a Reddit post or subreddit.
-        
+
         Args:
             url: URL to check
-            
+
         Returns:
             True if URL matches Reddit patterns
         """
@@ -82,7 +84,7 @@ class RedditPlugin(BasePlugin):
     ) -> "IndexDocumentRequest":
         """
         Fetch Reddit content.
-        
+
         Args:
             url: Reddit URL (post or subreddit)
             **kwargs: Additional options
@@ -90,10 +92,10 @@ class RedditPlugin(BasePlugin):
                 - time_filter: Time filter for subreddit posts (default: 'day')
                 - include_comments: Include top comments in post (default: True)
                 - comment_limit: Max comments to include (default: 20)
-            
+
         Returns:
             IndexDocumentRequest with Reddit content as markdown
-            
+
         Raises:
             ValueError: If URL format is invalid
             Exception: If content fetching fails
@@ -143,15 +145,17 @@ class RedditPlugin(BasePlugin):
         try:
             # Fetch the submission
             submission = reddit.submission(id=post_id)
-            
+
             # Build markdown content
             markdown_lines = [f"# {submission.title}\n"]
             markdown_lines.append(f"**Subreddit:** r/{submission.subreddit.display_name}\n")
-            markdown_lines.append(f"**Author:** u/{submission.author.name if submission.author else '[deleted]'}\n")
+            markdown_lines.append(
+                f"**Author:** u/{submission.author.name if submission.author else '[deleted]'}\n"
+            )
             markdown_lines.append(f"**Score:** {submission.score}\n")
             markdown_lines.append(f"**URL:** {url}\n")
-            markdown_lines.append(f"\n## Post Content\n")
-            
+            markdown_lines.append("\n## Post Content\n")
+
             if submission.selftext:
                 markdown_lines.append(f"{submission.selftext}\n")
             elif submission.is_self:
@@ -162,22 +166,22 @@ class RedditPlugin(BasePlugin):
             # Include comments if requested
             include_comments = kwargs.get("include_comments", True)
             comment_limit = kwargs.get("comment_limit", 20)
-            
+
             if include_comments:
-                markdown_lines.append(f"\n## Top Comments\n")
-                
+                markdown_lines.append("\n## Top Comments\n")
+
                 # Replace MoreComments objects with actual comments
                 submission.comments.replace_more(limit=0)
-                
+
                 # Get top-level comments sorted by score
                 top_comments = sorted(
                     submission.comments,
                     key=lambda c: c.score,
                     reverse=True,
                 )[:comment_limit]
-                
+
                 for i, comment in enumerate(top_comments, 1):
-                    author = comment.author.name if comment.author else '[deleted]'
+                    author = comment.author.name if comment.author else "[deleted]"
                     markdown_lines.append(f"\n### Comment {i} (Score: {comment.score})\n")
                     markdown_lines.append(f"**Author:** u/{author}\n")
                     markdown_lines.append(f"\n{comment.body}\n")
@@ -256,22 +260,24 @@ class RedditPlugin(BasePlugin):
 
         try:
             subreddit = reddit.subreddit(subreddit_name)
-            
+
             # Fetch top posts
             posts = list(subreddit.top(time_filter=time_filter, limit=limit))
-            
+
             # Build markdown content
             markdown_lines = [f"# r/{subreddit_name}\n"]
             markdown_lines.append(f"**Subscribers:** {subreddit.subscribers:,}\n")
             markdown_lines.append(f"**Description:** {subreddit.public_description}\n")
             markdown_lines.append(f"\n## Top {limit} Posts ({time_filter})\n")
-            
+
             for i, post in enumerate(posts, 1):
-                author = post.author.name if post.author else '[deleted]'
+                author = post.author.name if post.author else "[deleted]"
                 markdown_lines.append(f"\n### {i}. {post.title}\n")
-                markdown_lines.append(f"**Author:** u/{author} | **Score:** {post.score} | **Comments:** {post.num_comments}\n")
+                markdown_lines.append(
+                    f"**Author:** u/{author} | **Score:** {post.score} | **Comments:** {post.num_comments}\n"
+                )
                 markdown_lines.append(f"**URL:** https://reddit.com{post.permalink}\n")
-                
+
                 if post.selftext:
                     # Truncate long posts
                     text = post.selftext[:500]
@@ -316,7 +322,7 @@ class RedditPlugin(BasePlugin):
     def get_priority(self) -> int:
         """
         Return high priority for Reddit URLs.
-        
+
         Returns:
             Priority of 90 (high priority for specific source)
         """
@@ -325,7 +331,7 @@ class RedditPlugin(BasePlugin):
     def get_name(self) -> str:
         """
         Return plugin name.
-        
+
         Returns:
             Plugin name
         """
@@ -334,7 +340,7 @@ class RedditPlugin(BasePlugin):
     def get_supported_patterns(self) -> list[str]:
         """
         Get supported URL patterns.
-        
+
         Returns:
             List of supported Reddit URL patterns
         """
@@ -346,16 +352,17 @@ class RedditPlugin(BasePlugin):
     async def health_check(self) -> bool:
         """
         Check if praw library is available.
-        
+
         Returns:
             True if library is importable, False otherwise
         """
-        try:
-            import praw
+        import importlib.util
+
+        if importlib.util.find_spec("praw") is not None:
             return True
-        except ImportError:
-            logger.warning(
-                "praw not available",
-                plugin=self.get_name(),
-            )
-            return False
+
+        logger.warning(
+            "praw not available",
+            plugin=self.get_name(),
+        )
+        return False

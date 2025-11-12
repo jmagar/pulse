@@ -5,28 +5,30 @@ The registry maintains a collection of plugins and routes URLs to the
 appropriate plugin based on URL pattern matching and priority.
 """
 
-from typing import Optional
+from typing import Any
 
 from plugins.base import BasePlugin
 
 try:
     from utils.logging import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
 
 
 class PluginRegistry:
     """
     Central registry for content ingestion plugins.
-    
+
     The registry:
     1. Maintains a collection of registered plugins
     2. Routes URLs to appropriate plugins based on pattern matching
     3. Provides fallback to default plugin if no match is found
     4. Validates plugin health before use
-    
+
     Example:
         >>> registry = PluginRegistry()
         >>> registry.register(YouTubePlugin())
@@ -38,7 +40,7 @@ class PluginRegistry:
     def __init__(self) -> None:
         """Initialize the plugin registry."""
         self._plugins: list[BasePlugin] = []
-        self._default_plugin: Optional[BasePlugin] = None
+        self._default_plugin: BasePlugin | None = None
         logger.info("Plugin registry initialized")
 
     def register(
@@ -48,18 +50,18 @@ class PluginRegistry:
     ) -> None:
         """
         Register a plugin with the registry.
-        
+
         Args:
             plugin: Plugin instance to register
             is_default: If True, this plugin will be used as fallback
                        when no other plugin matches a URL
-                       
+
         Example:
             >>> registry.register(YouTubePlugin())
             >>> registry.register(FirecrawlPlugin(), is_default=True)
         """
         self._plugins.append(plugin)
-        
+
         if is_default:
             if self._default_plugin is not None:
                 logger.warning(
@@ -68,7 +70,7 @@ class PluginRegistry:
                     new=plugin.get_name(),
                 )
             self._default_plugin = plugin
-            
+
         logger.info(
             "Plugin registered",
             plugin=plugin.get_name(),
@@ -77,19 +79,19 @@ class PluginRegistry:
             patterns=plugin.get_supported_patterns(),
         )
 
-    def get_plugin_for_url(self, url: str) -> Optional[BasePlugin]:
+    def get_plugin_for_url(self, url: str) -> BasePlugin | None:
         """
         Find the appropriate plugin for a given URL.
-        
+
         Plugins are checked in priority order (highest first).
         If no plugin matches, the default plugin is returned.
-        
+
         Args:
             url: URL to find a plugin for
-            
+
         Returns:
             Matching plugin, default plugin, or None if no plugins registered
-            
+
         Example:
             >>> plugin = registry.get_plugin_for_url("https://youtube.com/watch?v=abc")
             >>> print(plugin.get_name())
@@ -141,13 +143,13 @@ class PluginRegistry:
         )
         return None
 
-    def list_plugins(self) -> list[dict[str, any]]:
+    def list_plugins(self) -> list[dict[str, Any]]:
         """
         List all registered plugins with their metadata.
-        
+
         Returns:
             List of plugin metadata dictionaries
-            
+
         Example:
             >>> plugins = registry.list_plugins()
             >>> for plugin in plugins:
@@ -156,21 +158,23 @@ class PluginRegistry:
         result = []
         for plugin in self._plugins:
             is_default = plugin == self._default_plugin
-            result.append({
-                "name": plugin.get_name(),
-                "priority": plugin.get_priority(),
-                "patterns": plugin.get_supported_patterns(),
-                "is_default": is_default,
-            })
+            result.append(
+                {
+                    "name": plugin.get_name(),
+                    "priority": plugin.get_priority(),
+                    "patterns": plugin.get_supported_patterns(),
+                    "is_default": is_default,
+                }
+            )
         return sorted(result, key=lambda p: p["priority"], reverse=True)
 
     async def validate_plugins(self) -> dict[str, bool]:
         """
         Run health checks on all registered plugins.
-        
+
         Returns:
             Dictionary mapping plugin names to health status
-            
+
         Example:
             >>> health = await registry.validate_plugins()
             >>> print(health)
@@ -181,7 +185,7 @@ class PluginRegistry:
             try:
                 is_healthy = await plugin.health_check()
                 results[plugin.get_name()] = is_healthy
-                
+
                 if not is_healthy:
                     logger.warning(
                         "Plugin health check failed",
@@ -194,36 +198,36 @@ class PluginRegistry:
                     error=str(e),
                 )
                 results[plugin.get_name()] = False
-                
+
         return results
 
     def unregister(self, plugin_name: str) -> bool:
         """
         Unregister a plugin by name.
-        
+
         Args:
             plugin_name: Name of the plugin to unregister
-            
+
         Returns:
             True if plugin was found and removed, False otherwise
         """
         for i, plugin in enumerate(self._plugins):
             if plugin.get_name() == plugin_name:
                 self._plugins.pop(i)
-                
+
                 if self._default_plugin and self._default_plugin.get_name() == plugin_name:
                     self._default_plugin = None
-                    
+
                 logger.info("Plugin unregistered", plugin=plugin_name)
                 return True
-                
+
         logger.warning("Plugin not found for unregistration", plugin=plugin_name)
         return False
 
     def get_plugin_count(self) -> int:
         """
         Get the number of registered plugins.
-        
+
         Returns:
             Number of registered plugins
         """

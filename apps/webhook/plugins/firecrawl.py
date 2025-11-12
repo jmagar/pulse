@@ -12,13 +12,14 @@ from plugins.base import BasePlugin
 
 if TYPE_CHECKING:
     from api.schemas.indexing import IndexDocumentRequest
-    from utils.logging import Logger
 
 try:
     from utils.logging import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
 
 logger = get_logger(__name__)
@@ -27,7 +28,7 @@ logger = get_logger(__name__)
 class FirecrawlPlugin(BasePlugin):
     """
     Plugin for scraping web content via Firecrawl API.
-    
+
     This is typically used as the default/fallback plugin since it can
     handle any URL. More specific plugins (YouTube, Reddit, etc.) should
     have higher priority.
@@ -36,10 +37,10 @@ class FirecrawlPlugin(BasePlugin):
     def can_handle(self, url: str) -> bool:
         """
         Firecrawl can handle any HTTP/HTTPS URL.
-        
+
         Args:
             url: URL to check
-            
+
         Returns:
             True if URL starts with http:// or https://
         """
@@ -52,19 +53,19 @@ class FirecrawlPlugin(BasePlugin):
     ) -> "IndexDocumentRequest":
         """
         Fetch content via Firecrawl API.
-        
+
         Note: This is a placeholder implementation. In practice, this
         should trigger a Firecrawl scrape job and wait for/queue the result.
         The actual implementation will depend on how Firecrawl integration
         is structured in the existing codebase.
-        
+
         Args:
             url: URL to scrape
             **kwargs: Additional options (e.g., wait_for_selectors, formats)
-            
+
         Returns:
             IndexDocumentRequest with scraped content
-            
+
         Raises:
             NotImplementedError: This is a placeholder - real implementation
                                  should integrate with existing Firecrawl flow
@@ -74,13 +75,13 @@ class FirecrawlPlugin(BasePlugin):
         # 1. Triggering a Firecrawl scrape job
         # 2. Waiting for webhook callback OR polling for completion
         # 3. Transforming Firecrawl response to IndexDocumentRequest
-        
+
         logger.info(
             "Firecrawl plugin invoked",
             url=url,
             kwargs=kwargs,
         )
-        
+
         raise NotImplementedError(
             "Firecrawl plugin should use existing webhook flow. "
             "Use the plugin system for new sources, but keep Firecrawl "
@@ -90,7 +91,7 @@ class FirecrawlPlugin(BasePlugin):
     def get_priority(self) -> int:
         """
         Return low priority since this is a fallback plugin.
-        
+
         Returns:
             Priority of 10 (low priority fallback)
         """
@@ -99,7 +100,7 @@ class FirecrawlPlugin(BasePlugin):
     def get_name(self) -> str:
         """
         Return plugin name.
-        
+
         Returns:
             Plugin name
         """
@@ -108,7 +109,7 @@ class FirecrawlPlugin(BasePlugin):
     def get_supported_patterns(self) -> list[str]:
         """
         Get supported URL patterns.
-        
+
         Returns:
             List of supported patterns (any HTTP/HTTPS URL)
         """
