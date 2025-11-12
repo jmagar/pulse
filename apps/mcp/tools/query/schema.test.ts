@@ -62,7 +62,11 @@ describe("Query Tool Schema", () => {
 
   describe("buildQueryInputSchema", () => {
     it("should return valid JSON schema", () => {
-      const schema = buildQueryInputSchema();
+      const schema = buildQueryInputSchema() as {
+        type: string;
+        properties: Record<string, unknown>;
+        required: string[];
+      };
 
       expect(schema.type).toBe("object");
       expect(schema.properties).toBeDefined();
@@ -71,7 +75,9 @@ describe("Query Tool Schema", () => {
     });
 
     it("should include all optional properties", () => {
-      const schema = buildQueryInputSchema();
+      const schema = buildQueryInputSchema() as {
+        properties: Record<string, unknown>;
+      };
 
       expect(schema.properties.mode).toBeDefined();
       expect(schema.properties.limit).toBeDefined();

@@ -46,9 +46,9 @@ export type QueryOptions = z.infer<typeof queryOptionsSchema>;
  * instanceof issues. Schemas imported from dist/ fail instanceof checks,
  * returning empty schemas.
  */
-export function buildQueryInputSchema(): Record<string, unknown> {
+export function buildQueryInputSchema() {
   return {
-    type: "object",
+    type: "object" as const,
     properties: {
       query: {
         type: "string",

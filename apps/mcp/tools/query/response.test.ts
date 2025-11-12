@@ -42,7 +42,10 @@ describe("Query Response Formatter", () => {
     expect(result.isError).toBeUndefined();
 
     // First result should be embedded resource
-    const firstResult = result.content[0];
+    const firstResult = result.content[0] as {
+      type: string;
+      resource: { uri: string; name: string; text: string };
+    };
     expect(firstResult.type).toBe("resource");
     expect(firstResult.resource).toBeDefined();
     expect(firstResult.resource.uri).toContain("scraped://");
@@ -89,7 +92,8 @@ describe("Query Response Formatter", () => {
 
     const result = formatQueryResponse(searchResponse, "test");
 
-    const resource = result.content[0].resource;
+    const resource = (result.content[0] as { resource: { text: string } })
+      .resource;
     expect(resource.text).toContain("**Domain:** example.com");
     expect(resource.text).toContain("**Language:** en");
     expect(resource.text).toContain("**Country:** US");
@@ -133,7 +137,9 @@ describe("Query Response Formatter", () => {
     expect(result.content).toHaveLength(3);
 
     // Extract all URIs
-    const uris = result.content.map((item) => item.resource.uri);
+    const uris = result.content.map(
+      (item) => (item as { resource: { uri: string } }).resource.uri,
+    );
 
     // Check that all URIs are unique
     const uniqueUris = new Set(uris);
