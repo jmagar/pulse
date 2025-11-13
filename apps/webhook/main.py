@@ -31,6 +31,34 @@ configure_logging(settings.log_level)
 logger = get_logger(__name__)
 
 
+async def run_cleanup_scheduler() -> None:
+    """
+    Run zombie job cleanup every 5 minutes.
+
+    This scheduler marks old in_progress rescrape jobs as failed to prevent
+    resource leaks from crashed/timed-out jobs.
+    """
+    logger.info("Starting cleanup scheduler (runs every 5 minutes)")
+
+    while True:
+        try:
+            await asyncio.sleep(5 * 60)  # 5 minutes
+
+            # Run zombie job cleanup
+            from workers.cleanup import cleanup_zombie_jobs
+
+            logger.info("Running scheduled zombie job cleanup")
+            await cleanup_zombie_jobs(max_age_minutes=15)
+
+        except asyncio.CancelledError:
+            logger.info("Cleanup scheduler cancelled")
+            break
+        except Exception as e:
+            logger.error("Cleanup scheduler error", error=str(e))
+            # Wait 1 minute before retrying on error
+            await asyncio.sleep(60)
+
+
 async def run_retention_scheduler() -> None:
     """
     Run data retention policy daily at 2 AM EST.
@@ -129,6 +157,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     else:
         logger.info("Background worker disabled (WEBHOOK_ENABLE_WORKER=false)")
 
+    # Start cleanup scheduler
+    cleanup_task = asyncio.create_task(run_cleanup_scheduler())
+    logger.info("Cleanup scheduler started")
+
     # Start retention scheduler
     retention_task = asyncio.create_task(run_retention_scheduler())
     logger.info("Retention scheduler started")
@@ -139,6 +171,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     # Shutdown
     logger.info("Shutting down Search Bridge API")
+
+    # Stop cleanup scheduler
+    try:
+        cleanup_task.cancel()
+        await cleanup_task
+        logger.info("Cleanup scheduler stopped successfully")
+    except asyncio.CancelledError:
+        logger.info("Cleanup scheduler cancelled")
+    except Exception:
+        logger.exception("Failed to stop cleanup scheduler")
 
     # Stop retention scheduler
     try:

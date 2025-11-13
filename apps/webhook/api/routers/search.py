@@ -151,7 +151,7 @@ async def search_documents(
         )
 
 
-@router.get("/stats", response_model=IndexStats)
+@router.get("/stats", response_model=IndexStats, dependencies=[Depends(verify_api_secret)])
 async def get_stats(
     vector_store: Annotated[VectorStore, Depends(get_vector_store)],
     bm25_engine: Annotated[BM25Engine, Depends(get_bm25_engine)],
