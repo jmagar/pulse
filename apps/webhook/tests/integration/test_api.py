@@ -84,9 +84,12 @@ def test_root_endpoint(client: TestClient) -> None:
     assert data["status"] == "running"
 
 
-def test_health_endpoint(client: TestClient) -> None:
+def test_health_endpoint(client: TestClient, api_secret: str) -> None:
     """Test health check endpoint."""
-    response = client.get("/health")
+    response = client.get(
+        "/health",
+        headers={"Authorization": f"Bearer {api_secret}"},
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -101,9 +104,12 @@ def test_health_endpoint(client: TestClient) -> None:
     assert "tei" in data["services"]
 
 
-def test_stats_endpoint(client: TestClient) -> None:
+def test_stats_endpoint(client: TestClient, api_secret: str) -> None:
     """Test stats endpoint."""
-    response = client.get("/api/stats")
+    response = client.get(
+        "/api/stats",
+        headers={"Authorization": f"Bearer {api_secret}"},
+    )
 
     assert response.status_code == 200
     data = response.json()
