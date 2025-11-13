@@ -197,8 +197,9 @@ class Settings(BaseSettings):
     changedetection_api_url: str = Field(
         default="http://pulse_change-detection:5000",
         validation_alias=AliasChoices(
-            "WEBHOOK_CHANGEDETECTION_API_URL",
-            "CHANGEDETECTION_API_URL",
+            "WEBHOOK_CHANGEDETECTION_API_URL",  # Legacy (keep for backward compat)
+            "CHANGEDETECTION_INTERNAL_URL",      # Preferred internal Docker URL
+            "CHANGEDETECTION_API_URL",           # External fallback
         ),
         description="changedetection.io API base URL",
     )
