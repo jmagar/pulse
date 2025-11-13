@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 
 import { createRateLimiter, RateLimiter } from "../../server/middleware/rateLimit.js";
 
@@ -83,5 +83,48 @@ describe("RateLimiter class - Crawl Operations", () => {
 
     // Should allow requests again
     expect(limiter.check("user-123")).toBe(true);
+  });
+});
+
+describe("Rate Limiter Memory Management", () => {
+  let limiter: RateLimiter;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    limiter = new RateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 10,
+    });
+  });
+
+  afterEach(() => {
+    limiter.destroy();
+    vi.useRealTimers();
+  });
+
+  it("should cleanup expired entries automatically", () => {
+    // Add entries for 100 unique keys
+    for (let i = 0; i < 100; i++) {
+      limiter.check(`user-${i}`);
+    }
+
+    // Verify entries exist
+    expect(limiter.getStoreSize()).toBe(100);
+
+    // Fast-forward past window expiry
+    vi.advanceTimersByTime(16 * 60 * 1000);
+
+    // Cleanup should have removed expired entries
+    expect(limiter.getStoreSize()).toBe(0);
+  });
+
+  it("should have destroy method to cleanup resources", () => {
+    const limiter2 = new RateLimiter({ windowMs: 60000, max: 10 });
+
+    limiter2.check("user-1");
+    expect(limiter2.getStoreSize()).toBe(1);
+
+    limiter2.destroy();
+    expect(limiter2.getStoreSize()).toBe(0);
   });
 });

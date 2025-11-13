@@ -11,6 +11,15 @@ const crawlRateLimiter = new RateLimiter({
   max: 10, // Max 10 crawl jobs per 15 min
 });
 
+// Add cleanup on process exit
+process.on("SIGTERM", () => {
+  crawlRateLimiter.destroy();
+});
+
+process.on("SIGINT", () => {
+  crawlRateLimiter.destroy();
+});
+
 export function createCrawlTool(config: FirecrawlConfig): Tool {
   const client = new FirecrawlCrawlClient(config);
 

@@ -58,9 +58,15 @@ interface RateLimitEntry {
 export class RateLimiter {
   private store = new Map<string, RateLimitEntry>();
   private options: RateLimiterOptions;
+  private cleanupInterval: NodeJS.Timeout;
 
   constructor(options: RateLimiterOptions) {
     this.options = options;
+
+    // Cleanup expired entries periodically
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupExpiredEntries();
+    }, options.windowMs);
   }
 
   check(key: string): boolean {
@@ -88,5 +94,34 @@ export class RateLimiter {
 
   reset(key: string): void {
     this.store.delete(key);
+  }
+
+  /**
+   * Remove expired entries from store.
+   * Called automatically every windowMs interval.
+   */
+  private cleanupExpiredEntries(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.store.entries()) {
+      if (now >= entry.resetAt) {
+        this.store.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Stop cleanup interval and clear all entries.
+   * Call this when shutting down the rate limiter.
+   */
+  destroy(): void {
+    clearInterval(this.cleanupInterval);
+    this.store.clear();
+  }
+
+  /**
+   * Get current store size (for testing).
+   */
+  getStoreSize(): number {
+    return this.store.size;
   }
 }
