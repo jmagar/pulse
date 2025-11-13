@@ -2,6 +2,7 @@
 
 import pytest
 from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 from workers.cleanup import cleanup_zombie_jobs
 from domain.models import ChangeEvent
@@ -29,8 +30,13 @@ async def test_cleanup_identifies_zombie_jobs(db_session):
     db_session.add_all([old_event, recent_event])
     await db_session.commit()
 
-    # Run cleanup
-    result = await cleanup_zombie_jobs(max_age_minutes=15)
+    # Mock get_db_context to use test session
+    async def mock_db_context():
+        yield db_session
+
+    with patch('workers.cleanup.get_db_context', return_value=mock_db_context()):
+        # Run cleanup
+        result = await cleanup_zombie_jobs(max_age_minutes=15)
 
     # Verify zombie marked as failed
     await db_session.refresh(old_event)
@@ -65,8 +71,13 @@ async def test_cleanup_preserves_completed_jobs(db_session):
     db_session.add_all([completed_event, failed_event])
     await db_session.commit()
 
-    # Run cleanup
-    result = await cleanup_zombie_jobs(max_age_minutes=15)
+    # Mock get_db_context to use test session
+    async def mock_db_context():
+        yield db_session
+
+    with patch('workers.cleanup.get_db_context', return_value=mock_db_context()):
+        # Run cleanup
+        result = await cleanup_zombie_jobs(max_age_minutes=15)
 
     # Verify nothing was cleaned up
     assert result["cleaned_up"] == 0
@@ -92,8 +103,13 @@ async def test_cleanup_handles_no_zombie_jobs(db_session):
     db_session.add(active_event)
     await db_session.commit()
 
-    # Run cleanup
-    result = await cleanup_zombie_jobs(max_age_minutes=15)
+    # Mock get_db_context to use test session
+    async def mock_db_context():
+        yield db_session
+
+    with patch('workers.cleanup.get_db_context', return_value=mock_db_context()):
+        # Run cleanup
+        result = await cleanup_zombie_jobs(max_age_minutes=15)
 
     # Should find nothing to clean
     assert result["cleaned_up"] == 0

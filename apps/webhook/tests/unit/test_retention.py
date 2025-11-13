@@ -2,6 +2,7 @@
 
 import pytest
 from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, patch
 from sqlalchemy import select
 
 from domain.models import RequestMetric, OperationMetric
@@ -43,8 +44,13 @@ async def test_retention_deletes_old_metrics(db_session):
     db_session.add_all([old_request, old_operation, recent_request])
     await db_session.commit()
 
-    # Run retention with 90-day policy
-    result = await enforce_retention_policy(retention_days=90)
+    # Mock get_db_context to use test session
+    async def mock_db_context():
+        yield db_session
+
+    with patch('workers.retention.get_db_context', return_value=mock_db_context()):
+        # Run retention with 90-day policy
+        result = await enforce_retention_policy(retention_days=90)
 
     # Verify old records deleted
     old_req_result = await db_session.execute(
@@ -83,8 +89,13 @@ async def test_retention_preserves_recent_data(db_session):
     db_session.add_all(recent_metrics)
     await db_session.commit()
 
-    # Run retention with 90-day policy
-    result = await enforce_retention_policy(retention_days=90)
+    # Mock get_db_context to use test session
+    async def mock_db_context():
+        yield db_session
+
+    with patch('workers.retention.get_db_context', return_value=mock_db_context()):
+        # Run retention with 90-day policy
+        result = await enforce_retention_policy(retention_days=90)
 
     # Verify no recent records deleted
     assert result["deleted_requests"] == 0
@@ -123,8 +134,13 @@ async def test_retention_with_custom_days(db_session):
     db_session.add_all([old_metric, recent_metric])
     await db_session.commit()
 
-    # Run retention with 30-day policy
-    result = await enforce_retention_policy(retention_days=30)
+    # Mock get_db_context to use test session
+    async def mock_db_context():
+        yield db_session
+
+    with patch('workers.retention.get_db_context', return_value=mock_db_context()):
+        # Run retention with 30-day policy
+        result = await enforce_retention_policy(retention_days=30)
 
     # Verify old record (35 days) deleted
     old_result = await db_session.execute(
@@ -146,8 +162,13 @@ async def test_retention_empty_database(db_session):
     """Should handle empty database gracefully."""
     from workers.retention import enforce_retention_policy
 
-    # Run retention on empty database
-    result = await enforce_retention_policy(retention_days=90)
+    # Mock get_db_context to use test session
+    async def mock_db_context():
+        yield db_session
+
+    with patch('workers.retention.get_db_context', return_value=mock_db_context()):
+        # Run retention on empty database
+        result = await enforce_retention_policy(retention_days=90)
 
     # Should return zero deletions
     assert result["deleted_requests"] == 0
