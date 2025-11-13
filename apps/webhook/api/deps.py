@@ -7,6 +7,7 @@ Implements dependency injection for FastAPI.
 import hashlib
 import hmac
 import re
+import secrets
 from types import SimpleNamespace
 from typing import Annotated, Any
 from uuid import uuid4
@@ -330,7 +331,7 @@ async def verify_api_secret(
     if authorization.startswith("Bearer "):
         api_secret = authorization[7:]  # Remove "Bearer " prefix
 
-    if api_secret != settings.api_secret:
+    if not secrets.compare_digest(api_secret, settings.api_secret):
         logger.warning("Invalid API secret provided")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
