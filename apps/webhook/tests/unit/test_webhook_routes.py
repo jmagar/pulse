@@ -48,7 +48,7 @@ def test_webhook_with_valid_signature(
     handler_mock = AsyncMock(
         return_value={"status": "queued", "queued_jobs": 1, "job_ids": ["job-1"]}
     )
-    monkeypatch.setattr(routes, "handle_firecrawl_event", handler_mock)
+    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,
@@ -119,7 +119,7 @@ def test_webhook_crawl_page_event(
     handler_mock = AsyncMock(
         return_value={"status": "queued", "queued_jobs": 1, "job_ids": ["job-1"]}
     )
-    monkeypatch.setattr(routes, "handle_firecrawl_event", handler_mock)
+    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,
@@ -154,7 +154,7 @@ def test_webhook_lifecycle_event(
     handler_mock = AsyncMock(
         return_value={"status": "acknowledged", "event_type": "crawl.completed"}
     )
-    monkeypatch.setattr(routes, "handle_firecrawl_event", handler_mock)
+    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,
@@ -186,7 +186,7 @@ def test_webhook_accepts_job_id_v0_payload(
     handler_mock = AsyncMock(
         return_value={"status": "queued", "queued_jobs": 1, "job_ids": ["job-legacy"]}
     )
-    monkeypatch.setattr(routes, "handle_firecrawl_event", handler_mock)
+    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,
@@ -217,7 +217,7 @@ def test_webhook_queue_failure(
 
     client, _ = webhook_client
     handler_mock = AsyncMock(side_effect=handlers.WebhookHandlerError(500, "Queue failure"))
-    monkeypatch.setattr(routes, "handle_firecrawl_event", handler_mock)
+    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,
