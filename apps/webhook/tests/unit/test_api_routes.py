@@ -163,7 +163,7 @@ async def test_search_documents_failure(
 @pytest.mark.asyncio
 async def test_health_check_all_healthy(mock_services: dict[str, Any]) -> None:
     """Test health check with all services healthy."""
-    with patch("app.api.dependencies.get_redis_connection") as mock_redis:
+    with patch("api.deps.get_redis_connection") as mock_redis:
         mock_redis_instance = MagicMock()
         mock_redis_instance.ping.return_value = True
         mock_redis.return_value = mock_redis_instance
@@ -184,7 +184,7 @@ async def test_health_check_partial_failure(mock_services: dict[str, Any]) -> No
     """Test health check with some services down."""
     mock_services["embedding"].health_check.return_value = False
 
-    with patch("app.api.dependencies.get_redis_connection") as mock_redis:
+    with patch("api.deps.get_redis_connection") as mock_redis:
         mock_redis_instance = MagicMock()
         mock_redis_instance.ping.return_value = True
         mock_redis.return_value = mock_redis_instance

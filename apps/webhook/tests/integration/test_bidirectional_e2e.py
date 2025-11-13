@@ -46,7 +46,7 @@ async def test_bidirectional_workflow():
     mock_queue.enqueue.return_value = mock_job
 
     # STEP 3: Auto-watch created
-    with patch("app.services.auto_watch.ChangeDetectionClient") as mock_client_cls:
+    with patch("services.auto_watch.ChangeDetectionClient") as mock_client_cls:
         mock_client_instance = mock_client_cls.return_value
         mock_client_instance.create_watch = AsyncMock(
             return_value={
@@ -104,7 +104,7 @@ async def test_multiple_urls_create_multiple_watches():
     mock_job = MagicMock()
     mock_queue.enqueue.return_value = mock_job
 
-    with patch("app.services.auto_watch.ChangeDetectionClient") as mock_client_cls:
+    with patch("services.auto_watch.ChangeDetectionClient") as mock_client_cls:
         mock_client_instance = mock_client_cls.return_value
         mock_client_instance.create_watch = AsyncMock(
             side_effect=[

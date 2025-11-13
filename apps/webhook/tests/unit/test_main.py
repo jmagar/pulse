@@ -37,7 +37,7 @@ def test_cors_middleware_configured() -> None:
 @pytest.mark.asyncio
 async def test_lifespan_startup_success() -> None:
     """Test lifespan startup with successful collection creation."""
-    with patch("app.main.get_vector_store") as mock_get_vs:
+    with patch("main.get_vector_store") as mock_get_vs:
         mock_vs = AsyncMock()
         mock_vs.ensure_collection = AsyncMock()
         mock_get_vs.return_value = mock_vs
@@ -53,7 +53,7 @@ async def test_lifespan_startup_success() -> None:
 @pytest.mark.asyncio
 async def test_lifespan_startup_failure_non_fatal() -> None:
     """Test lifespan handles collection creation failure gracefully."""
-    with patch("app.main.get_vector_store") as mock_get_vs:
+    with patch("main.get_vector_store") as mock_get_vs:
         mock_vs = AsyncMock()
         mock_vs.ensure_collection.side_effect = Exception("Collection error")
         mock_get_vs.return_value = mock_vs

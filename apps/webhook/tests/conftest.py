@@ -357,7 +357,7 @@ async def cleanup_database_engine():
 
     yield
     # Clean up after test
-    from app import database
+    from infra import database
 
     if database.engine:
         await database.engine.dispose()

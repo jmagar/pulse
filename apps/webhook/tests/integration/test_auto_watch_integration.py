@@ -35,7 +35,7 @@ async def test_page_event_creates_watch(test_queue: Queue) -> None:
         ],
     )
 
-    with patch("app.services.webhook_handlers.create_watch_for_url") as mock_create_watch:
+    with patch("services.webhook_handlers.create_watch_for_url") as mock_create_watch:
         mock_create_watch.return_value = AsyncMock()
 
         result = await handle_firecrawl_event(event, test_queue)
@@ -66,7 +66,7 @@ async def test_page_event_watch_creation_failure_does_not_block(test_queue: Queu
         ],
     )
 
-    with patch("app.services.webhook_handlers.create_watch_for_url") as mock_create_watch:
+    with patch("services.webhook_handlers.create_watch_for_url") as mock_create_watch:
         mock_create_watch.side_effect = Exception("Watch creation failed")
 
         # Should NOT raise exception

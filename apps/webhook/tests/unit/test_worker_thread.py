@@ -45,7 +45,7 @@ def test_worker_thread_manager_does_not_start_twice():
 
     manager = WorkerThreadManager()
 
-    with patch("app.worker_thread.Redis") as mock_redis:
+    with patch("worker_thread.Redis") as mock_redis:
         mock_redis.from_url.return_value = Mock()
 
         manager.start()

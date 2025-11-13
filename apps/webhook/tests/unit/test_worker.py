@@ -27,11 +27,11 @@ def sample_document_dict() -> dict[str, str | int]:
 def test_index_document_job_success(sample_document_dict: dict[str, str | int]) -> None:
     """Test successful job execution."""
     with (
-        patch("app.worker.TextChunker") as mock_chunker_cls,
-        patch("app.worker.EmbeddingService") as mock_embedding_cls,
-        patch("app.worker.VectorStore") as mock_vector_store_cls,
-        patch("app.worker.BM25Engine") as mock_bm25_cls,
-        patch("app.worker.IndexingService") as mock_indexing_cls,
+        patch("worker.TextChunker") as mock_chunker_cls,
+        patch("worker.EmbeddingService") as mock_embedding_cls,
+        patch("worker.VectorStore") as mock_vector_store_cls,
+        patch("worker.BM25Engine") as mock_bm25_cls,
+        patch("worker.IndexingService") as mock_indexing_cls,
     ):
         # Setup mocks
         mock_indexing = AsyncMock()
@@ -76,11 +76,11 @@ def test_index_document_job_success(sample_document_dict: dict[str, str | int]) 
 def test_index_document_job_document_parsing(sample_document_dict: dict[str, str | int]) -> None:
     """Test document dictionary is properly parsed to IndexDocumentRequest."""
     with (
-        patch("app.worker.TextChunker"),
-        patch("app.worker.EmbeddingService") as mock_embedding_cls,
-        patch("app.worker.VectorStore") as mock_vector_store_cls,
-        patch("app.worker.BM25Engine"),
-        patch("app.worker.IndexingService") as mock_indexing_cls,
+        patch("worker.TextChunker"),
+        patch("worker.EmbeddingService") as mock_embedding_cls,
+        patch("worker.VectorStore") as mock_vector_store_cls,
+        patch("worker.BM25Engine"),
+        patch("worker.IndexingService") as mock_indexing_cls,
     ):
         mock_indexing = AsyncMock()
         mock_indexing.index_document.return_value = {"success": True, "url": "https://example.com"}
@@ -114,11 +114,11 @@ def test_index_document_job_indexing_failure() -> None:
     }
 
     with (
-        patch("app.worker.TextChunker"),
-        patch("app.worker.EmbeddingService") as mock_embedding_cls,
-        patch("app.worker.VectorStore") as mock_vector_store_cls,
-        patch("app.worker.BM25Engine"),
-        patch("app.worker.IndexingService") as mock_indexing_cls,
+        patch("worker.TextChunker"),
+        patch("worker.EmbeddingService") as mock_embedding_cls,
+        patch("worker.VectorStore") as mock_vector_store_cls,
+        patch("worker.BM25Engine"),
+        patch("worker.IndexingService") as mock_indexing_cls,
     ):
         mock_vector_store = AsyncMock()
         mock_vector_store_cls.return_value = mock_vector_store
@@ -152,11 +152,11 @@ def test_index_document_job_cleanup_on_error() -> None:
     }
 
     with (
-        patch("app.worker.TextChunker"),
-        patch("app.worker.EmbeddingService") as mock_embedding_cls,
-        patch("app.worker.VectorStore") as mock_vector_store_cls,
-        patch("app.worker.BM25Engine"),
-        patch("app.worker.IndexingService") as mock_indexing_cls,
+        patch("worker.TextChunker"),
+        patch("worker.EmbeddingService") as mock_embedding_cls,
+        patch("worker.VectorStore") as mock_vector_store_cls,
+        patch("worker.BM25Engine"),
+        patch("worker.IndexingService") as mock_indexing_cls,
     ):
         mock_embedding = AsyncMock()
         mock_embedding_cls.return_value = mock_embedding
@@ -178,9 +178,9 @@ def test_index_document_job_cleanup_on_error() -> None:
 def test_run_worker() -> None:
     """Test worker initialization and execution."""
     with (
-        patch("app.worker.Redis"),
-        patch("app.worker.Worker") as mock_worker_cls,
-        patch("app.worker._validate_external_services", new=AsyncMock(return_value=True)),
+        patch("worker.Redis"),
+        patch("worker.Worker") as mock_worker_cls,
+        patch("worker._validate_external_services", new=AsyncMock(return_value=True)),
     ):
         mock_worker_instance = MagicMock()
         mock_worker_cls.return_value = mock_worker_instance
@@ -203,9 +203,9 @@ def test_run_worker() -> None:
 def test_run_worker_error_handling() -> None:
     """Test worker handles exceptions."""
     with (
-        patch("app.worker.Redis"),
-        patch("app.worker.Worker") as mock_worker_cls,
-        patch("app.worker._validate_external_services", new=AsyncMock(return_value=True)),
+        patch("worker.Redis"),
+        patch("worker.Worker") as mock_worker_cls,
+        patch("worker._validate_external_services", new=AsyncMock(return_value=True)),
     ):
         mock_worker_instance = MagicMock()
         mock_worker_cls.return_value = mock_worker_instance
@@ -225,9 +225,9 @@ def test_run_worker_error_handling() -> None:
 def test_run_worker_validation_failure() -> None:
     """Test worker exits when external services are unavailable."""
     with (
-        patch("app.worker._validate_external_services", new=AsyncMock(return_value=False)),
-        patch("app.worker.Redis") as mock_redis_cls,
-        patch("app.worker.Worker") as mock_worker_cls,
+        patch("worker._validate_external_services", new=AsyncMock(return_value=False)),
+        patch("worker.Redis") as mock_redis_cls,
+        patch("worker.Worker") as mock_worker_cls,
     ):
         from worker import run_worker
 

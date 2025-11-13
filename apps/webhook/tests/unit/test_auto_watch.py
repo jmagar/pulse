@@ -32,7 +32,7 @@ async def test_create_watch_for_url_success():
 @pytest.mark.asyncio
 async def test_create_watch_for_url_disabled():
     """Test watch creation skipped when feature disabled."""
-    with patch("app.services.auto_watch.settings") as mock_settings:
+    with patch("services.auto_watch.settings") as mock_settings:
         mock_settings.changedetection_enable_auto_watch = False
 
         result = await create_watch_for_url("https://example.com/test")
