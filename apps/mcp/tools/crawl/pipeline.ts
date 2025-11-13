@@ -33,7 +33,7 @@ export async function crawlPipeline(
       prompt: options.prompt,
       limit: options.limit,
       maxDiscoveryDepth: options.maxDiscoveryDepth,
-      crawlEntireDomain: options.crawlEntireDomain ?? true,
+      crawlEntireDomain: options.crawlEntireDomain ?? false,
       allowSubdomains: options.allowSubdomains,
       allowExternalLinks: options.allowExternalLinks,
       includePaths: options.includePaths,

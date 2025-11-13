@@ -115,4 +115,17 @@ describe("crawlPipeline", () => {
 
     expect(mockClient.listActiveCrawls).toHaveBeenCalledTimes(1);
   });
+
+  it("should default crawlEntireDomain to false when not specified", async () => {
+    await crawlPipeline(
+      mockClient,
+      asCrawlOptions({ command: "start", url: "https://example.com" }),
+    );
+
+    expect(mockClient.startCrawl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        crawlEntireDomain: false, // Should be false by default
+      }),
+    );
+  });
 });
