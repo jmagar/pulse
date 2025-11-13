@@ -6,6 +6,7 @@ Handles incoming webhooks from Firecrawl and changedetection.io.
 
 import hashlib
 import hmac
+import json
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -42,11 +43,11 @@ def limiter_exempt(route_fn: RouteCallable) -> RouteCallable:
 
 @router.post(
     "/firecrawl",
-    dependencies=[Depends(verify_webhook_signature)],
+    dependencies=[],  # Remove dependency, we'll use it as parameter instead
 )
 @limiter_exempt
 async def webhook_firecrawl(
-    request: Request,
+    verified_body: Annotated[bytes, Depends(verify_webhook_signature)],
     queue: Annotated[Queue, Depends(get_rq_queue)],
 ) -> JSONResponse:
     """
@@ -60,8 +61,8 @@ async def webhook_firecrawl(
 
     request_start = time.perf_counter()
 
-    # Log raw payload
-    payload = await request.json()
+    # Parse verified body (no second read needed)
+    payload = json.loads(verified_body)
     logger.info(
         "Webhook received",
         event_type=payload.get("type"),

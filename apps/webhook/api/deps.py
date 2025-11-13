@@ -355,8 +355,16 @@ def _parse_firecrawl_signature_header(signature_header: str) -> str:
 async def verify_webhook_signature(
     request: Request,
     x_firecrawl_signature: Annotated[str | None, Header(alias="X-Firecrawl-Signature")] = None,
-) -> None:
-    """Verify Firecrawl webhook signature using HMAC-SHA256."""
+) -> bytes:
+    """
+    Verify Firecrawl webhook signature using HMAC-SHA256.
+
+    Returns:
+        The verified request body as bytes for reuse by the handler.
+
+    Raises:
+        HTTPException: If verification fails or signature is missing.
+    """
 
     secret = getattr(settings, "webhook_secret", "")
 
@@ -382,6 +390,7 @@ async def verify_webhook_signature(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
+
     body = await request.body()
 
     expected_signature = hmac.new(
@@ -398,3 +407,4 @@ async def verify_webhook_signature(
         )
 
     logger.debug("Webhook signature verified successfully")
+    return body
