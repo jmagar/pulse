@@ -41,3 +41,52 @@ export function createRateLimiter(config: RateLimitConfig) {
     });
   };
 }
+
+/**
+ * Simple in-memory rate limiter using sliding window.
+ */
+export interface RateLimiterOptions {
+  windowMs: number; // Time window in milliseconds
+  max: number; // Max requests per window
+}
+
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+export class RateLimiter {
+  private store = new Map<string, RateLimitEntry>();
+  private options: RateLimiterOptions;
+
+  constructor(options: RateLimiterOptions) {
+    this.options = options;
+  }
+
+  check(key: string): boolean {
+    const now = Date.now();
+    const entry = this.store.get(key);
+
+    // No entry or expired window
+    if (!entry || now >= entry.resetAt) {
+      this.store.set(key, {
+        count: 1,
+        resetAt: now + this.options.windowMs,
+      });
+      return true;
+    }
+
+    // Within window, check limit
+    if (entry.count < this.options.max) {
+      entry.count++;
+      return true;
+    }
+
+    // Exceeded limit
+    return false;
+  }
+
+  reset(key: string): void {
+    this.store.delete(key);
+  }
+}
