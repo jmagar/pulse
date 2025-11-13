@@ -44,6 +44,7 @@ export interface ServerConfig {
   allowedOrigins: string[];
   allowedHosts: string[];
   oauthEnabled: boolean;
+  oauthRedirectUri?: string;
   resumabilityEnabled: boolean;
 }
 
@@ -131,9 +132,17 @@ function displaySecurityConfig(config: ServerConfig): void {
   }
 
   const oauthStatus = config.oauthEnabled
-    ? colorHelpers.warning("Enabled (not implemented)")
+    ? colorHelpers.success("Enabled")
     : colorHelpers.dim("Disabled");
   console.log(`  ${colorHelpers.bullet()} OAuth:           ${oauthStatus}`);
+  if (config.oauthEnabled) {
+    console.log(
+      `    Redirect URI:    ${colorHelpers.highlight(config.oauthRedirectUri || "not configured")}`,
+    );
+    console.log(
+      `    Endpoints:       ${colorHelpers.dim("/auth/google, /auth/status, /auth/logout")}`,
+    );
+  }
 
   const resumabilityStatus = config.resumabilityEnabled
     ? colorHelpers.success("Enabled")
@@ -195,7 +204,9 @@ function displayMCPStatus(): void {
         "  Tools and resources will be registered when clients connect",
       ),
     );
-    console.log(colorHelpers.dim("  Available: scrape, search, map, crawl"));
+    console.log(
+      colorHelpers.dim("  Available: scrape, search, map, crawl, query"),
+    );
     console.log("");
     return;
   }

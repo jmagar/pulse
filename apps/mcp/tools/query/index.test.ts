@@ -2,29 +2,33 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createQueryTool } from "./index.js";
 
 // Mock dependencies
+const queryMock = vi.fn().mockResolvedValue({
+  results: [
+    {
+      url: "https://example.com",
+      title: "Test",
+      description: "Test desc",
+      text: "Test content",
+      score: 0.95,
+      metadata: { domain: "example.com" },
+    },
+  ],
+  total: 1,
+  query: "test",
+  mode: "hybrid",
+  offset: 0,
+});
+
 vi.mock("./client.js", () => ({
   QueryClient: vi.fn().mockImplementation(() => ({
-    query: vi.fn().mockResolvedValue({
-      results: [
-        {
-          url: "https://example.com",
-          title: "Test",
-          description: "Test desc",
-          text: "Test content",
-          score: 0.95,
-          metadata: { domain: "example.com" },
-        },
-      ],
-      total: 1,
-      query: "test",
-      mode: "hybrid",
-    }),
+    query: queryMock,
   })),
 }));
 
 describe("Query Tool", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryMock.mockClear();
   });
 
   it("should create tool with correct name and description", () => {
@@ -55,7 +59,9 @@ describe("Query Tool", () => {
     });
 
     expect(result.content).toBeDefined();
-    expect(result.content.length).toBeGreaterThan(0);
+    expect(result.content[0]).toEqual(
+      expect.objectContaining({ type: "text", text: expect.stringContaining("1. Test") }),
+    );
     expect(result.isError).toBeUndefined();
   });
 

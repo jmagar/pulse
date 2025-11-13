@@ -22,6 +22,7 @@ from api.schemas.webhook import ChangeDetectionPayload, FirecrawlWebhookEvent
 from config import settings
 from services.webhook_handlers import WebhookHandlerError, handle_firecrawl_event
 from utils.logging import get_logger
+from utils.time import format_est_timestamp, parse_iso_timestamp
 from domain.models import ChangeEvent
 from infra.database import get_db_session
 from infra.rate_limit import limiter
@@ -179,11 +180,11 @@ def _extract_changedetection_metadata(
     """
     return {
         "watch_title": payload.watch_title,
-        "webhook_received_at": datetime.now(UTC).isoformat(),
+        "webhook_received_at": format_est_timestamp(),
         "signature": signature,
         "diff_size": snapshot_size,
         "raw_payload_version": "1.0",
-        "detected_at": payload.detected_at,
+        "detected_at": format_est_timestamp(parse_iso_timestamp(payload.detected_at)),
     }
 
 
@@ -245,7 +246,7 @@ async def handle_changedetection_webhook(
     change_event = ChangeEvent(
         watch_id=payload.watch_id,
         watch_url=payload.watch_url,
-        detected_at=datetime.fromisoformat(payload.detected_at.replace("Z", "+00:00")),
+        detected_at=parse_iso_timestamp(payload.detected_at),
         diff_summary=payload.snapshot[:500] if payload.snapshot else None,
         snapshot_url=payload.diff_url,
         rescrape_status="queued",

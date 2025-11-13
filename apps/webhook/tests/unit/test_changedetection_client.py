@@ -14,8 +14,12 @@ from tests.utils.db_fixtures import (  # noqa: F401
 from tests.utils.service_endpoints import get_changedetection_base_url
 
 
-def test_changedetection_config_defaults():
+def test_changedetection_config_defaults(monkeypatch):
     """Test changedetection.io config has correct defaults."""
+    monkeypatch.delenv("WEBHOOK_CHANGEDETECTION_API_URL", raising=False)
+    monkeypatch.delenv("WEBHOOK_CHANGEDETECTION_API_KEY", raising=False)
+    monkeypatch.delenv("CHANGEDETECTION_API_KEY", raising=False)
+
     settings = Settings()
 
     assert settings.changedetection_api_url == get_changedetection_base_url()
@@ -83,7 +87,10 @@ async def test_create_watch_success():
     # Verify API call
     mock_client_instance.post.assert_called_once()
     call_args = mock_client_instance.post.call_args
-    assert "https://example.com/test" in str(call_args.kwargs["json"])
+    payload = call_args.kwargs["json"]
+    assert payload["url"] == "https://example.com/test"
+    assert payload["notification_format"] == "System default"
+    assert payload["time_between_check"] == {"seconds": 3600}
 
 
 @pytest.mark.asyncio
@@ -200,3 +207,35 @@ async def test_get_watch_by_url_not_found():
         result = await client.get_watch_by_url("https://nonexistent.com")
 
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_watch_by_url_dict_response():
+    """Changedetection returns dict keyed by UUID; ensure we handle that format."""
+    client = ChangeDetectionClient(
+        api_url="http://test:5000",
+        api_key=None,
+    )
+
+    mock_response_data = {
+        "uuid-1": {"uuid": "uuid-1", "url": "https://example.com/test"},
+        "uuid-2": {"uuid": "uuid-2", "url": "https://other.com"},
+    }
+
+    mock_client_instance = AsyncMock()
+    mock_response_obj = MagicMock()
+    mock_response_obj.status_code = 200
+    mock_response_obj.json.return_value = mock_response_data
+    mock_response_obj.raise_for_status.return_value = None
+    mock_client_instance.get.return_value = mock_response_obj
+
+    mock_async_client = AsyncMock()
+    mock_async_client.__aenter__.return_value = mock_client_instance
+    mock_async_client.__aexit__.return_value = AsyncMock()
+
+    with patch("httpx.AsyncClient", return_value=mock_async_client):
+        result = await client.get_watch_by_url("https://example.com/test")
+
+    assert result is not None
+    assert result["uuid"] == "uuid-1"
+    assert result["url"] == "https://example.com/test"

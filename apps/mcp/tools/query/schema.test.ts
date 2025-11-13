@@ -12,7 +12,8 @@ describe("Query Tool Schema", () => {
 
       expect(result.query).toBe("firecrawl scrape options");
       expect(result.mode).toBe("hybrid");
-      expect(result.limit).toBe(10);
+      expect(result.limit).toBe(5);
+      expect(result.offset).toBe(0);
     });
 
     it("should validate query with all optional fields", () => {
@@ -20,6 +21,7 @@ describe("Query Tool Schema", () => {
         query: "test query",
         mode: "semantic",
         limit: 5,
+        offset: 10,
         filters: {
           domain: "docs.firecrawl.dev",
           language: "en",
@@ -31,8 +33,18 @@ describe("Query Tool Schema", () => {
       expect(result.query).toBe("test query");
       expect(result.mode).toBe("semantic");
       expect(result.limit).toBe(5);
+      expect(result.offset).toBe(10);
       expect(result.filters?.domain).toBe("docs.firecrawl.dev");
       expect(result.filters?.language).toBe("en");
+    });
+
+    it("should reject negative offset", () => {
+      const input = {
+        query: "test",
+        offset: -1,
+      };
+
+      expect(() => queryOptionsSchema.parse(input)).toThrow();
     });
 
     it("should reject invalid mode", () => {
@@ -81,6 +93,7 @@ describe("Query Tool Schema", () => {
 
       expect(schema.properties.mode).toBeDefined();
       expect(schema.properties.limit).toBeDefined();
+      expect(schema.properties.offset).toBeDefined();
       expect(schema.properties.filters).toBeDefined();
     });
   });

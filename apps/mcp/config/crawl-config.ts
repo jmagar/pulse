@@ -7,6 +7,8 @@
  * @module shared/config/crawl-config
  */
 
+import type { FirecrawlScrapingOptions } from "@firecrawl/client";
+
 const DEFAULT_MAX_DISCOVERY_DEPTH = 5;
 
 export const DEFAULT_LANGUAGE_EXCLUDES = [
@@ -53,57 +55,47 @@ export const DEFAULT_LANGUAGE_EXCLUDES = [
 ];
 
 /**
- * Configuration for Firecrawl crawl request
+ * Merge custom exclude patterns with the default language exclusions.
  *
- * Defines crawl parameters including base URL, path exclusions, and discovery depth.
- *
- * Note: v2 API renamed maxDepth to maxDiscoveryDepth, removed changeDetection
+ * Ensures defaults are always present and preserves insertion order without duplicates.
  */
-export interface CrawlRequestConfig {
-  url: string;
-  excludePaths: string[];
-  maxDiscoveryDepth: number;
+export function mergeExcludePaths(customPaths?: string[]): string[] {
+  const merged: string[] = [];
+  const seen = new Set<string>();
+
+  for (const pattern of DEFAULT_LANGUAGE_EXCLUDES) {
+    if (!seen.has(pattern)) {
+      merged.push(pattern);
+      seen.add(pattern);
+    }
+  }
+
+  for (const pattern of customPaths ?? []) {
+    if (!pattern) continue;
+    if (!seen.has(pattern)) {
+      merged.push(pattern);
+      seen.add(pattern);
+    }
+  }
+
+  return merged;
 }
 
-/**
- * Build crawl configuration for a target URL
- *
- * Generates crawl configuration with default language path exclusions.
- * Returns null if URL is invalid.
- *
- * @param targetUrl - URL to generate crawl config for
- * @returns Crawl configuration or null if URL is invalid
- */
-export function buildCrawlRequestConfig(
-  targetUrl: string,
-): CrawlRequestConfig | null {
-  try {
-    const parsed = new URL(targetUrl);
-    const baseUrl = `${parsed.protocol}//${parsed.host}`;
+export const DEFAULT_SCRAPE_OPTIONS: FirecrawlScrapingOptions = {
+  formats: ["markdown", "html", "summary", "changeTracking", "links"],
+  onlyMainContent: true,
+  blockAds: true,
+  removeBase64Images: true,
+  parsers: [],
+};
 
-    return {
-      url: baseUrl,
-      excludePaths: DEFAULT_LANGUAGE_EXCLUDES,
-      maxDiscoveryDepth: DEFAULT_MAX_DISCOVERY_DEPTH,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Check if URL is suitable for crawling
- *
- * Validates that URL uses HTTP or HTTPS protocol.
- *
- * @param targetUrl - URL to validate
- * @returns True if URL is crawlable, false otherwise
- */
-export function shouldStartCrawl(targetUrl: string): boolean {
-  try {
-    const parsed = new URL(targetUrl);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
+export function mergeScrapeOptions(
+  customOptions?: FirecrawlScrapingOptions,
+): FirecrawlScrapingOptions {
+  return {
+    ...DEFAULT_SCRAPE_OPTIONS,
+    ...customOptions,
+    formats: customOptions?.formats ?? DEFAULT_SCRAPE_OPTIONS.formats,
+    parsers: customOptions?.parsers ?? [],
+  };
 }

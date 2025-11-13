@@ -7,6 +7,7 @@ from tests.utils.db_fixtures import (  # noqa: F401
     initialize_test_database,
 )
 from tests.utils.service_endpoints import get_changedetection_diff_url
+from utils.time import format_est_timestamp, parse_iso_timestamp
 
 
 def test_compute_diff_size_with_content():
@@ -49,7 +50,9 @@ def test_extract_changedetection_metadata():
     assert result["signature"] == signature
     assert result["diff_size"] == snapshot_size
     assert result["raw_payload_version"] == "1.0"
-    assert result["detected_at"] == "2025-11-10T12:00:00Z"
+    assert result["detected_at"] == format_est_timestamp(
+        parse_iso_timestamp("2025-11-10T12:00:00Z")
+    )
 
 
 def test_extract_changedetection_metadata_with_none_title():

@@ -8,7 +8,13 @@ import {
   healthCheck,
   getCorsOptions,
   hostValidationLogger,
+  authMiddleware,
+  scopeMiddleware,
   metricsAuthMiddleware,
+  securityHeaders,
+  csrfTokenMiddleware,
+  csrfProtection,
+  createRateLimiter,
 } from "./middleware/index.js";
 import {
   getMetricsConsole,
@@ -16,6 +22,10 @@ import {
   resetMetrics,
 } from "./middleware/metrics.js";
 import { logInfo, logError } from "../utils/logging.js";
+import { attachRedisSession } from "./middleware/session.js";
+import { createAuthRouter } from "./routes/auth.js";
+import { oauthProtectedResource } from "./routes/metadata.js";
+import { env } from "../config/environment.js";
 
 /**
  * Creates and configures an Express server for HTTP streaming MCP transport
@@ -32,6 +42,7 @@ export async function createExpressServer(): Promise<Application> {
   // Middleware
   app.use(express.json());
   app.use(cors(getCorsOptions()));
+  app.use(securityHeaders);
 
   // Health check endpoint
   app.get("/health", healthCheck);
@@ -51,36 +62,23 @@ export async function createExpressServer(): Promise<Application> {
   app.get("/metrics/json", metricsAuthMiddleware, getMetricsJSON);
   app.post("/metrics/reset", metricsAuthMiddleware, resetMetrics);
 
-  // OAuth endpoints - check ENABLE_OAUTH environment variable
-  const oauthEnabled = process.env.ENABLE_OAUTH === "true";
+  const oauthEnabled = env.enableOAuth === "true";
 
-  app.post("/register", (req, res) => {
-    if (!oauthEnabled) {
+  if (oauthEnabled) {
+    await attachRedisSession(app);
+    app.use(csrfTokenMiddleware);
+    const authRouter = await createAuthRouter();
+    app.use(authRouter);
+  } else {
+    app.use("/auth", (_req, res) => {
       res.status(404).json({
         error:
-          "OAuth is not enabled on this server. Set ENABLE_OAUTH=true to enable OAuth authentication.",
+          "OAuth is not enabled on this server. Set MCP_ENABLE_OAUTH=true to enable authentication.",
       });
-    } else {
-      res.status(501).json({
-        error:
-          "OAuth is not yet implemented. This feature is planned for a future release.",
-      });
-    }
-  });
+    });
+  }
 
-  app.get("/authorize", (req, res) => {
-    if (!oauthEnabled) {
-      res.status(404).json({
-        error:
-          "OAuth is not enabled on this server. Set ENABLE_OAUTH=true to enable OAuth authentication.",
-      });
-    } else {
-      res.status(501).json({
-        error:
-          "OAuth is not yet implemented. This feature is planned for a future release.",
-      });
-    }
-  });
+  app.get("/.well-known/oauth-protected-resource", oauthProtectedResource);
 
   // Transport storage: maps session IDs to their transports
   const transports: Record<string, StreamableHTTPServerTransport> = {};
@@ -100,7 +98,18 @@ export async function createExpressServer(): Promise<Application> {
    * - Mcp-Session-Id header (POST, DELETE requests)
    * - sessionId query parameter (GET requests for SSE)
    */
-  app.all("/mcp", hostValidationLogger, async (req, res) => {
+  const rateLimiters = {
+    oauth: createRateLimiter({ windowMs: 60_000, limit: 10 }),
+    mcp: createRateLimiter({ windowMs: 60_000, limit: 100 }),
+  };
+
+  app.all(
+    "/mcp",
+    hostValidationLogger,
+    rateLimiters.mcp,
+    authMiddleware,
+    scopeMiddleware,
+    async (req, res) => {
     // Accept session ID from header or query param (for EventSource/GET requests)
     const sessionId =
       (req.headers["mcp-session-id"] as string | undefined) ||

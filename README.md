@@ -99,7 +99,7 @@ PostgreSQL is shared across services with schema isolation:
 **Purpose**: Model Context Protocol server enabling Claude Desktop to scrape, search, map, and crawl the web
 
 **Key Features**:
-- **Four powerful tools**: `scrape`, `search`, `map`, `crawl`
+- **Five powerful tools**: `scrape`, `crawl`, `map`, `search`, `query`
 - Multi-strategy scraping with fallback (native → browser → Firecrawl)
 - LLM-powered content extraction (supports OpenAI, Anthropic, compatible providers)
 - Smart content cleaning (HTML → Markdown with main content extraction)
@@ -246,19 +246,19 @@ For active development on individual services:
 **Test Firecrawl API**:
 
 ```bash
-curl -X POST http://localhost:50102/v1/scrape \
+curl -X POST http://localhost:50102/v2/scrape \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${FIRECRAWL_API_KEY}" \
   -d '{"url": "https://example.com"}'
 ```
 
-**Test MCP Server**:
+**Test MCP Server** (via MCP Inspector):
 
 ```bash
-curl -X POST http://localhost:50107/scrape \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com", "cleanScrape": true}'
+npx @modelcontextprotocol/inspector http://localhost:50107/mcp
 ```
+
+> The inspector opens an interactive UI for initializing the MCP session, listing tools, and running smoke tests (e.g., `scrape`, `query`) without Claude Desktop.
 
 **Test Webhook Bridge**:
 
@@ -490,6 +490,12 @@ pnpm test:web      # Web UI (no-op currently)
 pnpm test:webhook  # Webhook service (pytest)
 ```
 
+**OAuth-focused harness**:
+```bash
+./scripts/test-oauth-flow.sh
+```
+Runs only the MCP OAuth suites (auth routes/middleware, session/CSRF, security headers, token manager, health checks) for faster iteration.
+
 **Individual test suites with more control**:
 ```bash
 # MCP Server tests
@@ -581,6 +587,9 @@ Changed content will be automatically indexed for search within minutes.
 - **[.docs/webhook-troubleshooting.md](.docs/webhook-troubleshooting.md)** - Webhook debugging and troubleshooting guide
 - **[.env.example](.env.example)** - Comprehensive environment variable reference
 - **[docker-compose.yaml](docker-compose.yaml)** - Service definitions and infrastructure
+- **[docs/OAUTH.md](docs/OAUTH.md)** - Full OAuth/SSO setup for the MCP server (scopes, CSRF/session middleware, login flow)
+- **[docs/mcp/INDEX.md](docs/mcp/INDEX.md)** - MCP tool reference (scrape, crawl, map, search, query)
+- **[docs/mcp/RESOURCES.md](docs/mcp/RESOURCES.md)** - MCP resource storage and cache configuration
 
 ### Application Documentation
 

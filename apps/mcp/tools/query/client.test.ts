@@ -42,9 +42,11 @@ describe("QueryClient", () => {
       query: "test query",
       mode: "hybrid",
       limit: 10,
+      offset: 0,
     });
 
-    expect(result).toEqual(mockResponse);
+    expect(result.results).toEqual(mockResponse.results);
+    expect(result.offset).toBe(0);
     expect(global.fetch).toHaveBeenCalledWith(
       "http://localhost:50108/api/search",
       expect.objectContaining({
@@ -71,6 +73,7 @@ describe("QueryClient", () => {
         query: "test",
         mode: "hybrid",
         limit: 10,
+        offset: 0,
       }),
     ).rejects.toThrow("Query failed: 401 Unauthorized");
   });
@@ -83,6 +86,7 @@ describe("QueryClient", () => {
         query: "test",
         mode: "hybrid",
         limit: 10,
+        offset: 0,
       }),
     ).rejects.toThrow("Network error");
   });
@@ -98,6 +102,7 @@ describe("QueryClient", () => {
       query: "test",
       mode: "semantic",
       limit: 5,
+      offset: 0,
       filters: {
         domain: "docs.firecrawl.dev",
         language: "en",
@@ -111,5 +116,41 @@ describe("QueryClient", () => {
       domain: "docs.firecrawl.dev",
       language: "en",
     });
+  });
+
+  it("should honor offset by fetching more results and trimming", async () => {
+    const mockResults = Array.from({ length: 8 }).map((_, i) => ({
+      url: `https://example.com/${i}`,
+      title: `Result ${i}`,
+      description: null,
+      text: `Content ${i}`,
+      score: 1 - i * 0.01,
+      metadata: {},
+    }));
+
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        results: mockResults,
+        total: mockResults.length,
+        query: "test",
+        mode: "hybrid",
+      }),
+    });
+
+    const result = await client.query({
+      query: "test",
+      mode: "hybrid",
+      limit: 5,
+      offset: 5,
+    });
+
+    const callArgs = (global.fetch as any).mock.calls[0];
+    const body = JSON.parse(callArgs[1].body);
+    expect(body.limit).toBe(10);
+    expect(result.results).toHaveLength(3);
+    expect(result.results[0].title).toBe("Result 5");
+    expect(result.offset).toBe(5);
   });
 });

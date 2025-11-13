@@ -1,6 +1,12 @@
 import { detectContentType } from "./helpers.js";
 import type { ScrapeDiagnostics } from "../../types.js";
 import { logError } from "../../utils/logging.js";
+import type {
+  BatchScrapeStartResult,
+  CrawlStatusResult,
+  BatchScrapeCancelResult,
+  CrawlErrorsResult,
+} from "@firecrawl/client";
 
 export interface ResponseContent {
   type: string;
@@ -23,6 +29,8 @@ export interface ToolResponse {
   content: ResponseContent[];
   isError?: boolean;
 }
+
+const BATCH_STATUS_PAGINATION_THRESHOLD_MB = 10;
 
 /**
  * Apply pagination to content
@@ -330,4 +338,124 @@ export function buildSuccessResponse(
   }
 
   return response;
+}
+
+/**
+ * Build response for batch start command
+ */
+export function buildBatchStartResponse(
+  result: BatchScrapeStartResult,
+  requestedCount: number,
+): ToolResponse {
+  const invalidCount = result.invalidURLs?.length ?? 0;
+  const text = `Batch scrape job started.
+Job ID: ${result.id}
+URLs accepted: ${requestedCount - invalidCount}
+Invalid URLs skipped: ${invalidCount}
+Status URL: ${result.url ?? "N/A"}`;
+
+  return {
+    content: [
+      {
+        type: "text",
+        text,
+      },
+    ],
+  };
+}
+
+/**
+ * Build response for batch status command
+ */
+export function buildBatchStatusResponse(
+  status: CrawlStatusResult,
+): ToolResponse {
+  if (status.data && status.data.length > 0) {
+    status.data = [];
+  }
+
+  const statusLabel =
+    status.status.charAt(0).toUpperCase() + status.status.slice(1);
+
+  let text = `Batch Scrape Status: ${statusLabel}
+Progress: ${status.completed}/${status.total} pages
+Credits used: ${status.creditsUsed}
+Expires at: ${status.expiresAt}`;
+
+  if (status.next) {
+    text += `\n\n⚠️ Result payload exceeds ${BATCH_STATUS_PAGINATION_THRESHOLD_MB}MB.
+Use the pagination URL to fetch the next batch:
+${status.next}`;
+  }
+
+  return {
+    content: [
+      {
+        type: "text",
+        text,
+      },
+    ],
+  };
+}
+
+/**
+ * Build response for batch cancel command
+ */
+export function buildBatchCancelResponse(
+  result: BatchScrapeCancelResult,
+): ToolResponse {
+  const message = result.message ?? "Batch job cancelled.";
+  return {
+    content: [
+      {
+        type: "text",
+        text: `Batch scrape cancelled.\n${message}`,
+      },
+    ],
+  };
+}
+
+/**
+ * Build response for batch errors command
+ */
+export function buildBatchErrorsResponse(
+  result: CrawlErrorsResult,
+): ToolResponse {
+  if (result.errors.length > 5) {
+    result.errors = result.errors.slice(0, 5);
+  }
+
+  const errorsText = result.errors.length
+    ? result.errors
+        .map((err) => `• ${err.error}${err.url ? ` (${err.url})` : ""}`)
+        .join("\n")
+    : "No batch errors recorded.";
+
+  const robotsText = result.robotsBlocked.length
+    ? result.robotsBlocked.map((url) => `- ${url}`).join("\n")
+    : "None";
+
+  return {
+    content: [
+      {
+        type: "text",
+        text: `Batch Scrape Errors:\n${errorsText}\n\nRobots-blocked URLs:\n${robotsText}`,
+      },
+    ],
+  };
+}
+
+/**
+ * Build response for batch command errors
+ */
+export function buildBatchCommandError(message: string): ToolResponse {
+  return {
+    content: [
+      {
+        type: "text",
+        text: message,
+      },
+    ],
+    isError: true,
+  };
 }

@@ -20,6 +20,8 @@ All services use sequential high-numbered ports (50100-50110 range) following se
 | 50107 | MCP Server               | pulse_mcp             | HTTP     | Active |
 | 50108 | Webhook Bridge API       | pulse_webhook         | HTTP     | Active |
 | 50109 | Change Detection | pulse_change-detection | HTTP | Active |
+| 50210 | Neo4j HTTP               | pulse_neo4j           | HTTP     | Active |
+| 50211 | Neo4j Bolt               | pulse_neo4j           | Bolt     | Active |
 | N/A   | Webhook Worker           | pulse_webhook         | N/A      | Active |
 
 ## Internal Service URLs (Docker Network)
@@ -32,6 +34,8 @@ These URLs are used for service-to-service communication within the Docker netwo
 - **Redis**: `redis://pulse_redis:6379`
 - **PostgreSQL**: `postgresql://pulse_postgres:5432/pulse_postgres`
 - **Playwright**: `http://pulse_playwright:3000`
+- **Neo4j HTTP**: `http://pulse_neo4j:7474`
+- **Neo4j Bolt**: `bolt://pulse_neo4j:7687`
 
 ## External Service URLs (Host Access)
 
@@ -43,6 +47,8 @@ These URLs are accessible from the host machine:
 - **Redis**: `redis://localhost:50104`
 - **PostgreSQL**: `postgresql://localhost:50105/pulse_postgres`
 - **Playwright**: `http://localhost:50100`
+- **Neo4j HTTP**: `http://localhost:50210`
+- **Neo4j Bolt**: `bolt://localhost:50211`
 
 ## Service Descriptions
 
@@ -61,6 +67,8 @@ These URLs are accessible from the host machine:
 - **Dependencies**: firecrawl
 - **Health Check**: HTTP GET /health
 - **Volume**: `/app/resources` for persistent resource storage
+- **OAuth**: `/auth/google`, `/auth/status`, `/auth/logout`, `/auth/refresh`, and `/.well-known/oauth-protected-resource` run on the same port when `MCP_ENABLE_OAUTH=true`
+- **Sessions**: Requires `MCP_REDIS_URL` for Redis-backed session storage when OAuth is enabled
 
 ### Playwright Service
 - **Container**: pulse_playwright
@@ -111,6 +119,28 @@ These URLs are accessible from the host machine:
 - Shares Playwright browser with Firecrawl for JavaScript rendering
 - Posts change notifications to webhook bridge at http://pulse_webhook:52100/api/webhook/changedetection
 - Indexed content searchable via hybrid search (BM25 + vector)
+
+### Neo4j Graph Database
+
+**Container:** pulse_neo4j
+**Ports:** 50210 (HTTP), 50211 (Bolt)
+**Purpose:** Graph database for knowledge graph storage and traversal
+**Image:** neo4j:2025.10.1-community-bullseye
+**Health Check:** cypher-shell "RETURN 1" (30s interval, 10s timeout, 40s start period, 3 retries)
+**Volumes:**
+  - neo4j_data:/data (database files)
+  - neo4j_logs:/logs (query logs)
+  - neo4j_import:/var/lib/neo4j/import (data import)
+  - neo4j_plugins:/plugins (extensions)
+
+**Environment Variables:**
+- `GRAPH_DB_HTTP_PORT`: External HTTP port (default: 50210)
+- `GRAPH_DB_BOLT_PORT`: External Bolt port (default: 50211)
+- `NEO4J_AUTH`: Authentication (default: neo4j/password)
+
+**Access:**
+- Browser UI: http://localhost:50210
+- Bolt driver: bolt://localhost:50211
 
 ## Port Range Allocation
 

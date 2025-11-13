@@ -11,7 +11,7 @@ export function createCrawlTool(config: FirecrawlConfig): Tool {
   return {
     name: "crawl",
     description:
-      "Manage website crawling jobs. Start a crawl with url parameter, check status with jobId, or cancel with jobId + cancel=true.",
+      "Manage website crawling jobs. Commands: crawl <url>, crawl status <jobId>, crawl cancel <jobId>, crawl errors <jobId>, crawl list.",
     inputSchema: buildCrawlInputSchema(),
 
     handler: async (args: unknown) => {

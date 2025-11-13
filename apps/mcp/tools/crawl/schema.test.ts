@@ -2,38 +2,43 @@ import { describe, it, expect } from "vitest";
 import { crawlOptionsSchema } from "./schema.js";
 
 describe("Crawl Options Schema", () => {
-  describe("Basic validation", () => {
-    it("accepts valid url", () => {
+  describe("command routing", () => {
+    it("defaults to start command when omitted", () => {
       const result = crawlOptionsSchema.parse({
         url: "https://example.com",
       });
-      expect(result.url).toBe("https://example.com");
+      expect(result.command).toBe("start");
     });
 
-    it("accepts valid jobId", () => {
-      const result = crawlOptionsSchema.parse({
-        jobId: "test-job-123",
-      });
-      expect(result.jobId).toBe("test-job-123");
-    });
-
-    it("requires either url or jobId", () => {
-      expect(() => crawlOptionsSchema.parse({})).toThrow();
-    });
-
-    it("rejects both url and jobId together", () => {
+    it("requires url for start command", () => {
       expect(() =>
         crawlOptionsSchema.parse({
-          url: "https://example.com",
-          jobId: "test-job-123",
+          command: "start",
         }),
       ).toThrow();
+    });
+
+    it("requires jobId for status/cancel/errors commands", () => {
+      ["status", "cancel", "errors"].forEach((command) => {
+        expect(() => crawlOptionsSchema.parse({ command })).toThrow();
+        const parsed = crawlOptionsSchema.parse({
+          command,
+          jobId: "job-123",
+        });
+        expect(parsed.jobId).toBe("job-123");
+      });
+    });
+
+    it("allows list command without extra fields", () => {
+      const result = crawlOptionsSchema.parse({ command: "list" });
+      expect(result.command).toBe("list");
     });
   });
 
   describe("prompt parameter", () => {
     it("accepts natural language prompt", () => {
       const result = crawlOptionsSchema.parse({
+        command: "start",
         url: "https://example.com",
         prompt: "Find all blog posts about AI",
       });
@@ -42,6 +47,7 @@ describe("Crawl Options Schema", () => {
 
     it("is optional", () => {
       const result = crawlOptionsSchema.parse({
+        command: "start",
         url: "https://example.com",
       });
       expect(result.prompt).toBeUndefined();
@@ -49,6 +55,7 @@ describe("Crawl Options Schema", () => {
 
     it("works with manual parameters", () => {
       const result = crawlOptionsSchema.parse({
+        command: "start",
         url: "https://example.com",
         prompt: "Find documentation pages",
         limit: 50,
@@ -63,6 +70,7 @@ describe("Crawl Options Schema", () => {
   describe("scrapeOptions.actions", () => {
     it("accepts browser actions in scrapeOptions", () => {
       const result = crawlOptionsSchema.parse({
+        command: "start",
         url: "https://example.com",
         scrapeOptions: {
           actions: [
@@ -84,6 +92,7 @@ describe("Crawl Options Schema", () => {
 
     it("applies actions to all pages in crawl", () => {
       const result = crawlOptionsSchema.parse({
+        command: "start",
         url: "https://example.com",
         limit: 10,
         scrapeOptions: {
@@ -97,6 +106,7 @@ describe("Crawl Options Schema", () => {
 
     it("accepts multiple action types", () => {
       const result = crawlOptionsSchema.parse({
+        command: "start",
         url: "https://example.com",
         scrapeOptions: {
           actions: [
@@ -113,6 +123,7 @@ describe("Crawl Options Schema", () => {
 
     it("is optional", () => {
       const result = crawlOptionsSchema.parse({
+        command: "start",
         url: "https://example.com",
         scrapeOptions: {
           formats: ["markdown"],

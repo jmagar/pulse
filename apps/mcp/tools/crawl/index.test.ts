@@ -32,7 +32,11 @@ describe("Crawl Tool", () => {
 
     const tool = createCrawlTool(config);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
-    const result = await handler({ url: "https://example.com", limit: 100 });
+    const result = await handler({
+      command: "start",
+      url: "https://example.com",
+      limit: 100,
+    });
 
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toContain("crawl-job-123");
@@ -53,7 +57,7 @@ describe("Crawl Tool", () => {
 
     const tool = createCrawlTool(config);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
-    const result = await handler({ jobId: "crawl-job-123" });
+    const result = await handler({ command: "status", jobId: "crawl-job-123" });
 
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toContain("Crawl Status:");
@@ -67,7 +71,7 @@ describe("Crawl Tool", () => {
 
     const tool = createCrawlTool(config);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
-    const result = await handler({ jobId: "crawl-job-123", cancel: true });
+    const result = await handler({ command: "cancel", jobId: "crawl-job-123" });
 
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toContain("cancelled");
@@ -87,6 +91,7 @@ describe("Crawl Tool", () => {
     const tool = createCrawlTool(config);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     await handler({
+      command: "start",
       url: "https://example.com",
       prompt: "Find all blog posts about AI",
     });
@@ -98,5 +103,47 @@ describe("Crawl Tool", () => {
     const callArgs = mockFetch.mock.calls[0];
     const requestBody = JSON.parse(callArgs[1].body);
     expect(requestBody.prompt).toBe("Find all blog posts about AI");
+  });
+
+  it("returns crawl errors when requested", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          errors: [{ id: "err-1", error: "boom" }],
+          robotsBlocked: ["https://robots"],
+        },
+      }),
+    });
+
+    const tool = createCrawlTool(config);
+    const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
+    const result = await handler({ command: "errors", jobId: "job-1" });
+
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toContain("Robots");
+  });
+
+  it("lists active crawls", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        crawls: [
+          {
+            id: "job-1",
+            teamId: "team",
+            url: "https://example.com",
+          },
+        ],
+      }),
+    });
+
+    const tool = createCrawlTool(config);
+    const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
+    const result = await handler({ command: "list" });
+
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toContain("Active Crawls");
   });
 });

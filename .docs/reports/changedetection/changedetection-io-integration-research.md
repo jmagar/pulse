@@ -68,11 +68,11 @@ post://api.example.com/webhook?+Authorization=Bearer token123&+Content-Type=appl
 ChangeDetection.io provides a full REST API for programmatic control.
 
 **API Endpoints:**
-- `GET /api/v1/watch` - List all watches
-- `POST /api/v1/watch` - Create new watch
-- `POST /api/v1/notify/{KEY}` - Trigger notification
-- `GET /api/v1/watch/{uuid}/history` - Get change history
-- `GET /api/v1/watch/{uuid}/history/{timestamp}` - Get specific snapshot
+- `GET /api/v2/watch` - List all watches
+- `POST /api/v2/watch` - Create new watch
+- `POST /api/v2/notify/{KEY}` - Trigger notification
+- `GET /api/v2/watch/{uuid}/history` - Get change history
+- `GET /api/v2/watch/{uuid}/history/{timestamp}` - Get specific snapshot
 
 **Integration Pattern:**
 ```python
@@ -80,7 +80,7 @@ import requests
 
 # 1. Add URL to monitor
 response = requests.post(
-    'http://changedetection:5000/api/v1/watch',
+    'http://changedetection:5000/api/v2/watch',
     headers={'x-api-key': 'YOUR_API_KEY'},
     json={
         'url': 'https://example.com/product',
@@ -92,7 +92,7 @@ response = requests.post(
 
 # 2. Poll for changes
 watches = requests.get(
-    'http://changedetection:5000/api/v1/watch',
+    'http://changedetection:5000/api/v2/watch',
     headers={'x-api-key': 'YOUR_API_KEY'}
 ).json()
 
@@ -221,7 +221,7 @@ async def trigger_scrape(
 async def scrape_with_firecrawl(url: str):
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            'http://firecrawl:3002/v1/scrape',
+            'http://firecrawl:3002/v2/scrape',
             json={'url': url, 'formats': ['markdown', 'html']},
             headers={'Authorization': f'Bearer {FIRECRAWL_API_KEY}'}
         )
@@ -506,7 +506,7 @@ curl -X POST \
   -H "x-api-key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com"}' \
-  http://localhost:5000/api/v1/watch
+  http://localhost:5000/api/v2/watch
 ```
 
 ### 4.3 Webhook Security
@@ -646,7 +646,7 @@ def get_watch_data(watch_uuid: str):
         return watch_cache[watch_uuid]
 
     # Fetch from changedetection.io API
-    data = requests.get(f'/api/v1/watch/{watch_uuid}').json()
+    data = requests.get(f'/api/v2/watch/{watch_uuid}').json()
     watch_cache[watch_uuid] = data
     return data
 ```
@@ -918,13 +918,13 @@ CREATE TABLE change_events (
 
 ```bash
 # Via API - programmatically add watches
-curl -X POST http://localhost:52200/api/v1/add/product-monitor \
+curl -X POST http://localhost:52200/api/v2/add/product-monitor \
   -H "x-api-key: ${CHANGEDETECTION_API_KEY}" \
   -F "urls=https://example.com/product-1, https://example.com/product-2" \
   -F "tag=products"
 
 # Notification URLs are stored with the configuration
-curl -X POST http://localhost:52200/api/v1/notify/product-monitor \
+curl -X POST http://localhost:52200/api/v2/notify/product-monitor \
   -H "x-api-key: ${CHANGEDETECTION_API_KEY}" \
   -d "body=Test notification"
 ```

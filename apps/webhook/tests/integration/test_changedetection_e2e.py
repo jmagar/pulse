@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from domain.models import ChangeEvent
+from utils.time import format_est_timestamp
 from tests.utils.service_endpoints import get_changedetection_diff_url
 
 
@@ -33,7 +34,7 @@ async def test_changedetection_full_workflow(db_session):
         rescrape_job_id="test-job-123",
         extra_metadata={
             "watch_title": "E2E Test Watch",
-            "webhook_received_at": datetime.now(UTC).isoformat(),
+            "webhook_received_at": format_est_timestamp(),
         },
     )
 
@@ -99,7 +100,7 @@ async def test_changedetection_full_workflow(db_session):
             mock_client.post.assert_called_once()
             call_args = mock_client.post.call_args
             assert "https://example.com/e2e-test" in str(call_args)
-            assert call_args[0][0].endswith("/v1/scrape")  # First positional arg is URL
+            assert call_args[0][0].endswith("/v2/scrape")  # First positional arg is URL
 
             # Step 6: Verify indexing was called
             mock_index.assert_called_once()

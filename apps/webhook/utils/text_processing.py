@@ -10,7 +10,8 @@ library designed for parallel processing and high-throughput workloads.
 
 from typing import Any
 
-from semantic_text_splitter import HuggingFaceTextSplitter
+from semantic_text_splitter import TextSplitter
+from tokenizers import Tokenizer
 
 from utils.logging import get_logger
 
@@ -66,11 +67,9 @@ class TextChunker:
         )
 
         try:
-            # Initialize semantic-text-splitter with HuggingFace tokenizer
-            # This is thread-safe and optimized for parallel processing
-            # capacity parameter sets the target chunk size in tokens
-            self.splitter = HuggingFaceTextSplitter.from_pretrained(
-                model_name,
+            tokenizer = Tokenizer.from_pretrained(model_name)
+            self.splitter = TextSplitter.from_huggingface_tokenizer(
+                tokenizer,
                 capacity=max_tokens,
                 overlap=overlap_tokens,
             )

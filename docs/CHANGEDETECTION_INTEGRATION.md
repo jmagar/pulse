@@ -183,7 +183,7 @@ WEBHOOK_CHANGEDETECTION_API_KEY=                                        # Option
 
 **Query via API:**
 ```bash
-curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-auto")'
+curl http://localhost:50109/api/v2/watch | jq '.[] | select(.tag == "firecrawl-auto")'
 ```
 
 **Check webhook bridge logs:**
@@ -610,19 +610,15 @@ The webhook bridge runs a background worker **in the same process** (not separat
 
 **Trade-off:** Worker crash brings down entire service. Acceptable for self-hosted deployment with restart policies.
 
-### Why Shared Playwright?
+### Why Built-in Playwright?
 
-changedetection.io uses the same Playwright browser as Firecrawl:
+changedetection.io now relies on its built-in Playwright browser:
 
-1. **Reduces memory usage:** Single browser instance (400-800MB saved)
-2. **Shared browser cache:** Improves performance for repeated page loads
-3. **Consistent rendering:** Same browser version ensures consistent results
-4. **Cost efficiency:** Fewer resources needed for self-hosted deployments
+1. **Simpler deployment:** No extra WebSocket driver container to manage
+2. **Adequate for docs/watch targets:** Static documentation sites render fine without custom drivers
+3. **Fewer moving parts:** Removes the need to share Firecrawl's HTTP microservice across protocols
 
-**Configuration:**
-```bash
-CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
-```
+**Note:** The previous `CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL` override has been removed. Leave the field unset to use the default embedded browser.
 
 ### Why HMAC Signatures?
 

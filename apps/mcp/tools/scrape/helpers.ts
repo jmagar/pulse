@@ -7,12 +7,6 @@
  * @module shared/mcp/tools/scrape/helpers
  */
 
-import type { IScrapingClients } from "../../mcp-server.js";
-import {
-  buildCrawlRequestConfig,
-  shouldStartCrawl,
-} from "../../config/crawl-config.js";
-
 /**
  * Detect content type from content analysis
  *
@@ -58,26 +52,3 @@ export function detectContentType(content: string): string {
  * @param url - URL to extract base from and crawl
  * @param clients - Scraping clients with optional Firecrawl support
  */
-export function startBaseUrlCrawl(
-  url: string,
-  clients: IScrapingClients,
-): void {
-  if (!clients.firecrawl) return;
-  if (typeof clients.firecrawl.startCrawl !== "function") return;
-  if (!shouldStartCrawl(url)) return;
-
-  const crawlConfig = buildCrawlRequestConfig(url);
-  if (!crawlConfig) return;
-
-  Promise.resolve(clients.firecrawl.startCrawl(crawlConfig))
-    .then((result) => {
-      if (!result.success) {
-        console.warn(
-          `Firecrawl crawl failed for ${crawlConfig.url}: ${result.error || "Unknown error"}`,
-        );
-      }
-    })
-    .catch((error) => {
-      console.warn("Firecrawl crawl request error:", error);
-    });
-}

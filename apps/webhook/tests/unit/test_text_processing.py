@@ -2,7 +2,9 @@
 Tests for text processing utilities.
 """
 
-from utils.text_processing import clean_text, extract_domain
+from unittest.mock import MagicMock, patch
+
+from utils.text_processing import TextChunker, clean_text, extract_domain
 
 
 def test_clean_text() -> None:
@@ -67,4 +69,19 @@ def test_extract_domain_invalid_url() -> None:
     assert isinstance(result, str)
 
 
-# Note: TextChunker tests require downloading the model, so they're in integration tests
+def test_text_chunker_uses_hf_tokenizer() -> None:
+    """Ensure TextChunker wires HuggingFace tokenizer into semantic-text-splitter."""
+    with patch("tokenizers.Tokenizer.from_pretrained") as mock_from_pretrained, \
+        patch("semantic_text_splitter.TextSplitter.from_huggingface_tokenizer") as mock_from_hf:
+        mock_splitter = MagicMock()
+        mock_from_hf.return_value = mock_splitter
+
+        chunker = TextChunker("test-model", max_tokens=128, overlap_tokens=16)
+
+        mock_from_pretrained.assert_called_once_with("test-model")
+        mock_from_hf.assert_called_once_with(
+            mock_from_pretrained.return_value,
+            capacity=128,
+            overlap=16,
+        )
+        assert chunker.splitter is mock_splitter

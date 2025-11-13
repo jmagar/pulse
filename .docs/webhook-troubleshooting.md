@@ -320,7 +320,7 @@ WEBHOOK_TEI_URL=http://tei:80
 
 1. **Start a crawl:**
 ```bash
-curl -X POST http://localhost:4300/v1/crawl \
+curl -X POST http://localhost:4300/v2/crawl \
   -H "Authorization: Bearer <api-key>" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com","limit":2}'

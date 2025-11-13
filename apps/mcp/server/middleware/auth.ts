@@ -1,64 +1,89 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
-/**
- * Placeholder for future authentication middleware
- * Currently a no-op passthrough
- *
- * Future implementation could use:
- * - Bearer token validation
- * - OAuth 2.0 with MCP SDK auth helpers
- * - API key checking
- * - JWT verification
- *
- * @param req - Express request object
- * @param res - Express response object
- * @param next - Express next function
- */
+import { env } from "../../config/environment.js";
+import { getScopesForRequest } from "../oauth/scope-validator.js";
+
+function isInitializationRequest(req: Request): boolean {
+  return (
+    req.method === "POST" &&
+    typeof req.body === "object" &&
+    req.body?.method === "initialize"
+  );
+}
+
 export function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ): void {
-  // TODO: Implement authentication logic
-  // Example: Check Authorization header, validate token, etc.
+  if (env.enableOAuth !== "true") {
+    next();
+    return;
+  }
+
+  if (isInitializationRequest(req)) {
+    next();
+    return;
+  }
+
+  if (req.session?.user) {
+    res.locals.user = req.session.user;
+    next();
+    return;
+  }
+
+  res.status(401).json({
+    error: "unauthorized",
+    error_description: "Authentication required",
+  });
+}
+
+export function scopeMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (env.enableOAuth !== "true" || isInitializationRequest(req)) {
+    next();
+    return;
+  }
+
+  const requiredScopes = getScopesForRequest(req);
+  if (requiredScopes.length === 0) {
+    next();
+    return;
+  }
+
+  const userScopes = req.session?.user?.scopes ?? [];
+  const missing = requiredScopes.filter(
+    (scope) => !userScopes.includes(scope),
+  );
+
+  if (missing.length > 0) {
+    res.status(403).json({
+      error: "insufficient_scope",
+      error_description: `Missing required scopes: ${missing.join(", ")}`,
+      required_scopes: missing,
+    });
+    return;
+  }
+
   next();
 }
 
-/**
- * Metrics authentication middleware
- *
- * Protects metrics endpoints with optional authentication.
- * Enable by setting METRICS_AUTH_ENABLED=true and providing METRICS_AUTH_KEY.
- *
- * Security note: These endpoints can expose operational details.
- * In production, enable authentication with:
- * - METRICS_AUTH_ENABLED=true
- * - METRICS_AUTH_KEY=your-secret-key
- *
- * Access authenticated endpoints with:
- * - X-Metrics-Key header: curl -H "X-Metrics-Key: your-secret-key" http://localhost:${MCP_PORT}/metrics
- * - key query parameter: curl http://localhost:${MCP_PORT}/metrics?key=your-secret-key
- *
- * @param req - Express request object
- * @param res - Express response object
- * @param next - Express next function
- */
 export function metricsAuthMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,
 ): void {
-  // Check if authentication is enabled
   if (process.env.METRICS_AUTH_ENABLED !== "true") {
-    // Auth disabled, allow access
-    return next();
+    next();
+    return;
   }
 
-  // Get auth key from header or query parameter
   const authKey = req.headers["x-metrics-key"] || req.query.key;
   const expectedKey = process.env.METRICS_AUTH_KEY;
 
-  // Validate key exists and matches
   if (!expectedKey) {
     res.status(500).json({
       error: "Server misconfiguration",
@@ -69,14 +94,13 @@ export function metricsAuthMiddleware(
   }
 
   if (authKey === expectedKey) {
-    // Valid key, proceed
     next();
-  } else {
-    // Invalid or missing key
-    res.status(401).json({
-      error: "Unauthorized",
-      message:
-        "Valid metrics authentication key required. Provide via X-Metrics-Key header or ?key= query parameter.",
-    });
+    return;
   }
+
+  res.status(401).json({
+    error: "Unauthorized",
+    message:
+      "Valid metrics authentication key required. Provide via X-Metrics-Key header or ?key= query parameter.",
+  });
 }

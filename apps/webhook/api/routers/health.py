@@ -14,6 +14,7 @@ from api.schemas.health import HealthStatus
 from services.embedding import EmbeddingService
 from services.vector_store import VectorStore
 from utils.logging import get_logger
+from utils.time import format_est_timestamp
 
 logger = get_logger(__name__)
 
@@ -70,5 +71,5 @@ async def health_check(
     return HealthStatus(
         status=overall_status,
         services=services,
-        timestamp=datetime.now(UTC).isoformat(),
+        timestamp=format_est_timestamp(),
     )

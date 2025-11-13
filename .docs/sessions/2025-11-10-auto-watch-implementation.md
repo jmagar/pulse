@@ -229,7 +229,7 @@ Firecrawl scrapes URL → indexed in search → changedetection watch created
 http://localhost:50109
 
 # Query via API
-curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-auto")'
+curl http://localhost:50109/api/v2/watch | jq '.[] | select(.tag == "firecrawl-auto")'
 
 # Check logs
 docker compose logs pulse_webhook | grep "Auto-created changedetection.io watch"
@@ -432,7 +432,7 @@ docker compose logs pulse_webhook | grep "Auto-created"
 http://localhost:50109
 
 # Query API
-curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-auto")'
+curl http://localhost:50109/api/v2/watch | jq '.[] | select(.tag == "firecrawl-auto")'
 ```
 
 ### Disable Feature

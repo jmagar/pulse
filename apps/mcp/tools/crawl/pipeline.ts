@@ -4,49 +4,67 @@ import type {
   StartCrawlResult,
   CrawlStatusResult,
   CancelResult,
+  CrawlErrorsResult,
+  ActiveCrawlsResult,
 } from "@firecrawl/client";
 import type { CrawlOptions } from "./schema.js";
+import { mergeExcludePaths, mergeScrapeOptions } from "../../config/crawl-config.js";
 
 export async function crawlPipeline(
   client: FirecrawlCrawlClient,
   options: CrawlOptions,
-): Promise<StartCrawlResult | CrawlStatusResult | CancelResult> {
-  // Determine operation based on parameters
-  if ("url" in options && options.url) {
-    // Start crawl operation
+): Promise<
+  | StartCrawlResult
+  | CrawlStatusResult
+  | CancelResult
+  | CrawlErrorsResult
+  | ActiveCrawlsResult
+> {
+  const command = options.command;
+
+  if (command === "start") {
+    if (!options.url) {
+      throw new Error('Command "start" requires a url');
+    }
+
+    const mergedScrapeOptions = mergeScrapeOptions(options.scrapeOptions);
     const clientOptions: ClientCrawlOptions = {
       url: options.url,
       prompt: options.prompt,
       limit: options.limit,
       maxDiscoveryDepth: options.maxDiscoveryDepth,
-      crawlEntireDomain: options.crawlEntireDomain,
+      crawlEntireDomain: options.crawlEntireDomain ?? true,
       allowSubdomains: options.allowSubdomains,
       allowExternalLinks: options.allowExternalLinks,
       includePaths: options.includePaths,
-      excludePaths: options.excludePaths,
+      excludePaths: mergeExcludePaths(options.excludePaths),
       ignoreQueryParameters: options.ignoreQueryParameters,
       sitemap: options.sitemap,
       delay: options.delay,
       maxConcurrency: options.maxConcurrency,
       scrapeOptions: {
-        ...options.scrapeOptions,
-        // CRITICAL: Explicitly set parsers to empty array to prevent PDF engine loops
-        // Firecrawl API defaults to PDF parsing ENABLED if parsers is undefined
-        // Empty array prevents PDF engine selection entirely
-        parsers: options.scrapeOptions?.parsers ?? [],
+        ...mergedScrapeOptions,
+        parsers: mergedScrapeOptions.parsers ?? [],
       },
     };
-    return await client.startCrawl(clientOptions);
-  } else if ("jobId" in options && options.jobId) {
-    // Cancel or status operation
-    if (options.cancel) {
-      return await client.cancelCrawl(options.jobId);
-    } else {
-      return await client.getCrawlStatus(options.jobId);
-    }
-  } else {
-    throw new Error(
-      "Either url (to start crawl) or jobId (to check status/cancel) is required",
-    );
+
+    return client.startCrawl(clientOptions);
+  }
+
+  if (["status", "cancel", "errors"].includes(command ?? "") && !options.jobId) {
+    throw new Error(`Command "${command}" requires a jobId`);
+  }
+
+  switch (command) {
+    case "status":
+      return client.getCrawlStatus(options.jobId!);
+    case "cancel":
+      return client.cancelCrawl(options.jobId!);
+    case "errors":
+      return client.getCrawlErrors(options.jobId!);
+    case "list":
+      return client.listActiveCrawls();
+    default:
+      throw new Error(`Unsupported crawl command: ${command}`);
   }
 }

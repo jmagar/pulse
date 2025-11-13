@@ -5,6 +5,8 @@ import type {
   StartCrawlResult,
   CrawlStatusResult,
   CancelResult,
+  CrawlErrorsResult,
+  ActiveCrawlsResult,
 } from '../types.js';
 
 /**
@@ -27,5 +29,13 @@ export class FirecrawlCrawlClient {
 
   async cancelCrawl(jobId: string): Promise<CancelResult> {
     return this.client.cancelCrawl(jobId);
+  }
+
+  async getCrawlErrors(jobId: string): Promise<CrawlErrorsResult> {
+    return this.client.getCrawlErrors(jobId);
+  }
+
+  async listActiveCrawls(): Promise<ActiveCrawlsResult> {
+    return this.client.listActiveCrawls();
   }
 }

@@ -25,7 +25,8 @@
     "storage/**/*",
     "config/**/*",
     "utils/**/*",
-    "monitoring/**/*"
+    "monitoring/**/*",
+    "types/**/*"
   ],
   "exclude": ["node_modules", "dist", "tests"]
 }

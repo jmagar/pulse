@@ -13,6 +13,7 @@ from api.schemas.indexing import IndexDocumentRequest
 from domain.models import ChangeEvent
 from services.service_pool import ServicePool
 from utils.logging import get_logger
+from utils.time import format_est_timestamp
 
 logger = get_logger(__name__)
 
@@ -111,7 +112,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
 
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    f"{firecrawl_url}/v1/scrape",
+                    f"{firecrawl_url}/v2/scrape",
                     json={
                         "url": change_event.watch_url,
                         "formats": ["markdown", "html"],
@@ -135,7 +136,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
                 metadata={
                     "change_event_id": change_event_id,
                     "watch_id": change_event.watch_id,
-                    "detected_at": change_event.detected_at.isoformat(),
+                    "detected_at": format_est_timestamp(change_event.detected_at),
                     "title": data.get("metadata", {}).get("title"),
                     "description": data.get("metadata", {}).get("description"),
                 },
@@ -186,7 +187,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
                     extra_metadata={
                         **(change_event.extra_metadata or {}),
                         "error": str(e),
-                        "failed_at": datetime.now(UTC).isoformat(),
+                        "failed_at": format_est_timestamp(),
                     },
                 )
             )

@@ -147,7 +147,7 @@ export async function scrapeUniversal(
 
       if (
         nativeResult.success &&
-        nativeResult.status === 200 &&
+        nativeResult.statusCode === 200 &&
         nativeResult.data
       ) {
         metrics.recordStrategyExecution("native", true, duration);

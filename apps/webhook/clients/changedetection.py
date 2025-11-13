@@ -76,13 +76,7 @@ class ChangeDetectionClient:
             "url": url,
             "tag": tag,
             "title": title,
-            "time_between_check": {
-                "weeks": None,
-                "days": None,
-                "hours": None,
-                "minutes": None,
-                "seconds": check_interval,
-            },
+            "time_between_check": {"seconds": check_interval},
             "notification_urls": [webhook_url],
             "notification_title": "{{ watch_title }} changed",
             "notification_body": """{
@@ -93,7 +87,7 @@ class ChangeDetectionClient:
   "diff_url": "{{ diff_url }}",
   "snapshot": "{{ current_snapshot|truncate(500) }}"
 }""",
-            "notification_format": "JSON",
+            "notification_format": "System default",
         }
 
         headers = {}
@@ -103,7 +97,7 @@ class ChangeDetectionClient:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await client.post(
-                    f"{self.api_url}/api/v1/watch",
+                    f"{self.api_url}/api/v2/watch",
                     json=payload,
                     headers=headers,
                 )
@@ -155,16 +149,28 @@ class ChangeDetectionClient:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await client.get(
-                    f"{self.api_url}/api/v1/watch",
+                    f"{self.api_url}/api/v2/watch",
                     headers=headers,
                 )
                 response.raise_for_status()
-                watches = cast(list[dict[str, Any]], response.json())
+                raw_data = response.json()
 
-                # Find watch matching URL
-                for watch in watches:
+                # changedetection.io returns a dict keyed by UUIDs. Older versions may return a list,
+                # so support both formats for forward/backward compatibility.
+                if isinstance(raw_data, dict):
+                    watch_iterable = raw_data.values()
+                elif isinstance(raw_data, list):
+                    watch_iterable = raw_data
+                else:
+                    logger.warning(
+                        "Unexpected changedetection.io watch payload",
+                        response_type=type(raw_data).__name__,
+                    )
+                    return None
+
+                for watch in watch_iterable:
                     if watch.get("url") == url:
-                        return watch
+                        return cast(dict[str, Any], watch)
 
                 return None
 

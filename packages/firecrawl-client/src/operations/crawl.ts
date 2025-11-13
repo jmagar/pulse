@@ -6,7 +6,14 @@
  * @module shared/clients/firecrawl/operations/crawl
  */
 
-import type { CrawlOptions, StartCrawlResult, CrawlStatusResult, CancelResult } from '../types.js';
+import type {
+  CrawlOptions,
+  StartCrawlResult,
+  CrawlStatusResult,
+  CancelResult,
+  CrawlErrorsResult,
+  ActiveCrawlsResult,
+} from '../types.js';
 import { buildHeaders, debugLog } from '../utils/headers.js';
 
 /**
@@ -110,6 +117,91 @@ export async function cancelCrawl(
 
   try {
     return (await response.json()) as CancelResult;
+  } catch (error) {
+    throw new Error(
+      `Failed to parse Firecrawl API response: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+/**
+ * Retrieve crawl errors for a job
+ */
+export async function getCrawlErrors(
+  apiKey: string,
+  baseUrl: string,
+  jobId: string
+): Promise<CrawlErrorsResult> {
+  const headers = buildHeaders(apiKey);
+
+  const response = await fetch(`${baseUrl}/crawl/${jobId}/errors`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Firecrawl API error (${response.status}): ${errorText}`);
+  }
+
+  try {
+    const payload = (await response.json()) as Record<string, unknown> & {
+      data?: Record<string, unknown>;
+    };
+    const data = payload?.data ?? payload ?? {};
+    return {
+      errors: Array.isArray(data.errors) ? data.errors : [],
+      robotsBlocked: data.robotsBlocked ?? data.robots_blocked ?? [],
+    } as CrawlErrorsResult;
+  } catch (error) {
+    throw new Error(
+      `Failed to parse Firecrawl API response: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+/**
+ * List active crawl jobs for the authenticated team
+ */
+export async function getActiveCrawls(
+  apiKey: string,
+  baseUrl: string
+): Promise<ActiveCrawlsResult> {
+  const headers = buildHeaders(apiKey);
+
+  const response = await fetch(`${baseUrl}/crawl/active`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Firecrawl API error (${response.status}): ${errorText}`);
+  }
+
+  try {
+    const payload = (await response.json()) as Record<string, unknown>;
+    if (!payload?.success) {
+      const errorMessage =
+        typeof (payload as { error?: unknown }).error === 'string'
+          ? ((payload as { error?: string }).error as string)
+          : 'Firecrawl API returned an error response';
+      throw new Error(errorMessage);
+    }
+
+    const crawls = Array.isArray(payload.crawls)
+      ? (payload.crawls as Array<Record<string, unknown>>).map((crawl) => ({
+          id: crawl.id as string,
+          teamId: (crawl.teamId ?? crawl.team_id) as string | undefined,
+          url: crawl.url as string | undefined,
+          options: crawl.options as Record<string, unknown> | undefined,
+        }))
+      : [];
+
+    return {
+      success: true,
+      crawls,
+    } satisfies ActiveCrawlsResult;
   } catch (error) {
     throw new Error(
       `Failed to parse Firecrawl API response: ${error instanceof Error ? error.message : String(error)}`

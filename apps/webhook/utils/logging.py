@@ -1,11 +1,23 @@
 """Structured logging configuration using structlog."""
 
+from datetime import datetime
 import logging
 import sys
 from typing import cast
+from zoneinfo import ZoneInfo
 
 import structlog
-from structlog.typing import FilteringBoundLogger
+from structlog.typing import EventDict, FilteringBoundLogger, WrappedLogger
+
+EST_ZONE = ZoneInfo("America/New_York")
+TIMESTAMP_FORMAT = "%I:%M:%S %p | %m/%d/%Y"
+
+
+def _est_timestamp(_: WrappedLogger, __: str, event_dict: EventDict) -> EventDict:
+    """Inject a 12-hour EST timestamp without microseconds into event dict."""
+
+    event_dict["timestamp"] = datetime.now(EST_ZONE).strftime(TIMESTAMP_FORMAT)
+    return event_dict
 
 
 def configure_logging(log_level: str = "INFO") -> None:
@@ -29,7 +41,7 @@ def configure_logging(log_level: str = "INFO") -> None:
             structlog.processors.add_log_level,
             structlog.processors.StackInfoRenderer(),
             structlog.dev.set_exc_info,
-            structlog.processors.TimeStamper(fmt="iso", utc=True),
+            _est_timestamp,
             structlog.dev.ConsoleRenderer(),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, log_level.upper())),

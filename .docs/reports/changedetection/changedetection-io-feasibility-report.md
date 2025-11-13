@@ -120,12 +120,12 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
 
 | Endpoint | Method | Purpose | Integration Use |
 |----------|--------|---------|-----------------|
-| `/api/v1/watch` | POST | Create watch | Add URLs to monitor |
-| `/api/v1/watch` | GET | List watches | Query monitoring status |
-| `/api/v1/watch/{uuid}` | GET | Get watch details | Check last change time |
-| `/api/v1/watch/{uuid}` | PUT | Update watch | Modify check interval |
-| `/api/v1/watch/{uuid}` | DELETE | Delete watch | Remove monitoring |
-| `/api/v1/watch/{uuid}/history` | GET | Get snapshots | Retrieve change history |
+| `/api/v2/watch` | POST | Create watch | Add URLs to monitor |
+| `/api/v2/watch` | GET | List watches | Query monitoring status |
+| `/api/v2/watch/{uuid}` | GET | Get watch details | Check last change time |
+| `/api/v2/watch/{uuid}` | PUT | Update watch | Modify check interval |
+| `/api/v2/watch/{uuid}` | DELETE | Delete watch | Remove monitoring |
+| `/api/v2/watch/{uuid}/history` | GET | Get snapshots | Retrieve change history |
 
 **Webhook Integration:**
 - Notification URL: `json://pulse_webhook:52100/api/webhook/changedetection`
@@ -240,7 +240,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
 
 ```
 1. User adds URL to monitor
-   └─> POST /api/v1/watch to changedetection.io
+   └─> POST /api/v2/watch to changedetection.io
 
 2. changedetection.io checks URL periodically
    └─> Uses Playwright browser for JavaScript sites
@@ -310,7 +310,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
 ### 4.2 Alternative Approaches (Not Recommended)
 
 **Option B: Monitor Firecrawl API Directly**
-- changedetection.io watches Firecrawl's `/v1/crawl/{id}` status endpoint
+- changedetection.io watches Firecrawl's `/v2/crawl/{id}` status endpoint
 - Triggers rescrape when API signals completion
 - **Why Not:** Circular dependency, unnecessary complexity
 
@@ -521,7 +521,7 @@ changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure
    ```python
    def rescrape_changed_url(change_event_id: int):
        # Fetch change event from database
-       # Call Firecrawl API: POST /v1/scrape
+       # Call Firecrawl API: POST /v2/scrape
        # Wait for result (with timeout)
        # Index in Qdrant (existing pipeline)
        # Update change_event record
@@ -1011,7 +1011,7 @@ async def rescrape_changed_url(change_event_id: int):
             # Call Firecrawl API
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    f"{settings.firecrawl_api_url}/v1/scrape",
+                    f"{settings.firecrawl_api_url}/v2/scrape",
                     json={
                         "url": change_event.watch_url,
                         "formats": ["markdown", "html"],

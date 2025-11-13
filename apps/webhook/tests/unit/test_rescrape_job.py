@@ -7,6 +7,7 @@ import pytest
 
 from workers.jobs import rescrape_changed_url
 from domain.models import ChangeEvent
+from utils.time import format_est_timestamp, parse_iso_timestamp
 
 
 @pytest.mark.asyncio
@@ -24,8 +25,12 @@ async def test_rescrape_changed_url_success():
             "signature": "sha256=abc123",
             "diff_size": 100,
             "raw_payload_version": "1.0",
-            "detected_at": "2025-11-10T12:00:00Z",
-            "webhook_received_at": "2025-11-10T12:00:01Z",
+            "detected_at": format_est_timestamp(
+                parse_iso_timestamp("2025-11-10T12:00:00Z")
+            ),
+            "webhook_received_at": format_est_timestamp(
+                parse_iso_timestamp("2025-11-10T12:00:01Z")
+            ),
         },
     )
 

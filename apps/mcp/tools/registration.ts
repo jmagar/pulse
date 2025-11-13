@@ -22,12 +22,13 @@ import { scrapeTool } from "./scrape/index.js";
 import { createSearchTool } from "./search/index.js";
 import { createMapTool } from "./map/index.js";
 import { createCrawlTool } from "./crawl/index.js";
+import { createQueryTool } from "./query/index.js";
 import { ResourceStorageFactory } from "../storage/index.js";
 import type { FirecrawlConfig } from "../types.js";
 import { logInfo, logError } from "../utils/logging.js";
 import { registrationTracker } from "../utils/mcp-status.js";
 import { getMetricsCollector } from "../monitoring/index.js";
-import { env } from "../config/environment.js";
+import { env, getEnvSnapshot } from "../config/environment.js";
 import { SELF_HOSTED_NO_AUTH } from "@firecrawl/client";
 
 /**
@@ -53,10 +54,11 @@ export function registerTools(
   clientFactory: ClientFactory,
   strategyConfigFactory: StrategyConfigFactory,
 ): void {
+  const currentEnv = getEnvSnapshot();
   // Create Firecrawl config from centralized environment
   const firecrawlConfig: FirecrawlConfig = {
-    apiKey: env.firecrawlApiKey || SELF_HOSTED_NO_AUTH,
-    baseUrl: env.firecrawlBaseUrl || "http://firecrawl:3002",
+    apiKey: currentEnv.firecrawlApiKey || SELF_HOSTED_NO_AUTH,
+    baseUrl: currentEnv.firecrawlBaseUrl || "http://firecrawl:3002",
   };
 
   // Create tool instances with tracking
@@ -69,6 +71,24 @@ export function registerTools(
     { name: "search", factory: () => createSearchTool(firecrawlConfig) },
     { name: "map", factory: () => createMapTool(firecrawlConfig) },
     { name: "crawl", factory: () => createCrawlTool(firecrawlConfig) },
+    {
+      name: "query",
+      factory: () => {
+        if (!currentEnv.webhookBaseUrl) {
+          throw new Error("WEBHOOK_BASE_URL is required for the query tool");
+        }
+        if (!currentEnv.webhookApiSecret) {
+          throw new Error(
+            "WEBHOOK_API_SECRET is required for the query tool",
+          );
+        }
+
+        return createQueryTool({
+          baseUrl: currentEnv.webhookBaseUrl,
+          apiSecret: currentEnv.webhookApiSecret,
+        });
+      },
+    },
   ];
 
   const tools: Tool[] = [];

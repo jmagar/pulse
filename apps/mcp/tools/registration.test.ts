@@ -41,6 +41,15 @@ vi.mock("./crawl/index.js", () => ({
   })),
 }));
 
+vi.mock("./query/index.js", () => ({
+  createQueryTool: vi.fn(() => ({
+    name: "query",
+    description: "Query tool",
+    inputSchema: { type: "object" },
+    handler: vi.fn(),
+  })),
+}));
+
 describe("MCP Registration with Tracking", () => {
   let server: Server;
   const originalEnv = process.env;
@@ -51,6 +60,8 @@ describe("MCP Registration with Tracking", () => {
       ...originalEnv,
       FIRECRAWL_API_KEY: "test-api-key",
       FIRECRAWL_BASE_URL: "https://api.firecrawl.dev",
+      WEBHOOK_BASE_URL: "http://localhost:50108",
+      WEBHOOK_API_SECRET: "test-secret",
     };
 
     server = new Server(
@@ -84,7 +95,7 @@ describe("MCP Registration with Tracking", () => {
       registerTools(server, mockClientFactory, mockStrategyFactory);
 
       const tools = registrationTracker.getToolRegistrations();
-      expect(tools.length).toBe(4);
+      expect(tools.length).toBe(5);
       expect(tools.every((t) => t.success)).toBe(true);
     });
 
@@ -108,6 +119,7 @@ describe("MCP Registration with Tracking", () => {
       expect(toolNames).toContain("search");
       expect(toolNames).toContain("map");
       expect(toolNames).toContain("crawl");
+      expect(toolNames).toContain("query");
     });
 
     it("should continue registration if one tool fails", async () => {
@@ -134,17 +146,17 @@ describe("MCP Registration with Tracking", () => {
 
       const tools = registrationTracker.getToolRegistrations();
 
-      // Should have exactly 4 tool registration attempts (scrape, search, map, crawl)
-      expect(tools.length).toBe(4);
+      // Should have exactly 5 tool registration attempts (scrape, search, map, crawl, query)
+      expect(tools.length).toBe(5);
 
       // Should have exactly one failure (scrape)
       const failures = tools.filter((t) => !t.success);
       expect(failures.length).toBe(1);
       expect(failures[0].name).toBe("scrape");
 
-      // Should have three successes
+      // Should have four successes
       const successes = tools.filter((t) => t.success);
-      expect(successes.length).toBe(3);
+      expect(successes.length).toBe(4);
     });
 
     it("should record error messages for failed registrations", async () => {

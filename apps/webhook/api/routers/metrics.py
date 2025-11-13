@@ -16,6 +16,7 @@ from api.deps import verify_api_secret
 from infra.database import get_db_session
 from domain.models import OperationMetric, RequestMetric
 from utils.logging import get_logger
+from utils.time import format_est_timestamp
 
 logger = get_logger(__name__)
 
@@ -91,7 +92,7 @@ async def get_request_metrics(
         "metrics": [
             {
                 "id": str(m.id),
-                "timestamp": m.timestamp.isoformat(),
+                "timestamp": format_est_timestamp(m.timestamp),
                 "method": m.method,
                 "path": m.path,
                 "status_code": m.status_code,
@@ -204,7 +205,7 @@ async def get_operation_metrics(
         "metrics": [
             {
                 "id": str(m.id),
-                "timestamp": m.timestamp.isoformat(),
+                "timestamp": format_est_timestamp(m.timestamp),
                 "operation_type": m.operation_type,
                 "operation_name": m.operation_name,
                 "duration_ms": round(m.duration_ms, 2),

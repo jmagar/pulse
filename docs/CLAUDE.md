@@ -4,13 +4,27 @@
 
 ## Structure
 
+**Current directories:**
+```
+docs/
+├── mcp/                      # MCP tool documentation (scrape, crawl, map, search, query)
+├── plans/                    # Implementation plans and roadmaps
+├── ARCHITECTURE_DIAGRAM.md   # ASCII system topology diagrams
+├── CHANGEDETECTION_INTEGRATION.md  # changedetection.io setup guide
+├── OAUTH.md                  # Google OAuth 2.1 configuration
+├── services-ports.md         # Port allocation and service URLs
+├── deployment-log.md         # Deployment history
+├── external-services.md      # GPU services documentation
+└── CLAUDE.md                 # This file
+```
+
+**Planned directories** (not yet created):
 ```
 docs/
 ├── architecture/      # System design, component diagrams, ADRs
 ├── api/               # API specifications, endpoint documentation
 ├── guides/            # User guides, tutorials, how-tos
-├── contributing/      # Contribution guidelines, development setup
-└── CLAUDE.md          # This file
+└── contributing/      # Contribution guidelines, development setup
 ```
 
 ## Guidelines
@@ -64,6 +78,29 @@ All guides should include:
 - Update when features change
 - Archive obsolete docs (move to `.docs/archive/`)
 - Link from README for discoverability
+
+## Current Documentation Files
+
+### Integration Guides
+- **[CHANGEDETECTION_INTEGRATION.md](CHANGEDETECTION_INTEGRATION.md)** (677 lines) - Complete changedetection.io setup, webhook config, auto-rescraping
+- **[OAUTH.md](OAUTH.md)** (198 lines) - Google OAuth 2.1 setup for MCP server with production hardening
+
+### Service Documentation
+- **[services-ports.md](services-ports.md)** (200+ lines) - All service ports, container names, internal/external URLs, environment variables
+- **[external-services.md](external-services.md)** - GPU machine services (TEI, Qdrant, Ollama)
+- **[ARCHITECTURE_DIAGRAM.md](ARCHITECTURE_DIAGRAM.md)** (406 lines) - ASCII topology diagrams, health checks, data flow
+
+### MCP Tools
+- **[mcp/INDEX.md](mcp/INDEX.md)** - Tool overview table
+- **[mcp/SCRAPE.md](mcp/SCRAPE.md)** - Single/batch scraping documentation
+- **[mcp/CRAWL.md](mcp/CRAWL.md)** - Site-wide crawling
+- **[mcp/MAP.md](mcp/MAP.md)** - URL enumeration
+- **[mcp/SEARCH.md](mcp/SEARCH.md)** - Federated search
+- **[mcp/QUERY.md](mcp/QUERY.md)** - Hybrid documentation search
+- **[mcp/RESOURCES.md](mcp/RESOURCES.md)** - Persistent resource caching
+
+### Implementation Plans
+- **[plans/](plans/)** - Active roadmaps and feature plans (2025-11-10 through 2025-11-12)
 
 ## Relationship to .docs/
 

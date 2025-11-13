@@ -20,6 +20,7 @@ interface SearchResponse {
   total: number;
   query: string;
   mode: string;
+  offset: number;
 }
 
 /**
@@ -42,10 +43,14 @@ export class QueryClient {
   async query(options: QueryOptions): Promise<SearchResponse> {
     const url = `${this.baseUrl}/api/search`;
 
+    const offset = options.offset ?? 0;
+    const perPage = options.limit;
+    const fetchLimit = Math.min(100, offset + perPage);
+
     const requestBody = {
       query: options.query,
       mode: options.mode,
-      limit: options.limit,
+      limit: fetchLimit,
       ...(options.filters && { filters: options.filters }),
     };
 
@@ -68,6 +73,15 @@ export class QueryClient {
       );
     }
 
-    return await response.json();
+    const payload = await response.json();
+    const trimmedResults = Array.isArray(payload.results)
+      ? payload.results.slice(offset)
+      : [];
+
+    return {
+      ...payload,
+      results: trimmedResults,
+      offset,
+    };
   }
 }

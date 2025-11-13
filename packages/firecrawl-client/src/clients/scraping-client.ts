@@ -3,6 +3,11 @@ import type {
   FirecrawlConfig,
   FirecrawlScrapingOptions,
   FirecrawlScrapingResult,
+  BatchScrapeOptions,
+  BatchScrapeStartResult,
+  BatchScrapeCancelResult,
+  CrawlStatusResult,
+  CrawlErrorsResult,
 } from '../types.js';
 
 /**
@@ -20,5 +25,21 @@ export class FirecrawlScrapingClient {
     options: FirecrawlScrapingOptions = {}
   ): Promise<FirecrawlScrapingResult> {
     return this.client.scrape(url, options);
+  }
+
+  async batchScrape(options: BatchScrapeOptions): Promise<BatchScrapeStartResult> {
+    return this.client.startBatchScrape(options);
+  }
+
+  async getBatchScrapeStatus(jobId: string): Promise<CrawlStatusResult> {
+    return this.client.getBatchScrapeStatus(jobId);
+  }
+
+  async cancelBatchScrape(jobId: string): Promise<BatchScrapeCancelResult> {
+    return this.client.cancelBatchScrape(jobId);
+  }
+
+  async getBatchScrapeErrors(jobId: string): Promise<CrawlErrorsResult> {
+    return this.client.getBatchScrapeErrors(jobId);
   }
 }

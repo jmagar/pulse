@@ -93,8 +93,52 @@ Key variables:
 The server exposes the following MCP tools:
 
 - **scrape** - Extract content from a single URL
-- **crawl** - Recursively crawl a website
+- **crawl** - Recursively crawl a website. Commands:
+  - `crawl <url>` – start a crawl
+  - `crawl status <jobId>` – view progress
+  - `crawl cancel <jobId>` – stop a crawl
+  - `crawl errors <jobId>` – collect crawl errors/robots blocks
+  - `crawl list` – show active crawls
 - **map** - Generate a sitemap
 - **search** - Search indexed content
+- **query** - Search the webhook-managed hybrid index and return embedded resources
 
 See individual tool implementations in `tools/` for detailed parameters and response formats.
+
+**Crawl usage example:**
+
+```ts
+await mcp.callTool("crawl", {
+  command: "status",
+  jobId: "crawl-job-123",
+});
+```
+
+### Query Tool
+
+Search indexed documentation leveraging the webhook service's hybrid (vector + BM25) pipeline.
+
+**Features:**
+- Hybrid, semantic, and keyword/BM25-only modes
+- Domain filtering plus locale preferences (country/language) derived from map defaults
+- Results returned as embedded MCP resources (markdown payloads + metadata)
+- Automatic formatting of scores, descriptions, and metadata fields
+
+**Usage:**
+```ts
+const result = await mcp.callTool("query", {
+  query: "firecrawl scrape options",
+  mode: "hybrid",
+  limit: 10,
+  filters: {
+    domain: "docs.firecrawl.dev",
+    language: "en",
+  },
+});
+```
+
+**Configuration:**
+- `WEBHOOK_BASE_URL` (default: `http://pulse_webhook:52100` inside docker)
+- `WEBHOOK_API_SECRET` (required)
+- Standalone overrides: `MCP_WEBHOOK_BASE_URL`, `MCP_WEBHOOK_API_SECRET`
+- Optional `RUN_QUERY_TOOL_INTEGRATION=true` to enable the live integration tests

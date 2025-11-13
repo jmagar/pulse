@@ -1,173 +1,47 @@
 # Monitoring Module
 
-Performance monitoring infrastructure for the pulse MCP server.
-
-## Overview
-
-Provides comprehensive metrics collection for:
-
-- **Cache operations**: Hit/miss rates, storage size, evictions
-- **Scraping strategies**: Success rates, execution times, fallbacks, errors
-- **Request performance**: Latency percentiles (P50/P95/P99), error rates
+Performance metrics collection and export for the MCP server.
 
 ## Architecture
 
-```
-shared/monitoring/
-├── types.ts                  # Metric type definitions
-├── metrics-collector.ts      # Core metrics collection
-├── exporters/
-│   ├── console-exporter.ts  # Human-readable format
-│   └── json-exporter.ts     # Structured JSON format
-└── index.ts                  # Main exports
-```
+Three-tier design with singleton pattern:
 
-## Usage
+1. **Types** (`types.ts`) - Interface definitions for metrics structure
+2. **Collector** (`metrics-collector.ts`) - Core metrics recording with percentile calculation
+3. **Exporters** (`exporters/`) - Format-specific output (console, JSON)
 
-### Basic Usage
+## Metrics
 
-```typescript
-import { getMetricsCollector } from "./monitoring/index.js";
-
-const metrics = getMetricsCollector();
-
-// Record cache operations
-metrics.recordCacheHit();
-metrics.recordCacheMiss();
-metrics.recordCacheWrite(1024);
-metrics.updateStorageSize(totalBytes);
-
-// Record strategy execution
-metrics.recordStrategyExecution("native", true, durationMs);
-metrics.recordFallback("native", "firecrawl");
-metrics.recordStrategyError("native", errorMessage);
-
-// Record requests
-metrics.recordRequest(durationMs, isError);
-
-// Get current metrics
-const allMetrics = metrics.getAllMetrics();
-```
-
-### Exporting Metrics
-
-```typescript
-import { ConsoleExporter, JSONExporter } from "./monitoring/index.js";
-
-// Console format (human-readable)
-const consoleExporter = new ConsoleExporter({ includeTimestamp: true });
-const consoleOutput = consoleExporter.export(allMetrics);
-console.log(consoleOutput);
-
-// JSON format (structured)
-const jsonExporter = new JSONExporter({ pretty: true });
-const jsonOutput = jsonExporter.export(allMetrics);
-```
-
-## HTTP Endpoints (Remote Server)
-
-The remote server exposes metrics via HTTP:
-
-```bash
-# Console format
-curl http://localhost:3060/metrics
-
-# JSON format
-curl http://localhost:3060/metrics/json
-
-# Reset metrics (testing only)
-curl -X POST http://localhost:3060/metrics/reset
-```
-
-## Metrics Reference
+Tracks three metric categories:
 
 ### Cache Metrics
-
-```typescript
-interface CacheMetrics {
-  hits: number; // Total cache hits
-  misses: number; // Total cache misses
-  writes: number; // Total cache writes
-  evictions: number; // Total evictions
-  hitRate: number; // Hit rate (0-1)
-  missRate: number; // Miss rate (0-1)
-  currentSizeBytes: number; // Current storage size
-  totalBytesWritten: number; // Total bytes written
-  itemCount: number; // Number of cached items
-}
-```
+- Hit/miss counts and rates
+- Storage size and write volume
+- Eviction count
+- Item count
 
 ### Strategy Metrics
-
-```typescript
-interface StrategyMetric {
-  successCount: number; // Successful executions
-  failureCount: number; // Failed executions
-  totalExecutions: number; // Total attempts
-  successRate: number; // Success rate (0-1)
-  totalDurationMs: number; // Total execution time
-  avgDurationMs: number; // Average execution time
-  fallbackCount: number; // Times this strategy triggered fallback
-  errors?: Record<string, number>; // Error counts by message
-}
-
-interface StrategyMetrics {
-  [strategyName: string]: StrategyMetric;
-}
-```
+- Per-strategy: success count, failure count, total duration
+- Aggregated: success rate, average duration, fallback count
+- Error tracking by message
 
 ### Request Metrics
-
-```typescript
-interface RequestMetrics {
-  totalRequests: number; // Total number of requests
-  totalErrors: number; // Total errors
-  errorRate: number; // Error rate (0-1)
-  avgResponseTimeMs: number; // Average response time
-  p50Ms: number; // Median latency
-  p95Ms: number; // 95th percentile
-  p99Ms: number; // 99th percentile
-}
-```
+- Total requests and error count
+- Error rate, average response time
+- Latency percentiles (P50, P95, P99)
+- Efficient percentile calculation with sorted array interpolation
 
 ## Integration Points
 
-### Strategy Selector
-
-Monitoring is integrated in `/shared/scraping/strategies/selector.ts`:
+### Tool Registration (`../tools/registration.ts`)
 
 ```typescript
-import { getMetricsCollector } from "../../monitoring/index.js";
-
-const metrics = getMetricsCollector();
-
-// In tryNative() and tryFirecrawl()
-const duration = Date.now() - startTime;
-metrics.recordStrategyExecution(strategyName, success, duration);
-
-if (error) {
-  metrics.recordStrategyError(strategyName, errorMessage);
-}
-
-// When falling back
-metrics.recordFallback("native", "firecrawl");
-```
-
-### Tool Handler
-
-Request tracking is integrated in `/shared/mcp/registration.ts`:
-
-```typescript
-import { getMetricsCollector } from "../monitoring/index.js";
-
 const metrics = getMetricsCollector();
 const startTime = Date.now();
-
 try {
-  const result = await tool.handler(args);
+  const result = await handler(args);
   const duration = Date.now() - startTime;
   metrics.recordRequest(duration, false);
-  return result;
 } catch (error) {
   const duration = Date.now() - startTime;
   metrics.recordRequest(duration, true);
@@ -175,83 +49,64 @@ try {
 }
 ```
 
-### Storage Layer (Not Yet Implemented)
+### Strategy Selector (`../scraping/strategies/selector.ts`)
 
-To integrate with storage (when available):
+Records per-strategy execution metrics:
+```typescript
+const metrics = getMetricsCollector();
+const duration = Date.now() - startTime;
+metrics.recordStrategyExecution(strategyName, success, duration);
+if (error) metrics.recordStrategyError(strategyName, errorMessage);
+if (fallback) metrics.recordFallback(fromStrategy, toStrategy);
+```
+
+## HTTP Endpoints
+
+Exposed via metrics middleware (`../server/middleware/metrics.ts`):
+
+- `GET /metrics` - Console-formatted metrics with timestamp
+- `GET /metrics/json` - Structured JSON output
+- `POST /metrics/reset` - Clear all metrics (testing only)
+
+## Usage
 
 ```typescript
-import { getMetricsCollector } from "../monitoring/index.js";
+import { getMetricsCollector, ConsoleExporter, JSONExporter } from "../monitoring";
 
-class MemoryResourceStorage {
-  async read(uri: string) {
-    const metrics = getMetricsCollector();
+const metrics = getMetricsCollector();
 
-    if (this.cache.has(uri)) {
-      metrics.recordCacheHit();
-      return this.cache.get(uri);
-    }
+// Record metrics
+metrics.recordRequest(durationMs, isError);
+metrics.recordStrategyExecution(name, success, durationMs);
+metrics.recordCacheHit();
+metrics.recordCacheWrite(bytes);
 
-    metrics.recordCacheMiss();
-    // ... fetch and cache
-  }
+// Get metrics
+const all = metrics.getAllMetrics();
+const cache = metrics.getCacheMetrics();
+const strategies = metrics.getStrategyMetrics();
+const requests = metrics.getRequestMetrics();
 
-  async write(url: string, content: string) {
-    const metrics = getMetricsCollector();
-    const bytes = Buffer.byteLength(content);
+// Export
+const consoleExporter = new ConsoleExporter({ includeTimestamp: true });
+console.log(consoleExporter.export(all));
 
-    // ... write to cache
-
-    metrics.recordCacheWrite(bytes);
-    metrics.updateItemCount(this.cache.size);
-    metrics.updateStorageSize(this.getTotalSize());
-  }
-}
+const jsonExporter = new JSONExporter({ pretty: true });
+const json = jsonExporter.export(all);
 ```
 
-## Testing
+## Key Design Decisions
 
-```bash
-# Run all monitoring tests
-npm test -- tests/shared/monitoring/
-
-# Unit tests
-npm test -- tests/shared/monitoring/metrics.test.ts
-
-# Exporter tests
-npm test -- tests/shared/monitoring/exporters.test.ts
-
-# Integration tests
-npm test -- tests/shared/monitoring/integration.test.ts
-```
-
-## Best Practices
-
-1. **Singleton Pattern**: Always use `getMetricsCollector()` to get the global instance
-2. **Non-Blocking**: Metric recording is synchronous and fast - no async overhead
-3. **Memory Efficient**: Request latencies are stored for percentile calculation, but consider limits for long-running servers
-4. **Reset Carefully**: Only reset metrics in testing/debugging, not in production
-5. **Export Regularly**: In production, export metrics to monitoring systems periodically
-
-## Future Enhancements
-
-- [ ] Integrate with storage layer when available
-- [ ] Add metric history/windowing for time-series data
-- [ ] Add Prometheus exporter for production monitoring
-- [ ] Add metric aggregation across multiple server instances
-- [ ] Add configurable metric retention periods
-- [ ] Add automatic metric export on intervals
+1. **Singleton Pattern**: `getMetricsCollector()` ensures single global instance
+2. **Synchronous Recording**: No async overhead - metrics are in-memory counters
+3. **Percentile Calculation**: On-demand (not pre-calculated) to avoid continuous sorting
+4. **Bounded Latencies**: Max 5000 stored latencies to prevent unbounded memory growth
+5. **Non-Blocking**: Fast counters and maps suitable for high-frequency calls
 
 ## Related Files
 
-- `/shared/monitoring/types.ts` - Type definitions
-- `/shared/monitoring/metrics-collector.ts` - Core implementation
-- `/shared/monitoring/exporters/` - Export formats
-- `/remote/middleware/metrics.ts` - HTTP endpoints
-- `/tests/shared/monitoring/` - Test suite
-
-## Performance Impact
-
-- **Negligible overhead**: Simple counters and in-memory aggregation
-- **No external dependencies**: No network calls or I/O
-- **Fast percentile calculation**: Efficient sorting algorithm
-- **Small memory footprint**: ~100 bytes per recorded request latency
+- Core: `types.ts`, `metrics-collector.ts`
+- Exporters: `exporters/console-exporter.ts`, `exporters/json-exporter.ts`
+- Main export: `index.ts`
+- HTTP handlers: `../server/middleware/metrics.ts`
+- Consumers: `../tools/registration.ts`, `../scraping/strategies/selector.ts`

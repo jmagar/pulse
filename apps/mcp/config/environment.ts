@@ -69,9 +69,25 @@ type EnvConfig = {
   skipHealthChecks: string | undefined;
   forceColor: string | undefined;
   noColor: string | undefined;
+  webhookBaseUrl: string | undefined;
+  webhookApiSecret: string | undefined;
+  googleClientId: string | undefined;
+  googleClientSecret: string | undefined;
+  googleRedirectUri: string | undefined;
+  googleScopes: string | undefined;
+  oauthSessionSecret: string | undefined;
+  oauthTokenKey: string | undefined;
+  oauthResourceIndicator: string | undefined;
+  oauthAuthorizationServer: string | undefined;
+  oauthTokenTtl: string | undefined;
+  oauthRefreshTtl: string | undefined;
+  redisUrl: string | undefined;
+  databaseUrl: string | undefined;
 };
 
 function buildEnv(): EnvConfig {
+  const nuqDatabaseUrl = getEnvVar("NUQ_DATABASE_URL");
+
   return {
     // Server Configuration
     port: getEnvVar("MCP_PORT", "PORT", "3060"),
@@ -143,6 +159,67 @@ function buildEnv(): EnvConfig {
     // Color Output Control (for CLI tools)
     forceColor: getEnvVar("FORCE_COLOR"),
     noColor: getEnvVar("NO_COLOR"),
+
+    // Webhook Query Tool Configuration
+    webhookBaseUrl: getEnvVar(
+      "MCP_WEBHOOK_BASE_URL",
+      "WEBHOOK_BASE_URL",
+      "http://pulse_webhook:52100",
+    ),
+    webhookApiSecret: getEnvVar(
+      "MCP_WEBHOOK_API_SECRET",
+      "WEBHOOK_API_SECRET",
+    ),
+    googleClientId: getEnvVar(
+      "MCP_GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_ID",
+    ),
+    googleClientSecret: getEnvVar(
+      "MCP_GOOGLE_CLIENT_SECRET",
+      "GOOGLE_CLIENT_SECRET",
+    ),
+    googleRedirectUri: getEnvVar(
+      "MCP_GOOGLE_REDIRECT_URI",
+      "GOOGLE_REDIRECT_URI",
+    ),
+    googleScopes: getEnvVar(
+      "MCP_GOOGLE_OAUTH_SCOPES",
+      "GOOGLE_OAUTH_SCOPES",
+      "openid,email,profile",
+    ),
+    oauthSessionSecret: getEnvVar(
+      "MCP_OAUTH_SESSION_SECRET",
+      "OAUTH_SESSION_SECRET",
+    ),
+    oauthTokenKey: getEnvVar(
+      "MCP_OAUTH_TOKEN_KEY",
+      "OAUTH_TOKEN_KEY",
+    ),
+    oauthResourceIndicator: getEnvVar(
+      "MCP_OAUTH_RESOURCE_IDENTIFIER",
+      "MCP_RESOURCE_IDENTIFIER",
+    ),
+    oauthAuthorizationServer: getEnvVar(
+      "MCP_OAUTH_AUTHORIZATION_SERVER",
+      "OAUTH_AUTHORIZATION_SERVER",
+      "https://accounts.google.com",
+    ),
+    oauthTokenTtl: getEnvVar(
+      "MCP_OAUTH_TOKEN_TTL",
+      "OAUTH_TOKEN_TTL",
+      "3600",
+    ),
+    oauthRefreshTtl: getEnvVar(
+      "MCP_OAUTH_REFRESH_TTL",
+      "OAUTH_REFRESH_TTL",
+      "2592000",
+    ),
+    redisUrl: getEnvVar("MCP_REDIS_URL", "REDIS_URL"),
+    databaseUrl: getEnvVar(
+      "MCP_DATABASE_URL",
+      "DATABASE_URL",
+      nuqDatabaseUrl,
+    ),
   };
 }
 
@@ -243,6 +320,35 @@ export function getAllEnvVars(): Record<string, string | undefined> {
     "SKIP_HEALTH_CHECKS",
     "FORCE_COLOR",
     "NO_COLOR",
+    "MCP_WEBHOOK_BASE_URL",
+    "WEBHOOK_BASE_URL",
+    "MCP_WEBHOOK_API_SECRET",
+    "WEBHOOK_API_SECRET",
+    "MCP_GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_ID",
+    "MCP_GOOGLE_CLIENT_SECRET",
+    "GOOGLE_CLIENT_SECRET",
+    "MCP_GOOGLE_REDIRECT_URI",
+    "GOOGLE_REDIRECT_URI",
+    "MCP_GOOGLE_OAUTH_SCOPES",
+    "GOOGLE_OAUTH_SCOPES",
+    "MCP_OAUTH_SESSION_SECRET",
+    "OAUTH_SESSION_SECRET",
+    "MCP_OAUTH_TOKEN_KEY",
+    "OAUTH_TOKEN_KEY",
+    "MCP_OAUTH_RESOURCE_IDENTIFIER",
+    "MCP_RESOURCE_IDENTIFIER",
+    "MCP_OAUTH_AUTHORIZATION_SERVER",
+    "OAUTH_AUTHORIZATION_SERVER",
+    "MCP_OAUTH_TOKEN_TTL",
+    "OAUTH_TOKEN_TTL",
+    "MCP_OAUTH_REFRESH_TTL",
+    "OAUTH_REFRESH_TTL",
+    "MCP_REDIS_URL",
+    "REDIS_URL",
+    "MCP_DATABASE_URL",
+    "DATABASE_URL",
+    "NUQ_DATABASE_URL",
   ];
 
   const sensitiveVars = [
@@ -252,6 +358,14 @@ export function getAllEnvVars(): Record<string, string | undefined> {
     "LLM_API_KEY",
     "MCP_METRICS_AUTH_KEY",
     "METRICS_AUTH_KEY",
+    "MCP_WEBHOOK_API_SECRET",
+    "WEBHOOK_API_SECRET",
+    "MCP_GOOGLE_CLIENT_SECRET",
+    "GOOGLE_CLIENT_SECRET",
+    "MCP_OAUTH_SESSION_SECRET",
+    "OAUTH_SESSION_SECRET",
+    "MCP_OAUTH_TOKEN_KEY",
+    "OAUTH_TOKEN_KEY",
   ];
 
   for (const varName of varNames) {

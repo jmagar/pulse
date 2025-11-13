@@ -391,7 +391,7 @@ class ChangeDetectionClient:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await client.post(
-                    f"{self.api_url}/api/v1/watch",
+                    f"{self.api_url}/api/v2/watch",
                     json=payload,
                     headers=headers,
                 )
@@ -443,7 +443,7 @@ class ChangeDetectionClient:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await client.get(
-                    f"{self.api_url}/api/v1/watch",
+                    f"{self.api_url}/api/v2/watch",
                     headers=headers,
                 )
                 response.raise_for_status()
@@ -931,7 +931,6 @@ Add to the changedetection.io section:
 # -----------------
 CHANGEDETECTION_PORT=50109
 CHANGEDETECTION_BASE_URL=http://localhost:50109
-CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
 CHANGEDETECTION_FETCH_WORKERS=10
 CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME=60
 CHANGEDETECTION_WEBHOOK_SECRET=
@@ -1020,7 +1019,7 @@ WEBHOOK_CHANGEDETECTION_API_KEY=                                        # Option
 
 **Query via API:**
 ```bash
-curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-auto")'
+curl http://localhost:50109/api/v2/watch | jq '.[] | select(.tag == "firecrawl-auto")'
 ```
 
 **Check webhook bridge logs:**
@@ -1293,10 +1292,10 @@ After implementation:
 1. **Firecrawl scrapes URL → watch auto-created:**
    ```bash
    # Trigger scrape via Firecrawl API
-   curl -X POST http://localhost:3002/v1/scrape -H "Content-Type: application/json" -d '{"url": "https://example.com"}'
+   curl -X POST http://localhost:3002/v2/scrape -H "Content-Type: application/json" -d '{"url": "https://example.com"}'
 
    # Check changedetection.io for new watch
-   curl http://localhost:50109/api/v1/watch | jq '.[] | select(.tag == "firecrawl-auto")'
+   curl http://localhost:50109/api/v2/watch | jq '.[] | select(.tag == "firecrawl-auto")'
    ```
 
 2. **Watch has correct configuration:**
@@ -1350,7 +1349,7 @@ After implementation:
 
 **Create Watch:**
 ```http
-POST /api/v1/watch
+POST /api/v2/watch
 Content-Type: application/json
 x-api-key: <optional>
 
@@ -1365,7 +1364,7 @@ x-api-key: <optional>
 
 **List Watches:**
 ```http
-GET /api/v1/watch
+GET /api/v2/watch
 x-api-key: <optional>
 
 Response: [

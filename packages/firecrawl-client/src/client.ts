@@ -19,6 +19,11 @@ import type {
   StartCrawlResult,
   CrawlStatusResult,
   CancelResult,
+  CrawlErrorsResult,
+  ActiveCrawlsResult,
+  BatchScrapeOptions,
+  BatchScrapeStartResult,
+  BatchScrapeCancelResult,
 } from './types.js';
 
 import { scrape as scrapeOp } from './operations/scrape.js';
@@ -28,7 +33,15 @@ import {
   startCrawl as startCrawlOp,
   getCrawlStatus as getCrawlStatusOp,
   cancelCrawl as cancelCrawlOp,
+  getCrawlErrors as getCrawlErrorsOp,
+  getActiveCrawls as getActiveCrawlsOp,
 } from './operations/crawl.js';
+import {
+  startBatchScrape as startBatchScrapeOp,
+  getBatchScrapeStatus as getBatchScrapeStatusOp,
+  cancelBatchScrape as cancelBatchScrapeOp,
+  getBatchScrapeErrors as getBatchScrapeErrorsOp,
+} from './operations/batch-scrape.js';
 
 /**
  * Unified Firecrawl client for all operations
@@ -128,5 +141,47 @@ export class FirecrawlClient {
    */
   async cancelCrawl(jobId: string): Promise<CancelResult> {
     return cancelCrawlOp(this.apiKey, this.baseUrl, jobId);
+  }
+
+  /**
+   * Retrieve error information for a crawl job
+   */
+  async getCrawlErrors(jobId: string): Promise<CrawlErrorsResult> {
+    return getCrawlErrorsOp(this.apiKey, this.baseUrl, jobId);
+  }
+
+  /**
+   * List currently active crawl jobs
+   */
+  async listActiveCrawls(): Promise<ActiveCrawlsResult> {
+    return getActiveCrawlsOp(this.apiKey, this.baseUrl);
+  }
+
+  /**
+   * Start a batch scrape job
+   */
+  async startBatchScrape(options: BatchScrapeOptions): Promise<BatchScrapeStartResult> {
+    return startBatchScrapeOp(this.apiKey, this.baseUrl, options);
+  }
+
+  /**
+   * Get status for a batch scrape job
+   */
+  async getBatchScrapeStatus(jobId: string): Promise<CrawlStatusResult> {
+    return getBatchScrapeStatusOp(this.apiKey, this.baseUrl, jobId);
+  }
+
+  /**
+   * Cancel a batch scrape job
+   */
+  async cancelBatchScrape(jobId: string): Promise<BatchScrapeCancelResult> {
+    return cancelBatchScrapeOp(this.apiKey, this.baseUrl, jobId);
+  }
+
+  /**
+   * Retrieve batch scrape errors
+   */
+  async getBatchScrapeErrors(jobId: string): Promise<CrawlErrorsResult> {
+    return getBatchScrapeErrorsOp(this.apiKey, this.baseUrl, jobId);
   }
 }

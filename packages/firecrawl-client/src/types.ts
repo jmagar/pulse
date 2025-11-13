@@ -85,6 +85,33 @@ export interface FirecrawlScrapingResult {
   error?: string;
 }
 
+export interface BatchScrapeWebhookOptions {
+  url: string;
+  headers?: Record<string, string>;
+  metadata?: Record<string, unknown>;
+  events?: Array<'completed' | 'page' | 'failed' | 'started'>;
+}
+
+export interface BatchScrapeOptions extends FirecrawlScrapingOptions {
+  urls: string[];
+  ignoreInvalidURLs?: boolean;
+  appendToId?: string;
+  webhook?: BatchScrapeWebhookOptions;
+  ignoreInvalidUrls?: boolean; // backward compatibility
+}
+
+export interface BatchScrapeStartResult {
+  success: boolean;
+  id: string;
+  url: string;
+  invalidURLs?: string[];
+}
+
+export interface BatchScrapeCancelResult {
+  success: boolean;
+  message?: string;
+}
+
 // ============================================================================
 // SEARCH TYPES
 // ============================================================================
@@ -237,4 +264,42 @@ export interface CrawlStatusResult {
  */
 export interface CancelResult {
   status: 'cancelled';
+}
+
+/**
+ * Item describing a crawl error entry returned by Firecrawl
+ */
+export interface CrawlErrorItem {
+  id?: string;
+  url?: string;
+  error: string;
+  timestamp?: string;
+  statusCode?: number;
+  [key: string]: unknown;
+}
+
+/**
+ * Result describing crawl errors and robots.txt violations
+ */
+export interface CrawlErrorsResult {
+  errors: CrawlErrorItem[];
+  robotsBlocked: string[];
+}
+
+/**
+ * Active crawl metadata returned by Firecrawl
+ */
+export interface ActiveCrawlJob {
+  id: string;
+  teamId?: string;
+  url?: string;
+  options?: Record<string, unknown>;
+}
+
+/**
+ * Response for listing active crawl jobs
+ */
+export interface ActiveCrawlsResult {
+  success: boolean;
+  crawls: ActiveCrawlJob[];
 }

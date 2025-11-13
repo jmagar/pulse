@@ -2,6 +2,8 @@ import type {
   StartCrawlResult,
   CrawlStatusResult,
   CancelResult,
+  CrawlErrorsResult,
+  ActiveCrawlsResult,
 } from "@firecrawl/client";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
@@ -9,8 +11,52 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 const PAGINATION_THRESHOLD_MB = 10;
 
 export function formatCrawlResponse(
-  result: StartCrawlResult | CrawlStatusResult | CancelResult,
+  result:
+    | StartCrawlResult
+    | CrawlStatusResult
+    | CancelResult
+    | CrawlErrorsResult
+    | ActiveCrawlsResult,
 ): CallToolResult {
+  if ("errors" in result && "robotsBlocked" in result) {
+    const errorsText = result.errors
+      .map((error) => `• ${error.error}${error.url ? ` (${error.url})` : ""}`)
+      .join("\n") || "No error entries reported.";
+    const robotsText = result.robotsBlocked.length
+      ? result.robotsBlocked.map((url) => `- ${url}`).join("\n")
+      : "None";
+
+    return {
+      content: [
+        {
+          type: "text",
+          text:
+            "Crawl Errors:\n" +
+            `${errorsText}\n\nRobots-blocked URLs:\n${robotsText}`,
+        },
+      ],
+      isError: false,
+    };
+  }
+
+  if ("crawls" in result) {
+    const rows = result.crawls.length
+      ? result.crawls
+          .map((crawl) => `• ${crawl.id} — ${crawl.url ?? "(no url)"}`)
+          .join("\n")
+      : "No active crawls.";
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Active Crawls (total: ${result.crawls.length})\n${rows}`,
+        },
+      ],
+      isError: false,
+    };
+  }
+
   // Check which type of result we have
   if ("id" in result && "url" in result) {
     // StartCrawlResult

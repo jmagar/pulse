@@ -17,6 +17,8 @@ services:
     container_name: pulse_playwright
     ports:
       - "${PLAYWRIGHT_PORT:-50100}:3000"
+    environment:
+      - PORT=3000
 
   firecrawl:
     <<: *common-service
@@ -163,4 +165,4 @@ services:
 
 networks:
   pulse:
-    driver: bridge
+    external: true

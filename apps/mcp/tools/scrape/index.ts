@@ -49,7 +49,16 @@ export function scrapeTool(
 ) {
   return {
     name: "scrape",
-    description: `Scrape webpage content using intelligent automatic strategy selection with built-in caching. This tool fetches content from any URL with flexible result handling options.
+    description: `Scrape webpage content using intelligent automatic strategy selection with built-in caching. This tool fetches content from any URL with flexible result handling options and now supports Firecrawl batch scraping commands.
+
+Command overview:
+- "scrape <url>" — default start command. Provide a single URL for direct scraping (returns cached resources when available).
+- "scrape <url1> <url2> ..." — when multiple URLs are supplied, the tool automatically launches a Firecrawl batch scrape and returns the job ID for later polling.
+- "scrape status <jobId>" — prints the latest progress for a batch job (plain-text summary, includes pagination hints when the dataset exceeds 10MB).
+- "scrape cancel <jobId>" — cancels a running batch scrape.
+- "scrape errors <jobId>" — lists error entries and robots.txt blocks for the batch job.
+
+All command-style responses are formatted as plain text for easy use inside CLI workflows, mirroring the crawl tool behavior.
 
 Result handling modes:
 - returnOnly: Returns scraped content without saving (uses maxChars for size limits)

@@ -14,9 +14,15 @@ import { env } from "./config/environment.js";
 import type { IStrategyConfigClient } from "./scraping/strategies/learned/index.js";
 import { FilesystemStrategyConfigClient } from "./scraping/strategies/learned/index.js";
 import { NativeScrapingClient } from "./scraping/clients/native/native-scrape-client.js";
-import type { CrawlRequestConfig } from "./config/crawl-config.js";
 import { FirecrawlClient as ActualFirecrawlClient } from "@firecrawl/client";
-import type { FirecrawlConfig } from "@firecrawl/client";
+import type {
+  FirecrawlConfig,
+  BatchScrapeOptions,
+  BatchScrapeStartResult,
+  CrawlStatusResult,
+  BatchScrapeCancelResult,
+  CrawlErrorsResult,
+} from "@firecrawl/client";
 
 /**
  * Interface for Firecrawl API client
@@ -41,11 +47,19 @@ export interface IFirecrawlClient {
     error?: string;
   }>;
 
-  startCrawl?: (config: CrawlRequestConfig) => Promise<{
-    success: boolean;
-    crawlId?: string;
-    error?: string;
-  }>;
+  batchScrape?: (
+    options: BatchScrapeOptions,
+  ) => Promise<BatchScrapeStartResult>;
+
+  getBatchScrapeStatus?: (jobId: string) => Promise<CrawlStatusResult>;
+
+  cancelBatchScrape?: (
+    jobId: string,
+  ) => Promise<BatchScrapeCancelResult>;
+
+  getBatchScrapeErrors?: (
+    jobId: string,
+  ) => Promise<CrawlErrorsResult>;
 }
 
 /**
@@ -169,18 +183,36 @@ export class DefaultFirecrawlClient implements IFirecrawlClient {
     };
   }
 
-  async startCrawl(config: CrawlRequestConfig): Promise<{
-    success: boolean;
-    crawlId?: string;
-    error?: string;
-  }> {
-    const result = await this.client.startCrawl(config);
+  async batchScrape(
+    options: BatchScrapeOptions,
+  ): Promise<BatchScrapeStartResult> {
+    if (typeof this.client.startBatchScrape !== "function") {
+      throw new Error("Batch scraping not supported by Firecrawl client");
+    }
+    return this.client.startBatchScrape(options);
+  }
 
-    return {
-      success: result.success,
-      crawlId: result.id,
-      error: result.error,
-    };
+  async getBatchScrapeStatus(jobId: string): Promise<CrawlStatusResult> {
+    if (typeof this.client.getBatchScrapeStatus !== "function") {
+      throw new Error("Batch scrape status not supported by Firecrawl client");
+    }
+    return this.client.getBatchScrapeStatus(jobId);
+  }
+
+  async cancelBatchScrape(
+    jobId: string,
+  ): Promise<BatchScrapeCancelResult> {
+    if (typeof this.client.cancelBatchScrape !== "function") {
+      throw new Error("Batch scrape cancellation not supported by client");
+    }
+    return this.client.cancelBatchScrape(jobId);
+  }
+
+  async getBatchScrapeErrors(jobId: string): Promise<CrawlErrorsResult> {
+    if (typeof this.client.getBatchScrapeErrors !== "function") {
+      throw new Error("Batch scrape errors not supported by client");
+    }
+    return this.client.getBatchScrapeErrors(jobId);
   }
 }
 

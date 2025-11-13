@@ -44,7 +44,6 @@ Add to `.env.example`:
 # -----------------
 CHANGEDETECTION_PORT=50109
 CHANGEDETECTION_BASE_URL=http://localhost:50109
-CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
 CHANGEDETECTION_FETCH_WORKERS=10
 CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME=60
 CHANGEDETECTION_WEBHOOK_SECRET=
@@ -108,7 +107,6 @@ Add after `pulse_webhook` service:
     volumes:
       - changedetection_data:/datastore
     environment:
-      - PLAYWRIGHT_DRIVER_URL=${CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL:-ws://pulse_playwright:3000}
       - BASE_URL=${CHANGEDETECTION_BASE_URL:-http://localhost:50109}
       - FETCH_WORKERS=${CHANGEDETECTION_FETCH_WORKERS:-10}
       - MINIMUM_SECONDS_RECHECK_TIME=${CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME:-60}
@@ -920,7 +918,7 @@ async def rescrape_changed_url(change_event_id: int) -> dict:
 
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    f"{firecrawl_url}/v1/scrape",
+                    f"{firecrawl_url}/v2/scrape",
                     json={
                         "url": change_event.watch_url,
                         "formats": ["markdown", "html"],
@@ -1849,7 +1847,7 @@ Successfully integrated changedetection.io into Pulse monorepo for automated web
 ## Deployment Notes
 
 - Port 50109 allocated for changedetection web UI
-- Shared Playwright configured via `PLAYWRIGHT_DRIVER_URL`
+- changedetection uses its built-in Playwright engine (no external driver)
 - Webhook secret must match between changedetection and webhook bridge
 - Background worker enabled by default (`WEBHOOK_ENABLE_WORKER=true`)
 
@@ -1959,7 +1957,6 @@ Phase 4 - Testing:
 # changedetection.io Service
 CHANGEDETECTION_PORT=50109
 CHANGEDETECTION_BASE_URL=http://localhost:50109
-CHANGEDETECTION_PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
 CHANGEDETECTION_FETCH_WORKERS=10
 CHANGEDETECTION_MINIMUM_SECONDS_RECHECK_TIME=60
 CHANGEDETECTION_WEBHOOK_SECRET=<64-char-hex>

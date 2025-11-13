@@ -18,9 +18,8 @@ export function createQueryTool(config: QueryConfig): Tool {
   return {
     name: "query",
     description:
-      "Search indexed documentation using hybrid (vector + BM25), semantic (vector only), or keyword (BM25 only) search. " +
-      "Queries the webhook service's Qdrant vector store and BM25 index to find relevant documentation chunks. " +
-      "Returns results as embedded MCP resources with content, scores, and metadata.",
+      "Search indexed documentation (hybrid / semantic / keyword) via the webhook service." +
+      " Returns a plain-text summary listing the top five results and instructions for paginating with the offset argument.",
     inputSchema: buildQueryInputSchema(),
 
     handler: async (args: unknown) => {

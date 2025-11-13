@@ -1131,7 +1131,7 @@ pulse_change-detection:
   depends_on:
     - pulse_playwright
   healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/ping"]
+    test: ["CMD", "curl", "-f", "http://localhost:5000/api/v2/ping"]
     interval: 60s
     timeout: 10s
     retries: 3
@@ -1204,7 +1204,7 @@ pulse_change-detection:
 **Port:** 50111 (external) → 5000 (internal)
 **Purpose:** Monitor websites for changes, alert on updates
 **Dependencies:** pulse_playwright (optional), pulse_webhook (for indexing)
-**Health Check:** HTTP GET /api/v1/ping (60s interval, 10s timeout, 30s start period)
+**Health Check:** HTTP GET /api/v2/ping (60s interval, 10s timeout, 30s start period)
 **Volume:** /datastore (change history, monitors configuration)
 
 **Integration:**
@@ -1542,7 +1542,7 @@ Redis down
    - Document all variables in CLAUDE.md
 
 2. **Implement Health Checks**
-   - Endpoint: `/health` or `/api/v1/health`
+   - Endpoint: `/health` or `/api/v2/health`
    - Response: JSON with status
    - Check dependencies in health check
 

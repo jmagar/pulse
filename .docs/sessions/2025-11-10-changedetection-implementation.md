@@ -78,7 +78,7 @@ Successfully integrated changedetection.io into the Pulse monorepo for automated
 
 6. **Rescrape Job Implementation** (Task 6)
    - Created `app/jobs/rescrape.py` with `rescrape_changed_url()` function
-   - Fetches changed URL via Firecrawl API (`/v1/scrape` endpoint)
+   - Fetches changed URL via Firecrawl API (`/v2/scrape` endpoint)
    - Requests both markdown and HTML formats
    - Indexes scraped content in Qdrant + BM25 via `index_document()` service
    - Updates change_event with completion status and document_id

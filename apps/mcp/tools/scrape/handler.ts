@@ -10,13 +10,27 @@ import {
   scrapeContent,
   processContent,
   saveToStorage,
+  shouldUseBatchScrape,
+  createBatchScrapeOptions,
+  startBatchScrapeJob,
+  runBatchScrapeCommand,
 } from "./pipeline.js";
 import {
   buildCachedResponse,
   buildErrorResponse,
   buildSuccessResponse,
+  buildBatchStartResponse,
+  buildBatchStatusResponse,
+  buildBatchCancelResponse,
+  buildBatchErrorsResponse,
+  buildBatchCommandError,
   type ToolResponse,
 } from "./response.js";
+import type {
+  BatchScrapeCancelResult,
+  CrawlErrorsResult,
+  CrawlStatusResult,
+} from "@firecrawl/client";
 
 export async function handleScrapeRequest(
   args: unknown,
@@ -31,6 +45,9 @@ export async function handleScrapeRequest(
 
     const {
       url,
+      urls,
+      command,
+      jobId,
       maxChars,
       startIndex,
       timeout,
@@ -43,6 +60,71 @@ export async function handleScrapeRequest(
     let extract: string | undefined;
     if (ExtractClientFactory.isAvailable() && "extract" in validatedArgs) {
       extract = (validatedArgs as { extract?: string }).extract;
+    }
+
+    // Handle batch subcommands (status/cancel/errors)
+    if (command && command !== "start") {
+      const batchCommand = command as "status" | "cancel" | "errors";
+      if (!jobId) {
+        return buildBatchCommandError(
+          `Command "${batchCommand}" requires a jobId argument`,
+        );
+      }
+
+      try {
+        const batchResult = await runBatchScrapeCommand(
+          clients,
+          batchCommand,
+          jobId,
+        );
+        if (batchCommand === "status") {
+          return buildBatchStatusResponse(batchResult as CrawlStatusResult);
+        }
+        if (batchCommand === "cancel") {
+          return buildBatchCancelResponse(batchResult as BatchScrapeCancelResult);
+        }
+        if (batchCommand === "errors") {
+          return buildBatchErrorsResponse(batchResult as CrawlErrorsResult);
+        }
+      } catch (error) {
+        return buildBatchCommandError(
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+    }
+
+    // Multi-URL start commands use Firecrawl batch scrape
+    if (shouldUseBatchScrape(urls)) {
+      const batchOptions = createBatchScrapeOptions({
+        urls,
+        timeout,
+        maxAge: validatedArgs.maxAge,
+        proxy: validatedArgs.proxy,
+        blockAds: validatedArgs.blockAds,
+        headers: validatedArgs.headers,
+        waitFor: validatedArgs.waitFor,
+        includeTags: validatedArgs.includeTags,
+        excludeTags: validatedArgs.excludeTags,
+        formats: validatedArgs.formats,
+        parsers: validatedArgs.parsers,
+        onlyMainContent: validatedArgs.onlyMainContent,
+        actions: validatedArgs.actions,
+      });
+
+      try {
+        const batchResult = await startBatchScrapeJob(clients, batchOptions);
+        return buildBatchStartResponse(batchResult, urls!.length);
+      } catch (error) {
+        return buildBatchCommandError(
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+    }
+
+    if (!url) {
+      return buildBatchCommandError(
+        "Start command requires at least one valid URL.",
+      );
     }
 
     // Check if screenshot is requested

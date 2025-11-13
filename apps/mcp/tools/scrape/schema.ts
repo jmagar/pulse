@@ -20,6 +20,11 @@ import { browserActionsArraySchema } from "./action-types.js";
  */
 export const PARAM_DESCRIPTIONS = {
   url: 'The webpage URL to scrape (e.g., "https://example.com/article", "https://api.example.com/docs")',
+  urls:
+    'List of URLs to scrape in a single batch request. When more than one URL is provided the tool uses Firecrawl batch scraping.',
+  command:
+    'Operation to perform: start (default), status, cancel, errors. Legacy inputs without command default to start.',
+  jobId: 'Batch scrape job identifier returned by the start command.',
   timeout:
     "Maximum time to wait for page load in milliseconds. Increase for slow-loading sites (e.g., 120000 for 2 minutes). Default: 60000 (1 minute)",
   maxChars:
@@ -123,6 +128,26 @@ Complex queries:
 The LLM will intelligently parse the page content and return only the requested information in a clear, readable format.`,
 } as const;
 
+const SCRAPE_COMMANDS = ["start", "status", "cancel", "errors"] as const;
+type ScrapeCommand = (typeof SCRAPE_COMMANDS)[number];
+
+const resolveScrapeCommand = (data: {
+  command?: ScrapeCommand;
+  cancel?: boolean;
+  jobId?: string;
+}): ScrapeCommand => {
+  if (data.cancel) {
+    return "cancel";
+  }
+  if (data.command && data.command !== "start") {
+    return data.command;
+  }
+  if (!data.command && data.jobId) {
+    return "status";
+  }
+  return data.command ?? "start";
+};
+
 /**
  * Normalize and validate URL format
  *
@@ -172,11 +197,28 @@ export function preprocessUrl(url: string): string {
  */
 export const buildScrapeArgsSchema = () => {
   const baseSchema = {
+    command: z
+      .enum(SCRAPE_COMMANDS)
+      .optional()
+      .describe(PARAM_DESCRIPTIONS.command),
+    cancel: z.boolean().optional().default(false),
+    jobId: z.string().min(1).optional().describe(PARAM_DESCRIPTIONS.jobId),
     url: z
       .string()
       .transform(preprocessUrl)
       .pipe(z.string().url())
+      .optional()
       .describe(PARAM_DESCRIPTIONS.url),
+    urls: z
+      .array(
+        z
+          .string()
+          .transform(preprocessUrl)
+          .pipe(z.string().url()),
+      )
+      .min(1)
+      .optional()
+      .describe(PARAM_DESCRIPTIONS.urls),
     timeout: z
       .number()
       .optional()
@@ -277,15 +319,46 @@ export const buildScrapeArgsSchema = () => {
       .describe(PARAM_DESCRIPTIONS.actions),
   };
 
-  // Only include extract parameter if extraction is available
+  let schema = z.object(baseSchema);
+
   if (ExtractClientFactory.isAvailable()) {
-    return z.object({
-      ...baseSchema,
+    schema = schema.extend({
       extract: z.string().optional().describe(PARAM_DESCRIPTIONS.extract),
     });
   }
 
-  return z.object(baseSchema);
+  return schema
+    .superRefine((data, ctx) => {
+      const command = resolveScrapeCommand(data);
+      const hasUrl = Boolean(data.url) || Boolean(data.urls?.length);
+
+      if (command === "start" && !hasUrl) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Provide at least one "url" or an "urls" array to start a scrape',
+        });
+      }
+
+      if (command !== "start" && !data.jobId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Command "${command}" requires a jobId argument`,
+        });
+      }
+    })
+    .transform((data) => {
+      const command = resolveScrapeCommand(data);
+      const urls = data.urls ?? (data.url ? [data.url] : undefined);
+      const primaryUrl = data.url ?? urls?.[0];
+      const { cancel, ...rest } = data;
+
+      return {
+        ...rest,
+        command,
+        url: primaryUrl,
+        urls,
+      };
+    });
 };
 
 /**
@@ -308,10 +381,30 @@ export const buildScrapeArgsSchema = () => {
  */
 export const buildInputSchema = () => {
   const baseProperties = {
+    command: {
+      type: "string",
+      enum: SCRAPE_COMMANDS,
+      default: "start",
+      description: PARAM_DESCRIPTIONS.command,
+    },
+    cancel: {
+      type: "boolean",
+      default: false,
+      description: 'Deprecated flag. Prefer setting command="cancel".',
+    },
+    jobId: {
+      type: "string",
+      description: PARAM_DESCRIPTIONS.jobId,
+    },
     url: {
       type: "string",
       format: "uri",
       description: PARAM_DESCRIPTIONS.url,
+    },
+    urls: {
+      type: "array",
+      items: { type: "string", format: "uri" },
+      description: PARAM_DESCRIPTIONS.urls,
     },
     timeout: {
       type: "number",
@@ -528,13 +621,13 @@ export const buildInputSchema = () => {
           description: PARAM_DESCRIPTIONS.extract,
         },
       },
-      required: ["url"],
+      required: [],
     };
   }
 
   return {
     type: "object" as const,
     properties: baseProperties,
-    required: ["url"],
+    required: [],
   };
 };

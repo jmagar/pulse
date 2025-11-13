@@ -1,111 +1,181 @@
-# Agent Documentation
+# Claude Assistant Memory - Pulse Project
 
-This file references available agent documentation for the Pulse project.
-
-CLAUDE.md
+Quick reference for Claude Code assistants working on the Pulse monorepo.
 
 ## Monorepo Structure
 
-pulse uses a **multi-language monorepo**:
+Pulse is a **multi-language monorepo** combining Firecrawl API, MCP server, webhook bridge, and web UI.
 
-### Node.js Apps (pnpm workspace)
+### Apps & Packages
 
-- `apps/mcp` - MCP server (consolidated single package)
-- `apps/web` - Web UI
-- `packages/*` - Shared libraries
+**Node.js (pnpm workspace):**
+- `apps/mcp` - Model Context Protocol server (consolidated single package)
+- `apps/web` - Next.js web UI
+- `packages/firecrawl-client` - Shared Firecrawl client library
 
-**Build:** `pnpm build` or `pnpm build:web` or `pnpm build:mcp`
-**Test:** `pnpm test` or `pnpm test:web`  or `pnpm test:mcp`
+**Python (independent):**
+- `apps/webhook` - FastAPI search bridge with hybrid vector/BM25 search
+- `apps/nuq-postgres` - PostgreSQL custom build
 
-### Python Apps (independent)
-- `apps/webhook` - Search bridge
+**External Services (Docker containers):**
+- Firecrawl API (`ghcr.io/firecrawl/firecrawl`, container: `firecrawl`)
+- Playwright (`ghcr.io/firecrawl/playwright-service`, container: `pulse_playwright`)
+- changedetection.io (`ghcr.io/dgtlmoon/changedetection.io`, container: `pulse_change-detection`)
+- Neo4j Graph DB (container: `pulse_neo4j`)
+- Redis (container: `pulse_redis`)
 
-**Build:** `cd apps/webhook && uv sync`
-**Test:** `cd apps/webhook && make test`
+### Build & Test Commands
 
-### Shared Infrastructure
-- PostgreSQL: Shared database with app-specific schemas
-  - `public` schema: Firecrawl API data
-  - `webhook` schema: Webhook bridge metrics
-- Redis: Shared queue for API and webhook
-- Docker network: `firecrawl` (bridge)
+Root `package.json` orchestrates all builds/tests:
 
-### Cross-Service Communication
+```bash
+pnpm build                    # Build packages, apps/mcp, apps/web, apps/webhook
+pnpm build:mcp              # Build just MCP server
+pnpm build:web              # Build just web UI
+pnpm build:webhook          # Build just webhook (via: cd apps/webhook && uv sync)
 
-**Internal URLs (Docker network):**
-- API: `http://firecrawl:3002`
-- MCP: `http://pulse_mcp:3060`
-- Webhook: `http://pulse_webhook:52100`
-- changedetection.io: `http://pulse_change-detection:5000`
-- Redis: `redis://pulse_redis:6379`
-- PostgreSQL: `postgresql://pulse_postgres:5432/pulse_postgres`
+pnpm test                   # Test all (packages, apps/mcp, apps/web, apps/webhook)
+pnpm test:mcp               # Test MCP server
+pnpm test:webhook           # Run Python webhook tests
+```
 
-**Never hardcode external URLs in code!** Use environment variables.
+**Dev mode:**
+```bash
+pnpm dev                    # Start all services in parallel: MCP, web, webhook
+pnpm dev:mcp                # Start MCP only
+pnpm dev:web                # Start web UI only
+pnpm dev:webhook            # Start webhook only on port 50108
+```
 
-### changedetection.io
+## Service Ports & Naming
 
-**Purpose:** Website change monitoring with automatic rescraping
-**Port:** 50109
-**Language:** Python/Flask
-**Dependencies:** pulse_playwright (Playwright), pulse_webhook (optional)
-**Environment Variables:** CHANGEDETECTION_*
-**Health Check:** HTTP GET / (60s interval)
-**Integration:**
-- Shares Playwright browser for JavaScript rendering
-- Posts webhooks to pulse_webhook on change detection
-- Triggers automatic rescraping and re-indexing
+**Container names and ports (Docker network: `pulse`):**
 
-**Internal URLs:**
-- Service: `http://pulse_change-detection:5000`
-- Webhook: `json://pulse_webhook:52100/api/webhook/changedetection`
+| Port | Service | Container | Internal | Notes |
+|------|---------|-----------|----------|-------|
+| 50100 | Playwright | pulse_playwright | 3000 | Browser automation |
+| 50102 | Firecrawl API | firecrawl | 3002 | Web scraping API |
+| 50104 | Redis | pulse_redis | 6379 | Message queue & cache |
+| 50105 | PostgreSQL | pulse_postgres | 5432 | Shared database |
+| 50107 | MCP Server | pulse_mcp | 3060 | Claude integration |
+| 50108 | Webhook Bridge | pulse_webhook | 52100 | Search indexing & API |
+| 50109 | changedetection.io | pulse_change-detection | 5000 | Change monitoring |
+| 50210-50211 | Neo4j | pulse_neo4j | 7474/7687 | Graph database |
 
-### Environment Variables
+**Internal URLs (within Docker network):**
+```
+- Firecrawl API: http://firecrawl:3002
+- MCP Server: http://pulse_mcp:3060
+- Webhook Bridge: http://pulse_webhook:52100    [NOTE: internal port 52100, NOT 3000]
+- Redis: redis://pulse_redis:6379
+- PostgreSQL: postgresql://pulse_postgres:5432/pulse_postgres
+- Playwright: http://pulse_playwright:3000
+- changedetection.io: http://pulse_change-detection:5000
+- Neo4j HTTP: http://pulse_neo4j:7474
+- Neo4j Bolt: bolt://pulse_neo4j:7687
+```
 
-**Single Source of Truth:** The root `.env` file contains ALL environment variables for ALL services.
+## Environment Variables
 
-- `MCP_*` - MCP server variables (namespaced for monorepo)
-- `WEBHOOK_*` - Webhook bridge variables (namespaced for monorepo)
-- `FIRECRAWL_*` - Firecrawl API variables
-- Shared infrastructure: `DATABASE_URL`, `REDIS_URL`
+**Single source of truth:** Root `.env` file (git-ignored, copy from `.env.example`).
 
-**Docker Compose:** The `env_file: - .env` directive in the common service anchor ensures all containers receive the root `.env`.
+All services receive the same `.env` via docker-compose's `env_file` anchor directive.
 
-**Standalone Deployments:** Individual apps have `.env.example` files for standalone use, but these should NOT be used in monorepo deployments.
+### Key Variable Namespaces
 
-**Adding New Variables:**
-1. Add to root `.env` and `.env.example`
-2. Use namespaced prefixes (`MCP_*`, `WEBHOOK_*`, etc.)
-3. Update app-specific code to read from environment
-4. Document in this CLAUDE.md
+**MCP Server (`MCP_*`):**
+- `MCP_PORT` - Server port (default: 50107)
+- `MCP_FIRECRAWL_BASE_URL` - Points to `http://firecrawl:3002`
+- `MCP_WEBHOOK_BASE_URL` - Points to `http://pulse_webhook:52100`
+- `MCP_LLM_PROVIDER`, `MCP_LLM_MODEL` - LLM configuration
+- `MCP_ENABLE_OAUTH` - OAuth2 support (requires Google credentials + secrets)
 
-### Adding New Services
+**Webhook Bridge (`WEBHOOK_*`):**
+- `WEBHOOK_PORT` - External port (default: 50108)
+- `WEBHOOK_DATABASE_URL` - PostgreSQL connection
+- `WEBHOOK_REDIS_URL` - Redis connection
+- `WEBHOOK_QDRANT_URL` - Vector database (external GPU machine)
+- `WEBHOOK_TEI_URL` - Text embeddings service (external GPU machine)
+- `WEBHOOK_ENABLE_WORKER` - Set to false when using pulse_webhook-worker container
 
-1. Add to `docker-compose.yaml` following the anchor pattern
-2. Add port to `.docs/services-ports.md`
-3. Add environment variables to `.env.example`
-4. Update this CLAUDE.md with integration points
-5. Add build/test scripts to root `package.json` if Node.js
+**Firecrawl API (`FIRECRAWL_*`):**
+- `FIRECRAWL_PORT` - External port (default: 50102)
+- `FIRECRAWL_INTERNAL_PORT` - Internal port (default: 3002)
+- `FIRECRAWL_API_URL` - External URL for API access
 
-### Testing Integration
+**Shared Infrastructure:**
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` - Database credentials
+- `REDIS_URL` - Redis connection string
+- `DATABASE_URL` - PostgreSQL URL (if used instead of NUQ_DATABASE_URL)
 
-When testing cross-service features:
-1. Use `docker compose up -d` to start all services
-2. Check health endpoints before tests
-3. Use internal service URLs in tests
-4. Clean up with `docker compose down` after
+### Adding New Variables
 
-When making changes to the API, here are the general steps you should take:
-1. Write some end-to-end tests that assert your win conditions, if they don't already exist
-  - 1 happy path (more is encouraged if there are multiple happy paths with significantly different code paths taken)
-  - 1+ failure path(s)
-  - Generally, E2E (called `snips` in the API) is always preferred over unit testing.
-  - In the API, always use `scrapeTimeout` from `./lib` to set the timeout you use for scrapes.
-  - These tests will be ran on a variety of configurations. You should gate tests in the following manner:
-    - If it requires fire-engine: `!process.env.TEST_SUITE_SELF_HOSTED`
-    - If it requires AI: `!process.env.TEST_SUITE_SELF_HOSTED || process.env.OPENAI_API_KEY || process.env.OLLAMA_BASE_URL`
-2. Write code to achieve your win conditions
-3. Run your tests using `pnpm harness jest ...`
-  - `pnpm harness` is a command that gets the API server and workers up for you to run the tests. Don't try to `pnpm start` manually.
-  - The full test suite takes a long time to run, so you should try to only execute the relevant tests locally, and let CI run the full test suite.
-4. Push to a branch, open a PR, and let CI run to verify your win condition.
-Keep these steps in mind while building your TODO list.
+1. Add to both `.env` and `.env.example` (root)
+2. Use namespaced prefixes: `MCP_*`, `WEBHOOK_*`, `FIRECRAWL_*`
+3. Update app code to read from environment
+4. Document in `.env.example` comments
+5. Update this CLAUDE.md if service-wide impact
+
+## Docker Compose Architecture
+
+**Pattern:** Common service anchor with inheritance for consistency.
+
+```yaml
+x-common-service: &common-service
+  restart: unless-stopped
+  networks:
+    - pulse
+  env_file:
+    - .env
+  labels:
+    - "com.centurylinklabs.watchtower.enable=false"
+
+services:
+  service_name:
+    <<: *common-service
+    # ... service config
+```
+
+**Network:** All services on user-defined bridge `pulse` for DNS resolution by container name.
+
+**Volumes:** Persistent data stored in `${APPDATA_BASE}/pulse_*` directories (default: `/mnt/cache/appdata/`).
+
+## Key Integration Points
+
+### MCP ↔ Firecrawl API
+- MCP calls Firecrawl API at `http://firecrawl:3002` for scraping
+- MCP tools: scrape, map, crawl, query, search
+- Configuration: `MCP_FIRECRAWL_BASE_URL`, `MCP_FIRECRAWL_API_KEY`
+
+### MCP ↔ Webhook Bridge
+- MCP calls webhook bridge for indexed document search (query tool)
+- Configuration: `MCP_WEBHOOK_BASE_URL`, `MCP_WEBHOOK_API_SECRET`
+- Endpoint: POST `http://pulse_webhook:52100/api/search`
+
+### changedetection.io ↔ Webhook Bridge
+- changedetection.io posts webhooks on change detection
+- Endpoint: POST `http://pulse_webhook:52100/api/webhook/changedetection`
+- Shares Playwright browser with Firecrawl for rendering
+
+### PostgreSQL Schemas
+- `public` - Firecrawl API data
+- `webhook` - Webhook bridge metrics and search indices
+
+## Testing & Verification
+
+**Docker Services:** Start all with `pnpm services:up`, verify with `pnpm services:ps`
+
+**Health Checks:**
+- MCP: GET `http://localhost:50107/health` → 200
+- Webhook: GET `http://localhost:50108/health` → 200
+- Firecrawl: GET `http://localhost:50102/health` (if exposed)
+
+**Cross-Service Tests:** Use internal URLs (container names, not localhost)
+
+## Important Patterns
+
+1. **Never hardcode external URLs** in code - use `MCP_*` / `WEBHOOK_*` env vars
+2. **Use internal container names** in service-to-service communication
+3. **OAuth is optional** - disabled by default, enable with `MCP_ENABLE_OAUTH=true`
+4. **Environment variables are mandatory** - no default API keys in code
+5. **Worker thread model** - Webhook runs as separate `pulse_webhook-worker` container for scalability

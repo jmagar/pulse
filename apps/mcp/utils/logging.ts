@@ -58,6 +58,27 @@ export const BoxChars = {
   cross: "┼",
 } as const;
 
+const EST_TIME_ZONE = "America/New_York";
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: EST_TIME_ZONE,
+  hour12: true,
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: EST_TIME_ZONE,
+  month: "2-digit",
+  day: "2-digit",
+  year: "numeric",
+});
+
+export function formatEstTimestamp(date: Date = new Date()): string {
+  const timePart = timeFormatter.format(date);
+  const datePart = dateFormatter.format(date);
+  return `${timePart} | ${datePart}`;
+}
+
 /**
  * Log level enum for type safety
  */
@@ -133,9 +154,10 @@ function formatLog(
   message: string,
   metadata?: LogMetadata,
 ): string {
+  const timestamp = formatEstTimestamp();
   if (isStructuredLogging()) {
     const logEntry = {
-      timestamp: new Date().toISOString(),
+      timestamp,
       level,
       context,
       message,
@@ -173,7 +195,8 @@ function formatLog(
       ? " " + colorize(JSON.stringify(metadata), Colors.dim)
       : "";
 
-  return `[${colorizedLevel}] ${colorizedContext}: ${message}${metadataStr}`;
+  const colorizedTimestamp = colorize(timestamp, Colors.dim);
+  return `[${colorizedTimestamp}] [${colorizedLevel}] ${colorizedContext}: ${message}${metadataStr}`;
 }
 
 /**

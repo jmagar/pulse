@@ -15,7 +15,7 @@ import type {
   StrategyConfigFactory,
 } from "../../mcp-server.js";
 import { scrapeWithStrategy } from "../../scraping/strategies/selector.js";
-import { detectContentType, startBaseUrlCrawl } from "./helpers.js";
+import { detectContentType } from "./helpers.js";
 import type { ScrapeDiagnostics } from "../../types.js";
 import {
   logWarning,
@@ -23,6 +23,17 @@ import {
   logDebug,
   logInfo,
 } from "../../utils/logging.js";
+import type {
+  BatchScrapeOptions,
+  BatchScrapeStartResult,
+  CrawlStatusResult,
+  BatchScrapeCancelResult,
+  CrawlErrorsResult,
+} from "@firecrawl/client";
+import type { BrowserAction } from "./action-types.js";
+
+const BATCH_CLIENT_ERROR =
+  "Firecrawl batch scraping requires FIRECRAWL_API_KEY configured for the MCP server.";
 
 /**
  * Configuration options for scraping pipeline
@@ -157,6 +168,127 @@ export async function checkCache(
 }
 
 /**
+ * Determine whether batch scraping should be used
+ */
+export function shouldUseBatchScrape(
+  urls: string[] | undefined,
+): urls is string[] {
+  return Array.isArray(urls) && urls.length > 1;
+}
+
+/**
+ * Arguments used to build Firecrawl batch scrape options
+ */
+export interface BatchScrapeOptionArgs {
+  urls: string[];
+  timeout?: number;
+  maxAge?: number;
+  proxy?: "basic" | "stealth" | "auto";
+  blockAds?: boolean;
+  headers?: Record<string, string>;
+  waitFor?: number;
+  includeTags?: string[];
+  excludeTags?: string[];
+  formats?: Array<
+    | "markdown"
+    | "html"
+    | "rawHtml"
+    | "links"
+    | "images"
+    | "screenshot"
+    | "summary"
+    | "branding"
+    | "changeTracking"
+  >;
+  parsers?: Array<{ type: "pdf"; maxPages?: number }>;
+  onlyMainContent?: boolean;
+  actions?: BrowserAction[];
+}
+
+/**
+ * Create payload for Firecrawl batch scrape API
+ */
+export function createBatchScrapeOptions(
+  args: BatchScrapeOptionArgs,
+): BatchScrapeOptions {
+  const options: BatchScrapeOptions = {
+    urls: args.urls,
+  };
+
+  if (typeof args.timeout === "number") options.timeout = args.timeout;
+  if (typeof args.maxAge === "number") options.maxAge = args.maxAge;
+  if (args.proxy) options.proxy = args.proxy;
+  if (typeof args.blockAds === "boolean") options.blockAds = args.blockAds;
+  if (args.headers) options.headers = args.headers;
+  if (typeof args.waitFor === "number") options.waitFor = args.waitFor;
+  if (args.includeTags) options.includeTags = args.includeTags;
+  if (args.excludeTags) options.excludeTags = args.excludeTags;
+  if (args.formats) options.formats = args.formats;
+  if (args.parsers) options.parsers = args.parsers;
+  if (typeof args.onlyMainContent === "boolean") {
+    options.onlyMainContent = args.onlyMainContent;
+  }
+  if (args.actions) options.actions = args.actions;
+
+  return options;
+}
+
+/**
+ * Start Firecrawl batch scraping job
+ */
+export async function startBatchScrapeJob(
+  clients: IScrapingClients,
+  options: BatchScrapeOptions,
+): Promise<BatchScrapeStartResult> {
+  const firecrawl = clients.firecrawl;
+  if (!firecrawl || typeof firecrawl.batchScrape !== "function") {
+    throw new Error(BATCH_CLIENT_ERROR);
+  }
+  return firecrawl.batchScrape(options);
+}
+
+type BatchCommand = "status" | "cancel" | "errors";
+
+/**
+ * Execute batch scrape command for existing job
+ */
+export async function runBatchScrapeCommand(
+  clients: IScrapingClients,
+  command: BatchCommand,
+  jobId: string,
+): Promise<
+  CrawlStatusResult | BatchScrapeCancelResult | CrawlErrorsResult
+> {
+  const firecrawl = clients.firecrawl;
+  if (!firecrawl) {
+    throw new Error(BATCH_CLIENT_ERROR);
+  }
+
+  switch (command) {
+    case "status": {
+      if (typeof firecrawl.getBatchScrapeStatus !== "function") {
+        throw new Error(BATCH_CLIENT_ERROR);
+      }
+      return firecrawl.getBatchScrapeStatus(jobId);
+    }
+    case "cancel": {
+      if (typeof firecrawl.cancelBatchScrape !== "function") {
+        throw new Error(BATCH_CLIENT_ERROR);
+      }
+      return firecrawl.cancelBatchScrape(jobId);
+    }
+    case "errors": {
+      if (typeof firecrawl.getBatchScrapeErrors !== "function") {
+        throw new Error(BATCH_CLIENT_ERROR);
+      }
+      return firecrawl.getBatchScrapeErrors(jobId);
+    }
+    default:
+      throw new Error(`Unsupported batch command: ${command}`);
+  }
+}
+
+/**
  * Scrape content from URL
  */
 export async function scrapeContent(
@@ -217,9 +349,6 @@ export async function scrapeContent(
       screenshotFormat = metadata.format || "png";
     }
 
-    // Kick off async crawl of base URL
-    startBaseUrlCrawl(url, clients);
-
     return {
       success: true,
       content:
@@ -243,9 +372,6 @@ export async function scrapeContent(
       diagnostics: result.diagnostics,
     };
   }
-
-  // Kick off async crawl of base URL using Firecrawl
-  startBaseUrlCrawl(url, clients);
 
   return {
     success: true,

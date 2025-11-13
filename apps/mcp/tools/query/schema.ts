@@ -13,7 +13,6 @@ const searchFiltersSchema = z
     domain: z.string().optional().describe("Filter by domain"),
     language: z.string().optional().describe("Filter by language code"),
     country: z.string().optional().describe("Filter by country code"),
-    isMobile: z.boolean().optional().describe("Filter by mobile flag"),
   })
   .optional();
 
@@ -32,8 +31,14 @@ export const queryOptionsSchema = z.object({
     .int()
     .min(1)
     .max(100)
-    .default(10)
-    .describe("Maximum number of results (1-100)"),
+    .default(5)
+    .describe("Number of results to fetch per page (1-100). Output shows only the first five."),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .describe("Zero-based offset for pagination (e.g., 5 to view results 6-10)"),
   filters: searchFiltersSchema.describe("Search filters"),
 });
 
@@ -66,8 +71,15 @@ export function buildQueryInputSchema() {
         type: "integer",
         minimum: 1,
         maximum: 100,
-        default: 10,
-        description: "Maximum number of results (1-100)",
+        default: 5,
+        description:
+          "Number of results to fetch per page (1-100). Output always shows top five.",
+      },
+      offset: {
+        type: "integer",
+        minimum: 0,
+        default: 0,
+        description: "Zero-based offset for pagination",
       },
       filters: {
         type: "object",
@@ -83,10 +95,6 @@ export function buildQueryInputSchema() {
           country: {
             type: "string",
             description: "Filter by country code",
-          },
-          isMobile: {
-            type: "boolean",
-            description: "Filter by mobile flag",
           },
         },
         description: "Search filters",

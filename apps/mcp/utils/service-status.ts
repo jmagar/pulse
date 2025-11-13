@@ -158,6 +158,38 @@ export function checkStorageStatus(): ServiceStatus {
   };
 }
 
+export function checkOAuthStatus(): ServiceStatus {
+  const currentEnv = getEnvSnapshot();
+  const enabled = parseBoolean(currentEnv.enableOAuth);
+
+  if (!enabled) {
+    return {
+      name: "OAuth",
+      configured: false,
+    };
+  }
+
+  const missing: string[] = [];
+  if (!currentEnv.googleClientId) missing.push("MCP_GOOGLE_CLIENT_ID");
+  if (!currentEnv.googleClientSecret) missing.push("MCP_GOOGLE_CLIENT_SECRET");
+  if (!currentEnv.googleRedirectUri) missing.push("MCP_GOOGLE_REDIRECT_URI");
+  if (!currentEnv.oauthSessionSecret) missing.push("MCP_OAUTH_SESSION_SECRET");
+  if (!currentEnv.oauthTokenKey) missing.push("MCP_OAUTH_TOKEN_KEY");
+  if (!currentEnv.redisUrl) missing.push("MCP_REDIS_URL");
+
+  const configured = missing.length === 0;
+
+  return {
+    name: "OAuth",
+    configured: true,
+    healthy: configured,
+    error: configured ? undefined : `Missing: ${missing.join(", ")}`,
+    details: {
+      redirectUri: currentEnv.googleRedirectUri,
+    },
+  };
+}
+
 /**
  * Format service status for display
  *
@@ -230,9 +262,16 @@ export function formatServiceStatus(status: ServiceStatus): string {
  * }
  */
 export async function getAllServiceStatuses(): Promise<ServiceStatus[]> {
-  return Promise.all([
+  const statuses: Array<Promise<ServiceStatus>> = [
     checkFirecrawlStatus(),
     Promise.resolve(checkLLMProviderStatus()),
     Promise.resolve(checkStorageStatus()),
-  ]);
+  ];
+
+  const currentEnv = getEnvSnapshot();
+  if (parseBoolean(currentEnv.enableOAuth)) {
+    statuses.push(Promise.resolve(checkOAuthStatus()));
+  }
+
+  return Promise.all(statuses);
 }

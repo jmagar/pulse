@@ -8,6 +8,7 @@
  */
 
 import type { AllMetrics, MetricsExporter } from "../types.js";
+import { formatEstTimestamp } from "../../utils/logging.js";
 
 /**
  * ConsoleExporter - Formats metrics for console output
@@ -32,7 +33,7 @@ export class ConsoleExporter implements MetricsExporter {
 
     if (this.includeTimestamp) {
       lines.push(
-        `=== Metrics Report (${new Date(metrics.timestamp).toISOString()}) ===`,
+        `=== Metrics Report (${formatEstTimestamp(new Date(metrics.timestamp))}) ===`,
       );
     } else {
       lines.push("=== Metrics Report ===");
