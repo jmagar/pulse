@@ -4,17 +4,15 @@
 
 ## Structure
 
-**Current directories:**
+**Current directories/files:**
 ```
 docs/
 ├── mcp/                      # MCP tool documentation (scrape, crawl, map, search, query)
 ├── plans/                    # Implementation plans and roadmaps
+├── services/                 # Service guides (CHANGEDETECTION, FIRECRAWL, PORTS, INDEX, etc.)
 ├── ARCHITECTURE_DIAGRAM.md   # ASCII system topology diagrams
-├── CHANGEDETECTION_INTEGRATION.md  # changedetection.io setup guide
 ├── OAUTH.md                  # Google OAuth 2.1 configuration
-├── services-ports.md         # Port allocation and service URLs
 ├── deployment-log.md         # Deployment history
-├── external-services.md      # GPU services documentation
 └── CLAUDE.md                 # This file
 ```
 
@@ -82,7 +80,7 @@ All guides should include:
 ## Current Documentation Files
 
 ### Integration Guides
-- **[CHANGEDETECTION_INTEGRATION.md](CHANGEDETECTION_INTEGRATION.md)** (677 lines) - Complete changedetection.io setup, webhook config, auto-rescraping
+- **[CHANGEDETECTION.md](services/CHANGEDETECTION.md)** (~700 lines) - Complete changedetection.io setup, webhook config, auto-rescraping
 - **[OAUTH.md](OAUTH.md)** (198 lines) - Google OAuth 2.1 setup for MCP server with production hardening
 
 ### Service Documentation

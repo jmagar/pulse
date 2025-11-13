@@ -302,10 +302,10 @@ Multiple middleware for different concerns:
 
 ## Related Documentation
 
-- **[MCP Integration](mcp/SEARCH.md)** - Using search via MCP
-- **[Changedetection Integration](CHANGEDETECTION_INTEGRATION.md)** - Setup guide
-- **[External Services](external-services.md)** - GPU services (TEI, Qdrant)
-- **[Service Ports](services-ports.md)** - Container and service URLs
+- **[MCP Integration](../mcp/SEARCH.md)** - Using search via MCP
+- **[Changedetection Service Guide](../CHANGEDETECTION.md)** - Setup guide
+- **[External Services Index](../INDEX.md)** - GPU services (TEI, Qdrant)
+- **[Service Ports](../PORTS.md)** - Container and service URLs
 
 ## Support & Troubleshooting
 
@@ -351,4 +351,3 @@ When contributing to the webhook server:
 - Update documentation when changing behavior
 - Follow FastAPI best practices
 - Use type hints throughout
-

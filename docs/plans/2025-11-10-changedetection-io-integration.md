@@ -207,7 +207,7 @@ When changedetection detects a change, it can automatically trigger Firecrawl to
 1. In changedetection.io, edit a watch
 2. Go to "Notifications" tab
 3. Add notification URL: `json://pulse_webhook:52100/api/webhook/changedetection`
-4. Set notification body template (see docs/CHANGEDETECTION_INTEGRATION.md)
+4. Set notification body template (see docs/services/CHANGEDETECTION.md)
 5. Save configuration
 
 Changed content will be automatically indexed for search within minutes.
@@ -1289,11 +1289,11 @@ git commit -m "test(webhook): add E2E test for changedetection integration
 ### Task 9: Manual Testing Documentation
 
 **Files:**
-- Create: `docs/CHANGEDETECTION_INTEGRATION.md`
+- Create: `docs/services/CHANGEDETECTION.md`
 
 **Step 1: Write integration guide**
 
-Create: `docs/CHANGEDETECTION_INTEGRATION.md`
+Create: `docs/services/CHANGEDETECTION.md`
 
 ```markdown
 # changedetection.io Integration Guide
@@ -1590,7 +1590,7 @@ Webhook signatures prevent:
 **Step 2: Commit**
 
 ```bash
-git add docs/CHANGEDETECTION_INTEGRATION.md
+git add docs/services/CHANGEDETECTION.md
 git commit -m "docs: add changedetection.io integration guide
 
 - Complete setup instructions with webhook configuration
@@ -1817,7 +1817,7 @@ Successfully integrated changedetection.io into Pulse monorepo for automated web
 ### Phase 3: Configuration & Testing
 - Environment variable configuration with backward compatibility
 - E2E test validates full workflow
-- Manual testing guide in `docs/CHANGEDETECTION_INTEGRATION.md`
+- Manual testing guide in `docs/services/CHANGEDETECTION.md`
 
 ### Phase 4: Deployment
 - Deployment checklist with rollback plan
@@ -1868,7 +1868,7 @@ Successfully integrated changedetection.io into Pulse monorepo for automated web
 
 - Implementation Plan: `docs/plans/2025-11-10-changedetection-io-integration.md`
 - Feasibility Report: `.docs/reports/changedetection/changedetection-io-feasibility-report.md`
-- Integration Guide: `docs/CHANGEDETECTION_INTEGRATION.md`
+- Integration Guide: `docs/services/CHANGEDETECTION.md`
 - Deployment Checklist: `.docs/deployment-changedetection.md`
 ```
 
@@ -1941,7 +1941,7 @@ Phase 2 - Webhook Integration:
 - apps/webhook/alembic/versions/20251110_000000_add_change_events.py
 
 Phase 3 - Documentation:
-- docs/CHANGEDETECTION_INTEGRATION.md (user guide)
+- docs/services/CHANGEDETECTION.md (user guide)
 - .docs/deployment-changedetection.md (ops guide)
 
 Phase 4 - Testing:

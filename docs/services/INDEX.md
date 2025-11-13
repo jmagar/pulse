@@ -1,6 +1,6 @@
 # Pulse Services Index
 
-_Last Updated: 01:44 AM EST | Nov 13 2025_
+_Last Updated: 02:17 AM EST | Nov 13 2025_
 
 This index is the front door to every service that powers Pulse. Use it to jump to detailed guides, verify port assignments, and understand how each container fits into the NotebookLM-style experience.
 

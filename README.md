@@ -574,7 +574,7 @@ When changedetection detects a change, it can automatically trigger Firecrawl to
 1. In changedetection.io, edit a watch
 2. Go to "Notifications" tab
 3. Add notification URL: `json://pulse_webhook:52100/api/webhook/changedetection`
-4. Set notification body template (see docs/CHANGEDETECTION_INTEGRATION.md)
+4. Set notification body template (see docs/services/CHANGEDETECTION.md)
 5. Save configuration
 
 Changed content will be automatically indexed for search within minutes.

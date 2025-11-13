@@ -12,17 +12,17 @@ _Last Updated: 01:10 AM EST | Nov 13 2025_
 ## Primary Host Services (`docker-compose.yaml`)
 | Host Port ➜ Internal | Service | Container | Protocol | Purpose / Notes |
 |----------------------|---------|-----------|----------|-----------------|
-| 50100 ➜ 3000 | Playwright Service | `pulse_playwright` | HTTP | Headless browser automation used by Firecrawl and changedetection to render dynamic sites. |
-| 50102 ➜ 3002 | Firecrawl API | `firecrawl` | HTTP | Main scraping/orchestration API; depends on Redis, PostgreSQL, and Playwright. |
-| 50104 ➜ 6379 | Redis | `pulse_redis` | Redis | Shared cache + job queue backend (RQ) with persistent volume `${APPDATA_BASE}/pulse_redis`. |
-| 50105 ➜ 5432 | PostgreSQL | `pulse_postgres` | Postgres | Primary relational database for Firecrawl + webhook metrics, stored at `${APPDATA_BASE}/pulse_postgres`. |
-| 50107 ➜ 3060 | MCP Server | `pulse_mcp` | HTTP | Claude MCP server; volume `${APPDATA_BASE}/pulse_mcp/resources`. Health check hits `/health`. |
-| 50108 ➜ 52100 | Webhook Bridge API | `pulse_webhook` | HTTP | FastAPI search/indexer; BM25 artifacts in `${APPDATA_BASE}/pulse_webhook`. `WEBHOOK_ENABLE_WORKER` disabled when external worker is running. |
-| 50109 ➜ 5000 | changedetection.io | `pulse_change-detection` | HTTP | Monitors URLs for diffs, triggers webhook callbacks to `pulse_webhook`. Shares Playwright. |
-| 50210 ➜ 7474 | Neo4j HTTP | `pulse_neo4j` | HTTP | Browser/UI endpoint for the graph database. Volume set under `${APPDATA_BASE}/pulse_neo4j`. |
-| 50211 ➜ 7687 | Neo4j Bolt | `pulse_neo4j` | Bolt | Binary driver endpoint for graph queries. |
-| 50110 ➜ 3000 | Web UI (NotebookLM clone) | `pulse_web` | HTTP | Planned Next.js app delivering the NotebookLM-style interface; exposed via custom host port instead of 3000. |
-| — (no host port) | Webhook Worker | `pulse_webhook-worker` | N/A | Dedicated RQ worker container pulling jobs from `redis://pulse_redis:6379`; no network listener. |
+| 50100 ➜ 3000 | [Playwright Service](./PLAYWRIGHT.md) | `pulse_playwright` | HTTP | Headless browser automation used by Firecrawl and changedetection to render dynamic sites. |
+| 50102 ➜ 3002 | [Firecrawl API](./FIRECRAWL.md) | `firecrawl` | HTTP | Main scraping/orchestration API; depends on Redis, PostgreSQL, and Playwright. |
+| 50104 ➜ 6379 | [Redis](./REDIS.md) | `pulse_redis` | Redis | Shared cache + job queue backend (RQ) with persistent volume `${APPDATA_BASE}/pulse_redis`. |
+| 50105 ➜ 5432 | [PostgreSQL](./POSTGRES.md) | `pulse_postgres` | Postgres | Primary relational database for Firecrawl + webhook metrics, stored at `${APPDATA_BASE}/pulse_postgres`. |
+| 50107 ➜ 3060 | [MCP Server](./PULSE_MCP.md) | `pulse_mcp` | HTTP | Claude MCP server; volume `${APPDATA_BASE}/pulse_mcp/resources`. Health check hits `/health`. |
+| 50108 ➜ 52100 | [Webhook Bridge API](./PULSE_WEBHOOK.md) | `pulse_webhook` | HTTP | FastAPI search/indexer; BM25 artifacts in `${APPDATA_BASE}/pulse_webhook`. `WEBHOOK_ENABLE_WORKER` disabled when external worker is running. |
+| 50109 ➜ 5000 | [changedetection.io](./CHANGEDETECTION.md) | `pulse_change-detection` | HTTP | Monitors URLs for diffs, triggers webhook callbacks to `pulse_webhook`. Shares Playwright. |
+| 50210 ➜ 7474 | [Neo4j HTTP](./NEO4J.md) | `pulse_neo4j` | HTTP | Browser/UI endpoint for the graph database. Volume set under `${APPDATA_BASE}/pulse_neo4j`. |
+| 50211 ➜ 7687 | [Neo4j Bolt](./NEO4J.md) | `pulse_neo4j` | Bolt | Binary driver endpoint for graph queries. |
+| 50110 ➜ 3000 | [Web UI (NotebookLM clone)](./PULSE_WEB.md) | `pulse_web` | HTTP | Planned Next.js app delivering the NotebookLM-style interface; exposed via custom host port instead of 3000. |
+| — (no host port) | [Webhook Worker](./PULSE_WORKER.md) | `pulse_webhook-worker` | N/A | Dedicated RQ worker container pulling jobs from `redis://pulse_redis:6379`; no network listener. |
 
 > **Unused host ports 50101, 50103, and 50106 remain reserved** for future Firecrawl sidecars; keep them free until a new service is registered in this document.
 
@@ -54,10 +54,10 @@ _Last Updated: 01:10 AM EST | Nov 13 2025_
 ## External GPU Services (`docker-compose.external.yaml`)
 | Host Port ➜ Internal | Service | Container | Protocol | Notes |
 |----------------------|---------|-----------|----------|-------|
-| 52000 ➜ 80 | Text Embeddings Inference (TEI) | `pulse_tei` | HTTP | HuggingFace TEI serving `${TEI_EMBEDDING_MODEL}`; requires GPU. |
-| 52001 ➜ 6333 | Qdrant HTTP | `pulse_qdrant` | HTTP | Vector DB HTTP API (`pulse_docs` collection, 1024 dims). |
-| 52002 ➜ 6334 | Qdrant gRPC | `pulse_qdrant` | gRPC | High-throughput ingestion/search channel. |
-| 52003 ➜ 11434 | Ollama | `pulse_ollama` | HTTP | Local LLM inference (e.g., `qwen3:8b-instruct`). |
+| 52000 ➜ 80 | [Text Embeddings Inference (TEI)](./TEI.md) | `pulse_tei` | HTTP | HuggingFace TEI serving `${TEI_EMBEDDING_MODEL}`; requires GPU. |
+| 52001 ➜ 6333 | [Qdrant HTTP](./QDRANT.md) | `pulse_qdrant` | HTTP | Vector DB HTTP API (`pulse_docs` collection, 1024 dims). |
+| 52002 ➜ 6334 | [Qdrant gRPC](./QDRANT.md) | `pulse_qdrant` | gRPC | High-throughput ingestion/search channel. |
+| 52003 ➜ 11434 | [Ollama](./OLLAMA.md) | `pulse_ollama` | HTTP | Local LLM inference (e.g., `qwen3:8b-instruct`). |
 
 All external services join the same `pulse` network for DNS-based access from the primary stack (e.g., `http://pulse_qdrant:6333`).
 

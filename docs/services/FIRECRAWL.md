@@ -1,6 +1,6 @@
 # Firecrawl API Service Guide
 
-_Last Updated: 01:30 AM EST | Nov 13 2025_
+_Last Updated: 02:13 AM EST | Nov 13 2025_
 
 ## Role in Pulse
 The Firecrawl API is the core scraping/orchestration backend. MCP tools (`scrape`, `crawl`, `map`, `search`, `query`) and the webhook worker all rely on it to fetch raw pages, execute headless Playwright sessions, and normalize content into Markdown/JSON. Without Firecrawl the Pulse stack cannot scrape, crawl, or refresh documents.
@@ -25,6 +25,19 @@ The Firecrawl API is the core scraping/orchestration backend. MCP tools (`scrape
 | `WEBHOOK_FIRECRAWL_API_URL` / `WEBHOOK_FIRECRAWL_API_KEY` | Used by the webhook worker when initiating re-scrapes. |
 
 Other knobs (concurrency, timeouts, Playwright pool size) are controlled via Firecrawl’s own config file inside the container; use env overrides if upgrading the image.
+
+### Default `scrapeOptions`
+When the MCP crawl/scrape tools (and any consumer that uses `mergeScrapeOptions`) call Firecrawl, they provide a consistent baseline so responses always include the data our downstream pipeline expects:
+
+| Field | Default | Rationale |
+|-------|---------|-----------|
+| `formats` | `['markdown', 'html', 'summary', 'changeTracking', 'links']` | Ensures NotebookLM UI and change-diff tooling always get clean markdown, raw HTML, summary text, change tracking metadata, and outbound links in a single call. |
+| `onlyMainContent` | `true` | Drops nav/ads/footers for concise sources; override to `false` if you need entire pages. |
+| `blockAds` | `true` | Reduces noise/cookie banners before they reach the client. |
+| `removeBase64Images` | `true` | Prevents large inline images from spiking token counts. |
+| `parsers` | `[]` | Disables expensive PDF parsing unless explicitly requested (e.g., `{ type: 'pdf', maxPages: 5 }`). |
+
+These defaults live in `apps/mcp/config/crawl-config.ts`. User-supplied `scrapeOptions` are shallow-merged on top so only the overridden fields change; `parsers` always resolves to an array to satisfy the Firecrawl batch API. The MCP search tool separately defaults `blockAds` and `removeBase64Images`, but leaves other fields unset—pass the values above if you want search-result scraping to match crawl behavior. For a deeper dive (merge semantics, when to override, and example payloads) see [`docs/services/firecrawl/DEFAULT_SCRAPE_OPTIONS.md`](./firecrawl/DEFAULT_SCRAPE_OPTIONS.md).
 
 ## Dependencies & Networking
 - **depends_on**: `pulse_redis`, `pulse_playwright`, `pulse_postgres` must be online first.

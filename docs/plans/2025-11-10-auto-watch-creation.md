@@ -965,11 +965,11 @@ git commit -m "docs: add auto-watch environment variables to .env.example
 ### Task 6: Update Integration Documentation
 
 **Files:**
-- Modify: `docs/CHANGEDETECTION_INTEGRATION.md`
+- Modify: `docs/services/CHANGEDETECTION.md`
 
 **Step 1: Add automatic watch creation section**
 
-Modify: `docs/CHANGEDETECTION_INTEGRATION.md`
+Modify: `docs/services/CHANGEDETECTION.md`
 
 Add after the "Setup" section (around line 100):
 
@@ -1085,7 +1085,7 @@ docker compose logs pulse_webhook | grep "changedetection.io watch"
 **Step 3: Commit**
 
 ```bash
-git add docs/CHANGEDETECTION_INTEGRATION.md
+git add docs/services/CHANGEDETECTION.md
 git commit -m "docs: document automatic watch creation feature
 
 - How auto-watch works with data flow diagram
@@ -1279,7 +1279,7 @@ git commit -m "test(webhook): add E2E test for bidirectional monitoring
 - [x] Troubleshooting section updated (Commit: e2dd638)
 
 **Deployment:**
-- [x] Environment variables documented in .env.example and CHANGEDETECTION_INTEGRATION.md
+- [x] Environment variables documented in .env.example and services/CHANGEDETECTION.md
 - [x] Feature flag defaults to enabled (WEBHOOK_CHANGEDETECTION_ENABLE_AUTO_WATCH=true)
 - [x] Graceful degradation if changedetection.io unavailable (try/except with logging)
 

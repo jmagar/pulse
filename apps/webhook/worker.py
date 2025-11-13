@@ -75,6 +75,7 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
             "get_service_pool",
             job_id=job_id,
             document_url=document.url,
+            request_id=None,  # Worker operations have no HTTP request context
         ) as ctx:
             service_pool = ServicePool.get_instance()
             ctx.metadata = {"pool_exists": True}
@@ -100,6 +101,7 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
             "index_document",
             job_id=job_id,
             document_url=document.url,
+            request_id=None,  # Worker operations have no HTTP request context
         ) as ctx:
             result = await indexing_service.index_document(document, job_id=job_id)
             ctx.metadata = {
