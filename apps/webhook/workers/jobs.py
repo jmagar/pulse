@@ -65,7 +65,12 @@ async def _index_document_helper(
 
 async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
     """
-    Rescrape URL that was detected as changed by changedetection.io.
+    Rescrape URL with proper transaction boundaries.
+
+    Transaction strategy:
+    1. Mark as in_progress in separate transaction (commit immediately)
+    2. Execute Firecrawl + indexing (no DB changes)
+    3. Update final status in final transaction (commit on success, rollback on error)
 
     Args:
         change_event_id: ID of change event in webhook.change_events table
@@ -82,114 +87,101 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
 
     logger.info("Starting rescrape job", change_event_id=change_event_id, job_id=job_id)
 
+    # TRANSACTION 1: Mark as in_progress (separate transaction)
     async with get_db_context() as session:
-        # Fetch change event
         result = await session.execute(select(ChangeEvent).where(ChangeEvent.id == change_event_id))
         change_event = result.scalar_one_or_none()
 
         if not change_event:
             raise ValueError(f"Change event {change_event_id} not found")
 
-        # Update job ID
+        watch_url = change_event.watch_url
+
         if job_id:
             await session.execute(
                 update(ChangeEvent)
                 .where(ChangeEvent.id == change_event_id)
                 .values(rescrape_job_id=job_id, rescrape_status="in_progress")
             )
-            await session.commit()
+            await session.commit()  # Commit immediately
 
-        try:
-            # Call Firecrawl API
-            logger.info(
-                "Calling Firecrawl API",
-                url=change_event.watch_url,
-                job_id=job_id,
-            )
+    # PHASE 2: Execute external operations (Firecrawl + indexing) - no DB changes
+    try:
+        # Call Firecrawl API
+        logger.info("Calling Firecrawl API", url=watch_url, job_id=job_id)
 
-            firecrawl_url = getattr(settings, "firecrawl_api_url", "http://firecrawl:3002")
-            firecrawl_key = getattr(settings, "firecrawl_api_key", "self-hosted-no-auth")
+        firecrawl_url = getattr(settings, "firecrawl_api_url", "http://firecrawl:3002")
+        firecrawl_key = getattr(settings, "firecrawl_api_key", "self-hosted-no-auth")
 
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                response = await client.post(
-                    f"{firecrawl_url}/v2/scrape",
-                    json={
-                        "url": change_event.watch_url,
-                        "formats": ["markdown", "html"],
-                        "onlyMainContent": True,
-                    },
-                    headers={"Authorization": f"Bearer {firecrawl_key}"},
-                )
-                response.raise_for_status()
-                scrape_data = cast(dict[str, Any], response.json())
-
-            if not scrape_data.get("success"):
-                raise Exception(f"Firecrawl scrape failed: {scrape_data}")
-
-            # Index in search (Qdrant + BM25)
-            logger.info("Indexing scraped content", url=change_event.watch_url)
-
-            data = scrape_data.get("data", {})
-            doc_id = await _index_document_helper(
-                url=change_event.watch_url,
-                text=data.get("markdown", ""),
-                metadata={
-                    "change_event_id": change_event_id,
-                    "watch_id": change_event.watch_id,
-                    "detected_at": format_est_timestamp(change_event.detected_at),
-                    "title": data.get("metadata", {}).get("title"),
-                    "description": data.get("metadata", {}).get("description"),
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                f"{firecrawl_url}/v2/scrape",
+                json={
+                    "url": watch_url,
+                    "formats": ["markdown", "html"],
+                    "onlyMainContent": True,
                 },
+                headers={"Authorization": f"Bearer {firecrawl_key}"},
             )
+            response.raise_for_status()
+            scrape_data = cast(dict[str, Any], response.json())
 
-            # Update change event
-            await session.execute(
-                update(ChangeEvent)
-                .where(ChangeEvent.id == change_event_id)
-                .values(
-                    rescrape_status="completed",
-                    indexed_at=datetime.now(UTC),
-                    extra_metadata={
-                        **(change_event.extra_metadata or {}),
-                        "document_id": doc_id,
-                        "firecrawl_status": scrape_data.get("status"),
-                    },
-                )
-            )
-            await session.commit()
+        if not scrape_data.get("success"):
+            raise Exception(f"Firecrawl scrape failed: {scrape_data}")
 
-            logger.info(
-                "Rescrape completed successfully",
-                change_event_id=change_event_id,
-                document_id=doc_id,
-            )
-
-            return {
-                "status": "success",
+        # Index in search
+        logger.info("Indexing scraped content", url=watch_url)
+        data = scrape_data.get("data", {})
+        doc_id = await _index_document_helper(
+            url=watch_url,
+            text=data.get("markdown", ""),
+            metadata={
                 "change_event_id": change_event_id,
-                "document_id": doc_id,
-                "url": change_event.watch_url,
-            }
+                "title": data.get("metadata", {}).get("title"),
+                "description": data.get("metadata", {}).get("description"),
+            },
+        )
 
-        except Exception as e:
-            # Update failure status
-            logger.error(
-                "Rescrape failed",
-                change_event_id=change_event_id,
-                error=str(e),
-            )
+    except Exception as e:
+        # TRANSACTION 3a: Update failure status (separate transaction)
+        logger.error("Rescrape failed", change_event_id=change_event_id, error=str(e))
 
+        async with get_db_context() as session:
             await session.execute(
                 update(ChangeEvent)
                 .where(ChangeEvent.id == change_event_id)
                 .values(
                     rescrape_status=f"failed: {str(e)[:200]}",
                     extra_metadata={
-                        **(change_event.extra_metadata or {}),
                         "error": str(e),
                         "failed_at": format_est_timestamp(),
                     },
                 )
             )
             await session.commit()
-            raise
+        raise
+
+    # TRANSACTION 3b: Update success status (separate transaction)
+    async with get_db_context() as session:
+        await session.execute(
+            update(ChangeEvent)
+            .where(ChangeEvent.id == change_event_id)
+            .values(
+                rescrape_status="completed",
+                indexed_at=datetime.now(UTC),
+                extra_metadata={
+                    "document_id": doc_id,
+                    "firecrawl_status": scrape_data.get("status"),
+                },
+            )
+        )
+        await session.commit()
+
+    logger.info("Rescrape completed successfully", change_event_id=change_event_id, document_id=doc_id)
+
+    return {
+        "status": "success",
+        "change_event_id": change_event_id,
+        "document_id": doc_id,
+        "url": watch_url,
+    }
