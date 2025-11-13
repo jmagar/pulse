@@ -67,20 +67,64 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
     """
     Rescrape URL with proper transaction boundaries.
 
-    Transaction strategy:
-    1. Mark as in_progress in separate transaction (commit immediately)
-    2. Execute Firecrawl + indexing (no DB changes)
-    3. Update final status in final transaction (commit on success, rollback on error)
+    TRANSACTION ISOLATION STRATEGY
+    ==============================
+
+    This function uses a THREE-TRANSACTION pattern to prevent zombie jobs
+    while minimizing database lock contention during long HTTP operations.
+
+    Transaction 1: Mark as in_progress (COMMIT IMMEDIATELY)
+    -------------------------------------------------------
+    - Updates rescrape_status = "in_progress"
+    - Commits immediately (releases DB lock)
+    - TRADE-OFF: Job is visible as "in_progress" but not actually running yet
+    - WHY: Allows zombie cleanup cron to detect stuck jobs
+
+    Phase 2: External Operations (NO DATABASE TRANSACTION)
+    -------------------------------------------------------
+    - Calls Firecrawl API (up to 120s timeout)
+    - Indexes document in Qdrant
+    - NO database locks held during this phase
+    - TRADE-OFF: If process crashes here, job stuck in "in_progress"
+    - MITIGATION: Zombie cleanup cron marks abandoned jobs as failed after 15min
+
+    Transaction 3a/3b: Update Final Status (SEPARATE TRANSACTION)
+    --------------------------------------------------------------
+    - On success: Update to "completed" + metadata
+    - On failure: Update to "failed" + error message
+    - Each in separate transaction (commit on success, rollback on error)
+
+    CONCURRENCY CONSIDERATIONS
+    ==========================
+
+    This pattern DOES NOT prevent duplicate processing if multiple workers
+    start simultaneously. To prevent this, consider adding:
+
+    1. Optimistic Locking:
+       WHERE rescrape_status = "queued" AND id = change_event_id
+       (only one worker succeeds if both try to claim)
+
+    2. Worker ID Tracking:
+       Store processing_worker_id to identify owner
+
+    3. Row-Level Locking:
+       SELECT ... FOR UPDATE (holds lock across all 3 phases)
+       TRADE-OFF: Blocks other workers for 120+ seconds
+
+    Current implementation optimizes for:
+    - Low DB lock contention (important for high throughput)
+    - Zombie job detection (important for reliability)
+    - Simple failure recovery (no complex rollback logic)
 
     Args:
-        change_event_id: ID of change event in webhook.change_events table
+        change_event_id: ID of change event to rescrape
 
     Returns:
-        dict: Rescrape result with status and indexed document ID
+        dict with status, change_event_id, document_id, url
 
     Raises:
         ValueError: If change event not found
-        Exception: If Firecrawl API or indexing fails
+        Exception: If Firecrawl or indexing fails
     """
     job = get_current_job()
     job_id = job.id if job else None
@@ -106,8 +150,9 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
             await session.commit()  # Commit immediately
 
     # PHASE 2: Execute external operations (Firecrawl + indexing) - no DB changes
+    # This phase can take 120+ seconds, so we intentionally do NOT hold a DB transaction
     try:
-        # Call Firecrawl API
+        # Call Firecrawl API (up to 120s timeout)
         logger.info("Calling Firecrawl API", url=watch_url, job_id=job_id)
 
         firecrawl_url = getattr(settings, "firecrawl_api_url", "http://firecrawl:3002")
@@ -144,6 +189,8 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
 
     except Exception as e:
         # TRANSACTION 3a: Update failure status (separate transaction)
+        # If we fail here, we still update the database status to "failed"
+        # This ensures the job doesn't remain in "in_progress" forever
         logger.error("Rescrape failed", change_event_id=change_event_id, error=str(e))
 
         async with get_db_context() as session:
