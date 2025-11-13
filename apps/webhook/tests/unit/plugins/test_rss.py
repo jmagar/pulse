@@ -116,10 +116,10 @@ class TestRSSPlugin:
                 include_summary=True,
             )
 
-            assert "url" in result
-            assert result["title"] == "Test Feed"
-            assert "Test Entry" in result["markdown"]
-            assert "Test summary" in result["markdown"]
+            assert result.url == "https://example.com/feed.xml"
+            assert result.title == "Test Feed"
+            assert "Test Entry" in result.markdown
+            assert "Test summary" in result.markdown
 
     @pytest.mark.asyncio
     async def test_fetch_content_with_options(self):
@@ -152,10 +152,10 @@ class TestRSSPlugin:
 
             # Should only include 5 entries
             for i in range(5):
-                assert f"Entry {i}" in result["markdown"]
+                assert f"Entry {i}" in result.markdown
 
             # Should not include entries beyond limit
-            assert "Entry 5" not in result["markdown"]
+            assert "Entry 5" not in result.markdown
 
     @pytest.mark.asyncio
     async def test_health_check_library_available(self):
@@ -194,6 +194,6 @@ class TestRSSPlugin:
             )
 
             # HTML tags should be stripped
-            assert "Text with HTML tags" in result["markdown"]
-            assert "<p>" not in result["markdown"]
-            assert "<strong>" not in result["markdown"]
+            assert "Text with HTML tags" in result.markdown
+            assert "<p>" not in result.markdown
+            assert "<strong>" not in result.markdown

@@ -101,10 +101,10 @@ class TestRedditPlugin:
                 comment_limit=10,
             )
 
-            assert "url" in result
-            assert result["title"] == "Test Post"
-            assert "Test Post" in result["markdown"]
-            assert "This is test content" in result["markdown"]
+            assert result.url == "https://reddit.com/r/python/comments/abc/test"
+            assert result.title == "Test Post"
+            assert "Test Post" in result.markdown
+            assert "This is test content" in result.markdown
 
     @pytest.mark.asyncio
     async def test_fetch_subreddit_success(self):
@@ -137,10 +137,10 @@ class TestRedditPlugin:
                 "https://reddit.com/r/python", limit=10, time_filter="day"
             )
 
-            assert "url" in result
-            assert result["title"] == "r/python"
-            assert "python" in result["markdown"].lower()
-            assert "Test Post" in result["markdown"]
+            assert result.url == "https://reddit.com/r/python"
+            assert result.title == "r/python"
+            assert "python" in result.markdown.lower()
+            assert "Test Post" in result.markdown
 
     @pytest.mark.asyncio
     async def test_health_check_library_available(self):

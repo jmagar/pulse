@@ -6,7 +6,7 @@ The webhook server includes a pluggable architecture for ingesting content from 
 
 ### Overview
 
-```
+```text
 URL → Plugin Registry → Appropriate Plugin → IndexDocumentRequest → Indexing Pipeline
 ```
 

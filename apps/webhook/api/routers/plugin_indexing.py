@@ -5,6 +5,7 @@ Provides endpoints for ingesting content from various sources
 (YouTube, Reddit, RSS, etc.) using the plugin system.
 """
 
+from functools import lru_cache
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -88,20 +89,10 @@ class PluginHealthResponse(BaseModel):
 
 
 # Create a singleton service instance
-_plugin_service: PluginIngestionService | None = None
-
-
+@lru_cache(maxsize=1)
 def get_plugin_service() -> PluginIngestionService:
-    """
-    Get or create the plugin ingestion service instance.
-
-    Returns:
-        PluginIngestionService instance
-    """
-    global _plugin_service
-    if _plugin_service is None:
-        _plugin_service = PluginIngestionService()
-    return _plugin_service
+    """Get or create the plugin ingestion service instance."""
+    return PluginIngestionService()
 
 
 @router.post(

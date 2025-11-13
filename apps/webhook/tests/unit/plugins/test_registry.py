@@ -27,21 +27,22 @@ class MockPlugin(BasePlugin):
         return url in self._can_handle_urls
 
     async def fetch_content(self, url: str, **kwargs: Any) -> Any:
-        # Return a mock document dict instead of IndexDocumentRequest
-        return {
-            "url": url,
-            "resolvedUrl": url,
-            "title": f"Content from {self._name}",
-            "description": "Test content",
-            "markdown": f"# Test\n\nContent from {self._name}",
-            "html": "",
-            "statusCode": 200,
-            "gcsPath": None,
-            "screenshotUrl": None,
-            "language": "en",
-            "country": None,
-            "isMobile": False,
-        }
+        from api.schemas.indexing import IndexDocumentRequest
+
+        return IndexDocumentRequest(
+            url=url,
+            resolvedUrl=url,
+            title=f"Content from {self._name}",
+            description="Test content",
+            markdown=f"# Test\n\nContent from {self._name}",
+            html="",
+            statusCode=200,
+            gcsPath=None,
+            screenshotUrl=None,
+            language="en",
+            country=None,
+            isMobile=False,
+        )
 
     def get_priority(self) -> int:
         return self._priority

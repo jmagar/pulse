@@ -1,4 +1,4 @@
-  # Plugin Development Guide
+# Plugin Development Guide
 
 This guide provides detailed instructions for creating custom content ingestion plugins for the webhook server.
 

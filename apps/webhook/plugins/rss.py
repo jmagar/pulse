@@ -5,11 +5,14 @@ This plugin extracts articles from RSS and Atom feeds, transforming
 them into documents suitable for RAG indexing.
 """
 
+import re
 from typing import TYPE_CHECKING, Any
 
 from plugins.base import BasePlugin
 
 if TYPE_CHECKING:
+    from api.schemas.indexing import IndexDocumentRequest
+else:
     from api.schemas.indexing import IndexDocumentRequest
 
 try:
@@ -178,8 +181,6 @@ class RSSPlugin(BasePlugin):
                         if content_value:
                             # Strip HTML tags for cleaner markdown
                             # This is a basic strip - for production, use a proper HTML parser
-                            import re
-
                             clean_content = re.sub(r"<[^>]+>", "", content_value)
                             markdown_lines.append(f"\n{clean_content}\n")
                             break  # Only use first content item

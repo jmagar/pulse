@@ -13,6 +13,8 @@ from plugins.base import BasePlugin
 
 if TYPE_CHECKING:
     from api.schemas.indexing import IndexDocumentRequest
+else:
+    from api.schemas.indexing import IndexDocumentRequest
 
 try:
     from utils.logging import get_logger
@@ -89,8 +91,10 @@ class YouTubePlugin(BasePlugin):
                     # Validate video ID format (11 alphanumeric chars)
                     if re.match(r"^[a-zA-Z0-9_-]{11}$", video_id):
                         return video_id
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(
+                "Error extracting YouTube video ID from URL: %s (%s)", url, e
+            )
 
         return None
 

@@ -5,12 +5,15 @@ This plugin extracts content from Reddit posts and subreddits,
 transforming them into documents suitable for RAG indexing.
 """
 
+import os
 import re
 from typing import TYPE_CHECKING, Any
 
 from plugins.base import BasePlugin
 
 if TYPE_CHECKING:
+    from api.schemas.indexing import IndexDocumentRequest
+else:
     from api.schemas.indexing import IndexDocumentRequest
 
 try:
@@ -135,10 +138,20 @@ class RedditPlugin(BasePlugin):
             post_id=post_id,
         )
 
+        # Get credentials from environment or constructor
+        client_id = self.client_id or os.getenv("REDDIT_CLIENT_ID")
+        client_secret = self.client_secret or os.getenv("REDDIT_CLIENT_SECRET")
+
+        if not client_id or not client_secret:
+            raise RuntimeError(
+                "Reddit credentials required. Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET "
+                "environment variables or pass via constructor."
+            )
+
         # Initialize Reddit API client
         reddit = praw.Reddit(
-            client_id=self.client_id or "REDDIT_CLIENT_ID",
-            client_secret=self.client_secret or "REDDIT_CLIENT_SECRET",
+            client_id=client_id,
+            client_secret=client_secret,
             user_agent=self.user_agent,
         )
 
@@ -251,10 +264,20 @@ class RedditPlugin(BasePlugin):
             time_filter=time_filter,
         )
 
+        # Get credentials from environment or constructor
+        client_id = self.client_id or os.getenv("REDDIT_CLIENT_ID")
+        client_secret = self.client_secret or os.getenv("REDDIT_CLIENT_SECRET")
+
+        if not client_id or not client_secret:
+            raise RuntimeError(
+                "Reddit credentials required. Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET "
+                "environment variables or pass via constructor."
+            )
+
         # Initialize Reddit API client
         reddit = praw.Reddit(
-            client_id=self.client_id or "REDDIT_CLIENT_ID",
-            client_secret=self.client_secret or "REDDIT_CLIENT_SECRET",
+            client_id=client_id,
+            client_secret=client_secret,
             user_agent=self.user_agent,
         )
 
