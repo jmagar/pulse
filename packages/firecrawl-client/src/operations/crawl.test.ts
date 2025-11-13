@@ -76,4 +76,113 @@ describe('crawl operations', () => {
     expect(fetchMock).toHaveBeenCalledWith(`${BASE_URL}/crawl/active`, expect.any(Object));
     expect(result.crawls[0]).toMatchObject({ id: 'job-1', teamId: 'team-1' });
   });
+
+  describe('timeout protection', () => {
+    it('should timeout startCrawl after 30 seconds', async () => {
+      // Mock fetch to respect abort signal
+      fetchMock.mockImplementation((_url, options) => {
+        return new Promise((_resolve, reject) => {
+          const signal = (options as RequestInit)?.signal;
+          if (signal) {
+            signal.addEventListener('abort', () => {
+              const error = new Error('The operation was aborted');
+              error.name = 'AbortError';
+              reject(error);
+            });
+          }
+          // Never resolve - wait for abort
+        });
+      });
+
+      await expect(
+        startCrawl(API_KEY, BASE_URL, { url: 'https://example.com' })
+      ).rejects.toThrow(/timeout/i);
+    });
+
+    it('should clear timeout on successful response', async () => {
+      const payload = { success: true, id: 'test-123', url: 'https://firecrawl.test/crawl/test-123' };
+      fetchMock.mockResolvedValue(buildResponse(payload));
+
+      const result = await startCrawl(API_KEY, BASE_URL, { url: 'https://example.com' });
+
+      expect(result).toBeDefined();
+      expect(result.id).toBe('test-123');
+    });
+
+    it('should apply timeout to getCrawlStatus', async () => {
+      fetchMock.mockImplementation((_url, options) => {
+        return new Promise((_resolve, reject) => {
+          const signal = (options as RequestInit)?.signal;
+          if (signal) {
+            signal.addEventListener('abort', () => {
+              const error = new Error('The operation was aborted');
+              error.name = 'AbortError';
+              reject(error);
+            });
+          }
+        });
+      });
+
+      await expect(
+        getCrawlStatus(API_KEY, BASE_URL, 'job-123')
+      ).rejects.toThrow(/timeout/i);
+    });
+
+    it('should apply timeout to cancelCrawl', async () => {
+      fetchMock.mockImplementation((_url, options) => {
+        return new Promise((_resolve, reject) => {
+          const signal = (options as RequestInit)?.signal;
+          if (signal) {
+            signal.addEventListener('abort', () => {
+              const error = new Error('The operation was aborted');
+              error.name = 'AbortError';
+              reject(error);
+            });
+          }
+        });
+      });
+
+      await expect(
+        cancelCrawl(API_KEY, BASE_URL, 'job-123')
+      ).rejects.toThrow(/timeout/i);
+    });
+
+    it('should apply timeout to getCrawlErrors', async () => {
+      fetchMock.mockImplementation((_url, options) => {
+        return new Promise((_resolve, reject) => {
+          const signal = (options as RequestInit)?.signal;
+          if (signal) {
+            signal.addEventListener('abort', () => {
+              const error = new Error('The operation was aborted');
+              error.name = 'AbortError';
+              reject(error);
+            });
+          }
+        });
+      });
+
+      await expect(
+        getCrawlErrors(API_KEY, BASE_URL, 'job-123')
+      ).rejects.toThrow(/timeout/i);
+    });
+
+    it('should apply timeout to getActiveCrawls', async () => {
+      fetchMock.mockImplementation((_url, options) => {
+        return new Promise((_resolve, reject) => {
+          const signal = (options as RequestInit)?.signal;
+          if (signal) {
+            signal.addEventListener('abort', () => {
+              const error = new Error('The operation was aborted');
+              error.name = 'AbortError';
+              reject(error);
+            });
+          }
+        });
+      });
+
+      await expect(
+        getActiveCrawls(API_KEY, BASE_URL)
+      ).rejects.toThrow(/timeout/i);
+    });
+  });
 });

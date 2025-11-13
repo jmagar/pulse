@@ -15,6 +15,7 @@ import type {
   ActiveCrawlsResult,
 } from '../types.js';
 import { buildHeaders, debugLog } from '../utils/headers.js';
+import { fetchWithTimeout } from '../utils/timeout.js';
 
 /**
  * Start a crawl job using Firecrawl API
@@ -36,11 +37,15 @@ export async function startCrawl(
   const fetchUrl = `${baseUrl}/crawl`;
   debugLog('Fetching', { url: fetchUrl, hasAuth: !!headers['Authorization'] });
 
-  const response = await fetch(fetchUrl, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(options),
-  });
+  const response = await fetchWithTimeout(
+    fetchUrl,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(options),
+    },
+    30000
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -71,10 +76,14 @@ export async function getCrawlStatus(
 ): Promise<CrawlStatusResult> {
   const headers = buildHeaders(apiKey);
 
-  const response = await fetch(`${baseUrl}/crawl/${jobId}`, {
-    method: 'GET',
-    headers,
-  });
+  const response = await fetchWithTimeout(
+    `${baseUrl}/crawl/${jobId}`,
+    {
+      method: 'GET',
+      headers,
+    },
+    30000
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -105,10 +114,14 @@ export async function cancelCrawl(
 ): Promise<CancelResult> {
   const headers = buildHeaders(apiKey);
 
-  const response = await fetch(`${baseUrl}/crawl/${jobId}`, {
-    method: 'DELETE',
-    headers,
-  });
+  const response = await fetchWithTimeout(
+    `${baseUrl}/crawl/${jobId}`,
+    {
+      method: 'DELETE',
+      headers,
+    },
+    30000
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -134,10 +147,14 @@ export async function getCrawlErrors(
 ): Promise<CrawlErrorsResult> {
   const headers = buildHeaders(apiKey);
 
-  const response = await fetch(`${baseUrl}/crawl/${jobId}/errors`, {
-    method: 'GET',
-    headers,
-  });
+  const response = await fetchWithTimeout(
+    `${baseUrl}/crawl/${jobId}/errors`,
+    {
+      method: 'GET',
+      headers,
+    },
+    30000
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -169,10 +186,14 @@ export async function getActiveCrawls(
 ): Promise<ActiveCrawlsResult> {
   const headers = buildHeaders(apiKey);
 
-  const response = await fetch(`${baseUrl}/crawl/active`, {
-    method: 'GET',
-    headers,
-  });
+  const response = await fetchWithTimeout(
+    `${baseUrl}/crawl/active`,
+    {
+      method: 'GET',
+      headers,
+    },
+    30000
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
