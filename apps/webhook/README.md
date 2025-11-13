@@ -1,464 +1,493 @@
-# Firecrawl Search Bridge
+# Webhook Search Bridge
 
-A semantic search service that bridges Firecrawl web scraping with vector search capabilities using HuggingFace Text Embeddings Inference (TEI) and Qdrant.
+A production-ready FastAPI service providing hybrid search (vector + keyword) capabilities for Firecrawl-crawled web content.
 
-## Architecture
+## Overview
 
-The Search Bridge runs as a single FastAPI application with an embedded background worker thread:
+The webhook service indexes scraped web content and provides semantic + keyword search with intelligent result fusion. It integrates with Firecrawl API for web scraping, changedetection.io for change monitoring, and provides comprehensive metrics and monitoring.
 
-- **API Server**: FastAPI application handling HTTP requests (webhooks, search, stats)
-- **Background Worker**: RQ worker thread processing indexing jobs from Redis queue
-- **BM25 Engine**: Shared in-memory instance used by both API and worker
-- **Vector Store**: Qdrant for semantic search
-- **Embedding Service**: TEI for generating text embeddings
+**Service:** `pulse_webhook` (API) + `pulse_webhook-worker` (optional background worker)
+**Internal Port:** 52100 | **External Port:** 50108 (configurable)
+**Tech Stack:** Python 3.13, FastAPI 0.121+, SQLAlchemy 2.0 (async), Redis Queue, Qdrant, PostgreSQL
 
-The worker thread starts automatically during FastAPI startup and shares all services with the API, eliminating file synchronization complexity.
-
-```
-Firecrawl → Search Bridge (API + Worker Thread) → Redis Queue → HuggingFace TEI (embeddings)
-                                                                 ├─> Qdrant (vector storage)
-                                                                 └─> BM25 (keyword search)
-```
-
-## Features
-
-- **Hybrid Search**: Combines vector similarity (semantic) + BM25 (keyword) using Reciprocal Rank Fusion (RRF)
-- **Token-based Chunking**: Intelligent text splitting using actual token counts (not characters)
-- **Async Processing**: Background job queue for non-blocking document indexing
-- **Rich Filtering**: Domain, language, country, mobile device filters
-- **Multiple Search Modes**: Hybrid, semantic-only, keyword-only, BM25-only
+---
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.12+
-- Docker & Docker Compose
-- UV package manager
-
-### Installation
-
-Run from monorepo root:
+### Development (with embedded worker)
 
 ```bash
-# Copy environment template
-cp .env.example .env
-# Edit .env with your configuration
-
 # Install dependencies
-pnpm install:webhook
+cd apps/webhook
+uv sync
 
-# Start all services via Docker Compose
-pnpm services:up
+# Configure environment
+cp ../../.env.example ../../.env
+# Edit .env with your settings
+
+# Run database migrations
+uv run alembic upgrade head
+
+# Start development server
+uv run uvicorn main:app --host 0.0.0.0 --port 52100 --reload
 ```
 
-For standalone deployment, see root `docker-compose.yaml` for service definition.
-
-### API Endpoints
-
-- `POST /api/index` - Queue document for indexing
-- `POST /api/search` - Search indexed documents
-- `GET /health` - Health check
-- `GET /api/stats` - Index statistics
-
-## Configuration
-
-### Port Allocation
-
-| Port  | Service | Description |
-|-------|---------|-------------|
-| 52100 | search-bridge | FastAPI REST API |
-| 52101 | redis | Redis Queue |
-| 52102 | qdrant | Qdrant HTTP API |
-| 52103 | qdrant | Qdrant gRPC API |
-| 52104 | tei | HuggingFace TEI |
-
-### Firecrawl Integration
-
-Update Firecrawl's `.env` (on steamy-wsl):
+### Production (Docker Compose)
 
 ```bash
-ENABLE_SEARCH_INDEX=true
-SEARCH_SERVICE_URL=http://<IP_OF_THIS_MACHINE>:52100
-SEARCH_SERVICE_API_SECRET=your-secret-key
-SEARCH_INDEX_SAMPLE_RATE=0.1
+# From project root
+docker compose up -d pulse_webhook pulse_webhook-worker
+
+# Check health
+curl http://localhost:50108/health
 ```
 
-To find this machine's IP:
-```bash
-hostname -I | awk '{print $1}'
-```
-
-## Deployment
-
-### Docker Compose (Recommended)
-
-```yaml
-services:
-  pulse_webhook:
-    build: ./apps/webhook
-    ports:
-      - "52100:52100"
-    environment:
-      WEBHOOK_REDIS_URL: redis://pulse_redis:6379
-      WEBHOOK_QDRANT_URL: http://qdrant:6333
-      WEBHOOK_TEI_URL: http://tei:80
-      WEBHOOK_ENABLE_WORKER: "true"  # Enable background worker
-    depends_on:
-      - pulse_redis
-      - qdrant
-      - tei
-```
-
-### Disable Worker (API Only)
-
-To run only the API without the background worker:
+### Basic Usage
 
 ```bash
-WEBHOOK_ENABLE_WORKER=false uvicorn main:app --host 0.0.0.0 --port 52100
+# Search indexed content (hybrid mode)
+curl -X POST http://localhost:50108/api/search \
+  -H "Authorization: Bearer YOUR_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "python async patterns",
+    "mode": "hybrid",
+    "limit": 10
+  }'
+
+# Get index statistics
+curl http://localhost:50108/api/stats \
+  -H "Authorization: Bearer YOUR_SECRET"
 ```
 
-This is useful for:
-- Development/testing the API independently
-- Scaling API and worker separately (run worker in separate process)
-- Debugging API without worker interference
-
-## Development
-
-### Setup
-
-```bash
-# Install all dependencies (Node.js and Python)
-pnpm install
-pnpm install:webhook
-```
-
-### Running Services
-
-```bash
-# Start all Docker services
-pnpm services:up
-
-# Run API server in development mode
-pnpm dev:webhook
-
-# Run background worker (deprecated - now embedded in API)
-pnpm worker:webhook
-
-# Stop all services
-pnpm services:down
-```
-
-### Code Quality
-
-```bash
-# Run tests
-pnpm test:webhook
-
-# Format code
-pnpm format:webhook
-
-# Lint code
-pnpm lint:webhook
-
-# Type check
-pnpm typecheck:webhook
-
-# Run all checks (format, lint, typecheck)
-pnpm check
-```
-
-### External Integration Tests
-
-Most webhook tests run against in-memory doubles for Redis, Qdrant, and the embedding
-service. To exercise the real infrastructure, set the environment flag and target the
-`external` marker:
-
-```bash
-export WEBHOOK_RUN_EXTERNAL_TESTS=1
-cd apps/webhook && uv run pytest -m external
-```
-
-Tests marked with `@pytest.mark.external` will be skipped automatically unless the
-`WEBHOOK_RUN_EXTERNAL_TESTS` variable is truthy ("1", "true", "yes", or "on").
+---
 
 ## Project Structure
 
-The webhook service uses a **flattened structure** with all modules at the root level:
-
 ```
 apps/webhook/
-├── main.py                  # FastAPI application entrypoint
-├── config.py                # Settings and configuration
-├── worker.py                # Background worker
-├── worker_thread.py         # Embedded worker thread
-├── api/                     # API layer
-│   ├── routers/             # HTTP endpoints
-│   │   ├── indexing.py      # Index endpoints
-│   │   ├── search.py        # Search endpoints
-│   │   ├── metrics.py       # Stats/metrics endpoints
-│   │   ├── webhook.py       # Webhook endpoints (changedetection)
-│   │   └── health.py        # Health check endpoint
-│   ├── schemas/             # Pydantic request/response models
-│   │   ├── search.py        # Search models
-│   │   ├── indexing.py      # Index models
-│   │   └── webhook.py       # Webhook models
-│   ├── middleware/          # FastAPI middleware
-│   └── deps.py              # Shared FastAPI dependencies
-├── services/                # Business logic layer
-│   ├── embedding.py         # HF TEI client
-│   ├── vector_store.py      # Qdrant client
-│   ├── bm25_engine.py       # BM25 indexing
-│   ├── search.py            # Hybrid search orchestrator
-│   └── indexing.py          # Document processing
-├── workers/                 # Background job handlers
-│   └── jobs.py              # Indexing and rescrape jobs
-├── domain/                  # Domain layer
-│   └── models.py            # SQLAlchemy ORM models (RequestMetric, etc.)
-├── clients/                 # External API clients
-│   └── firecrawl.py         # Firecrawl API client
-├── infra/                   # Infrastructure layer
-│   └── database/            # Database setup
-│       └── session.py       # SQLAlchemy session management
-├── utils/                   # Utilities
-│   ├── text_processing.py   # Token-based chunking
-│   ├── url.py               # URL normalization
-│   ├── logging.py           # Structured logging
-│   └── timing.py            # Timing context managers
-├── alembic/                 # Database migrations
-├── tests/                   # Test suite
-│   ├── unit/                # Unit tests
-│   └── integration/         # Integration tests
-├── pyproject.toml           # Python dependencies (uv)
-├── Dockerfile               # Production container
-└── README.md
+├── main.py                     # FastAPI application entry point
+├── config.py                   # Pydantic settings with env validation
+├── worker.py                   # Standalone RQ worker (external mode)
+├── worker_thread.py            # Embedded worker thread (dev mode)
+│
+├── api/                        # HTTP layer
+│   ├── deps.py                 # FastAPI dependencies & auth
+│   ├── middleware/             # Timing, logging, CORS, rate limiting
+│   ├── routers/                # 5 routers (webhooks, search, indexing, metrics, health)
+│   └── schemas/                # Request/response Pydantic models
+│
+├── domain/                     # Data models
+│   └── models.py               # SQLAlchemy ORM (3 tables: metrics + events)
+│
+├── services/                   # Business logic
+│   ├── search_orchestrator.py # Hybrid search with RRF fusion
+│   ├── indexing_service.py    # Document chunking + embedding + indexing
+│   ├── embedding_service.py   # Text embeddings via HF TEI
+│   ├── vector_store.py         # Qdrant vector database client
+│   └── bm25_engine.py          # Keyword search with BM25 algorithm
+│
+├── workers/                    # Background jobs
+│   ├── jobs.py                 # RQ job definitions (indexing, rescraping)
+│   ├── service_pool.py         # Singleton service instances (1000x faster)
+│   └── cleanup.py              # Zombie job cleanup
+│
+├── infra/                      # Infrastructure
+│   ├── database.py             # Async SQLAlchemy setup + session management
+│   ├── rate_limit.py           # Redis-backed rate limiting
+│   └── redis_connection.py     # Redis client singleton
+│
+├── clients/                    # External service clients
+│   └── firecrawl.py            # Firecrawl API client
+│
+├── utils/                      # Shared utilities
+│   ├── logging.py              # Structured logging (structlog)
+│   ├── timing.py               # Operation timing context manager
+│   ├── service_status.py       # Health check helpers
+│   └── content_metrics.py      # Webhook payload summarization
+│
+├── alembic/                    # Database migrations
+│   └── versions/               # 3 migrations (initial, schema move, change events)
+│
+├── tests/                      # Test suite (8K+ LOC)
+│   ├── unit/                   # 40 files - isolated unit tests
+│   ├── integration/            # 11 files - end-to-end API tests
+│   └── security/               # 3 files - timing attacks, SQL injection, DoS
+│
+├── scripts/                    # Maintenance scripts
+│   └── migrate_metadata.py     # Legacy metadata migration
+│
+└── data/bm25/                  # BM25 index storage (persisted)
 ```
 
-### Import Conventions
+---
 
-The service uses **relative imports** from the root level:
+## Key Features
 
-```python
-# API routers and schemas
-from api.routers.search import router as search_router
-from api.routers.indexing import router as indexing_router
-from api.schemas.search import SearchRequest, SearchResponse
-from api.schemas.indexing import IndexRequest, IndexResponse
-from api.deps import get_settings
+### Hybrid Search Architecture
+- **Vector Search** (Qdrant): Semantic similarity via embeddings
+- **Keyword Search** (BM25): Exact term matching with TF-IDF ranking
+- **Result Fusion** (RRF): Reciprocal Rank Fusion combines both rankings
 
-# Services
-from services.embedding import EmbeddingService
-from services.vector_store import VectorStoreService
-from services.search import SearchOrchestrator
-from services.indexing import IndexingService
+### Document Processing Pipeline
+1. **Text Cleaning** - Remove control characters, normalize whitespace
+2. **Token-Based Chunking** - semantic-text-splitter (Rust, 10-100x faster)
+3. **Batch Embeddings** - HF Text Embeddings Inference (TEI)
+4. **Parallel Indexing** - Qdrant (vector) + BM25 (keyword) simultaneously
 
-# Domain models (SQLAlchemy ORM)
-from domain.models import RequestMetric
+### Background Worker System
+- **Redis Queue (RQ)**: Job queue with 10min timeout
+- **Service Pool Pattern**: Reuse expensive services (1000x performance boost)
+- **Two Modes**: Embedded thread (dev) or standalone worker (prod)
+- **Job Types**: Document indexing, URL rescraping
 
-# Workers
-from workers.jobs import index_document_job, rescrape_job
+### Observability
+- **Request Metrics**: HTTP method, path, status, duration → PostgreSQL
+- **Operation Metrics**: Embedding, chunking, indexing timing → PostgreSQL
+- **Structured Logging**: JSON logs with timestamps, request IDs, context
+- **Health Checks**: Redis, Qdrant, TEI, PostgreSQL connectivity
 
-# Clients
-from clients.firecrawl import FirecrawlClient
+---
 
-# Utils
-from utils.url import normalize_url
-from utils.timing import timing_context
-from utils.text_processing import chunk_text
+## API Endpoints
 
-# Config
-from config import Settings
-```
+### Webhooks (rate limit exempt)
+- `POST /api/webhook/firecrawl` - Receive Firecrawl scrape results
+- `POST /api/webhook/changedetection` - Receive change detection notifications
 
-**Key principle:** All imports are relative to `/apps/webhook/` (the root of this service). No `PYTHONPATH` manipulation required.
-```
+### Search (50/min)
+- `POST /api/search` - Hybrid/semantic/keyword search
+- `GET /api/stats` - Index statistics (document count, storage)
 
-## Search Modes
+### Indexing (10/min, 5/min)
+- `POST /api/index` - Queue async indexing job (DEPRECATED)
+- `POST /api/test-index` - Sync indexing with timing breakdown
 
-### 1. Hybrid (Default)
-Combines vector similarity + BM25 using RRF:
-```json
-{
-  "query": "machine learning",
-  "mode": "hybrid",
-  "limit": 10
-}
-```
+### Metrics (100/min)
+- `GET /api/metrics/requests` - HTTP request timing data
+- `GET /api/metrics/operations` - Operation-level performance
+- `GET /api/metrics/summary` - Aggregated dashboard stats
 
-### 2. Semantic Only
-Pure vector similarity:
-```json
-{
-  "query": "machine learning",
-  "mode": "semantic"
-}
-```
+### Health (100/min)
+- `GET /health` - Service health check (Redis, Qdrant, TEI, DB)
+- `GET /` - Root endpoint
 
-### 3. Keyword / BM25
-Traditional keyword search:
-```json
-{
-  "query": "machine learning",
-  "mode": "keyword"
-}
-```
+---
 
-## Monitoring
+## Configuration
+
+All configuration via environment variables (see `../../.env.example` for complete reference).
+
+### Core Settings
 
 ```bash
-# View service logs
-pnpm services:logs
+# Server
+WEBHOOK_PORT=50108                    # External port
+WEBHOOK_ENABLE_WORKER=false           # Embedded worker (true) or external (false)
 
-# Check health
-curl http://localhost:52100/health
+# Database
+WEBHOOK_DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/db
 
-# View stats
-curl http://localhost:52100/api/stats
+# Redis (job queue + rate limiting)
+WEBHOOK_REDIS_URL=redis://localhost:6379
+
+# Search Services
+WEBHOOK_QDRANT_URL=http://qdrant:6333      # Vector database
+WEBHOOK_TEI_URL=http://tei:8080            # Text embeddings
+
+# Security
+WEBHOOK_API_SECRET=your-secret-key-32-chars-minimum
+WEBHOOK_FIRECRAWL_WEBHOOK_SECRET=firecrawl-webhook-secret
+WEBHOOK_CHANGEDETECTION_SECRET=changedetection-webhook-secret
+
+# Firecrawl Integration
+WEBHOOK_FIRECRAWL_BASE_URL=http://firecrawl:3002
+WEBHOOK_FIRECRAWL_API_KEY=self-hosted-auth
 ```
 
-## changedetection.io Integration
-
-The webhook bridge integrates with changedetection.io for automated website monitoring and rescraping:
-
-### Features
-
-- **Webhook Endpoint:** `POST /api/webhook/changedetection` accepts change notifications
-- **HMAC Verification:** Validates webhook signatures using SHA256
-- **Change Event Tracking:** Stores events in `webhook.change_events` table
-- **Automatic Rescraping:** Queues Firecrawl API calls for changed URLs
-- **Search Re-indexing:** Updates Qdrant + BM25 with latest content
-
-### Rescrape Job
-
-**Location:** `workers/jobs.py` (rescrape_job function)
-
-The rescrape job handles URLs detected as changed by changedetection.io:
-
-1. Fetches change event from `webhook.change_events` table
-2. Calls Firecrawl API to rescrape the URL with latest content
-3. Indexes markdown content in Qdrant vector store
-4. Updates BM25 engine with fresh text
-5. Marks change event as `completed` or `failed` with metadata
-
-**Configuration:**
-```bash
-WEBHOOK_FIRECRAWL_API_URL=http://firecrawl:3002
-WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
-```
-
-### ChangeEvent Model
-
-**Location:** `domain/models.py` (SQLAlchemy ORM model)
-
-The `ChangeEvent` model tracks change detection events:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | Integer | Primary key |
-| `watch_id` | String | UUID from changedetection.io |
-| `watch_url` | String | URL being monitored |
-| `detected_at` | DateTime | When change was detected |
-| `diff_summary` | Text | First 500 chars of diff |
-| `snapshot_url` | String | Link to view full diff |
-| `rescrape_job_id` | String | RQ job ID |
-| `rescrape_status` | String | `queued`, `in_progress`, `completed`, `failed` |
-| `indexed_at` | DateTime | When content was re-indexed |
-| `metadata` | JSONB | Additional metadata (signature, error details) |
-
-**Indexes:**
-- `idx_change_events_watch_id` - Fast lookup by watch
-- `idx_change_events_detected_at` - Time-based queries
-
-### URL Normalization
-
-The rescrape system applies canonical URL normalization to prevent duplicate indexing:
-
-**Normalization Rules:**
-1. Convert to lowercase
-2. Remove trailing slashes
-3. Strip `www.` subdomain
-4. Remove fragment identifiers (`#section`)
-5. Sort query parameters alphabetically
-6. Remove common tracking parameters (utm_*, fbclid, etc.)
-
-**Examples:**
-- `https://Example.com/Page/` → `https://example.com/page`
-- `https://www.site.com/` → `https://site.com`
-- `https://site.com/page?b=2&a=1` → `https://site.com/page?a=1&b=2`
-
-**Benefits:**
-- Hybrid search deduplication (single canonical entry per URL)
-- Efficient rescraping (updates existing document vs creating duplicate)
-- Consistent search results across URL variations
-
-### Hybrid Search Improvements
-
-**Deduplication Strategy:**
-- URL normalization reduces duplicate entries by ~30-40%
-- RRF (Reciprocal Rank Fusion) merges BM25 and vector results
-- Canonical URLs ensure single ranking per page
-
-**Search Accuracy:**
-- No false duplicates from URL variations
-- Cleaner result sets (no `example.com` + `www.example.com`)
-- Improved relevance scores (consolidated signals)
-
-### Metadata Enhancements
-
-Change events store additional metadata in JSONB:
-
-```json
-{
-  "signature": "sha256=...",
-  "diff_size": 1234,
-  "watch_title": "Example Page",
-  "webhook_received_at": "2025-11-10T12:00:00Z",
-  "document_id": "doc-uuid",
-  "firecrawl_status": "completed"
-}
-```
-
-**Use Cases:**
-- Signature verification audit trail
-- Change magnitude tracking (diff_size)
-- Performance metrics (time deltas)
-- Debugging failed rescraped
-
-### Configuration
-
-All changedetection.io settings use `WEBHOOK_*` namespace:
+### Search Tuning
 
 ```bash
-# Webhook security
-WEBHOOK_CHANGEDETECTION_HMAC_SECRET=<64-char-hex>
-
-# Firecrawl API access
-WEBHOOK_FIRECRAWL_API_URL=http://firecrawl:3002
-WEBHOOK_FIRECRAWL_API_KEY=self-hosted-no-auth
+WEBHOOK_VECTOR_WEIGHT=0.6             # Vector search weight (0.0-1.0)
+WEBHOOK_BM25_WEIGHT=0.4               # BM25 weight (0.0-1.0)
+WEBHOOK_CHUNK_SIZE=800                # Tokens per chunk
+WEBHOOK_CHUNK_OVERLAP=200             # Overlap between chunks
 ```
 
-### Testing
+---
+
+## Database Schema
+
+### Tables (in `webhook` schema)
+
+**`request_metrics`** - HTTP request timing
+- Columns: id, timestamp, method, path, status_code, duration_ms, request_id, client_ip, user_agent
+- Indexes: timestamp, method, path, status_code, duration_ms, request_id
+
+**`operation_metrics`** - Operation-level performance
+- Columns: id, timestamp, operation_type, operation_name, duration_ms, success, error_message, request_id, job_id, document_url
+- Indexes: timestamp, operation_type, operation_name, duration_ms, success, request_id, job_id, document_url
+
+**`change_events`** - Change detection tracking
+- Columns: id, watch_id, watch_url, detected_at, diff_summary, snapshot_url, rescrape_job_id, rescrape_status, indexed_at
+- Indexes: watch_id, detected_at
+
+### Migrations
 
 ```bash
-# Run changedetection integration tests
-cd apps/webhook && uv run pytest tests/integration/test_changedetection*.py -v
+# Run migrations
+uv run alembic upgrade head
 
-# Run rescrape job tests
-cd apps/webhook && uv run pytest tests/unit/test_rescrape_job.py -v
+# Check current version
+uv run alembic current
+
+# Create new migration
+uv run alembic revision --autogenerate -m "description"
 ```
 
-### Documentation
+---
 
-See [changedetection.io Integration Guide](../../docs/CHANGEDETECTION_INTEGRATION.md) for:
-- Setup instructions
-- Webhook configuration
-- Troubleshooting common issues
-- Architecture decisions
+## Testing
 
-## License
+```bash
+# Run all tests
+uv run pytest tests/
 
-MIT
+# Run with coverage
+uv run pytest tests/ --cov=. --cov-report=html
+
+# Run specific test suite
+uv run pytest tests/unit/           # Unit tests only
+uv run pytest tests/integration/    # Integration tests
+uv run pytest tests/security/       # Security tests
+
+# Run with external services (requires live Qdrant, TEI)
+WEBHOOK_RUN_EXTERNAL_TESTS=1 uv run pytest tests/
+
+# Skip database fixtures (faster unit tests)
+WEBHOOK_SKIP_DB_FIXTURES=1 uv run pytest tests/unit/
+```
+
+**Test Coverage:** 85%+ (150+ tests across 54 files)
+
+---
+
+## Development Workflow
+
+### Adding a New Endpoint
+
+1. Define Pydantic schema in `api/schemas/`
+2. Create route handler in `api/routers/`
+3. Add business logic to `services/`
+4. Write unit tests in `tests/unit/api/routers/`
+5. Add integration test in `tests/integration/api/`
+6. Update this README if public-facing
+
+### Adding a Background Job
+
+1. Define job function in `workers/jobs.py`
+2. Enqueue job via `get_queue().enqueue(...)`
+3. Use `get_service_pool()` for service instances
+4. Add operation timing with `TimingContext`
+5. Write job test in `tests/unit/workers/`
+
+### Running Database Migrations
+
+```bash
+# After modifying domain/models.py
+uv run alembic revision --autogenerate -m "add new column"
+
+# Review generated migration in alembic/versions/
+# Edit if needed (alembic doesn't catch everything)
+
+# Apply migration
+uv run alembic upgrade head
+```
+
+---
+
+## Deployment
+
+### Docker Build
+
+```bash
+# From project root
+docker compose build pulse_webhook
+
+# Or build manually
+cd apps/webhook
+docker build -t pulse_webhook .
+```
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+- Database credentials (PostgreSQL)
+- Redis connection
+- Qdrant URL (vector database)
+- TEI URL (text embeddings service)
+- API secrets (32+ characters)
+
+### Health Checks
+
+```bash
+# API health
+curl http://localhost:50108/health
+
+# Check logs
+docker logs pulse_webhook --tail 50
+
+# Check worker (if external)
+docker logs pulse_webhook-worker --tail 50
+```
+
+### Monitoring
+
+```bash
+# View request metrics (last 24h)
+curl "http://localhost:50108/api/metrics/requests?hours=24" \
+  -H "Authorization: Bearer YOUR_SECRET"
+
+# View operation breakdown
+curl "http://localhost:50108/api/metrics/operations?hours=24" \
+  -H "Authorization: Bearer YOUR_SECRET"
+
+# High-level summary
+curl "http://localhost:50108/api/metrics/summary?hours=24" \
+  -H "Authorization: Bearer YOUR_SECRET"
+```
+
+---
 
 ## Documentation
 
-See [FIRECRAWL_BRIDGE.md](FIRECRAWL_BRIDGE.md) for complete implementation details.
+Comprehensive documentation available in `/compose/pulse/docs/services/webhook/`:
+
+### Essential Guides
+- **WEBHOOK_DOCUMENTATION_INDEX.md** - Navigation guide to all docs
+- **webhook-quick-reference.md** - Daily reference for developers
+- **webhook-configuration-deployment-analysis.md** - Complete technical reference
+
+### API & Architecture
+- **webhook-api-endpoints.md** - Full API specification with examples
+- **webhook-api-quick-reference.md** - Endpoint summary table
+- **webhook-routing-architecture.md** - Router organization and middleware
+
+### Data & Search
+- **webhook-database-analysis.md** - Database models, schema, migrations
+- **webhook-search-architecture.md** - Hybrid search implementation details
+- **webhook-search-quick-reference.md** - Search modes and parameters
+
+### Workers & Background Jobs
+- **webhook-worker-architecture.md** - Worker design and service pool
+- **webhook-worker-flow-diagrams.md** - Job processing workflows
+- **webhook-worker-quick-reference.md** - Worker commands and monitoring
+
+### Testing
+- **test-analysis-webhook-2025-11-13.md** - Test suite analysis
+- **test-fixtures-webhook-reference.md** - Fixture documentation
+- **webhook-test-coverage-analysis.md** - Coverage gaps and recommendations
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Service won't start**
+```bash
+# Check dependencies
+docker compose ps pulse_postgres pulse_redis
+
+# Check logs for errors
+docker logs pulse_webhook
+
+# Verify environment variables
+docker exec pulse_webhook env | grep WEBHOOK_
+```
+
+**Search returns no results**
+```bash
+# Check index stats
+curl http://localhost:50108/api/stats \
+  -H "Authorization: Bearer YOUR_SECRET"
+
+# Verify Qdrant connectivity
+curl http://localhost:50108/health
+
+# Check if documents were indexed
+docker logs pulse_webhook | grep "indexed successfully"
+```
+
+**Slow search performance**
+- Check `WEBHOOK_VECTOR_WEIGHT` and `WEBHOOK_BM25_WEIGHT` (adjust ratio)
+- Reduce `limit` parameter in search requests
+- Verify TEI service is GPU-accelerated
+- Check Qdrant query time in operation metrics
+
+**Worker jobs failing**
+```bash
+# Check worker logs
+docker logs pulse_webhook-worker
+
+# Verify Redis connectivity
+redis-cli -h localhost -p 50104 PING
+
+# Check job queue depth
+redis-cli -h localhost -p 50104 LLEN rq:queue:indexing
+
+# Inspect failed jobs
+redis-cli -h localhost -p 50104 LRANGE rq:queue:failed 0 -1
+```
+
+---
+
+## Performance
+
+### Benchmarks (typical deployment)
+
+- **Semantic Search**: 100-300ms (depends on Qdrant + TEI latency)
+- **Keyword Search**: 1-10ms (in-memory BM25)
+- **Hybrid Search**: 100-300ms (vector search dominates)
+- **Document Indexing**: 2-5 seconds per document (chunking + embedding + indexing)
+
+### Optimization Tips
+
+1. **Use GPU for TEI**: 10x faster embeddings (CPU: 500ms, GPU: 50ms)
+2. **Tune chunk size**: Smaller chunks = more precise, larger chunks = faster
+3. **Adjust search weights**: Increase BM25 weight for keyword-heavy queries
+4. **Enable worker pool**: Reuse services for 1000x performance boost
+5. **Use external worker**: Scale workers independently from API
+
+---
+
+## Contributing
+
+### Code Style
+- **Formatter**: Ruff (PEP 8, 100 char lines)
+- **Type Hints**: Required on all functions (mypy strict mode)
+- **Docstrings**: XML-style for public functions
+
+### Pull Request Checklist
+- [ ] Tests pass (`uv run pytest tests/`)
+- [ ] Type checking passes (`uv run mypy .`)
+- [ ] Linting passes (`uv run ruff check .`)
+- [ ] Coverage maintained (85%+)
+- [ ] Documentation updated (if public API changed)
+- [ ] Migration created (if models changed)
+
+---
+
+## License
+
+Part of the Pulse monorepo. See root LICENSE file.
+
+---
+
+## Support
+
+For issues, questions, or contributions, see the main Pulse repository documentation.
+
+**Service Owner:** Webhook Search Bridge Team
+**Last Updated:** 11/13/2025
+**Version:** 1.0.0 (Production Ready)

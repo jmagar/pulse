@@ -46,6 +46,21 @@ Validation rules:
 - Batch subcommands require `jobId`.
 - `cancel: true` without `command` automatically maps to `command: "cancel"`.
 
+### Default `scrapeOptions`
+The crawl/scrape pipeline injects a consistent set of defaults via `apps/mcp/config/crawl-config.ts` whenever you omit or partially define `scrapeOptions`:
+
+| Field | Default | Notes |
+|-------|---------|-------|
+| `formats` | `['markdown', 'html', 'summary', 'changeTracking', 'links']` | Requests multiple Firecrawl output formats so downstream tooling (diffs, summaries, resources) always has the data it needs. Override to limit payload size. |
+| `onlyMainContent` | `true` | Strips nav, ads, and footers for cleaner NotebookLM ingestion. Set to `false` if you need complete HTML. |
+| `blockAds` | `true` | Enables Firecrawl’s ad / cookie banner blocking. |
+| `removeBase64Images` | `true` | Prevents large inline images from bloating responses. |
+| `parsers` | `[]` | Disables PDF parsing by default (Firecrawl charges extra credits). Provide objects like `{ type: 'pdf', maxPages: 5 }` to enable. |
+
+When you supply custom `scrapeOptions`, the merge logic keeps these defaults unless you explicitly override a field; `parsers` always falls back to an array (never `undefined`) to avoid batch API regressions. The same defaults flow into Firecrawl batch jobs, crawl jobs, and any MCP flow that pulls from `mergeScrapeOptions`.
+
+> **Search tool note:** The `search` MCP tool has its own schema defaults (`blockAds=true`, `removeBase64Images=true`) but leaves `formats`/`onlyMainContent` unset. If you want the full crawl defaults during search-result scraping, pass them explicitly.
+
 ## Responses
 
 Formatting logic lives in `apps/mcp/tools/scrape/response.ts`:
