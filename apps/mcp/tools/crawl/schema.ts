@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { browserActionsArraySchema } from "../scrape/action-types.js";
+import { preprocessUrl } from "./url-utils.js";
 
 const resolveCommand = (data: {
   command?: string;
@@ -32,7 +33,18 @@ export const crawlOptionsSchema = z
     command: z
       .enum(["start", "status", "cancel", "errors", "list"])
       .default("start"),
-    url: z.string().url("Valid URL is required").optional(),
+    url: z
+      .string()
+      .transform(preprocessUrl)
+      .refine((val) => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      }, "Must be a valid URL")
+      .optional(),
     jobId: z.string().min(1, "Job ID is required").optional(),
     /**
      * Legacy flag for backwards compatibility. When `true` we treat the

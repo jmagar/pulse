@@ -2,6 +2,49 @@ import { describe, it, expect } from "vitest";
 import { crawlOptionsSchema } from "./schema.js";
 
 describe("Crawl Options Schema", () => {
+  describe("URL preprocessing", () => {
+    it("adds https:// to bare domains", () => {
+      const result = crawlOptionsSchema.parse({
+        url: "example.com",
+        command: "start",
+      });
+      expect(result.url).toBe("https://example.com");
+    });
+
+    it("preserves existing http:// protocol", () => {
+      const result = crawlOptionsSchema.parse({
+        url: "http://example.com",
+        command: "start",
+      });
+      expect(result.url).toBe("http://example.com");
+    });
+
+    it("preserves existing https:// protocol", () => {
+      const result = crawlOptionsSchema.parse({
+        url: "https://example.com",
+        command: "start",
+      });
+      expect(result.url).toBe("https://example.com");
+    });
+
+    it("handles bare domains with paths", () => {
+      const result = crawlOptionsSchema.parse({
+        url: "example.com/blog/post",
+        command: "start",
+      });
+      expect(result.url).toBe("https://example.com/blog/post");
+    });
+
+    it("rejects invalid URLs", () => {
+      expect(() =>
+        crawlOptionsSchema.parse({
+          url: "not a valid url",
+          command: "start",
+        }),
+      ).toThrow();
+    });
+  });
+
   describe("command routing", () => {
     it("defaults to start command when omitted", () => {
       const result = crawlOptionsSchema.parse({
