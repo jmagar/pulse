@@ -31,7 +31,8 @@ def vector_store(mock_qdrant_client: AsyncMock) -> Generator[VectorStore]:
             collection_name="test_collection",
             vector_dim=384,
         )
-        store.client = mock_qdrant_client
+        # Mock the client property instead of trying to set it
+        store._client = mock_qdrant_client
         yield store
 
 

@@ -25,10 +25,10 @@ def mock_httpx_client() -> AsyncMock:
 @pytest.fixture
 def embedding_service(mock_httpx_client: AsyncMock) -> EmbeddingService:
     """Create EmbeddingService with mocked client."""
-    with patch("services.embedding.httpx.AsyncClient", return_value=mock_httpx_client):
-        service = EmbeddingService(tei_url=get_tei_base_url())
-        service.client = mock_httpx_client
-        return service
+    service = EmbeddingService(tei_url=get_tei_base_url())
+    # Mock the client property instead of trying to set it
+    service._client = mock_httpx_client
+    return service
 
 
 @pytest.mark.asyncio
