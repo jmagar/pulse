@@ -14,6 +14,7 @@ from api.schemas.webhook import (
     FirecrawlLifecycleEvent,
     FirecrawlPageEvent,
 )
+from config import settings
 from services.auto_watch import create_watch_for_url
 from utils.logging import get_logger
 
@@ -101,7 +102,7 @@ async def _handle_page_event(
                     job = queue.enqueue(
                         "worker.index_document_job",
                         index_payload,
-                        job_timeout="10m",
+                        job_timeout=settings.indexing_job_timeout,
                         pipeline=pipe,  # Use pipeline for batching
                     )
                     job_id = str(job.id) if job.id else None

@@ -164,6 +164,16 @@ class Settings(BaseSettings):
         description="Enable test mode to stub external services",
     )
 
+    # Job Configuration
+    indexing_job_timeout: str = Field(
+        default="10m",
+        description="RQ job timeout for document indexing (e.g., '10m', '1h', '600')",
+        validation_alias=AliasChoices(
+            "WEBHOOK_INDEXING_JOB_TIMEOUT",
+            "INDEXING_JOB_TIMEOUT",
+        ),
+    )
+
     # PostgreSQL Database (for timing metrics)
     # Supports WEBHOOK_DATABASE_URL or falls back to DATABASE_URL (shared) or SEARCH_BRIDGE_DATABASE_URL (legacy)
     database_url: str = Field(
