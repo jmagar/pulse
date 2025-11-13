@@ -41,10 +41,6 @@ Firecrawl → Search Bridge (API + Worker Thread) → Redis Queue → HuggingFac
 Run from monorepo root:
 
 ```bash
-# Copy environment template
-cp .env.example .env
-# Edit .env with your configuration
-
 # Install dependencies
 pnpm install:webhook
 
@@ -62,6 +58,15 @@ For standalone deployment, see root `docker-compose.yaml` for service definition
 - `GET /api/stats` - Index statistics
 
 ## Configuration
+
+All environment variables are configured in the **root `.env` file**.
+
+```bash
+# Copy template and update with your values
+cp .env.example .env
+```
+
+See root `.env.example` for all available configuration options.
 
 ### Port Allocation
 

@@ -108,6 +108,28 @@ All services receive the same `.env` via docker-compose's `env_file` anchor dire
 - `REDIS_URL` - Redis connection string
 - `DATABASE_URL` - PostgreSQL URL (if used instead of NUQ_DATABASE_URL)
 
+### Canonical Variables (After Consolidation)
+
+**Shared Infrastructure:**
+- `REDIS_URL` - All services use this (no more duplicates)
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` - Base credentials
+- `NUQ_DATABASE_URL` - Firecrawl/MCP (postgres:// protocol)
+- `WEBHOOK_DATABASE_URL` - Webhook bridge (postgresql+asyncpg:// protocol)
+
+**Service URLs (Internal vs External):**
+- `MCP_FIRECRAWL_BASE_URL` - Internal Docker network (http://firecrawl:3002)
+- `FIRECRAWL_API_URL` - External access (https://firecrawl.tootie.tv)
+- `WEBHOOK_BASE_URL` - Internal Docker network (http://pulse_webhook:52100)
+- `CHANGEDETECTION_INTERNAL_URL` - Internal Docker network (http://pulse_change-detection:5000)
+
+**Secrets:**
+- `FIRECRAWL_API_KEY` - Base Firecrawl key
+- `MCP_FIRECRAWL_API_KEY` - MCP override (self-hosted-no-auth)
+- `WEBHOOK_API_SECRET` - Webhook API authentication
+- `WEBHOOK_SECRET` - Webhook HMAC verification
+- `CHANGEDETECTION_WEBHOOK_SECRET` - changedetection.io webhook signature
+- `WEBHOOK_CHANGEDETECTION_HMAC_SECRET` - Uses ${CHANGEDETECTION_WEBHOOK_SECRET} substitution
+
 ### Adding New Variables
 
 1. Add to both `.env` and `.env.example` (root)

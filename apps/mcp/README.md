@@ -73,9 +73,16 @@ docker compose logs -f pulse_mcp
 
 ## Configuration
 
-All configuration is via environment variables. See `.env.example` in the project root for available options.
+All environment variables are configured in the **root `.env` file**.
 
-Key variables:
+```bash
+# Copy template and update with your values
+cp .env.example .env
+```
+
+See root `.env.example` for all available configuration options.
+
+**Key variables:**
 
 - `MCP_PORT` - External host port (default: 50107, maps to internal container port 3060)
 - `MCP_HOST` - Bind address (default: 0.0.0.0)
