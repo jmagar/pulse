@@ -10,7 +10,7 @@ Environment variables are checked in order:
 
 import json
 
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, Field, ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -230,14 +230,67 @@ class Settings(BaseSettings):
         description="Enable automatic watch creation for scraped URLs",
     )
 
-    @field_validator("webhook_secret")
+    @field_validator("api_secret", "webhook_secret")
     @classmethod
-    def validate_webhook_secret(cls, value: str) -> str:
-        """Ensure webhook secret does not contain surrounding whitespace."""
-
+    def validate_whitespace(cls, value: str, info: ValidationInfo) -> str:
+        """Ensure secrets do not contain surrounding whitespace."""
         if value.strip() != value:
-            raise ValueError("Webhook secret must not contain leading or trailing whitespace")
+            raise ValueError(f"{info.field_name} must not contain leading or trailing whitespace")
         return value
+
+    @model_validator(mode="after")
+    def validate_secret_strength(self) -> "Settings":
+        """
+        Validate secrets are strong and not default values.
+
+        Requirements:
+        - Minimum 32 characters in production
+        - Not a weak default (dev-unsafe-*, changeme, secret, etc.)
+
+        Weak secrets are allowed in test_mode for development/testing.
+        """
+        # In test mode, skip validation for testing convenience
+        if self.test_mode:
+            return self
+
+        # Define weak default secrets
+        WEAK_DEFAULTS = {
+            "dev-unsafe-api-secret-change-in-production",
+            "dev-unsafe-hmac-secret-change-in-production",
+            "your-api-key-here",
+            "changeme",
+            "secret",
+        }
+
+        # Validate api_secret
+        if self.api_secret in WEAK_DEFAULTS:
+            raise ValueError(
+                "Weak default secret detected for api_secret. "
+                "Generate a secure secret: openssl rand -hex 32"
+            )
+
+        if len(self.api_secret) < 32:
+            raise ValueError(
+                f"api_secret must be at least 32 characters in production. "
+                f"Current length: {len(self.api_secret)}. "
+                f"Generate with: openssl rand -hex 32"
+            )
+
+        # Validate webhook_secret
+        if self.webhook_secret in WEAK_DEFAULTS:
+            raise ValueError(
+                "Weak default secret detected for webhook_secret. "
+                "Generate a secure secret: openssl rand -hex 32"
+            )
+
+        if len(self.webhook_secret) < 32:
+            raise ValueError(
+                f"webhook_secret must be at least 32 characters in production. "
+                f"Current length: {len(self.webhook_secret)}. "
+                f"Generate with: openssl rand -hex 32"
+            )
+
+        return self
 
     @field_validator("cors_origins", mode="before")
     @classmethod
