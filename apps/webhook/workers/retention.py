@@ -5,12 +5,12 @@ Implements automatic deletion of old metrics to prevent unbounded database growt
 """
 
 from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import delete
 
+from domain.models import OperationMetric, RequestMetric
 from infra.database import get_db_context
-from domain.models import RequestMetric, OperationMetric
 from utils.logging import get_logger
-
 
 logger = get_logger(__name__)
 

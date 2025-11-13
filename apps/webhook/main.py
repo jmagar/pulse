@@ -19,9 +19,9 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from api.deps import cleanup_services, get_vector_store
+from api.middleware.timing import TimingMiddleware
 from config import settings
 from infra.database import close_database, init_database
-from api.middleware.timing import TimingMiddleware
 from infra.rate_limit import limiter
 from utils.content_metrics import summarize_firecrawl_payload
 from utils.logging import configure_logging, get_logger
