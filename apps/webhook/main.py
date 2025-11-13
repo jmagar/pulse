@@ -4,9 +4,11 @@ FastAPI application entry point.
 This is the main application that runs the Search Bridge REST API.
 """
 
+import asyncio
 import json
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -27,6 +29,50 @@ from utils.logging import configure_logging, get_logger
 # Configure logging
 configure_logging(settings.log_level)
 logger = get_logger(__name__)
+
+
+async def run_retention_scheduler() -> None:
+    """
+    Run data retention policy daily at 2 AM EST.
+
+    This scheduler enforces the 90-day retention policy by deleting old metrics.
+    Runs continuously in the background as a separate async task.
+    """
+    logger.info("Starting retention scheduler (runs daily at 2 AM EST)")
+
+    while True:
+        try:
+            # Calculate seconds until next 2 AM EST
+            est_tz = timezone(timedelta(hours=-5))
+            now = datetime.now(est_tz)
+            next_run = now.replace(hour=2, minute=0, second=0, microsecond=0)
+
+            # If we're past 2 AM today, schedule for 2 AM tomorrow
+            if next_run <= now:
+                next_run += timedelta(days=1)
+
+            wait_seconds = (next_run - now).total_seconds()
+            logger.info(
+                "Next retention run scheduled",
+                next_run=next_run.isoformat(),
+                wait_hours=wait_seconds / 3600,
+            )
+
+            await asyncio.sleep(wait_seconds)
+
+            # Run retention policy
+            from workers.retention import enforce_retention_policy
+
+            logger.info("Running scheduled retention policy enforcement")
+            await enforce_retention_policy(retention_days=90)
+
+        except asyncio.CancelledError:
+            logger.info("Retention scheduler cancelled")
+            break
+        except Exception as e:
+            logger.error("Retention scheduler error", error=str(e))
+            # Wait 1 hour before retrying on error
+            await asyncio.sleep(3600)
 
 
 @asynccontextmanager
@@ -83,12 +129,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     else:
         logger.info("Background worker disabled (WEBHOOK_ENABLE_WORKER=false)")
 
+    # Start retention scheduler
+    retention_task = asyncio.create_task(run_retention_scheduler())
+    logger.info("Retention scheduler started")
+
     logger.info("Search Bridge API ready")
 
     yield
 
     # Shutdown
     logger.info("Shutting down Search Bridge API")
+
+    # Stop retention scheduler
+    try:
+        retention_task.cancel()
+        await retention_task
+        logger.info("Retention scheduler stopped successfully")
+    except asyncio.CancelledError:
+        logger.info("Retention scheduler cancelled")
+    except Exception:
+        logger.exception("Failed to stop retention scheduler")
 
     # Stop background worker if running
     if worker_manager is not None:
