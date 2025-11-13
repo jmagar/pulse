@@ -13,8 +13,20 @@ from structlog.typing import EventDict, FilteringBoundLogger, WrappedLogger
 EST_ZONE = ZoneInfo("America/New_York")
 TIMESTAMP_FORMAT = "%I:%M:%S %p | %m/%d/%Y"
 
+# Precompile regex patterns (module level - compiled once)
+_BEARER_PATTERN = re.compile(r"Bearer\s+[^\s]+", flags=re.IGNORECASE)
+_API_KEY_PATTERN = re.compile(
+    r'(api[_-]?key|token|secret)["\']?\s*[:=]\s*["\']?([^\s&"\'>]+)',
+    flags=re.IGNORECASE,
+)
+_URL_CREDS_PATTERN = re.compile(r"://([^:]+):([^@]+)@")
+_HMAC_PATTERN = re.compile(r"sha256=[a-f0-9]{64}")
 
-def mask_secrets(data: Any) -> Any:
+# Sensitive key patterns
+_SENSITIVE_KEYS = {"key", "secret", "token", "password", "credential", "auth"}
+
+
+def mask_secrets(data: Any, _depth: int = 0) -> Any:
     """
     Recursively mask sensitive data in logs.
 
@@ -25,46 +37,37 @@ def mask_secrets(data: Any) -> Any:
     - HMAC signatures
 
     Args:
-        data: Data to mask (str, dict, list, or other)
+        data: Data to mask (string, dict, list, or other)
+        _depth: Current recursion depth (internal)
 
     Returns:
-        Masked version of data
+        Masked data with same structure
     """
+    # Prevent infinite recursion / stack overflow
+    if _depth > 10:
+        return "*** (max depth exceeded) ***"
+
     if isinstance(data, str):
-        # Mask Bearer tokens
-        data = re.sub(r"Bearer\s+[^\s]+", "Bearer ***", data, flags=re.IGNORECASE)
-
-        # Mask API keys in text
-        data = re.sub(
-            r'(api[_-]?key|token|secret)["\']?\s*[:=]\s*["\']?([^\s&"\'>]+)',
-            r"\1=***",
-            data,
-            flags=re.IGNORECASE,
-        )
-
-        # Mask credentials in URLs
-        data = re.sub(r"://([^:]+):([^@]+)@", r"://\1:***@", data)
-
-        # Mask HMAC signatures
-        data = re.sub(r"sha256=[a-f0-9]{64}", "sha256=***", data)
-
+        # Apply all regex patterns (now precompiled)
+        data = _BEARER_PATTERN.sub("Bearer ***", data)
+        data = _API_KEY_PATTERN.sub(r"\1=***", data)
+        data = _URL_CREDS_PATTERN.sub(r"://\1:***@", data)
+        data = _HMAC_PATTERN.sub("sha256=***", data)
         return data
 
     elif isinstance(data, dict):
         masked = {}
         for key, value in data.items():
+            key_lower = key.lower()
             # Mask sensitive keys
-            if any(
-                sensitive in key.lower()
-                for sensitive in ["key", "secret", "token", "password"]
-            ):
+            if any(sensitive in key_lower for sensitive in _SENSITIVE_KEYS):
                 masked[key] = "***"
             else:
-                masked[key] = mask_secrets(value)
+                masked[key] = mask_secrets(value, _depth + 1)
         return masked
 
     elif isinstance(data, (list, tuple)):
-        return type(data)(mask_secrets(item) for item in data)
+        return type(data)(mask_secrets(item, _depth + 1) for item in data)
 
     else:
         return data
