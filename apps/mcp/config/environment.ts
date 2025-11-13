@@ -83,6 +83,7 @@ type EnvConfig = {
   oauthRefreshTtl: string | undefined;
   redisUrl: string | undefined;
   databaseUrl: string | undefined;
+  webhookEvents: string | undefined;
 };
 
 function buildEnv(): EnvConfig {
@@ -220,6 +221,11 @@ function buildEnv(): EnvConfig {
       "DATABASE_URL",
       nuqDatabaseUrl,
     ),
+    webhookEvents: getEnvVar(
+      "MCP_WEBHOOK_EVENTS",
+      "WEBHOOK_EVENTS",
+      "page",
+    ),
   };
 }
 
@@ -258,6 +264,19 @@ export function parseNumber(
   }
   const parsed = parseInt(value, 10);
   return isNaN(parsed) ? defaultValue : parsed;
+}
+
+/**
+ * Type-safe array conversion helper
+ *
+ * @param value - Comma-separated string value to convert
+ * @returns Array of strings
+ */
+export function parseArray(value: string | undefined): string[] {
+  if (value === undefined || value === "") {
+    return [];
+  }
+  return value.split(",").map((s) => s.trim()).filter((s) => s !== "");
 }
 
 /**
@@ -349,6 +368,8 @@ export function getAllEnvVars(): Record<string, string | undefined> {
     "MCP_DATABASE_URL",
     "DATABASE_URL",
     "NUQ_DATABASE_URL",
+    "MCP_WEBHOOK_EVENTS",
+    "WEBHOOK_EVENTS",
   ];
 
   const sensitiveVars = [

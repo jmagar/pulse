@@ -201,6 +201,16 @@ export interface MapResult {
 // ============================================================================
 
 /**
+ * Webhook configuration for crawl operations
+ */
+export interface CrawlWebhookOptions {
+  url: string;
+  headers?: Record<string, string>;
+  metadata?: Record<string, unknown>;
+  events?: Array<'completed' | 'page' | 'failed' | 'started'>;
+}
+
+/**
  * Options for Firecrawl crawl operation
  *
  * Note: v2 API renamed maxDepth to maxDiscoveryDepth, removed changeDetection
@@ -220,6 +230,7 @@ export interface CrawlOptions {
   delay?: number;
   maxConcurrency?: number;
   scrapeOptions?: FirecrawlScrapingOptions;
+  webhook?: CrawlWebhookOptions;
 }
 
 /**

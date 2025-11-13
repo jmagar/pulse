@@ -28,6 +28,16 @@ export async function crawlPipeline(
     }
 
     const mergedScrapeOptions = mergeScrapeOptions(options.scrapeOptions);
+
+    // Apply default webhook event filtering if webhook is configured
+    let webhookConfig = options.webhook;
+    if (webhookConfig && !webhookConfig.events) {
+      webhookConfig = {
+        ...webhookConfig,
+        events: ["page"], // Default to page-only events
+      };
+    }
+
     const clientOptions: ClientCrawlOptions = {
       url: options.url,
       prompt: options.prompt,
@@ -42,6 +52,7 @@ export async function crawlPipeline(
       sitemap: options.sitemap,
       delay: options.delay,
       maxConcurrency: options.maxConcurrency,
+      webhook: webhookConfig,
       scrapeOptions: {
         ...mergedScrapeOptions,
         parsers: mergedScrapeOptions.parsers ?? [],

@@ -51,6 +51,17 @@ export const crawlOptionsSchema = z
      * request as a cancel command even if `command` was omitted.
      */
     cancel: z.boolean().optional().default(false),
+    webhook: z
+      .object({
+        url: z.string().url(),
+        headers: z.record(z.string()).optional(),
+        metadata: z.record(z.unknown()).optional(),
+        events: z
+          .array(z.enum(["completed", "page", "failed", "started"]))
+          .optional(),
+      })
+      .optional()
+      .describe("Webhook configuration for crawl events"),
     prompt: z
       .string()
       .optional()
@@ -171,6 +182,23 @@ export const buildCrawlInputSchema = () => {
         type: "boolean",
         default: false,
         description: "Deprecated flag. Prefer setting command=cancel.",
+      },
+      webhook: {
+        type: "object",
+        description: "Webhook configuration for crawl events",
+        properties: {
+          url: { type: "string", format: "uri" },
+          headers: { type: "object", additionalProperties: { type: "string" } },
+          metadata: { type: "object" },
+          events: {
+            type: "array",
+            items: {
+              type: "string",
+              enum: ["completed", "page", "failed", "started"],
+            },
+          },
+        },
+        required: ["url"],
       },
       prompt: {
         type: "string",

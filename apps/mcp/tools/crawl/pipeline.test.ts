@@ -128,4 +128,48 @@ describe("crawlPipeline", () => {
       }),
     );
   });
+
+  it("should filter webhook events to only page events by default", async () => {
+    await crawlPipeline(
+      mockClient,
+      asCrawlOptions({
+        command: "start",
+        url: "https://example.com",
+        webhook: {
+          url: "https://webhook.example.com/firecrawl",
+        },
+      }),
+    );
+
+    expect(mockClient.startCrawl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        webhook: expect.objectContaining({
+          url: "https://webhook.example.com/firecrawl",
+          events: ["page"], // Should default to page-only
+        }),
+      }),
+    );
+  });
+
+  it("should use provided webhook events if specified", async () => {
+    await crawlPipeline(
+      mockClient,
+      asCrawlOptions({
+        command: "start",
+        url: "https://example.com",
+        webhook: {
+          url: "https://webhook.example.com/firecrawl",
+          events: ["page", "completed", "started"],
+        },
+      }),
+    );
+
+    expect(mockClient.startCrawl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        webhook: expect.objectContaining({
+          events: ["page", "completed", "started"], // Should respect user input
+        }),
+      }),
+    );
+  });
 });
