@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Pulse - NotebookLM Clone",
+  title: "Pulse - A beautiful self-hosted SHADCN NotebookLM Alternative",
   description: "AI-powered research and knowledge management",
 }
 
