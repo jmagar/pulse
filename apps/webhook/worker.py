@@ -217,6 +217,23 @@ def index_document_job(document_dict: dict[str, Any]) -> dict[str, Any]:
     return asyncio.run(_index_document_async(document_dict))
 
 
+def index_document_batch_job(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Background job to index multiple documents in a batch.
+
+    This is the batch job function that RQ executes for multiple documents.
+    RQ requires synchronous functions, so this wraps the async batch implementation.
+
+    Args:
+        documents: List of document dictionaries to index
+
+    Returns:
+        List of indexing results (same order as input)
+    """
+    # RQ expects a synchronous function, so we use asyncio.run() to execute the async code
+    return asyncio.run(process_batch_async(documents))
+
+
 async def _validate_external_services() -> bool:
     """
     Validate that all required external services are accessible.

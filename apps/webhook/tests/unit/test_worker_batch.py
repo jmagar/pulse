@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from worker import process_batch_async
+from worker import index_document_batch_job, process_batch_async
 
 
 def test_process_batch_async_processes_multiple_documents():
@@ -76,3 +76,53 @@ def test_process_batch_async_handles_partial_failures():
 
     # Run async test in synchronous context
     asyncio.run(run_test())
+
+
+def test_index_document_batch_job_wraps_async_batch_processing():
+    """Test that index_document_batch_job is synchronous wrapper for process_batch_async."""
+    # Mock documents
+    doc1 = {"url": "https://example.com/1", "markdown": "Content 1", "title": "Doc 1"}
+    doc2 = {"url": "https://example.com/2", "markdown": "Content 2", "title": "Doc 2"}
+    doc3 = {"url": "https://example.com/3", "markdown": "Content 3", "title": "Doc 3"}
+
+    documents = [doc1, doc2, doc3]
+
+    # Mock the async batch processing function
+    mock_results = [
+        {"success": True, "url": "https://example.com/1", "chunks_indexed": 5},
+        {"success": True, "url": "https://example.com/2", "chunks_indexed": 3},
+        {"success": True, "url": "https://example.com/3", "chunks_indexed": 7},
+    ]
+
+    with patch("worker.process_batch_async", new_callable=AsyncMock) as mock_batch:
+        mock_batch.return_value = mock_results
+
+        # Execute synchronous batch job
+        results = index_document_batch_job(documents)
+
+        # Verify batch processing was called
+        assert mock_batch.called
+        mock_batch.assert_called_once_with(documents)
+
+        # Verify results
+        assert len(results) == 3
+        assert results[0]["url"] == "https://example.com/1"
+        assert results[0]["chunks_indexed"] == 5
+        assert results[1]["url"] == "https://example.com/2"
+        assert results[1]["chunks_indexed"] == 3
+        assert results[2]["url"] == "https://example.com/3"
+        assert results[2]["chunks_indexed"] == 7
+
+
+def test_index_document_batch_job_handles_empty_list():
+    """Test that index_document_batch_job handles empty document list."""
+    documents = []
+
+    with patch("worker.process_batch_async", new_callable=AsyncMock) as mock_batch:
+        mock_batch.return_value = []
+
+        results = index_document_batch_job(documents)
+
+        # Verify empty list is handled
+        assert results == []
+        mock_batch.assert_called_once_with(documents)
