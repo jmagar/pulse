@@ -8,13 +8,19 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 
 import sqlalchemy as sa
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import verify_api_secret
+from api.schemas.metrics import (
+    CrawlMetricsResponse,
+    CrawlListResponse,
+    OperationTimingSummary,
+    PerPageMetric,
+)
 from infra.database import get_db_session
-from domain.models import OperationMetric, RequestMetric
+from domain.models import CrawlSession, OperationMetric, RequestMetric
 from utils.logging import get_logger
 from utils.time import format_est_timestamp
 
@@ -306,3 +312,79 @@ async def get_metrics_summary(
         "operations_by_type": operations_by_type,
         "slowest_endpoints": slowest_endpoints,
     }
+
+
+@router.get("/crawls/{crawl_id}", response_model=CrawlMetricsResponse, dependencies=[Depends(verify_api_secret)])
+async def get_crawl_metrics(
+    crawl_id: str,
+    include_per_page: bool = False,
+    db: AsyncSession = Depends(get_db_session),
+) -> CrawlMetricsResponse:
+    """
+    Get comprehensive metrics for a specific crawl.
+
+    Args:
+        crawl_id: Firecrawl crawl identifier
+        include_per_page: Whether to include per-page operation details
+        db: Database session
+
+    Returns:
+        Crawl metrics with aggregate timings
+
+    Raises:
+        HTTPException: 404 if crawl not found
+    """
+    # Fetch crawl session
+    result = await db.execute(select(CrawlSession).where(CrawlSession.crawl_id == crawl_id))
+    session = result.scalar_one_or_none()
+
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Crawl not found: {crawl_id}")
+
+    # Build aggregate timing summary
+    aggregate_timing = OperationTimingSummary(
+        chunking_ms=session.total_chunking_ms,
+        embedding_ms=session.total_embedding_ms,
+        qdrant_ms=session.total_qdrant_ms,
+        bm25_ms=session.total_bm25_ms,
+    )
+
+    # Optionally fetch per-page metrics
+    per_page_metrics = None
+    if include_per_page:
+        operations_result = await db.execute(
+            select(OperationMetric)
+            .where(OperationMetric.crawl_id == crawl_id)
+            .order_by(OperationMetric.timestamp)
+        )
+        operations = operations_result.scalars().all()
+
+        per_page_metrics = [
+            PerPageMetric(
+                url=op.document_url,
+                operation_type=op.operation_type,
+                operation_name=op.operation_name,
+                duration_ms=op.duration_ms,
+                success=op.success,
+                timestamp=op.timestamp,
+            )
+            for op in operations
+        ]
+
+    return CrawlMetricsResponse(
+        crawl_id=session.crawl_id,
+        crawl_url=session.crawl_url,
+        status=session.status,
+        success=session.success,
+        started_at=session.started_at,
+        completed_at=session.completed_at,
+        duration_ms=session.duration_ms,
+        e2e_duration_ms=session.e2e_duration_ms,
+        total_pages=session.total_pages,
+        pages_indexed=session.pages_indexed,
+        pages_failed=session.pages_failed,
+        aggregate_timing=aggregate_timing,
+        per_page_metrics=per_page_metrics,
+        error_message=session.error_message,
+        extra_metadata=session.extra_metadata,
+    )

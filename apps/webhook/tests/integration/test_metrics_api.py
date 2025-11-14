@@ -1,9 +1,12 @@
 """Integration tests for metrics API endpoints."""
 
 import pytest
+from datetime import datetime, UTC
 from httpx import ASGITransport, AsyncClient
 
 from main import app
+from domain.models import CrawlSession
+from config import settings
 
 
 @pytest.mark.asyncio
@@ -59,3 +62,51 @@ async def test_get_metrics_summary_authorized(api_secret_header):
     assert "requests" in data
     assert "operations_by_type" in data
     assert "slowest_endpoints" in data
+
+
+@pytest.mark.asyncio
+async def test_get_crawl_metrics_success(client: AsyncClient, db_session):
+    """Test GET /api/metrics/crawls/{crawl_id} returns metrics."""
+    # Create test session
+    session = CrawlSession(
+        crawl_id="api_test_crawl",
+        crawl_url="https://example.com",
+        started_at=datetime.now(UTC),
+        completed_at=datetime.now(UTC),
+        status="completed",
+        success=True,
+        total_pages=5,
+        pages_indexed=4,
+        pages_failed=1,
+        duration_ms=3000.0,
+        total_embedding_ms=800.0,
+        total_qdrant_ms=500.0,
+    )
+    db_session.add(session)
+    await db_session.commit()
+
+    # Request metrics
+    headers = {"X-API-Secret": settings.api_secret}
+    response = await client.get(
+        "/api/metrics/crawls/api_test_crawl",
+        headers=headers
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["crawl_id"] == "api_test_crawl"
+    assert data["status"] == "completed"
+    assert data["total_pages"] == 5
+    assert data["aggregate_timing"]["embedding_ms"] == 800.0
+
+
+@pytest.mark.asyncio
+async def test_get_crawl_metrics_not_found(client: AsyncClient):
+    """Test GET /api/metrics/crawls/{crawl_id} returns 404 for unknown crawl."""
+    headers = {"X-API-Secret": settings.api_secret}
+    response = await client.get(
+        "/api/metrics/crawls/nonexistent_crawl",
+        headers=headers
+    )
+
+    assert response.status_code == 404
