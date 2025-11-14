@@ -6,6 +6,7 @@ import {
   runHealthChecks,
   type HealthCheckResult,
 } from "./config/health-checks.js";
+import { env } from "./config/environment.js";
 import { logInfo, logError } from "./utils/logging.js";
 import { displayStartupInfo } from "./server/startup/display.js";
 
@@ -77,7 +78,7 @@ async function main(): Promise<void> {
 
   // Create Express server
   const app = await createExpressServer();
-  const port = parseInt(process.env.PORT || "3060", 10);
+  const port = parseInt(env.port || "3060", 10);
 
   // Start listening
   const server = app.listen(port, async () => {

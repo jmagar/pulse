@@ -30,6 +30,9 @@ FROM node:20-alpine
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
+# Install Docker CLI, Compose, and SSH for remote context support
+RUN apk add --no-cache docker-cli docker-cli-compose openssh-client
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 

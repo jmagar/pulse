@@ -67,7 +67,7 @@ class ChangeDetectionClient:
             logger.info(
                 "Watch already exists for URL",
                 url=url,
-                watch_uuid=existing_watch["uuid"],
+                watch_uuid=existing_watch.get("uuid"),
             )
             return existing_watch
 

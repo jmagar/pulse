@@ -73,6 +73,24 @@ async def webhook_firecrawl(
         payload_keys=list(payload.keys()),
     )
 
+    # Handle failed events (e.g., canceled crawls) gracefully
+    # These events may have incomplete metadata and should not be processed
+    if payload.get("success") is False:
+        logger.info(
+            "Skipping failed event",
+            event_type=payload.get("type"),
+            event_id=payload.get("id"),
+            reason="Event marked as unsuccessful (likely canceled crawl)",
+        )
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "status": "acknowledged",
+                "message": "Failed event received and logged",
+                "event_id": payload.get("id"),
+            },
+        )
+
     # Validate with detailed error context
     try:
         event = WEBHOOK_EVENT_ADAPTER.validate_python(payload)

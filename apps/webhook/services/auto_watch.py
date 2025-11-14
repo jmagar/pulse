@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 from urllib.parse import urlparse
 
@@ -10,6 +11,10 @@ from config import settings
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
+
+# Limit concurrent watch creation to prevent overwhelming changedetection.io API
+# which has a race condition in dictionary iteration under high concurrency
+_watch_creation_semaphore = asyncio.Semaphore(5)
 
 
 async def create_watch_for_url(
@@ -21,6 +26,9 @@ async def create_watch_for_url(
 
     Idempotent: If watch already exists, returns existing watch.
     Gracefully handles errors by logging and returning None.
+
+    Uses semaphore to limit concurrent API calls and prevent race conditions
+    in changedetection.io's internal dictionary iteration.
 
     Args:
         url: URL that was scraped
@@ -40,30 +48,32 @@ async def create_watch_for_url(
         logger.warning("Invalid URL for watch creation", url=url)
         return None
 
-    try:
-        client = ChangeDetectionClient()
-        watch = await client.create_watch(
-            url=url,
-            check_interval=check_interval or settings.changedetection_default_check_interval,
-            tag=tag,
-        )
+    # Limit concurrent API calls to prevent overwhelming changedetection.io
+    async with _watch_creation_semaphore:
+        try:
+            client = ChangeDetectionClient()
+            watch = await client.create_watch(
+                url=url,
+                check_interval=check_interval or settings.changedetection_default_check_interval,
+                tag=tag,
+            )
 
-        logger.info(
-            "Auto-created changedetection.io watch",
-            url=url,
-            watch_uuid=watch.get("uuid"),
-        )
+            logger.info(
+                "Auto-created changedetection.io watch",
+                url=url,
+                watch_uuid=watch.get("uuid"),
+            )
 
-        return watch
+            return watch
 
-    except Exception as e:
-        logger.error(
-            "Failed to create changedetection.io watch",
-            url=url,
-            error=str(e),
-            error_type=type(e).__name__,
-        )
-        return None
+        except Exception as e:
+            logger.error(
+                "Failed to create changedetection.io watch",
+                url=url,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
+            return None
 
 
 def _is_valid_url(url: str) -> bool:

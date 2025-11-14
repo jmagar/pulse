@@ -84,6 +84,9 @@ type EnvConfig = {
   redisUrl: string | undefined;
   databaseUrl: string | undefined;
   webhookEvents: string | undefined;
+  dockerComposePath: string | undefined;
+  dockerProjectName: string | undefined;
+  dockerExternalServices: string | undefined;
 };
 
 function buildEnv(): EnvConfig {
@@ -91,7 +94,7 @@ function buildEnv(): EnvConfig {
 
   return {
     // Server Configuration
-    port: getEnvVar("MCP_PORT", "PORT", "3060"),
+    port: getEnvVar("MCP_INTERNAL_PORT", undefined, "3060"),
     nodeEnv: getEnvVar("NODE_ENV", undefined, "development"),
     debug: getEnvVar("MCP_DEBUG", "DEBUG", "false"),
     logFormat: getEnvVar("MCP_LOG_FORMAT", "LOG_FORMAT", "text"),
@@ -225,6 +228,20 @@ function buildEnv(): EnvConfig {
       "MCP_WEBHOOK_EVENTS",
       "WEBHOOK_EVENTS",
       "page",
+    ),
+    dockerComposePath: getEnvVar(
+      "MCP_DOCKER_COMPOSE_PATH",
+      "DOCKER_COMPOSE_PATH",
+      "/compose/pulse/docker-compose.yaml",
+    ),
+    dockerProjectName: getEnvVar(
+      "MCP_DOCKER_PROJECT_NAME",
+      "DOCKER_PROJECT_NAME",
+      "pulse",
+    ),
+    dockerExternalServices: getEnvVar(
+      "MCP_DOCKER_EXTERNAL_SERVICES",
+      "DOCKER_EXTERNAL_SERVICES",
     ),
   };
 }
@@ -370,6 +387,12 @@ export function getAllEnvVars(): Record<string, string | undefined> {
     "NUQ_DATABASE_URL",
     "MCP_WEBHOOK_EVENTS",
     "WEBHOOK_EVENTS",
+    "MCP_DOCKER_COMPOSE_PATH",
+    "DOCKER_COMPOSE_PATH",
+    "MCP_DOCKER_PROJECT_NAME",
+    "DOCKER_PROJECT_NAME",
+    "MCP_DOCKER_EXTERNAL_SERVICES",
+    "DOCKER_EXTERNAL_SERVICES",
   ];
 
   const sensitiveVars = [
