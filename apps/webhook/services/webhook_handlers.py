@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any, cast
 
 from rq import Queue
+from sqlalchemy import func, select
 
 from api.schemas.indexing import IndexDocumentRequest
 from api.schemas.webhook import (
@@ -15,6 +17,8 @@ from api.schemas.webhook import (
     FirecrawlPageEvent,
 )
 from config import settings
+from domain.models import CrawlSession, OperationMetric
+from infra.database import get_db_context
 from services.auto_watch import create_watch_for_url
 from utils.logging import get_logger
 
@@ -56,7 +60,7 @@ async def handle_firecrawl_event(
         return await _handle_page_event(event, queue)
 
     if event_type in LIFECYCLE_EVENT_TYPES:
-        return _handle_lifecycle_event(event)
+        return await _handle_lifecycle_event(event)
 
     logger.warning("Unsupported Firecrawl event type", event_type=event_type)
     raise WebhookHandlerError(status_code=400, detail=f"Unsupported event type: {event_type}")
@@ -192,30 +196,102 @@ async def _handle_page_event(
     return result
 
 
-def _handle_lifecycle_event(event: FirecrawlLifecycleEvent | Any) -> dict[str, Any]:
-    """Log lifecycle events and acknowledge reception."""
+async def _handle_lifecycle_event(event: FirecrawlLifecycleEvent | Any) -> dict[str, Any]:
+    """Process lifecycle events with crawl session tracking."""
 
-    metadata = getattr(event, "metadata", {})
-    event_id = getattr(event, "id", None)
     event_type = getattr(event, "type", None)
+    crawl_id = getattr(event, "id", None)
+
+    # Record lifecycle events
+    if event_type == "crawl.started":
+        await _record_crawl_start(crawl_id, event)
+
+    # Existing logging
+    metadata = getattr(event, "metadata", {})
     error = getattr(event, "error", None)
 
     if event_type and event_type.endswith("failed"):
         logger.error(
             "Firecrawl crawl failed",
-            event_id=event_id,
+            event_id=crawl_id,
             error=error,
             metadata=metadata,
         )
     else:
         logger.info(
             "Firecrawl lifecycle event",
-            event_id=event_id,
+            event_id=crawl_id,
             event_type=event_type,
             metadata=metadata,
         )
 
     return {"status": "acknowledged", "event_type": event_type}
+
+
+async def _record_crawl_start(crawl_id: str, event: FirecrawlLifecycleEvent) -> None:
+    """
+    Record crawl start in CrawlSession table.
+
+    Args:
+        crawl_id: Firecrawl crawl/job identifier
+        event: Lifecycle start event
+    """
+    crawl_url = event.metadata.get("url", "unknown")
+
+    # Parse MCP-provided timestamp if available
+    initiated_at_str = event.metadata.get("initiated_at")
+    initiated_at = None
+    if initiated_at_str:
+        try:
+            initiated_at = datetime.fromisoformat(initiated_at_str.replace("Z", "+00:00"))
+        except Exception as e:
+            logger.warning(
+                "Failed to parse initiated_at timestamp",
+                value=initiated_at_str,
+                error=str(e),
+            )
+
+    try:
+        async with get_db_context() as db:
+            # Check if session already exists
+            result = await db.execute(
+                select(CrawlSession).where(CrawlSession.crawl_id == crawl_id)
+            )
+            existing = result.scalar_one_or_none()
+
+            if existing:
+                logger.info(
+                    "Crawl session already exists, skipping creation",
+                    crawl_id=crawl_id,
+                    status=existing.status,
+                )
+                return
+
+            session = CrawlSession(
+                crawl_id=crawl_id,
+                crawl_url=crawl_url,
+                started_at=datetime.now(UTC),
+                initiated_at=initiated_at,
+                status="in_progress",
+                extra_metadata=event.metadata,
+            )
+            db.add(session)
+            await db.commit()
+
+        logger.info(
+            "Crawl session started",
+            crawl_id=crawl_id,
+            crawl_url=crawl_url,
+            has_initiated_timestamp=initiated_at is not None,
+        )
+
+    except Exception as e:
+        logger.error(
+            "Failed to record crawl start",
+            crawl_id=crawl_id,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
 
 
 def _coerce_documents(
