@@ -28,6 +28,9 @@ describe.skipIf(SKIP_INTEGRATION)("ProfileTool Integration", () => {
   });
 
   it("should handle unknown crawl_id gracefully", async () => {
+    if (!tool.handler || typeof tool.handler !== "function") {
+      throw new Error("Tool handler not defined");
+    }
     const result = await tool.handler({
       crawl_id: "nonexistent-crawl-id-12345",
     });
