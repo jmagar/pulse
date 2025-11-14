@@ -37,7 +37,7 @@ echo "   - $started_length active jobs will be terminated"
 echo "   - $queue_length waiting jobs will be removed"
 echo "   - All job history will be lost"
 echo ""
-read -p "Continue? (y/N): " confirm
+read -r -p "Continue? (y/N): " confirm
 
 if [[ $confirm != [yY] ]]; then
   echo "Aborted."

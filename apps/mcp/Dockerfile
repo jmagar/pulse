@@ -31,7 +31,13 @@ FROM node:20-alpine
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 # Install Docker CLI, Compose, and SSH for remote context support
-RUN apk add --no-cache docker-cli docker-cli-compose openssh-client
+# Note: Package versions are determined by the Alpine version in the base image (node:20-alpine)
+# To pin versions, specify them as: package=version (e.g., docker-cli=27.3.1-r0)
+# Check available versions: docker run --rm node:20-alpine apk search docker-cli
+RUN apk add --no-cache \
+    docker-cli \
+    docker-cli-compose \
+    openssh-client
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001

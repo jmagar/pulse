@@ -8,12 +8,9 @@
  * @module resources/docker-logs
  */
 
-import { exec } from "child_process";
-import { promisify } from "util";
+import { spawn } from "child_process";
 import type { ResourceData, ResourceContent } from "../storage/types.js";
 import { logInfo, logError } from "../utils/logging.js";
-
-const execAsync = promisify(exec);
 
 /**
  * Docker Compose service configuration
@@ -110,19 +107,41 @@ export class DockerLogsProvider {
     try {
       logInfo("docker-logs", `Fetching logs for service: ${service}`);
 
-      // Execute docker logs command directly on container
-      // Container names are deterministic from docker-compose
+      // Execute docker compose logs command (safer than docker logs for scaled services)
+      // Uses argument arrays to prevent command injection
       // --tail 500: Last 500 lines
       // --timestamps: Include timestamps
       // Support remote contexts via --context flag
-      const contextFlag = serviceConfig.context
-        ? `--context ${serviceConfig.context}`
-        : "";
-      const command = `docker ${contextFlag} logs --tail 500 --timestamps ${service}`;
+      const args: string[] = [];
+      
+      if (serviceConfig.context) {
+        args.push("--context", serviceConfig.context);
+      }
+      
+      args.push("compose", "logs", "--tail", "500", "--timestamps", service);
 
-      const { stdout, stderr } = await execAsync(command, {
+      const dockerProcess = spawn("docker", args, {
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large logs
       });
+
+      let stdout = "";
+      let stderr = "";
+
+      dockerProcess.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      dockerProcess.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      const exitCode = await new Promise<number>((resolve) => {
+        dockerProcess.on("close", (code) => resolve(code ?? 1));
+      });
+
+      if (exitCode !== 0) {
+        throw new Error(`Docker command failed with exit code ${exitCode}: ${stderr}`);
+      }
 
       if (stderr) {
         logError("docker-logs", new Error("Docker logs stderr"), {

@@ -308,6 +308,7 @@ export function getAllEnvVars(): Record<string, string | undefined> {
 
   // Add all variables referenced in env object
   const varNames = [
+    "MCP_INTERNAL_PORT",
     "MCP_PORT",
     "PORT",
     "NODE_ENV",
@@ -393,6 +394,7 @@ export function getAllEnvVars(): Record<string, string | undefined> {
     "DOCKER_PROJECT_NAME",
     "MCP_DOCKER_EXTERNAL_SERVICES",
     "DOCKER_EXTERNAL_SERVICES",
+    "MCP_DOCKER_REMOTE_HOST",
   ];
 
   const sensitiveVars = [

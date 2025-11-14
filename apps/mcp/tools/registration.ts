@@ -236,9 +236,17 @@ export function registerResources(server: Server): void {
 
       // Add external services from remote Docker contexts (if configured)
       // Example: GPU services on remote host
-      const externalServices = currentEnv.dockerExternalServices
-        ? JSON.parse(currentEnv.dockerExternalServices)
-        : [];
+      let externalServices: DockerService[] = [];
+      if (currentEnv.dockerExternalServices) {
+        try {
+          externalServices = JSON.parse(currentEnv.dockerExternalServices);
+        } catch (error) {
+          logError("docker-logs", error, {
+            message: "Failed to parse MCP_DOCKER_EXTERNAL_SERVICES",
+            value: currentEnv.dockerExternalServices,
+          });
+        }
+      }
       services.push(...externalServices);
 
       dockerLogsProvider = new DockerLogsProvider({
