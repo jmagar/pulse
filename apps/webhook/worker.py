@@ -135,6 +135,61 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
         }
 
 
+async def process_batch_async(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Process multiple documents concurrently using asyncio.gather().
+
+    This function processes documents in parallel, maximizing throughput
+    for I/O-bound operations (TEI embeddings, Qdrant indexing).
+
+    Args:
+        documents: List of document dictionaries to index
+
+    Returns:
+        List of indexing results (same order as input)
+    """
+    if not documents:
+        return []
+
+    logger.info("Starting batch processing", batch_size=len(documents))
+
+    # Create tasks for all documents
+    tasks = [_index_document_async(doc) for doc in documents]
+
+    # Execute concurrently with asyncio.gather()
+    # return_exceptions=True ensures one failure doesn't stop the batch
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Convert exceptions to error dicts
+    processed_results = []
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            logger.error(
+                "Document indexing failed in batch",
+                url=documents[i].get("url"),
+                error=str(result),
+                error_type=type(result).__name__,
+            )
+            processed_results.append({
+                "success": False,
+                "url": documents[i].get("url"),
+                "error": str(result),
+                "error_type": type(result).__name__,
+            })
+        else:
+            processed_results.append(result)
+
+    success_count = sum(1 for r in processed_results if r.get("success"))
+    logger.info(
+        "Batch processing complete",
+        total=len(documents),
+        success=success_count,
+        failed=len(documents) - success_count,
+    )
+
+    return processed_results
+
+
 def index_document_job(document_dict: dict[str, Any]) -> dict[str, Any]:
     """
     Background job to index a document.
