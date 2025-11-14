@@ -22,8 +22,10 @@ services:
 
   firecrawl:
     <<: *common-service
-    image: ghcr.io/firecrawl/firecrawl
-    # build: apps/api
+    # image: ghcr.io/firecrawl/firecrawl  # Replaced with local build (PR #2381)
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
     container_name: firecrawl
     ulimits:
       nofile:
@@ -31,6 +33,7 @@ services:
         hard: 65535
     environment:
       - PORT=3002  # Firecrawl's internal port
+      # PR #2381 environment variables loaded from root .env via env_file
     depends_on:
       - pulse_redis
       - pulse_playwright
