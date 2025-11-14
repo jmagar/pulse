@@ -230,8 +230,11 @@ def index_document_batch_job(documents: list[dict[str, Any]]) -> list[dict[str, 
     Returns:
         List of indexing results (same order as input)
     """
-    # RQ expects a synchronous function, so we use asyncio.run() to execute the async code
-    return asyncio.run(process_batch_async(documents))
+    # Use BatchWorker for batch processing
+    from workers.batch_worker import BatchWorker
+
+    batch_worker = BatchWorker()
+    return batch_worker.process_batch_sync(documents)
 
 
 async def _validate_external_services() -> bool:
@@ -285,6 +288,9 @@ def run_worker() -> None:
     Run the RQ worker.
 
     This is the main entry point for the worker process.
+    The worker processes both individual document jobs (index_document_job)
+    and batch jobs (index_document_batch_job) which uses BatchWorker for
+    concurrent processing via asyncio.gather().
     """
     logger.info("Starting RQ worker", redis_url=settings.redis_url)
 
