@@ -35,6 +35,7 @@ class TimingContext:
         operation_name: str,
         request_id: str | None = None,
         job_id: str | None = None,
+        crawl_id: str | None = None,
         document_url: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
@@ -46,6 +47,7 @@ class TimingContext:
             operation_name: Specific operation name (e.g., 'crawl.page', 'embed_batch')
             request_id: Optional request ID for correlation
             job_id: Optional job ID for worker correlation
+            crawl_id: Optional crawl ID for lifecycle correlation
             document_url: Optional document URL being processed
             metadata: Optional additional metadata
         """
@@ -53,6 +55,7 @@ class TimingContext:
         self.operation_name = operation_name
         self.request_id = request_id  # Can be None for worker operations
         self.job_id = job_id
+        self.crawl_id = crawl_id
         self.document_url = document_url
         self.metadata = metadata or {}
         self.start_time: float = 0.0
@@ -112,6 +115,7 @@ class TimingContext:
                     error_message=self.error_message,
                     request_id=self.request_id,
                     job_id=self.job_id,
+                    crawl_id=self.crawl_id,
                     document_url=self.document_url,
                     extra_metadata=self.metadata,
                 )
