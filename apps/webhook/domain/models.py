@@ -72,6 +72,7 @@ class OperationMetric(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     request_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     job_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    crawl_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     document_url: Mapped[str | None] = mapped_column(String(500), nullable=True, index=True)
     extra_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
