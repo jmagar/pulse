@@ -54,7 +54,7 @@ pnpm dev:webhook            # Start webhook only on port 50108
 | Port | Service | Container | Internal | Notes |
 |------|---------|-----------|----------|-------|
 | 50100 | Playwright | pulse_playwright | 3000 | Browser automation |
-| 50102 | Firecrawl API | firecrawl | 3002 | Web scraping API |
+| 50102 | Firecrawl API | firecrawl | 3002 | **Local build** with PR #2381 |
 | 50104 | Redis | pulse_redis | 6379 | Message queue & cache |
 | 50105 | PostgreSQL | pulse_postgres | 5432 | Shared database |
 | 50107 | MCP Server | pulse_mcp | 3060 | Claude integration |
@@ -162,6 +162,23 @@ services:
 ### PostgreSQL Schemas
 - `public` - Firecrawl API data
 - `webhook` - Webhook bridge metrics and search indices
+
+### Firecrawl API: Local Build with PR #2381
+
+**Why local build:** Apply critical bug fixes from [PR #2381](https://github.com/firecrawl/firecrawl/pull/2381):
+- Prevents infinite retry loops (`ScrapeRetryTracker`)
+- Cancels jobs on client disconnect (Redis + AbortSignal)
+- Retries NuQ finalization to prevent stuck jobs
+
+**Source:** Sparse checkout from `firecrawl/firecrawl` repo
+**Commits:** `7c697331`, `b613ae9d`
+**Build:** `docker compose build firecrawl`
+
+**Upstream sync:**
+```bash
+git fetch firecrawl
+git log --oneline firecrawl/main ^HEAD -- apps/api
+```
 
 ## Testing & Verification
 
