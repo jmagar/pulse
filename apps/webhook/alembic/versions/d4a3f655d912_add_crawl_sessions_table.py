@@ -22,7 +22,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     # Only create crawl_sessions table (other tables already exist)
     op.create_table('crawl_sessions',
-    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('id', postgresql.UUID(), nullable=False),
     sa.Column('crawl_id', sa.String(length=255), nullable=False),
     sa.Column('crawl_url', sa.String(length=500), nullable=False),
     sa.Column('started_at', sa.DateTime(timezone=True), nullable=False),

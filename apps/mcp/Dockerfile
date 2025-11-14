@@ -56,7 +56,7 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 RUN mkdir -p /app/resources && chown -R nodejs:nodejs /app/resources
 
 # Install su-exec for non-root user execution
-RUN apk add --no-cache su-exec
+RUN apk add --no-cache su-exec=0.2-r3
 
 # Copy entrypoint script
 COPY apps/mcp/entrypoint.sh /entrypoint.sh

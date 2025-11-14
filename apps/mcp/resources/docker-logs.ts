@@ -8,12 +8,9 @@
  * @module resources/docker-logs
  */
 
-import { exec } from "child_process";
-import { promisify } from "util";
+import { execa } from "execa";
 import type { ResourceData, ResourceContent } from "../storage/types.js";
 import { logInfo, logError } from "../utils/logging.js";
-
-const execAsync = promisify(exec);
 
 /**
  * Docker Compose service configuration
@@ -110,17 +107,20 @@ export class DockerLogsProvider {
     try {
       logInfo("docker-logs", `Fetching logs for service: ${service}`);
 
-      // Execute docker logs command directly on container
-      // Container names are deterministic from docker-compose
-      // --tail 500: Last 500 lines
-      // --timestamps: Include timestamps
-      // Support remote contexts via --context flag
-      const contextFlag = serviceConfig.context
-        ? `--context ${serviceConfig.context}`
-        : "";
-      const command = `docker ${contextFlag} logs --tail 500 --timestamps ${service}`;
+      // Execute docker compose logs command with safe argument arrays
+      // Use docker compose logs for both single and scaled services
+      // Build command arguments array to prevent injection
+      const args = ["compose", "logs", "--tail", "500", "--timestamps"];
 
-      const { stdout, stderr } = await execAsync(command, {
+      // Add context flag before compose if specified
+      if (serviceConfig.context) {
+        args.unshift("--context", serviceConfig.context);
+      }
+
+      // Add service name
+      args.push(service);
+
+      const { stdout, stderr } = await execa("docker", args, {
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large logs
       });
 

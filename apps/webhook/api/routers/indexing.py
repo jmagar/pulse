@@ -29,7 +29,7 @@ router = APIRouter()
     deprecated=True,
     description="DEPRECATED: Use /api/webhook/firecrawl instead.",
 )
-@limiter.limit("10/minute")
+@limiter.limit("1000/minute")  # Temporarily increased for bulk doc indexing
 async def index_document(
     request: Request,
     document: IndexDocumentRequest,
