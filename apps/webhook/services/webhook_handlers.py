@@ -70,7 +70,10 @@ async def _handle_page_event(
     event: FirecrawlPageEvent | Any,
     queue: Queue,
 ) -> dict[str, Any]:
-    """Process crawl page events with robust error handling."""
+    """Process crawl page events with crawl_id propagation."""
+
+    # Extract crawl_id from event
+    crawl_id = getattr(event, "id", None)
 
     try:
         documents = _coerce_documents(getattr(event, "data", []))
@@ -101,6 +104,10 @@ async def _handle_page_event(
         for idx, document in enumerate(documents):
             try:
                 index_payload = _document_to_index_payload(document)
+
+                # Add crawl_id to payload
+                if crawl_id:
+                    index_payload["crawl_id"] = crawl_id
 
                 try:
                     job = queue.enqueue(
@@ -205,6 +212,8 @@ async def _handle_lifecycle_event(event: FirecrawlLifecycleEvent | Any) -> dict[
     # Record lifecycle events
     if event_type == "crawl.started":
         await _record_crawl_start(crawl_id, event)
+    elif event_type == "crawl.completed":
+        await _record_crawl_complete(crawl_id, event)
 
     # Existing logging
     metadata = getattr(event, "metadata", {})
@@ -291,6 +300,110 @@ async def _record_crawl_start(crawl_id: str, event: FirecrawlLifecycleEvent) -> 
             crawl_id=crawl_id,
             error=str(e),
             error_type=type(e).__name__,
+        )
+
+
+async def _record_crawl_complete(crawl_id: str, event: FirecrawlLifecycleEvent) -> None:
+    """
+    Update CrawlSession with completion data and aggregate metrics.
+
+    Args:
+        crawl_id: Firecrawl crawl/job identifier
+        event: Lifecycle completion event
+    """
+    try:
+        async with get_db_context() as db:
+            # Fetch existing session
+            result = await db.execute(
+                select(CrawlSession).where(CrawlSession.crawl_id == crawl_id)
+            )
+            session = result.scalar_one_or_none()
+
+            if not session:
+                logger.warning(
+                    "Crawl completed but no session found",
+                    crawl_id=crawl_id,
+                    hint="crawl.started event may have been missed",
+                )
+                return
+
+            # Update completion timestamp and status
+            completed_at = datetime.now(UTC)
+            session.completed_at = completed_at
+            session.status = "completed"
+            session.success = getattr(event, "success", True)
+            session.duration_ms = (completed_at - session.started_at).total_seconds() * 1000
+
+            # Calculate end-to-end duration if available
+            if session.initiated_at:
+                session.e2e_duration_ms = (
+                    completed_at - session.initiated_at
+                ).total_seconds() * 1000
+
+            # Query actual page count from operation metrics
+            page_count_result = await db.execute(
+                select(func.count(func.distinct(OperationMetric.document_url)))
+                .select_from(OperationMetric)
+                .where(OperationMetric.crawl_id == crawl_id)
+                .where(OperationMetric.operation_type == "worker")
+                .where(OperationMetric.operation_name == "index_document")
+                .where(OperationMetric.document_url.isnot(None))
+            )
+            session.total_pages = page_count_result.scalar() or 0
+
+            # Count successful vs failed
+            success_count_result = await db.execute(
+                select(func.count(func.distinct(OperationMetric.document_url)))
+                .select_from(OperationMetric)
+                .where(OperationMetric.crawl_id == crawl_id)
+                .where(OperationMetric.operation_type == "worker")
+                .where(OperationMetric.operation_name == "index_document")
+                .where(OperationMetric.success == True)
+                .where(OperationMetric.document_url.isnot(None))
+            )
+            session.pages_indexed = success_count_result.scalar() or 0
+            session.pages_failed = session.total_pages - session.pages_indexed
+
+            # Aggregate operation timings by type
+            aggregate_result = await db.execute(
+                select(
+                    OperationMetric.operation_type,
+                    func.sum(OperationMetric.duration_ms).label("total_ms"),
+                )
+                .where(OperationMetric.crawl_id == crawl_id)
+                .where(OperationMetric.success == True)
+                .group_by(OperationMetric.operation_type)
+            )
+
+            for row in aggregate_result:
+                if row.operation_type == "chunking":
+                    session.total_chunking_ms = row.total_ms
+                elif row.operation_type == "embedding":
+                    session.total_embedding_ms = row.total_ms
+                elif row.operation_type == "qdrant":
+                    session.total_qdrant_ms = row.total_ms
+                elif row.operation_type == "bm25":
+                    session.total_bm25_ms = row.total_ms
+
+            await db.commit()
+
+            logger.info(
+                "Crawl session completed",
+                crawl_id=crawl_id,
+                duration_ms=session.duration_ms,
+                e2e_duration_ms=session.e2e_duration_ms,
+                pages_total=session.total_pages,
+                pages_indexed=session.pages_indexed,
+                pages_failed=session.pages_failed,
+            )
+
+    except Exception as e:
+        logger.error(
+            "Failed to record crawl completion",
+            crawl_id=crawl_id,
+            error=str(e),
+            error_type=type(e).__name__,
+            exc_info=True,
         )
 
 

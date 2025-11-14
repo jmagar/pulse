@@ -35,24 +35,27 @@ logger = get_logger(__name__)
 
 async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]:
     """
-    Async implementation of document indexing with enhanced error logging.
+    Async implementation of document indexing with crawl_id propagation.
 
     Uses service pool for efficient resource reuse across jobs.
 
     Args:
-        document_dict: Document data as dictionary
+        document_dict: Document data including optional crawl_id
 
     Returns:
         Indexing result
     """
+    # Generate job ID for correlation
+    job_id = str(uuid4())
+
+    # Extract crawl_id BEFORE parsing (not in schema)
+    crawl_id = document_dict.get("crawl_id")
+
     logger.info(
         "Starting indexing job",
         url=document_dict.get("url"),
-        document_keys=list(document_dict.keys()),
+        crawl_id=crawl_id,
     )
-
-    # Generate job ID for correlation
-    job_id = str(uuid4())
 
     try:
         # Parse with detailed error context
@@ -62,6 +65,7 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
             logger.error(
                 "Failed to parse document payload",
                 url=document_dict.get("url"),
+                crawl_id=crawl_id,
                 error=str(parse_error),
                 error_type=type(parse_error).__name__,
                 provided_keys=list(document_dict.keys()),
@@ -74,6 +78,7 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
             "worker",
             "get_service_pool",
             job_id=job_id,
+            crawl_id=crawl_id,
             document_url=document.url,
             request_id=None,  # Worker operations have no HTTP request context
         ) as ctx:
@@ -100,10 +105,15 @@ async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]
             "worker",
             "index_document",
             job_id=job_id,
+            crawl_id=crawl_id,
             document_url=document.url,
             request_id=None,  # Worker operations have no HTTP request context
         ) as ctx:
-            result = await indexing_service.index_document(document, job_id=job_id)
+            result = await indexing_service.index_document(
+                document,
+                job_id=job_id,
+                crawl_id=crawl_id,
+            )
             ctx.metadata = {
                 "chunks_indexed": result.get("chunks_indexed", 0),
                 "total_tokens": result.get("total_tokens", 0),
