@@ -70,6 +70,9 @@ services:
       - "${MCP_PORT:-50107}:3060"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for log access
+      # Optional: SSH configuration for remote Docker context (GPU machine)
+      # Uncomment and configure path to enable remote Docker access
+      # Required files: known_hosts, id_rsa/id_ed25519
       - /config/pulse_mcp_ssh:/mnt/ssh:ro  # SSH keys for remote Docker contexts
       - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_mcp/resources:/app/resources
     depends_on:
@@ -112,13 +115,7 @@ services:
     command:
       - "python"
       - "-m"
-      - "rq.cli"
       - "worker"
-      - "--url"
-      - "redis://pulse_redis:6379"
-      - "--worker-ttl"
-      - "600"
-      - "indexing"
     volumes:
       - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_webhook/bm25:/app/data/bm25
       - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_webhook/hf_cache:/app/.cache/huggingface
