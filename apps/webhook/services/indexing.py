@@ -52,6 +52,7 @@ class IndexingService:
         self,
         document: IndexDocumentRequest,
         job_id: str | None = None,
+        crawl_id: str | None = None,
     ) -> dict[str, Any]:
         """
         Index a document from Firecrawl.
@@ -59,6 +60,7 @@ class IndexingService:
         Args:
             document: Document to index
             job_id: Optional job ID for correlation
+            crawl_id: Optional crawl ID for lifecycle correlation
 
         Returns:
             Indexing result with statistics
@@ -105,6 +107,7 @@ class IndexingService:
                 "chunking",
                 "chunk_text",
                 job_id=job_id,
+                crawl_id=crawl_id,
                 document_url=document.url,
                 request_id=None,  # Worker operations have no HTTP request context
             ) as ctx:
@@ -138,6 +141,7 @@ class IndexingService:
                 "embedding",
                 "embed_batch",
                 job_id=job_id,
+                crawl_id=crawl_id,
                 document_url=document.url,
                 request_id=None,  # Worker operations have no HTTP request context
             ) as ctx:
@@ -178,6 +182,7 @@ class IndexingService:
                 "qdrant",
                 "index_chunks",
                 job_id=job_id,
+                crawl_id=crawl_id,
                 document_url=document.url,
                 request_id=None,  # Worker operations have no HTTP request context
             ) as ctx:
@@ -217,6 +222,7 @@ class IndexingService:
                 "bm25",
                 "index_document",
                 job_id=job_id,
+                crawl_id=crawl_id,
                 document_url=document.url,
                 request_id=None,  # Worker operations have no HTTP request context
             ) as ctx:
