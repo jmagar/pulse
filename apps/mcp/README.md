@@ -71,6 +71,38 @@ docker compose up -d pulse_mcp
 docker compose logs -f pulse_mcp
 ```
 
+### Remote Docker Context (Optional)
+
+For GPU acceleration or remote Docker hosts, you can configure SSH access:
+
+**Requirements:**
+- SSH key pair for authentication
+- Known hosts file for the remote machine
+- `MCP_DOCKER_REMOTE_HOST` environment variable set
+
+**Setup:**
+
+1. Create an SSH directory with required files:
+   ```bash
+   mkdir -p ~/.ssh/pulse_mcp_ssh
+   cp ~/.ssh/id_rsa ~/.ssh/pulse_mcp_ssh/
+   cp ~/.ssh/known_hosts ~/.ssh/pulse_mcp_ssh/
+   chmod 600 ~/.ssh/pulse_mcp_ssh/*
+   ```
+
+2. Configure the mount in docker-compose.yaml:
+   ```yaml
+   volumes:
+     - ~/.ssh/pulse_mcp_ssh:/mnt/ssh:ro
+   ```
+
+3. Set the remote host in .env:
+   ```bash
+   MCP_DOCKER_REMOTE_HOST=username@remote-host-ip
+   ```
+
+The entrypoint will automatically create a Docker context named `gpu-machine` if the environment variable is set.
+
 ## Configuration
 
 All configuration is via environment variables. See `.env.example` in the project root for available options.
@@ -102,6 +134,7 @@ The server exposes the following MCP tools:
 - **map** - Generate a sitemap
 - **search** - Search indexed content
 - **query** - Search the webhook-managed hybrid index and return embedded resources
+- **profile_crawl** - Debug and profile crawl performance
 
 See individual tool implementations in `tools/` for detailed parameters and response formats.
 
@@ -142,3 +175,74 @@ const result = await mcp.callTool("query", {
 - `WEBHOOK_API_SECRET` (required)
 - Standalone overrides: `MCP_WEBHOOK_BASE_URL`, `MCP_WEBHOOK_API_SECRET`
 - Optional `RUN_QUERY_TOOL_INTEGRATION=true` to enable the live integration tests
+
+### Profile Crawl Tool
+
+Debug and profile crawl performance by querying lifecycle metrics from the webhook service.
+
+**Purpose:**
+- Identify performance bottlenecks in crawl operations
+- Analyze which pages failed and why
+- Monitor crawl progress and completion status
+- Get actionable optimization insights
+
+**Key Parameters:**
+- `crawl_id` (required) - Firecrawl crawl/job identifier returned by the crawl tool
+- `include_details` (optional) - Include per-page operation breakdowns (default: false)
+- `error_offset` (optional) - Error pagination offset for paging through errors (default: 0)
+- `error_limit` (optional) - Maximum errors per page, 1-50 (default: 5)
+
+**Output Format:**
+Plain-text diagnostic report with:
+- Crawl status and duration
+- Pages processed (indexed vs failed)
+- Performance breakdown by operation (chunking, embedding, Qdrant, BM25)
+- Error details grouped by operation type
+- Actionable optimization insights
+
+**Basic Usage:**
+```ts
+// After triggering a crawl
+const crawlResult = await mcp.callTool("crawl", {
+  command: "start",
+  url: "https://docs.example.com",
+});
+
+// Profile the completed crawl
+const profile = await mcp.callTool("profile_crawl", {
+  crawl_id: crawlResult.id,
+});
+```
+
+**Detailed Analysis:**
+```ts
+// Get per-page breakdown of slowest pages
+const detailedProfile = await mcp.callTool("profile_crawl", {
+  crawl_id: "abc123",
+  include_details: true,
+});
+```
+
+**Error Pagination:**
+```ts
+// View first page of errors
+const errors = await mcp.callTool("profile_crawl", {
+  crawl_id: "abc123",
+  error_offset: 0,
+  error_limit: 10,
+});
+
+// View next page of errors
+const moreErrors = await mcp.callTool("profile_crawl", {
+  crawl_id: "abc123",
+  error_offset: 10,
+  error_limit: 10,
+});
+```
+
+**Configuration:**
+- `WEBHOOK_BASE_URL` (default: `http://pulse_webhook:52100` inside docker)
+- `WEBHOOK_API_SECRET` (required)
+- Standalone overrides: `MCP_WEBHOOK_BASE_URL`, `MCP_WEBHOOK_API_SECRET`
+
+Same configuration as the query tool - no additional setup required.

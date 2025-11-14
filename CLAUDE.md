@@ -144,13 +144,15 @@ services:
 
 ### MCP ↔ Firecrawl API
 - MCP calls Firecrawl API at `http://firecrawl:3002` for scraping
-- MCP tools: scrape, map, crawl, query, search
+- MCP tools: scrape, map, crawl, query, search, profile_crawl
 - Configuration: `MCP_FIRECRAWL_BASE_URL`, `MCP_FIRECRAWL_API_KEY`
 
 ### MCP ↔ Webhook Bridge
-- MCP calls webhook bridge for indexed document search (query tool)
+- MCP calls webhook bridge for indexed document search (query tool) and crawl profiling (profile_crawl tool)
 - Configuration: `MCP_WEBHOOK_BASE_URL`, `MCP_WEBHOOK_API_SECRET`
-- Endpoint: POST `http://pulse_webhook:52100/api/search`
+- Endpoints:
+  - POST `http://pulse_webhook:52100/api/search` (query tool)
+  - GET `http://pulse_webhook:52100/api/metrics/crawls/{crawl_id}` (profile_crawl tool)
 
 ### changedetection.io ↔ Webhook Bridge
 - changedetection.io posts webhooks on change detection
