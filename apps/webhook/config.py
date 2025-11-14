@@ -164,6 +164,13 @@ class Settings(BaseSettings):
         description="Enable test mode to stub external services",
     )
 
+    # Worker batch processing
+    worker_batch_size: int = Field(
+        default=4,
+        env="WEBHOOK_WORKER_BATCH_SIZE",
+        description="Number of documents to process concurrently per worker (1-10 recommended)",
+    )
+
     # Job Configuration
     indexing_job_timeout: str = Field(
         default="10m",
