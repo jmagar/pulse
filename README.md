@@ -84,10 +84,11 @@ PostgreSQL is shared across services with schema isolation:
 - Rate limiting and quota management
 - Webhook notifications
 - Search indexing integration
+- **PR #2381 fixes**: Infinite retry prevention, client disconnect cancellation, NuQ finalization retry
 
 **Technology**: Node.js, TypeScript, Express, BullMQ, Playwright
 
-**Documentation**: Uses official Firecrawl image - see [Firecrawl Documentation](https://docs.firecrawl.dev)
+**Documentation**: Local build from source with [PR #2381](https://github.com/firecrawl/firecrawl/pull/2381) reliability fixes - see `apps/api/CLAUDE.md` for details
 
 **Ports**:
 - External API: `50102` (internal: `3002`)
@@ -286,6 +287,9 @@ pnpm build:packages
 
 # Build webhook (Python)
 pnpm build:webhook
+
+# Build Firecrawl API (local with PR #2381 fixes)
+docker compose build firecrawl
 ```
 
 **Test commands**:
@@ -324,6 +328,23 @@ pnpm dev:all
 ```
 
 **Note**: External services (TEI, Qdrant) must be running separately. See `docs/external-services.md`.
+
+### Building Firecrawl API
+
+The API is built from source to include PR #2381 fixes:
+
+```bash
+# Build API image locally
+docker compose build firecrawl
+
+# Start API service
+docker compose up -d firecrawl
+
+# View logs
+docker logs firecrawl -f
+```
+
+For upstream updates and detailed integration notes, see `apps/api/CLAUDE.md`.
 
 **Clean build artifacts**:
 ```bash
