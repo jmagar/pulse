@@ -120,23 +120,21 @@ export class DockerLogsProvider {
       
       args.push("compose", "logs", "--tail", "500", "--timestamps", service);
 
-      const dockerProcess = spawn("docker", args, {
-        maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large logs
-      });
+      const dockerProcess = spawn("docker", args);
 
       let stdout = "";
       let stderr = "";
 
-      dockerProcess.stdout.on("data", (data) => {
+      dockerProcess.stdout.on("data", (data: Buffer) => {
         stdout += data.toString();
       });
 
-      dockerProcess.stderr.on("data", (data) => {
+      dockerProcess.stderr.on("data", (data: Buffer) => {
         stderr += data.toString();
       });
 
       const exitCode = await new Promise<number>((resolve) => {
-        dockerProcess.on("close", (code) => resolve(code ?? 1));
+        dockerProcess.on("close", (code: number | null) => resolve(code ?? 1));
       });
 
       if (exitCode !== 0) {
