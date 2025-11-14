@@ -19,6 +19,5 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
     },
-    tsconfig: "./tsconfig.vitest.json",
   },
 })
