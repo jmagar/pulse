@@ -51,7 +51,7 @@ class TimingContext:
         """
         self.operation_type = operation_type
         self.operation_name = operation_name
-        self.request_id = request_id or str(uuid4())
+        self.request_id = request_id  # Can be None for worker operations
         self.job_id = job_id
         self.document_url = document_url
         self.metadata = metadata or {}
@@ -63,12 +63,13 @@ class TimingContext:
     async def __aenter__(self) -> "TimingContext":
         """Start timing."""
         self.start_time = time.perf_counter()
-        logger.debug(
-            "Operation started",
-            operation_type=self.operation_type,
-            operation_name=self.operation_name,
-            request_id=self.request_id,
-        )
+        log_kwargs = {
+            "operation_type": self.operation_type,
+            "operation_name": self.operation_name,
+        }
+        if self.request_id is not None:
+            log_kwargs["request_id"] = self.request_id
+        logger.debug("Operation started", **log_kwargs)
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -89,15 +90,16 @@ class TimingContext:
         # Log timing
         log_level = "info" if self.success else "error"
         log_method = getattr(logger, log_level)
-        log_method(
-            "Operation completed",
-            operation_type=self.operation_type,
-            operation_name=self.operation_name,
-            duration_ms=round(self.duration_ms, 2),
-            success=self.success,
-            error=self.error_message,
-            request_id=self.request_id,
-        )
+        log_kwargs = {
+            "operation_type": self.operation_type,
+            "operation_name": self.operation_name,
+            "duration_ms": round(self.duration_ms, 2),
+            "success": self.success,
+            "error": self.error_message,
+        }
+        if self.request_id is not None:
+            log_kwargs["request_id"] = self.request_id
+        log_method("Operation completed", **log_kwargs)
 
         # Store to database (non-blocking - fire and forget)
         try:

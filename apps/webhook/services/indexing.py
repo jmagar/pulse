@@ -106,6 +106,7 @@ class IndexingService:
                 "chunk_text",
                 job_id=job_id,
                 document_url=document.url,
+                request_id=None,  # Worker operations have no HTTP request context
             ) as ctx:
                 chunks = self.text_chunker.chunk_text(cleaned_markdown, metadata=chunk_metadata)
                 ctx.metadata = {
@@ -138,6 +139,7 @@ class IndexingService:
                 "embed_batch",
                 job_id=job_id,
                 document_url=document.url,
+                request_id=None,  # Worker operations have no HTTP request context
             ) as ctx:
                 chunk_texts = [chunk["text"] for chunk in chunks]
                 embeddings = await self.embedding_service.embed_batch(chunk_texts)
@@ -177,6 +179,7 @@ class IndexingService:
                 "index_chunks",
                 job_id=job_id,
                 document_url=document.url,
+                request_id=None,  # Worker operations have no HTTP request context
             ) as ctx:
                 indexed_count = await self.vector_store.index_chunks(
                     chunks=chunks,
@@ -215,6 +218,7 @@ class IndexingService:
                 "index_document",
                 job_id=job_id,
                 document_url=document.url,
+                request_id=None,  # Worker operations have no HTTP request context
             ) as ctx:
                 self.bm25_engine.index_document(
                     text=cleaned_markdown,

@@ -504,21 +504,47 @@ class ServicePool:
 
 ```bash
 # Queue depth (how many jobs waiting?)
-redis-cli -h localhost -p 50104 LLEN rq:queue:indexing
+docker exec pulse_redis redis-cli LLEN rq:queue:indexing
 
 # Job IDs in queue
-redis-cli -h localhost -p 50104 LRANGE rq:queue:indexing 0 -1
+docker exec pulse_redis redis-cli LRANGE rq:queue:indexing 0 -1
 
 # Job details
-redis-cli -h localhost -p 50104 HGETALL rq:job:{job_id}
+docker exec pulse_redis redis-cli HGETALL rq:job:{job_id}
 
 # Worker heartbeat (is worker alive?)
-redis-cli -h localhost -p 50104 SMEMBERS rq:workers
+docker exec pulse_redis redis-cli SMEMBERS rq:workers
+docker exec pulse_redis redis-cli KEYS rq:worker:*
 
 # Failed jobs
-redis-cli -h localhost -p 50104 LLEN rq:queue:failed
-redis-cli -h localhost -p 50104 LRANGE rq:queue:failed 0 -1
+docker exec pulse_redis redis-cli LLEN rq:queue:failed
+docker exec pulse_redis redis-cli LRANGE rq:queue:failed 0 -1
 ```
+
+### Queue Management
+
+```bash
+# Clear the indexing queue (abandon all pending jobs)
+docker exec pulse_redis redis-cli DEL rq:queue:indexing
+
+# Flush entire Redis database (nuclear option - clears everything)
+docker exec pulse_redis redis-cli FLUSHDB
+
+# Stop worker gracefully (finishes current job, then stops)
+docker compose stop pulse_webhook-worker
+
+# Stop worker immediately (kills current job, job marked as failed)
+docker compose kill pulse_webhook-worker
+
+# Restart worker (waits for current job to complete)
+docker compose restart pulse_webhook-worker
+```
+
+**Important:**
+- `stop`/`restart` are graceful - worker completes current job before stopping
+- `kill` is forceful - worker terminates immediately, job fails
+- Canceling a Firecrawl crawl does NOT clear queued indexing jobs
+- Jobs already enqueued will process even if source crawl is canceled
 
 ### Worker Logs
 
@@ -884,5 +910,5 @@ For issues, questions, or feature requests related to the worker system:
 3. Inspect Redis queue: `redis-cli -p 50104 LLEN rq:queue:indexing`
 4. Check operation metrics: `GET /api/metrics/operations`
 
-**Last Updated:** 11/13/2025  
+**Last Updated:** 06:56:18 | 11/13/2025
 **Worker Version:** 1.0.0 (RQ-based implementation)

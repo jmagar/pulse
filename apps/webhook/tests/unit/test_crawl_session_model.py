@@ -1,0 +1,31 @@
+"""Unit tests for CrawlSession model."""
+
+import pytest
+from datetime import datetime, UTC
+from sqlalchemy import select
+
+from domain.models import CrawlSession
+
+
+@pytest.mark.asyncio
+async def test_crawl_session_creation(db_session):
+    """Test creating a CrawlSession with required fields."""
+    session = CrawlSession(
+        crawl_id="test_crawl_123",
+        crawl_url="https://example.com",
+        started_at=datetime.now(UTC),
+        status="in_progress",
+    )
+    db_session.add(session)
+    await db_session.commit()
+
+    result = await db_session.execute(
+        select(CrawlSession).where(CrawlSession.crawl_id == "test_crawl_123")
+    )
+    fetched = result.scalar_one()
+
+    assert fetched.crawl_id == "test_crawl_123"
+    assert fetched.status == "in_progress"
+    assert fetched.total_pages == 0
+    assert fetched.total_chunking_ms == 0.0
+    assert fetched.success is None

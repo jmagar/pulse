@@ -67,7 +67,7 @@ class ChangeDetectionClient:
             logger.info(
                 "Watch already exists for URL",
                 url=url,
-                watch_uuid=existing_watch["uuid"],
+                watch_uuid=existing_watch.get("uuid"),
             )
             return existing_watch
 
@@ -97,7 +97,7 @@ class ChangeDetectionClient:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await client.post(
-                    f"{self.api_url}/api/v2/watch",
+                    f"{self.api_url}/api/v1/watch",
                     json=payload,
                     headers=headers,
                 )
@@ -149,7 +149,7 @@ class ChangeDetectionClient:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await client.get(
-                    f"{self.api_url}/api/v2/watch",
+                    f"{self.api_url}/api/v1/watch",
                     headers=headers,
                 )
                 response.raise_for_status()

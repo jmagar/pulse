@@ -30,6 +30,7 @@ import { registrationTracker } from "../utils/mcp-status.js";
 import { getMetricsCollector } from "../monitoring/index.js";
 import { env, getEnvSnapshot } from "../config/environment.js";
 import { SELF_HOSTED_NO_AUTH } from "@firecrawl/client";
+import { DockerLogsProvider } from "../resources/docker-logs.js";
 
 /**
  * Register MCP tools with the server
@@ -209,6 +210,50 @@ export function registerTools(
  */
 export function registerResources(server: Server): void {
   try {
+    // Initialize Docker logs provider if configured
+    const currentEnv = getEnvSnapshot();
+    let dockerLogsProvider: DockerLogsProvider | undefined;
+
+    if (currentEnv.dockerComposePath && currentEnv.dockerProjectName) {
+      // Define services to expose logs for (local docker-compose stack)
+      const services = [
+        { name: "firecrawl", description: "Firecrawl API service logs" },
+        { name: "pulse_mcp", description: "MCP server logs" },
+        { name: "pulse_webhook", description: "Webhook bridge service logs" },
+        {
+          name: "pulse_webhook-worker",
+          description: "Webhook worker process logs",
+        },
+        { name: "pulse_postgres", description: "PostgreSQL database logs" },
+        { name: "pulse_redis", description: "Redis cache logs" },
+        { name: "pulse_playwright", description: "Playwright browser logs" },
+        {
+          name: "pulse_change-detection",
+          description: "Change detection service logs",
+        },
+        { name: "pulse_neo4j", description: "Neo4j graph database logs" },
+      ];
+
+      // Add external services from remote Docker contexts (if configured)
+      // Example: GPU services on remote host
+      const externalServices = currentEnv.dockerExternalServices
+        ? JSON.parse(currentEnv.dockerExternalServices)
+        : [];
+      services.push(...externalServices);
+
+      dockerLogsProvider = new DockerLogsProvider({
+        composePath: currentEnv.dockerComposePath,
+        projectName: currentEnv.dockerProjectName,
+        services,
+      });
+
+      logInfo("docker-logs", "Docker logs provider initialized", {
+        composePath: currentEnv.dockerComposePath,
+        projectName: currentEnv.dockerProjectName,
+        serviceCount: services.length,
+      });
+    }
+
     // Set up resource handlers with error tracking
     server.setRequestHandler(ListResourcesRequestSchema, async () => {
       logInfo("resources/list", "Listing resources");
@@ -216,12 +261,25 @@ export function registerResources(server: Server): void {
       const storage = await ResourceStorageFactory.create();
       const resources = await storage.list();
 
-      logInfo("resources/list", `Found ${resources.length} resources`, {
-        count: resources.length,
-      });
+      // Add Docker logs resources if provider is configured
+      const dockerResources = dockerLogsProvider
+        ? dockerLogsProvider.list()
+        : [];
+
+      const allResources = [...resources, ...dockerResources];
+
+      logInfo(
+        "resources/list",
+        `Found ${allResources.length} resources (${resources.length} storage, ${dockerResources.length} docker)`,
+        {
+          storageCount: resources.length,
+          dockerCount: dockerResources.length,
+          total: allResources.length,
+        },
+      );
 
       return {
-        resources: resources.map((resource) => ({
+        resources: allResources.map((resource) => ({
           uri: resource.uri,
           name: resource.name,
           mimeType: resource.mimeType,
@@ -236,6 +294,29 @@ export function registerResources(server: Server): void {
       logInfo("resources/read", `Reading resource: ${uri}`, { uri });
 
       try {
+        // Check if this is a Docker logs resource
+        if (
+          dockerLogsProvider &&
+          DockerLogsProvider.isDockerLogsUri(uri)
+        ) {
+          const resource = await dockerLogsProvider.read(uri);
+
+          logInfo("resources/read", `Docker logs read successfully: ${uri}`, {
+            uri,
+          });
+
+          return {
+            contents: [
+              {
+                uri: resource.uri,
+                mimeType: resource.mimeType,
+                text: resource.text,
+              },
+            ],
+          };
+        }
+
+        // Otherwise, read from storage
         const storage = await ResourceStorageFactory.create();
         const resource = await storage.read(uri);
 

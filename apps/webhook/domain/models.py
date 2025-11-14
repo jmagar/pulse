@@ -111,3 +111,55 @@ class ChangeEvent(Base):
 
     def __repr__(self) -> str:
         return f"<ChangeEvent(watch_id={self.watch_id}, watch_url={self.watch_url}, status={self.rescrape_status})>"
+
+
+class CrawlSession(Base):
+    """
+    Tracks complete crawl lifecycle with aggregate metrics.
+
+    Records lifecycle from crawl.started → crawl.completed and aggregates
+    per-page operation metrics for holistic performance analysis.
+    """
+    __tablename__ = "crawl_sessions"
+    __table_args__ = {"schema": "webhook"}
+
+    # Primary key
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # Crawl identification
+    crawl_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    crawl_url: Mapped[str] = mapped_column(String(500), nullable=False)
+
+    # Lifecycle timestamps
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Status tracking
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="in_progress", index=True)
+    success: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
+    # Page statistics
+    total_pages: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    pages_indexed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    pages_failed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Aggregate timing in milliseconds
+    total_chunking_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    total_embedding_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    total_qdrant_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    total_bm25_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+
+    # Crawl duration
+    duration_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # End-to-end tracking
+    initiated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    e2e_duration_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # Metadata
+    extra_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now())
+
+    def __repr__(self) -> str:
+        return f"<CrawlSession(crawl_id={self.crawl_id}, status={self.status}, pages={self.total_pages})>"

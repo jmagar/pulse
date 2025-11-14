@@ -15,10 +15,10 @@ services:
     image: ghcr.io/firecrawl/playwright-service:latest
     # build: apps/playwright-service-ts
     container_name: pulse_playwright
-    ports:
-      - "${PLAYWRIGHT_PORT:-50100}:3000"
     environment:
       - PORT=3000
+    ports:
+      - "${PLAYWRIGHT_PORT:-50100}:3000"
 
   firecrawl:
     <<: *common-service
@@ -29,6 +29,8 @@ services:
       nofile:
         soft: 65535
         hard: 65535
+    environment:
+      - PORT=3002  # Firecrawl's internal port
     depends_on:
       - pulse_redis
       - pulse_playwright
@@ -67,6 +69,8 @@ services:
     ports:
       - "${MCP_PORT:-50107}:3060"
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for log access
+      - /config/pulse_mcp_ssh:/mnt/ssh:ro  # SSH keys for remote Docker contexts
       - ${APPDATA_BASE:-/mnt/cache/appdata}/pulse_mcp/resources:/app/resources
     depends_on:
       - firecrawl
@@ -104,7 +108,7 @@ services:
     build:
       context: ./apps/webhook
       dockerfile: Dockerfile
-    container_name: pulse_webhook-worker
+    # No container_name - allows scaling with --scale flag
     command:
       - "python"
       - "-m"
@@ -112,8 +116,6 @@ services:
       - "worker"
       - "--url"
       - "redis://pulse_redis:6379"
-      - "--name"
-      - "search-bridge-worker"
       - "--worker-ttl"
       - "600"
       - "indexing"
@@ -131,6 +133,8 @@ services:
     image: ghcr.io/dgtlmoon/changedetection.io:latest
     container_name: pulse_change-detection
     hostname: changedetection
+    environment:
+      - PLAYWRIGHT_DRIVER_URL=ws://pulse_playwright:3000
     ports:
       - "${CHANGEDETECTION_PORT:-50109}:5000"
     volumes:

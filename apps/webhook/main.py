@@ -264,7 +264,7 @@ async def log_pulse_webhook(request: Request, call_next: Any) -> Any:
 
         if isinstance(payload, dict):
             summary = summarize_firecrawl_payload(payload)
-            logger.warning(
+            logger.info(
                 "Webhook request received",
                 event_type=summary.get("event_type"),
                 event_id=summary.get("event_id"),
@@ -273,7 +273,7 @@ async def log_pulse_webhook(request: Request, call_next: Any) -> Any:
                 body_bytes=len(body),
             )
         else:
-            logger.warning(
+            logger.info(
                 "Webhook request received (invalid JSON)",
                 body_bytes=len(body),
             )
@@ -282,7 +282,7 @@ async def log_pulse_webhook(request: Request, call_next: Any) -> Any:
             return {"type": "http.request", "body": body, "more_body": False}
 
         response = await call_next(Request(request.scope, receive))
-        logger.warning("Webhook response sent", status=response.status_code)
+        logger.info("Webhook response sent", status=response.status_code)
         return response
 
     return await call_next(request)
