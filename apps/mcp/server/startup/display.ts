@@ -205,7 +205,9 @@ function displayMCPStatus(): void {
       ),
     );
     console.log(
-      colorHelpers.dim("  Available: scrape, search, map, crawl, query"),
+      colorHelpers.dim(
+        "  Available: scrape, search, map, crawl, query, profile_crawl",
+      ),
     );
     console.log("");
     return;
