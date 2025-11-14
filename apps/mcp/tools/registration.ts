@@ -23,6 +23,7 @@ import { createSearchTool } from "./search/index.js";
 import { createMapTool } from "./map/index.js";
 import { createCrawlTool } from "./crawl/index.js";
 import { createQueryTool } from "./query/index.js";
+import { createProfileTool } from "./profile/index.js";
 import { ResourceStorageFactory } from "../storage/index.js";
 import type { FirecrawlConfig } from "../types.js";
 import { logInfo, logError } from "../utils/logging.js";
@@ -85,6 +86,24 @@ export function registerTools(
         }
 
         return createQueryTool({
+          baseUrl: currentEnv.webhookBaseUrl,
+          apiSecret: currentEnv.webhookApiSecret,
+        });
+      },
+    },
+    {
+      name: "profile_crawl",
+      factory: () => {
+        if (!currentEnv.webhookBaseUrl) {
+          throw new Error("WEBHOOK_BASE_URL is required for the profile_crawl tool");
+        }
+        if (!currentEnv.webhookApiSecret) {
+          throw new Error(
+            "WEBHOOK_API_SECRET is required for the profile_crawl tool",
+          );
+        }
+
+        return createProfileTool({
           baseUrl: currentEnv.webhookBaseUrl,
           apiSecret: currentEnv.webhookApiSecret,
         });
@@ -236,9 +255,18 @@ export function registerResources(server: Server): void {
 
       // Add external services from remote Docker contexts (if configured)
       // Example: GPU services on remote host
-      const externalServices = currentEnv.dockerExternalServices
-        ? JSON.parse(currentEnv.dockerExternalServices)
-        : [];
+      let externalServices: Array<{ name: string; description: string; context?: string }> = [];
+      if (currentEnv.dockerExternalServices) {
+        try {
+          externalServices = JSON.parse(currentEnv.dockerExternalServices);
+        } catch (error) {
+          logError("json-parse", error, {
+            context: "registration",
+            variable: "dockerExternalServices",
+          });
+          // Continue with empty array - don't fail registration
+        }
+      }
       services.push(...externalServices);
 
       dockerLogsProvider = new DockerLogsProvider({

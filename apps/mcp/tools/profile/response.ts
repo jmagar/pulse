@@ -56,7 +56,7 @@ function percentage(part: number, total: number): string {
  */
 function buildErrorSection(
   metrics: CrawlMetricsResponse,
-  options: ProfileOptions
+  options: Partial<ProfileOptions>
 ): string {
   if (!metrics.per_page_metrics || metrics.per_page_metrics.length === 0) {
     return "";
@@ -182,7 +182,7 @@ function buildInsights(metrics: CrawlMetricsResponse): string {
  */
 export function formatProfileResponse(
   metrics: CrawlMetricsResponse,
-  options: ProfileOptions
+  options: Partial<ProfileOptions>
 ): ToolResponse {
   const lines: string[] = [];
 
