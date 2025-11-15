@@ -110,13 +110,6 @@ All services receive the same `.env` via docker-compose's `env_file` anchor dire
 - `REDIS_URL` - Redis connection string
 - `DATABASE_URL` - PostgreSQL URL (if used instead of NUQ_DATABASE_URL)
 
-**Connection Pool Sizing:**
-- Base pool: 40 connections (3-4 concurrent crawls × 4 workers × 2.5 ops/worker)
-- Overflow: 20 connections (burst capacity for metrics/API)
-- Total: 60 max connections (within PostgreSQL default limit of 100)
-- Rationale: Sized for concurrent multi-crawl scenarios per 2025-01-15 capacity analysis
-- Monitoring: See `apps/webhook/tests/integration/test_connection_pool.py`
-
 ### Adding New Variables
 
 1. Add to both `.env` and `.env.example` (root)
