@@ -14,7 +14,6 @@ import { env } from "./config/environment.js";
 import type { IStrategyConfigClient } from "./scraping/strategies/learned/index.js";
 import { FilesystemStrategyConfigClient } from "./scraping/strategies/learned/index.js";
 import { NativeScrapingClient } from "./scraping/clients/native/native-scrape-client.js";
-import { FirecrawlClient as ActualFirecrawlClient } from "@firecrawl/client";
 import type {
   FirecrawlConfig,
   BatchScrapeOptions,
@@ -22,6 +21,14 @@ import type {
   CrawlStatusResult,
   BatchScrapeCancelResult,
   CrawlErrorsResult,
+  CrawlOptions as FirecrawlCrawlOptions,
+  StartCrawlResult,
+  CancelResult,
+  ActiveCrawlsResult,
+  MapOptions as FirecrawlMapOptions,
+  MapResult,
+  SearchOptions as FirecrawlSearchOptions,
+  SearchResult,
 } from "@firecrawl/client";
 
 /**
@@ -60,6 +67,17 @@ export interface IFirecrawlClient {
   getBatchScrapeErrors?: (
     jobId: string,
   ) => Promise<CrawlErrorsResult>;
+
+  // Crawl operations
+  startCrawl?: (options: FirecrawlCrawlOptions) => Promise<StartCrawlResult>;
+  getCrawlStatus?: (jobId: string) => Promise<CrawlStatusResult>;
+  cancelCrawl?: (jobId: string) => Promise<CancelResult>;
+  getCrawlErrors?: (jobId: string) => Promise<CrawlErrorsResult>;
+  listActiveCrawls?: () => Promise<ActiveCrawlsResult>;
+
+  // Map and search operations
+  map?: (options: FirecrawlMapOptions) => Promise<MapResult>;
+  search?: (options: FirecrawlSearchOptions) => Promise<SearchResult>;
 }
 
 /**
@@ -124,30 +142,26 @@ export class NativeFetcher implements INativeFetcher {
 }
 
 /**
- * Default Firecrawl API client implementation
+ * Webhook Bridge Firecrawl client implementation
  *
- * Wrapper around the unified FirecrawlClient that adapts it to the
- * IFirecrawlClient interface. Provides access to Firecrawl's advanced
- * scraping capabilities including JavaScript rendering, anti-bot bypass,
- * and intelligent content extraction.
+ * Routes all Firecrawl operations through the webhook bridge proxy at
+ * http://pulse_webhook:52100/v2/*. This consolidates Firecrawl integration
+ * in one place, enables automatic session tracking, and eliminates code
+ * duplication between MCP and webhook services.
  *
  * @example
  * ```typescript
- * const client = new DefaultFirecrawlClient(process.env.FIRECRAWL_API_KEY);
+ * const client = new WebhookBridgeClient('http://pulse_webhook:52100');
  * const result = await client.scrape('https://example.com', {
  *   formats: ['markdown', 'html']
  * });
  * ```
  */
-export class DefaultFirecrawlClient implements IFirecrawlClient {
-  private client: ActualFirecrawlClient;
+export class WebhookBridgeClient implements IFirecrawlClient {
+  private baseUrl: string;
 
-  constructor(apiKey: string, baseUrl?: string) {
-    const config: FirecrawlConfig = { apiKey };
-    if (baseUrl) {
-      config.baseUrl = baseUrl;
-    }
-    this.client = new ActualFirecrawlClient(config);
+  constructor(baseUrl: string = "http://pulse_webhook:52100") {
+    this.baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
   }
 
   async scrape(
@@ -165,10 +179,23 @@ export class DefaultFirecrawlClient implements IFirecrawlClient {
     };
     error?: string;
   }> {
-    const result = await this.client.scrape(url, options);
+    const response = await fetch(`${this.baseUrl}/v2/scrape`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, ...options }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: result.error || `HTTP ${response.status}`,
+      };
+    }
 
     return {
-      success: result.success,
+      success: result.success !== false,
       data: result.data
         ? {
             content: result.data.markdown || result.data.html || "",
@@ -186,33 +213,159 @@ export class DefaultFirecrawlClient implements IFirecrawlClient {
   async batchScrape(
     options: BatchScrapeOptions,
   ): Promise<BatchScrapeStartResult> {
-    if (typeof this.client.startBatchScrape !== "function") {
-      throw new Error("Batch scraping not supported by Firecrawl client");
+    const response = await fetch(`${this.baseUrl}/v2/batch/scrape`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(options),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Batch scrape failed: ${error}`);
     }
-    return this.client.startBatchScrape(options);
+
+    return response.json();
   }
 
   async getBatchScrapeStatus(jobId: string): Promise<CrawlStatusResult> {
-    if (typeof this.client.getBatchScrapeStatus !== "function") {
-      throw new Error("Batch scrape status not supported by Firecrawl client");
+    const response = await fetch(`${this.baseUrl}/v2/batch/scrape/${jobId}`, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Get batch scrape status failed: ${error}`);
     }
-    return this.client.getBatchScrapeStatus(jobId);
+
+    return response.json();
   }
 
   async cancelBatchScrape(
     jobId: string,
   ): Promise<BatchScrapeCancelResult> {
-    if (typeof this.client.cancelBatchScrape !== "function") {
-      throw new Error("Batch scrape cancellation not supported by client");
+    const response = await fetch(`${this.baseUrl}/v2/batch/scrape/${jobId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Cancel batch scrape failed: ${error}`);
     }
-    return this.client.cancelBatchScrape(jobId);
+
+    return response.json();
   }
 
   async getBatchScrapeErrors(jobId: string): Promise<CrawlErrorsResult> {
-    if (typeof this.client.getBatchScrapeErrors !== "function") {
-      throw new Error("Batch scrape errors not supported by client");
+    const response = await fetch(
+      `${this.baseUrl}/v2/batch/scrape/${jobId}/errors`,
+      {
+        method: "GET",
+      },
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Get batch scrape errors failed: ${error}`);
     }
-    return this.client.getBatchScrapeErrors(jobId);
+
+    return response.json();
+  }
+
+  async startCrawl(options: FirecrawlCrawlOptions): Promise<StartCrawlResult> {
+    const response = await fetch(`${this.baseUrl}/v2/crawl`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(options),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Start crawl failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async getCrawlStatus(jobId: string): Promise<CrawlStatusResult> {
+    const response = await fetch(`${this.baseUrl}/v2/crawl/${jobId}`, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Get crawl status failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async cancelCrawl(jobId: string): Promise<CancelResult> {
+    const response = await fetch(`${this.baseUrl}/v2/crawl/${jobId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Cancel crawl failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async getCrawlErrors(jobId: string): Promise<CrawlErrorsResult> {
+    const response = await fetch(`${this.baseUrl}/v2/crawl/${jobId}/errors`, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Get crawl errors failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async listActiveCrawls(): Promise<ActiveCrawlsResult> {
+    const response = await fetch(`${this.baseUrl}/v2/crawl/active`, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`List active crawls failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async map(options: FirecrawlMapOptions): Promise<MapResult> {
+    const response = await fetch(`${this.baseUrl}/v2/map`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(options),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Map request failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async search(options: FirecrawlSearchOptions): Promise<SearchResult> {
+    const response = await fetch(`${this.baseUrl}/v2/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(options),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Search request failed: ${error}`);
+    }
+
+    return response.json();
   }
 }
 
@@ -290,19 +443,13 @@ export function createMCPServer() {
     const factory =
       clientFactory ||
       (() => {
-        const firecrawlApiKey = env.firecrawlApiKey;
-        const firecrawlBaseUrl = env.firecrawlBaseUrl;
+        const webhookBridgeUrl = env.webhookBaseUrl;
 
         const clients: IScrapingClients = {
           native: new NativeFetcher(),
+          // Use webhook bridge as Firecrawl proxy (always available)
+          firecrawl: new WebhookBridgeClient(webhookBridgeUrl),
         };
-
-        if (firecrawlApiKey) {
-          clients.firecrawl = new DefaultFirecrawlClient(
-            firecrawlApiKey,
-            firecrawlBaseUrl,
-          );
-        }
 
         return clients;
       });
