@@ -18,13 +18,22 @@ from utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Create async engine
+# Create async engine with connection pooling
+#
+# Pool sizing rationale (from capacity analysis 2025-01-15):
+# - pool_size=40: Base pool supports 3-4 concurrent crawls with 4 workers each
+#   (4 workers × 2.5 operations/worker × 3 crawls = ~30 base connections)
+# - max_overflow=20: Burst capacity for transient metric writes and API requests
+# - Total capacity: 60 connections (well within PostgreSQL default of 100)
+#
+# Monitoring: Query pool.size(), pool.checkedout(), pool.checkedin(), pool.overflow()
+# See: tests/integration/test_connection_pool.py for pool status checks
 engine = create_async_engine(
     settings.database_url,
     echo=False,  # Set to True for SQL query logging
     pool_pre_ping=True,  # Verify connections before using
-    pool_size=40,  # Connection pool size
-    max_overflow=20,  # Additional connections if pool is full
+    pool_size=40,  # Connection pool size (base capacity)
+    max_overflow=20,  # Additional connections if pool is full (burst capacity)
 )
 
 # Create session factory
