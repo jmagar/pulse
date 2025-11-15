@@ -167,7 +167,7 @@ describeIf(TEST_PRODUCTION)("Billing tests", () => {
           identity,
         ),
 
-        // crawl 2: fc.dev crawl with json (5y credits)
+        // crawl 2: fc.dev crawl with json (5 credits per page)
         crawl(
           {
             url: TEST_SUITE_WEBSITE,
@@ -518,7 +518,7 @@ describeIf(TEST_PRODUCTION)("Billing tests", () => {
           identity,
         ),
 
-        // crawl 2: fc.dev crawl with json (5y credits)
+        // crawl 2: fc.dev crawl with json (6 credits per page)
         crawl(
           {
             url: TEST_SUITE_WEBSITE,

@@ -1285,7 +1285,7 @@ describe("Scrape tests", () => {
       );
 
       // TODO: flaky
-      // it.concurrent("auto works properly on 'stealth' site (faked for reliabile testing)", async () => {
+      // it.concurrent("auto works properly on 'stealth' site (faked for reliable testing)", async () => {
       //   const res = await scrape({
       //     url: "https://eo16f6718vph4un.m.pipedream.net", // always returns 403
       //     proxy: "auto",
