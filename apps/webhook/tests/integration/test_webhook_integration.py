@@ -11,8 +11,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from api import deps
-from api import router
+from api import deps, router
 
 
 @pytest.fixture

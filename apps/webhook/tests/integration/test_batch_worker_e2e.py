@@ -6,12 +6,11 @@ concurrent document indexing to final results aggregation.
 """
 
 import asyncio
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
 
-from workers.batch_worker import BatchWorker, _index_document_async
-from api.schemas.indexing import IndexDocumentRequest
+import pytest
+
+from workers.batch_worker import BatchWorker
 
 
 @pytest.fixture

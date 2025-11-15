@@ -1,8 +1,6 @@
 """Tests for configurable job timeout setting."""
 
-import os
 
-import pytest
 from config import Settings
 
 

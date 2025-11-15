@@ -271,7 +271,7 @@ class Settings(BaseSettings):
             return self
 
         # Define weak default secrets
-        WEAK_DEFAULTS = {
+        weak_defaults = {
             "dev-unsafe-api-secret-change-in-production",
             "dev-unsafe-hmac-secret-change-in-production",
             "your-api-key-here",
@@ -280,7 +280,7 @@ class Settings(BaseSettings):
         }
 
         # Validate api_secret
-        if self.api_secret in WEAK_DEFAULTS:
+        if self.api_secret in weak_defaults:
             raise ValueError(
                 "Weak default secret detected for api_secret. "
                 "Generate a secure secret: openssl rand -hex 32"
@@ -294,7 +294,7 @@ class Settings(BaseSettings):
             )
 
         # Validate webhook_secret
-        if self.webhook_secret in WEAK_DEFAULTS:
+        if self.webhook_secret in weak_defaults:
             raise ValueError(
                 "Weak default secret detected for webhook_secret. "
                 "Generate a secure secret: openssl rand -hex 32"

@@ -39,6 +39,10 @@ class ContentCacheService:
         """Generate Redis cache key for URL lookup."""
         return f"content:url:{url}"
 
+    def _cache_key_session(self, session_id: str, limit: int, offset: int) -> str:
+        """Generate Redis cache key for session lookup with pagination."""
+        return f"content:session:{session_id}:limit:{limit}:offset:{offset}"
+
     async def get_by_url(
         self,
         url: str,
@@ -97,6 +101,101 @@ class ContentCacheService:
             )
 
         return content_dicts
+
+    async def get_by_session(
+        self, session_id: str, limit: int = 100, offset: int = 0
+    ) -> list[dict[str, Any]]:
+        """Get scraped content by session ID with pagination and caching.
+
+        Args:
+            session_id: The crawl session job ID
+            limit: Maximum results to return (default 100)
+            offset: Number of results to skip (default 0)
+
+        Returns:
+            List of content dicts for the session
+        """
+        # 1. Try Redis cache
+        cache_key = self._cache_key_session(session_id, limit, offset)
+        cached = self.redis.get(cache_key)
+
+        if cached:
+            logger.debug(
+                "Cache hit for session", session_id=session_id, cache_key=cache_key
+            )
+            return json.loads(cached.decode())
+
+        logger.debug(
+            "Cache miss for session", session_id=session_id, cache_key=cache_key
+        )
+
+        # 2. Query PostgreSQL with pagination
+        result = await self.db.execute(
+            select(ScrapedContent)
+            .where(ScrapedContent.crawl_session_id == session_id)
+            .order_by(ScrapedContent.created_at.asc())
+            .limit(limit)
+            .offset(offset)
+        )
+        contents = result.scalars().all()
+
+        # 3. Serialize to dicts (reuse existing helper)
+        content_dicts = [self._content_to_dict(c) for c in contents]
+
+        # 4. Cache result
+        if content_dicts:
+            self.redis.setex(
+                cache_key, self.default_ttl, json.dumps(content_dicts, default=str)
+            )
+            logger.debug(
+                "Cached content for session",
+                session_id=session_id,
+                count=len(content_dicts),
+                limit=limit,
+                offset=offset,
+                ttl=self.default_ttl,
+            )
+
+        return content_dicts
+
+    async def invalidate_url(self, url: str) -> None:
+        """Invalidate cached content for a specific URL.
+
+        Use when content for URL has been updated or deleted.
+
+        Args:
+            url: The URL to invalidate
+        """
+        cache_key = self._cache_key_url(url)
+        deleted = self.redis.delete(cache_key)
+
+        if deleted:
+            logger.info("Invalidated URL cache", url=url, cache_key=cache_key)
+        else:
+            logger.debug("No cache to invalidate for URL", url=url)
+
+    async def invalidate_session(self, session_id: str) -> None:
+        """Invalidate all cached content for a crawl session.
+
+        Use when session content has been updated or deleted.
+        Removes all paginated caches for this session.
+
+        Args:
+            session_id: The session job_id to invalidate
+        """
+        # Find all cache keys for this session (all pagination pages)
+        pattern = f"content:session:{session_id}:*"
+        keys = self.redis.keys(pattern)
+
+        if keys:
+            deleted = self.redis.delete(*keys)
+            logger.info(
+                "Invalidated session cache",
+                session_id=session_id,
+                keys_deleted=deleted,
+            )
+        else:
+            logger.debug("No cache to invalidate for session", session_id=session_id)
 
     def _content_to_dict(self, content: ScrapedContent) -> dict[str, Any]:
         """Convert ScrapedContent model to dictionary."""

@@ -7,10 +7,10 @@ import httpx
 from rq import get_current_job
 from sqlalchemy import select, update
 
-from config import settings
-from infra.database import get_db_context
 from api.schemas.indexing import IndexDocumentRequest
+from config import settings
 from domain.models import ChangeEvent
+from infra.database import get_db_context
 from services.service_pool import ServicePool
 from utils.logging import get_logger
 from utils.time import format_est_timestamp

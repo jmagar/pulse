@@ -5,7 +5,7 @@ Handles creation and updates of CrawlSession records for tracking
 Firecrawl operations across their lifecycle.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -43,7 +43,7 @@ async def create_crawl_session(
         job_id=job_id,
         operation_type=operation_type,
         base_url=base_url,
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
         status="pending",
         auto_index=auto_index,
         extra_metadata=extra_metadata or {},
@@ -114,7 +114,7 @@ async def update_crawl_session_status(
 
     # Update fields
     session.status = status
-    session.updated_at = datetime.now(timezone.utc)
+    session.updated_at = datetime.now(UTC)
 
     if total_urls is not None:
         session.total_urls = total_urls
@@ -129,7 +129,7 @@ async def update_crawl_session_status(
 
     # Set completed_at if status is terminal
     if status in ("completed", "failed", "cancelled"):
-        session.completed_at = datetime.now(timezone.utc)
+        session.completed_at = datetime.now(UTC)
 
         # Calculate duration if we have both timestamps
         if session.started_at and session.completed_at:

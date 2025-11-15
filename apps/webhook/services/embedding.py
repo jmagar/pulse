@@ -51,7 +51,7 @@ class EmbeddingService:
     def client(self) -> httpx.AsyncClient:
         """
         Get the HTTP client, creating it lazily if needed.
-        
+
         Lazy initialization ensures the client is created in a thread
         with an active event loop, avoiding potential issues.
         """

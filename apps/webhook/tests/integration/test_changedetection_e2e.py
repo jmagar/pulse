@@ -1,13 +1,13 @@
 """End-to-end test for changedetection.io integration."""
 
-from datetime import UTC, datetime
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from domain.models import ChangeEvent
-from utils.time import format_est_timestamp
 from tests.utils.service_endpoints import get_changedetection_diff_url
+from utils.time import format_est_timestamp
 
 
 @pytest.mark.asyncio

@@ -1,5 +1,3 @@
-import type { Pool } from "pg";
-
 import { decrypt, encrypt } from "./crypto.js";
 import type {
   TokenRecord,

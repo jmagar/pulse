@@ -4,12 +4,9 @@ Tests verify that user input is properly sanitized and parameterized to prevent
 SQL injection attacks across all database operations.
 """
 
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select, text
 
 from main import app
-
 
 client = TestClient(app)
 
@@ -116,8 +113,9 @@ def test_watch_id_sql_injection():
     Attack vector: Watch ID in changedetection webhook payload
     Expected: Parameterized queries prevent injection
     """
-    import hmac
     import hashlib
+    import hmac
+
     from config import settings
 
     malicious_payload = {

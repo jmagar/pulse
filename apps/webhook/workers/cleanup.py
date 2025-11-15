@@ -1,13 +1,13 @@
 """Background cleanup tasks for stale jobs."""
 
 from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select, update
 
-from infra.database import get_db_context
 from domain.models import ChangeEvent
+from infra.database import get_db_context
 from utils.logging import get_logger
 from utils.time import format_est_timestamp
-
 
 logger = get_logger(__name__)
 

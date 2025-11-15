@@ -19,9 +19,9 @@ from uuid import uuid4
 
 from rq import Worker
 
+from api.schemas.indexing import IndexDocumentRequest
 from config import settings
 from infra.redis import get_redis_connection
-from api.schemas.indexing import IndexDocumentRequest
 from services.embedding import EmbeddingService
 from services.service_pool import ServicePool
 from services.vector_store import VectorStore

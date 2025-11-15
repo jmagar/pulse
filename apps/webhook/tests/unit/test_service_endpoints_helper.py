@@ -1,5 +1,9 @@
 """Tests for service endpoint helper utilities."""
 
+from tests.utils.db_fixtures import (  # noqa: F401
+    cleanup_database_engine,
+    initialize_test_database,
+)
 from tests.utils.service_endpoints import (
     get_api_base_url,
     get_api_host,
@@ -10,10 +14,6 @@ from tests.utils.service_endpoints import (
     get_qdrant_base_url,
     get_redis_url,
     get_tei_base_url,
-)
-from tests.utils.db_fixtures import (  # noqa: F401
-    cleanup_database_engine,
-    initialize_test_database,
 )
 
 

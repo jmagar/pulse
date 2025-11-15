@@ -1,12 +1,9 @@
 """Unit tests for batch worker processing."""
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
+from unittest.mock import AsyncMock, patch
 
 from worker import index_document_batch_job, process_batch_async
-from workers.batch_worker import BatchWorker
 
 
 def test_process_batch_async_processes_multiple_documents():

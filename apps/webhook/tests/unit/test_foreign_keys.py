@@ -2,7 +2,8 @@
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
-from domain.models import RequestMetric, OperationMetric
+
+from domain.models import OperationMetric
 
 
 @pytest.mark.asyncio

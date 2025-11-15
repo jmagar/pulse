@@ -48,15 +48,15 @@ os.environ.setdefault("WEBHOOK_ENABLE_WORKER", "false")
 os.environ.setdefault("WEBHOOK_VECTOR_DIM", "3")
 
 # Reload configuration and database modules so they pick up the test settings.
-import config as app_config
+import config as app_config  # noqa: E402
 
 app_config.settings = app_config.Settings()  # type: ignore[call-arg]
 
-import infra.database as app_database
+import infra.database as app_database  # noqa: E402
 
 importlib.reload(app_database)
 
-import domain.models as timing_models
+import domain.models as timing_models  # noqa: E402
 
 for table in timing_models.Base.metadata.tables.values():
     table.schema = None
@@ -285,7 +285,7 @@ def stub_external_services(
     monkeypatch: pytest.MonkeyPatch,
     request: pytest.FixtureRequest,
     in_memory_queue: InMemoryQueue,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """Swap external infrastructure with in-memory doubles unless opted out."""
 
     if request.node.get_closest_marker("external"):
@@ -438,7 +438,7 @@ def api_secret() -> str:
 
 
 @pytest.fixture
-def client() -> Generator[TestClient, None, None]:
+def client() -> Generator[TestClient]:
     """Create a FastAPI test client with application lifespan support."""
 
     from main import app

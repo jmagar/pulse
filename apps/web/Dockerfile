@@ -24,7 +24,24 @@ RUN pnpm --filter @firecrawl/client run build
 # Build Next.js app
 RUN pnpm --filter web run build
 
-# Stage 2: Production
+# Stage 2: Development (for hot reload with volume mounts)
+FROM node:20-alpine AS development
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+WORKDIR /app
+
+# Set environment
+ENV NODE_ENV=development
+
+# Expose port
+EXPOSE 3000
+
+# Dependencies and dev server will be handled by docker-compose volume mount + command
+CMD ["sh", "-c", "pnpm install && pnpm --filter web dev"]
+
+# Stage 3: Production
 FROM node:20-alpine
 
 # Install pnpm

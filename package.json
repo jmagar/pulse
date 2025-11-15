@@ -9,6 +9,7 @@
     "build:mcp": "pnpm --filter './apps/mcp' build",
     "build:web": "pnpm --filter './apps/web' build",
     "build:webhook": "cd apps/webhook && uv sync --extra dev",
+    "mcp:migrate": "tsx apps/mcp/scripts/run-migrations.ts",
     "test": "pnpm test:packages && pnpm test:apps && pnpm test:webhook",
     "test:packages": "pnpm --filter './packages/*' test",
     "test:apps": "pnpm --filter './apps/mcp' --filter './apps/web' test",
@@ -55,6 +56,7 @@
     "validate:filters": "bash scripts/validate-pnpm-filters.sh"
   },
   "devDependencies": {
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "tsx": "^4.20.6"
   }
 }

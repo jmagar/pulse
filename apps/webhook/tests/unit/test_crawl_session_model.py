@@ -1,7 +1,8 @@
 """Unit tests for CrawlSession model."""
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, UTC
 from sqlalchemy import select
 
 from domain.models import CrawlSession

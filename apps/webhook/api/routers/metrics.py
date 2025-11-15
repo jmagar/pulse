@@ -15,12 +15,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.deps import verify_api_secret
 from api.schemas.metrics import (
     CrawlMetricsResponse,
-    CrawlListResponse,
     OperationTimingSummary,
     PerPageMetric,
 )
-from infra.database import get_db_session
 from domain.models import CrawlSession, OperationMetric, RequestMetric
+from infra.database import get_db_session
 from utils.logging import get_logger
 from utils.time import format_est_timestamp
 

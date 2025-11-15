@@ -8,7 +8,6 @@ resource exhaustion attacks.
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-import pytest
 from fastapi.testclient import TestClient
 
 from main import app
@@ -149,6 +148,7 @@ def test_webhook_replay_attack_prevention():
     """
     import hashlib
     import hmac
+
     from config import settings
 
     # Create valid webhook payload

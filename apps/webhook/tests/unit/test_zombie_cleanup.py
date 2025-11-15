@@ -1,11 +1,12 @@
 """Test zombie job cleanup."""
 
-import pytest
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
-from workers.cleanup import cleanup_zombie_jobs
+import pytest
+
 from domain.models import ChangeEvent
+from workers.cleanup import cleanup_zombie_jobs
 
 
 @pytest.mark.asyncio

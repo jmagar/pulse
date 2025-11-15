@@ -8,10 +8,9 @@ import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
-from uuid import uuid4
 
-from infra.database import get_db_context
 from domain.models import OperationMetric
+from infra.database import get_db_context
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

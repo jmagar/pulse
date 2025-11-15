@@ -30,7 +30,7 @@ import type { FirecrawlConfig } from "../types.js";
 import { logInfo, logError } from "../utils/logging.js";
 import { registrationTracker } from "../utils/mcp-status.js";
 import { getMetricsCollector } from "../monitoring/index.js";
-import { env, getEnvSnapshot } from "../config/environment.js";
+import { getEnvSnapshot } from "../config/environment.js";
 import { SELF_HOSTED_NO_AUTH } from "@firecrawl/client";
 import { DockerLogsProvider } from "../resources/docker-logs.js";
 

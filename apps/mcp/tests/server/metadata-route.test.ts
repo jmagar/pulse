@@ -3,7 +3,6 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { OAuthConfig } from "../../config/oauth.js";
-import { oauthProtectedResource } from "../../server/routes/metadata.js";
 
 const baseConfig: OAuthConfig = {
   enabled: true,

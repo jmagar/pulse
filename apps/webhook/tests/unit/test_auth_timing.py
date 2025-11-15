@@ -1,6 +1,7 @@
 """Test authentication timing-attack resistance."""
 import time
 from statistics import stdev
+
 import pytest
 from fastapi import HTTPException
 

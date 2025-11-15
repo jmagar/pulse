@@ -1,12 +1,13 @@
 """Integration tests for metrics API endpoints."""
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, UTC
 from httpx import ASGITransport, AsyncClient
 
-from main import app
-from domain.models import CrawlSession
 from config import settings
+from domain.models import CrawlSession
+from main import app
 
 
 @pytest.mark.asyncio

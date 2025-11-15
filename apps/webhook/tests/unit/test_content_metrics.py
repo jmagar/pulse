@@ -37,10 +37,10 @@ def test_summarize_payload_counts_metrics(fake_token_counter: Callable[[str], in
     assert summary["document_count"] == 1
     document = summary["documents"][0]
     assert document["url"] == "https://example.com/page"
-    assert document["markdown"]["byte_length"] == len("Hello world from webhook".encode("utf-8"))
+    assert document["markdown"]["byte_length"] == len(b"Hello world from webhook")
     assert document["markdown"]["word_count"] == 4
     assert document["markdown"]["token_count"] == fake_token_counter("Hello world from webhook")
-    assert document["html"]["byte_length"] == len("<p>Hello world</p>".encode("utf-8"))
+    assert document["html"]["byte_length"] == len(b"<p>Hello world</p>")
     assert document["html"]["word_count"] == 2
     assert document["html"]["token_count"] == fake_token_counter("<p>Hello world</p>")
 

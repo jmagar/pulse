@@ -1,7 +1,8 @@
 """Integration tests for crawl lifecycle tracking."""
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, UTC
 from sqlalchemy import select
 
 from api.schemas.webhook import FirecrawlLifecycleEvent

@@ -76,6 +76,7 @@ def test_rejects_short_webhook_secret():
 def test_accepts_strong_api_secret():
     """Should accept strong cryptographically random API secret."""
     import secrets
+
     from config import Settings
 
     strong_api_secret = secrets.token_hex(32)

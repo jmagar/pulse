@@ -10,8 +10,8 @@ import threading
 from rq import Worker
 
 from config import settings
-from utils.logging import get_logger
 from infra.redis import get_redis_connection
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -86,7 +86,7 @@ class WorkerThreadManager:
             except RuntimeError:
                 # No current event loop in this thread
                 pass
-            
+
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:

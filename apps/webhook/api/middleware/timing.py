@@ -11,8 +11,8 @@ from uuid import uuid4
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from infra.database import get_db_context
 from domain.models import RequestMetric
+from infra.database import get_db_context
 from utils.logging import get_logger
 
 logger = get_logger(__name__)

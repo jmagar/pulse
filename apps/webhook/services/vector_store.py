@@ -55,7 +55,7 @@ class VectorStore:
         self.collection_name = collection_name
         self.vector_dim = vector_dim
         self.timeout = timeout
-        
+
         # Lazy initialization - client created on first use
         self._client: AsyncQdrantClient | None = None
 
@@ -70,7 +70,7 @@ class VectorStore:
     def client(self) -> AsyncQdrantClient:
         """
         Get the Qdrant client, creating it lazily if needed.
-        
+
         Lazy initialization ensures the client is created in a thread
         with an active event loop, avoiding potential issues.
         """

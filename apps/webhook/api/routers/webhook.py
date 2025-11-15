@@ -9,7 +9,6 @@ import hmac
 import json
 import time
 from collections.abc import Callable
-from datetime import UTC, datetime
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
@@ -21,12 +20,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.deps import get_redis_connection, get_rq_queue, verify_webhook_signature
 from api.schemas.webhook import ChangeDetectionPayload, FirecrawlWebhookEvent
 from config import settings
-from services.webhook_handlers import WebhookHandlerError, handle_firecrawl_event
-from utils.logging import get_logger
-from utils.time import format_est_timestamp, parse_iso_timestamp
 from domain.models import ChangeEvent
 from infra.database import get_db_session
 from infra.rate_limit import limiter
+from services.webhook_handlers import WebhookHandlerError, handle_firecrawl_event
+from utils.logging import get_logger
+from utils.time import format_est_timestamp, parse_iso_timestamp
 
 logger = get_logger(__name__)
 

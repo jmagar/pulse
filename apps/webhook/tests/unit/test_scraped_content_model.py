@@ -1,10 +1,11 @@
 """Unit tests for ScrapedContent model."""
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, UTC
 from sqlalchemy import select
 
-from domain.models import ScrapedContent, CrawlSession
+from domain.models import CrawlSession, ScrapedContent
 
 
 @pytest.mark.asyncio

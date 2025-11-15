@@ -1,12 +1,10 @@
 """Unit tests for metrics response schemas."""
 
-import pytest
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from api.schemas.metrics import (
-    OperationTimingSummary,
-    PerPageMetric,
     CrawlMetricsResponse,
+    OperationTimingSummary,
 )
 
 

@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from workers.jobs import rescrape_changed_url
 from domain.models import ChangeEvent
 from utils.time import format_est_timestamp, parse_iso_timestamp
+from workers.jobs import rescrape_changed_url
 
 
 @pytest.mark.asyncio

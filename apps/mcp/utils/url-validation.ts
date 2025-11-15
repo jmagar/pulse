@@ -10,8 +10,11 @@ const PRIVATE_IP_PATTERNS = [
   /^10\.\d+\.\d+\.\d+$/,
   /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/,
   /^192\.168\.\d+\.\d+$/,
-  /^\[?::1\]?$/,
-  /^\[?fe80:/i,
+  /^169\.254\.\d+\.\d+$/,           // AWS metadata service
+  /^\[?::1\]?$/,                    // IPv6 loopback
+  /^\[?fe80:/i,                     // IPv6 link-local
+  /^\[?fc00:/i,                     // IPv6 unique local (fc00::/7)
+  /^\[?fd[0-9a-f]{2}:/i,            // IPv6 unique local (fd00::/8)
 ];
 
 /**
@@ -61,15 +64,4 @@ export function preprocessUrl(url: string): string {
   }
 
   return processed;
-}
-
-/**
- * Validate URL without preprocessing
- *
- * @param url - URL to validate
- * @returns true if valid, throws error otherwise
- */
-export function validateUrl(url: string): boolean {
-  preprocessUrl(url); // Reuse validation logic
-  return true;
 }

@@ -1,14 +1,14 @@
 """Integration tests for webhook optimizations."""
 
-import pytest
-import time
-import json
-import hmac
 import hashlib
+import hmac
+import json
+import time
+
+import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from config import settings
 
 
 @pytest.fixture

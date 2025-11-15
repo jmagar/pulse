@@ -9,14 +9,13 @@ Implements transparent proxying of all Firecrawl v2 endpoints with:
 """
 
 import json
-from typing import Any
 
 import httpx
 from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infra.database import get_db_session
 from config import settings
+from infra.database import get_db_session
 from services.crawl_session import create_crawl_session
 from utils.logging import get_logger
 

@@ -9,7 +9,6 @@ import hmac
 import time
 from statistics import stdev
 
-import pytest
 from fastapi.testclient import TestClient
 
 from config import settings

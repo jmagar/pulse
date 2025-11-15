@@ -18,14 +18,13 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from api import deps
-from api import router
+from api import deps, router
 
 
 @pytest.fixture
 def integration_client(
     monkeypatch: pytest.MonkeyPatch,
-) -> Generator[tuple[TestClient, MagicMock, str], None, None]:
+) -> Generator[tuple[TestClient, MagicMock, str]]:
     """Provide a TestClient with real signature verification."""
 
     secret = "integration-secret-1234567890"

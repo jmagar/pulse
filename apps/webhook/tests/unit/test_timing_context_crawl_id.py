@@ -1,11 +1,12 @@
 """Unit tests for TimingContext crawl_id parameter."""
 
-import pytest
 import asyncio
+
+import pytest
 from sqlalchemy import select
 
-from utils.timing import TimingContext
 from domain.models import OperationMetric
+from utils.timing import TimingContext
 
 
 @pytest.mark.asyncio
@@ -15,7 +16,7 @@ async def test_timing_context_stores_crawl_id(db_session):
         "test_op",
         "test_name",
         crawl_id="timing_test_123"
-    ) as ctx:
+    ):
         await asyncio.sleep(0.01)
 
     # Verify stored in database

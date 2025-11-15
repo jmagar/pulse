@@ -2,9 +2,7 @@
 
 import asyncio
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
+from unittest.mock import AsyncMock, patch
 
 from workers.batch_worker import BatchWorker
 
@@ -194,7 +192,7 @@ def test_batch_worker_logs_batch_metrics():
 
             with patch("workers.batch_worker.logger") as mock_logger:
                 batch_worker = BatchWorker()
-                results = await batch_worker.process_batch(documents)
+                await batch_worker.process_batch(documents)
 
                 # Verify logging calls
                 # Should log start and completion with metrics

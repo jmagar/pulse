@@ -377,7 +377,7 @@ async def _record_crawl_complete(crawl_id: str, event: FirecrawlLifecycleEvent) 
                 .where(OperationMetric.job_id == crawl_id)
                 .where(OperationMetric.operation_type == "worker")
                 .where(OperationMetric.operation_name == "index_document")
-                .where(OperationMetric.success == True)
+                .where(OperationMetric.success)
                 .where(OperationMetric.document_url.isnot(None))
             )
             session.pages_indexed = success_count_result.scalar() or 0
@@ -390,7 +390,7 @@ async def _record_crawl_complete(crawl_id: str, event: FirecrawlLifecycleEvent) 
                     func.sum(OperationMetric.duration_ms).label("total_ms"),
                 )
                 .where(OperationMetric.job_id == crawl_id)
-                .where(OperationMetric.success == True)
+                .where(OperationMetric.success)
                 .group_by(OperationMetric.operation_type)
             )
 

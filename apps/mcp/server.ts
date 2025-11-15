@@ -15,7 +15,6 @@ import type { IStrategyConfigClient } from "./scraping/strategies/learned/index.
 import { FilesystemStrategyConfigClient } from "./scraping/strategies/learned/index.js";
 import { NativeScrapingClient } from "./scraping/clients/native/native-scrape-client.js";
 import type {
-  FirecrawlConfig,
   BatchScrapeOptions,
   BatchScrapeStartResult,
   CrawlStatusResult,

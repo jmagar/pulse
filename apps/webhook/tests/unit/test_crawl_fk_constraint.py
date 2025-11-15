@@ -1,9 +1,9 @@
 """Unit tests for crawl_id foreign key constraint."""
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, UTC
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 
 from domain.models import CrawlSession, OperationMetric
 

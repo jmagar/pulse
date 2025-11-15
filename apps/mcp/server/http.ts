@@ -13,7 +13,6 @@ import {
   metricsAuthMiddleware,
   securityHeaders,
   csrfTokenMiddleware,
-  csrfProtection,
   createRateLimiter,
 } from "./middleware/index.js";
 import {

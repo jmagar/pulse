@@ -9,8 +9,6 @@
 
 import type { FirecrawlScrapingOptions } from "@firecrawl/client";
 
-const DEFAULT_MAX_DISCOVERY_DEPTH = 5;
-
 export const DEFAULT_LANGUAGE_EXCLUDES = [
   // European languages
   "^/de/", // German

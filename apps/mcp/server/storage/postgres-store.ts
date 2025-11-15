@@ -1,7 +1,6 @@
 import type { Pool } from "pg";
 
 import {
-  deserializeRecord,
   serializeRecord,
   type TokenRecord,
   type TokenStore,

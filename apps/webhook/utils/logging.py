@@ -1,9 +1,9 @@
 """Structured logging configuration using structlog."""
 
-from datetime import datetime
 import logging
 import re
 import sys
+from datetime import datetime
 from typing import Any, cast
 from zoneinfo import ZoneInfo
 

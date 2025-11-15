@@ -1,8 +1,14 @@
 """Tests for batch job enqueueing optimization."""
 
+from unittest.mock import MagicMock, Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
-from api.schemas.webhook import FirecrawlPageEvent, FirecrawlDocumentPayload, FirecrawlDocumentMetadata
+
+from api.schemas.webhook import (
+    FirecrawlDocumentMetadata,
+    FirecrawlDocumentPayload,
+    FirecrawlPageEvent,
+)
 from services.webhook_handlers import _handle_page_event
 
 

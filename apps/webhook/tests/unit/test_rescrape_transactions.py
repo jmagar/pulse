@@ -1,9 +1,11 @@
 """Test rescrape job transaction handling."""
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 from datetime import UTC, datetime
-from workers.jobs import rescrape_changed_url
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from domain.models import ChangeEvent
+from workers.jobs import rescrape_changed_url
 
 
 @pytest.mark.asyncio

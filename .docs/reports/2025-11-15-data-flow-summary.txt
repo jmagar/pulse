@@ -1,0 +1,338 @@
+COMPLETE DATA FLOW: MCP SCRAPE TOOL → WEBHOOK STORAGE
+
+================================================================================
+KEY FINDING: TWO COMPLETELY SEPARATE STORAGE SYSTEMS
+================================================================================
+
+  MCP LOCAL STORAGE                    WEBHOOK PERSISTENT STORAGE
+  (TypeScript)                         (Python + PostgreSQL)
+  
+  saveToStorage() ──────────┐          
+  (scrape/pipeline.ts)      │          Webhook events ─────────────┐
+                            │                                      │
+  ResourceStorageFactory    │          store_content_async()       │
+                            │          (content_storage.py)        │
+  ├─ Memory (default)       │                                      │
+  ├─ Filesystem             │          PostgreSQL                  │
+  └─ Postgres (optional)    │          webhook.scraped_content     │
+                            │          └──────────────────────────┘
+  Content stored:           │                                       
+  • raw HTML                │          Content stored:
+  • cleaned markdown        │          • markdown
+  • extracted JSON          │          • html
+                            │          • links (JSONB)
+  Trigger: User action      │          • screenshot
+  Visibility: Local only    │          • extra_metadata (OG, DC, etc)
+  Indexing: Manual          │
+                            │          Trigger: Automatic (webhooks)
+                            │          Visibility: Cross-service
+                            │          Indexing: Automatic
+                            │
+                NO SYNCHRONIZATION BETWEEN THEM
+                            │
+                            └─────────────────────┬──────────────────┘
+                                                  │
+                                    Data duplication issue:
+                                    - Different schemas
+                                    - Different triggers
+                                    - Different indexing
+                                    - Can't search across both
+
+
+================================================================================
+CRITICAL GAPS IDENTIFIED
+================================================================================
+
+GAP 1: SINGLE-URL SCRAPE NOT IN WEBHOOK DB
+  ├─ User calls: scrape("https://example.com", resultHandling="saveAndReturn")
+  ├─ Flow: MCP → WebhookBridgeClient → Webhook proxy → Firecrawl
+  ├─ Problem: Firecrawl doesn't send webhook event for single scrapes
+  ├─ Result: CrawlSession created ✓, but NO content in scraped_content ✗
+  └─ Impact: Can't search webhook DB for single-URL scrape results
+
+GAP 2: MCP STORAGE INVISIBLE TO WEBHOOK SERVICE
+  ├─ User calls: scrape(url) with resultHandling="saveAndReturn"
+  ├─ Content saved to: MCP storage (memory/filesystem/postgres)
+  ├─ Problem: Webhook service has NO ACCESS to MCP storage backend
+  ├─ Result: Content not in webhook DB, can't be searched via webhook API
+  └─ Impact: Two separate content silos - can't cross-search
+
+GAP 3: DIFFERENT CONTENT FORMATS
+  ├─ MCP stores: raw, cleaned, extracted (3 variants per URL)
+  ├─ Webhook stores: markdown, html, links, screenshot (4 variants per URL)
+  ├─ Problem: Different deduplication (MCP=none, webhook=content_hash)
+  ├─ Result: Webhook can't index MCP variants, MCP can't store webhook metadata
+  └─ Impact: Schema mismatch - need migration layer
+
+GAP 4: INCONSISTENT INDEXING
+  ├─ MCP content: Stored locally, NO automatic indexing
+  ├─ Webhook content: Stored in DB, auto_index=true by default
+  ├─ Problem: User doesn't know which content is searchable
+  ├─ Result: Some searches succeed, others fail silently
+  └─ Impact: Confusing UX - unpredictable content availability
+
+GAP 5: METADATA MISMATCH
+  ├─ MCP metadata: url, source, timestamp, extract, contentLength, pagination
+  ├─ Webhook metadata: url, source_url, statusCode, openGraph, dublinCore, language, country
+  ├─ Problem: Different query languages needed for each backend
+  ├─ Result: Can't build unified search across both systems
+  └─ Impact: Complex application code with dual-path logic
+
+
+================================================================================
+DATA FLOW TIMELINE (SINGLE SCRAPE)
+================================================================================
+
+T0:   User calls scrape("https://example.com", resultHandling="saveAndReturn")
+      │
+T1:   ├─ MCP Scrape Tool processes request
+      │  └─ Validates args, checks cache (MCP storage)
+      │
+T2:   ├─ scrapeContent() → scrapeWithStrategy()
+      │  └─ Determines: Use Firecrawl via WebhookBridgeClient
+      │
+T3:   ├─ POST http://pulse_webhook:52100/v2/scrape
+      │  └─ Request body: { url, formats, ... }
+      │
+T4:   ├─ Webhook proxy receives request
+      │  ├─ Creates CrawlSession (job_id, base_url="https://example.com", operation_type="scrape")
+      │  └─ DB insert: webhook.crawl_sessions (status="in_progress")
+      │
+T5:   ├─ Webhook proxies to http://firecrawl:3002/v2/scrape
+      │  └─ Body: { url, formats, ... }
+      │
+T6:   ├─ Firecrawl renders page, extracts content
+      │  └─ Returns: { success, data: { html, markdown, ... } }
+      │
+T7:   ├─ Webhook receives Firecrawl response (2xx status)
+      │  ├─ Adds _webhook_meta to response
+      │  └─ Returns response to MCP
+      │
+T8:   ├─ MCP receives Firecrawl response
+      │  ├─ processContent(): HTML → Markdown (if cleanScrape=true)
+      │  └─ extract(): LLM extraction (if extract query provided)
+      │
+T9:   ├─ saveToStorage() 
+      │  ├─ Determines storage backend: MCP_RESOURCE_STORAGE (default=memory)
+      │  └─ Writes: raw HTML, cleaned markdown, extracted JSON to MCP storage
+      │
+T10:  └─ Return response to user
+           ├─ Content: cleaned markdown or extracted JSON
+           ├─ SavedURIs: { raw?: uri, cleaned?: uri, extracted?: uri }
+           └─ Result: Content visible to user immediately
+
+BACKGROUND (NOT shown to user):
+  - Firecrawl completes asynchronously
+  - Webhook session remains in "in_progress" state
+  - NO page event sent (single scrape)
+  - CrawlSession never transitions to "completed"
+  - Content never stored in webhook.scraped_content
+
+
+================================================================================
+DATA FLOW TIMELINE (MULTI-PAGE CRAWL)
+================================================================================
+
+T0:   User calls crawl("https://example.com", limit=10)
+      │
+T1:   ├─ MCP Crawl Tool → startCrawl() via WebhookBridgeClient
+      │
+T2:   ├─ POST http://pulse_webhook:52100/v2/crawl
+      │  └─ Body: { url, limit: 10, ... }
+      │
+T3:   ├─ Webhook creates CrawlSession (operation_type="crawl", status="in_progress")
+      │  └─ DB: webhook.crawl_sessions
+      │
+T4:   ├─ Webhook proxies to http://firecrawl:3002/v2/crawl
+      │
+T5:   ├─ Firecrawl starts crawl, returns job_id
+      │  └─ MCP returns job_id to user (async operation)
+      │
+T6+:  BACKGROUND PROCESSING (webhooks)
+      │
+      ├─ Firecrawl crawl.started event
+      │  └─ _record_crawl_start() → Updates CrawlSession.initiated_at
+      │
+      ├─ Firecrawl crawl.page event (for each page)
+      │  ├─ _handle_page_event()
+      │  │  ├─ asyncio.create_task(store_content_async())  ← FIRE-AND-FORGET
+      │  │  │  └─ For each document:
+      │  │  │     └─ store_scraped_content()
+      │  │  │        ├─ INSERT ... ON CONFLICT DO NOTHING
+      │  │  │        └─ DB: webhook.scraped_content (crawl_session_id=FK, markdown, html, links, ...)
+      │  │  │
+      │  │  └─ queue.enqueue("worker.index_document_job")  ← Separate from storage
+      │  │     └─ Later: embedding + search indexing
+      │  │
+      │  └─ RESULT: Each page stored in webhook DB
+      │
+      └─ Firecrawl crawl.completed event
+         └─ _record_crawl_complete()
+            ├─ Update CrawlSession.status = "completed"
+            ├─ Calculate pages_indexed, pages_failed
+            └─ Aggregate timing metrics
+
+
+================================================================================
+WHAT'S STORED WHERE
+================================================================================
+
+SCENARIO 1: scrape(url) → MCP → Firecrawl → WebhookBridgeClient
+───────────────────────────────────────────────────────────────
+Location  | Stored | Format                  | Duration      | Searchable
+──────────┼────────┼─────────────────────────┼───────────────┼────────────
+MCP       | ✓      | raw, cleaned, extracted | MCP_RESOURCE_ | search tool
+          |        |                         | STORAGE type  | (local)
+──────────┼────────┼─────────────────────────┼───────────────┼────────────
+Webhook   | ✗      | N/A (no webhook event)  | N/A           | N/A
+          |        |                         |               |
+──────────┴────────┴─────────────────────────┴───────────────┴────────────
+
+
+SCENARIO 2: crawl(url, limit=10) → Firecrawl webhooks
+──────────────────────────────────────────────────────
+Location  | Stored | Format           | Duration          | Searchable
+──────────┼────────┼──────────────────┼───────────────────┼────────────
+MCP       | ✗      | N/A (not stored) | N/A               | N/A
+          |        |                  |                   |
+──────────┼────────┼──────────────────┼───────────────────┼────────────
+Webhook   | ✓      | markdown, html,  | webhook.scraped_  | webhook
+          |        | links, screenshot| content (per-page)| search API
+──────────┴────────┴──────────────────┴───────────────────┴────────────
+
+
+SCENARIO 3: scrape(url) with native fetcher (no WebhookBridgeClient)
+───────────────────────────────────────────────────────────────────
+Location  | Stored | Format                  | Duration      | Searchable
+──────────┼────────┼─────────────────────────┼───────────────┼────────────
+MCP       | ✓      | raw, cleaned, extracted | MCP_RESOURCE_ | search tool
+          |        |                         | STORAGE type  | (local)
+──────────┼────────┼─────────────────────────┼───────────────┼────────────
+Webhook   | ✗      | N/A                     | N/A           | N/A
+──────────┴────────┴─────────────────────────┴───────────────┴────────────
+
+
+================================================================================
+WHAT'S NOT BEING SAVED (DATA LOSS)
+================================================================================
+
+In MCP Storage:
+  ✗ Links (extracted URLs)
+  ✗ Screenshots (not persisted separately)
+  ✗ Deduplication (each variant separate)
+
+In Webhook Storage:
+  ✗ Single-URL scrape content (no webhook event from Firecrawl)
+  ✗ LLM extraction results (not passed through webhooks)
+  ✗ Cleaned markdown variants (Firecrawl markdown != MCP cleaned)
+  ✗ Custom extraction schemas (lost in transport)
+
+Missing Entirely:
+  ✗ Change tracking (version history)
+  ✗ Content diffs (what changed between scrapes)
+  ✗ Extraction history (previous extractions)
+  ✗ Cleaning variants (different markdown processors)
+  ✗ Unified search (across both backends)
+
+
+================================================================================
+KEY CODE LOCATIONS
+================================================================================
+
+MCP Side (TypeScript):
+  └─ apps/mcp/
+     ├─ tools/scrape/handler.ts         (handleScrapeRequest entry)
+     ├─ tools/scrape/pipeline.ts        (saveToStorage function, line 450)
+     ├─ storage/factory.ts              (ResourceStorageFactory)
+     ├─ storage/memory.ts               (In-memory storage, volatile)
+     ├─ storage/filesystem.ts           (Disk-based storage)
+     ├─ storage/postgres.ts             (DB storage, not enabled)
+     └─ server.ts                       (WebhookBridgeClient, line 172)
+
+Webhook Side (Python):
+  └─ apps/webhook/
+     ├─ api/routers/firecrawl_proxy.py  (Proxy endpoints, auto session tracking)
+     ├─ services/webhook_handlers.py    (Page event handler, line 71)
+     │  └─ _handle_page_event()         (Fire-and-forget storage call, line 110)
+     ├─ services/content_storage.py     (Persistent storage, line 20)
+     │  ├─ store_scraped_content()      (INSERT ... ON CONFLICT, line 54)
+     │  └─ store_content_async()        (Async fire-and-forget, line 88)
+     └─ domain/models.py                (DB models)
+        ├─ CrawlSession                 (Session tracking)
+        └─ ScrapedContent               (Content storage table)
+
+Database:
+  └─ PostgreSQL
+     └─ webhook.scraped_content         (Unique constraint: uq_content_per_session_url)
+
+
+================================================================================
+ENVIRONMENT VARIABLES
+================================================================================
+
+MCP Configuration:
+  MCP_WEBHOOK_BASE_URL              = "http://pulse_webhook:52100" (default)
+  MCP_RESOURCE_STORAGE              = "memory" (default) | "filesystem" | "postgres"
+  MCP_RESOURCE_FILESYSTEM_ROOT      = "/path/to/resources" (if filesystem)
+  MCP_FIRECRAWL_BASE_URL            = "http://firecrawl:3002" (internal)
+
+Webhook Configuration:
+  WEBHOOK_DATABASE_URL              = PostgreSQL connection (must match MCP if postgres storage)
+  WEBHOOK_FIRECRAWL_API_KEY         = API key for proxying to Firecrawl
+
+
+================================================================================
+RECOMMENDATIONS TO FIX GAPS
+================================================================================
+
+Priority 1: Sync Single Scrapes to Webhook DB
+  └─ Modify: apps/mcp/tools/scrape/pipeline.ts saveToStorage()
+     Action: Insert into webhook.scraped_content in addition to local storage
+     Benefit: All content searchable via webhook API
+
+Priority 2: Enable Shared PostgreSQL Storage
+  └─ Modify: .env file
+     Action: Set MCP_RESOURCE_STORAGE=postgres
+     Benefit: MCP and webhook share same DB, automatic sync
+
+Priority 3: Deduplicate Content Schemas
+  └─ Create: Content model migration layer
+     Action: Convert MCP variants to webhook schema
+     Benefit: Single unified storage format
+
+Priority 4: Auto-Index MCP Scrapes
+  └─ Modify: apps/mcp/tools/scrape/pipeline.ts saveToStorage()
+     Action: Call webhook indexing API after save
+     Benefit: All content auto-indexed without user action
+
+Priority 5: Track Content Changes
+  └─ Create: content_history table
+     Action: Store version diffs between scrapes
+     Benefit: User can see what changed
+
+
+================================================================================
+SUMMARY: THE BIG PICTURE
+================================================================================
+
+You have TWO storage systems that don't talk to each other:
+
+1. MCP LOCAL STORAGE
+   - Where: Memory/disk/postgres (user choice)
+   - When: On scrape with resultHandling != "returnOnly"
+   - What: raw HTML, cleaned markdown, extracted JSON
+   - Visibility: Local to MCP only
+   - Indexing: Manual
+
+2. WEBHOOK PERSISTENT STORAGE
+   - Where: PostgreSQL webhook.scraped_content table
+   - When: On Firecrawl webhook events (batch/crawl only)
+   - What: markdown, html, links, screenshot
+   - Visibility: Cross-service (searchable via webhook API)
+   - Indexing: Automatic
+
+The gap: Single-URL scrapes via MCP are stored locally but NOT in webhook DB.
+Result: Can't search webhook for single-scrape results.
+
+Fix: Have MCP saveToStorage() also insert into webhook.scraped_content.
+

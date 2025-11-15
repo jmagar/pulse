@@ -5,11 +5,10 @@ These tests validate the model structure, schema, and relationships
 without requiring a database connection.
 """
 
-import pytest
-from sqlalchemy import BigInteger, String, Text, TIMESTAMP, ForeignKey, JSON
+from sqlalchemy import JSON, TIMESTAMP, BigInteger, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 
-from domain.models import ScrapedContent, CrawlSession
+from domain.models import CrawlSession, ScrapedContent
 
 
 def test_scraped_content_table_name():

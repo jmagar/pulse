@@ -1,12 +1,13 @@
 """Tests for webhook signature verification with body passthrough."""
 
-import json
-import hmac
 import hashlib
-from fastapi import FastAPI, Depends
-from fastapi.testclient import TestClient
+import hmac
+import json
 from typing import Annotated
+
 import pytest
+from fastapi import Depends, FastAPI
+from fastapi.testclient import TestClient
 
 from api.deps import verify_webhook_signature
 
@@ -38,7 +39,7 @@ def test_verify_signature_returns_body(client, monkeypatch):
 
     # Compute signature
     signature = hmac.new(
-        "test-secret".encode("utf-8"),
+        b"test-secret",
         body,
         hashlib.sha256
     ).hexdigest()
@@ -60,7 +61,7 @@ def test_body_not_read_twice(client, monkeypatch):
 
     payload = {"type": "crawl.page", "id": "123", "success": True, "data": []}
     body = json.dumps(payload).encode("utf-8")
-    signature = hmac.new("test-secret".encode(), body, hashlib.sha256).hexdigest()
+    signature = hmac.new(b"test-secret", body, hashlib.sha256).hexdigest()
 
     # This should not raise "body already read" error
     response = client.post(

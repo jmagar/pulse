@@ -1,11 +1,12 @@
 """Test data retention policy."""
 
-import pytest
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
+
+import pytest
 from sqlalchemy import select
 
-from domain.models import RequestMetric, OperationMetric
+from domain.models import OperationMetric, RequestMetric
 
 
 @pytest.mark.asyncio

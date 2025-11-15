@@ -1,7 +1,7 @@
 """Unit tests for OperationMetric crawl_id field."""
 
+
 import pytest
-from datetime import datetime, UTC
 from sqlalchemy import select
 
 from domain.models import OperationMetric

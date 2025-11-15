@@ -7,18 +7,18 @@ Create Date: 2025-11-15 01:16:13.332710
 Add scraped_content table for permanent Firecrawl content storage.
 Stores original markdown/HTML from all Firecrawl operations (scrape, map, crawl, search, extract).
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '04f2514440fd'
-down_revision: Union[str, Sequence[str], None] = '413191e2eb2c'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = '413191e2eb2c'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

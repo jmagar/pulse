@@ -4,7 +4,6 @@ Health check API endpoint.
 Verifies that all required services are accessible.
 """
 
-from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends

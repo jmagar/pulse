@@ -33,5 +33,5 @@ export interface CrawlMetricsResponse {
   aggregate_timing: OperationTimingSummary;
   per_page_metrics?: PerPageMetric[];
   error_message: string | null;
-  extra_metadata: Record<string, any> | null;
+  extra_metadata: Record<string, unknown> | null;
 }
