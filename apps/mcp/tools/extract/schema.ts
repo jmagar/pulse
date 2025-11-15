@@ -45,7 +45,7 @@ export type ExtractOptions = z.infer<typeof extractOptionsSchema>;
  */
 export function buildExtractInputSchema() {
   return {
-    type: "object",
+    type: "object" as const,
     properties: {
       urls: {
         type: "array",
@@ -78,5 +78,5 @@ export function buildExtractInputSchema() {
       },
     },
     required: ["urls"],
-  } as const;
+  };
 }
