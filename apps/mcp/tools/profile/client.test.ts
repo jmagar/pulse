@@ -33,7 +33,7 @@ describe("ProfileClient", () => {
         expect.objectContaining({
           method: "GET",
           headers: expect.objectContaining({
-            "X-API-Secret": "test-secret",
+            "Authorization": "Bearer test-secret",
           }),
         })
       );
