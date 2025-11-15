@@ -23,7 +23,7 @@ export function createExtractTool(clients: IScrapingClients): Tool {
           throw new Error("Extract operation not supported by Firecrawl client");
         }
 
-        const result = await extractPipeline(extractClient, validatedArgs);
+        const result = await extractPipeline(extractClient as { extract: NonNullable<typeof extractClient.extract> }, validatedArgs);
         return formatExtractResponse(result, validatedArgs.urls);
       } catch (error) {
         return {
