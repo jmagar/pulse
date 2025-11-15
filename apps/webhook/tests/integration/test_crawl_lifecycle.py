@@ -23,12 +23,12 @@ async def test_record_crawl_start_creates_session(db_session):
 
     # Verify session created
     result = await db_session.execute(
-        select(CrawlSession).where(CrawlSession.crawl_id == "test_crawl_start_123")
+        select(CrawlSession).where(CrawlSession.job_id == "test_crawl_start_123")
     )
     session = result.scalar_one()
 
-    assert session.crawl_id == "test_crawl_start_123"
-    assert session.crawl_url == "https://example.com"
+    assert session.job_id == "test_crawl_start_123"
+    assert session.base_url == "https://example.com"
     assert session.status == "in_progress"
     assert session.success is None
     assert session.started_at is not None
@@ -50,7 +50,7 @@ async def test_record_crawl_start_idempotent(db_session):
 
     # Verify only one session
     result = await db_session.execute(
-        select(CrawlSession).where(CrawlSession.crawl_id == "idempotent_crawl")
+        select(CrawlSession).where(CrawlSession.job_id == "idempotent_crawl")
     )
     sessions = result.scalars().all()
     assert len(sessions) == 1
@@ -63,8 +63,9 @@ async def test_record_crawl_complete_aggregates_metrics(db_session):
 
     # Create crawl session
     session = CrawlSession(
-        crawl_id="complete_test_crawl",
-        crawl_url="https://example.com",
+        job_id="complete_test_crawl",
+        base_url="https://example.com",
+        operation_type="crawl",
         started_at=datetime.now(UTC),
         status="in_progress",
     )
@@ -114,7 +115,7 @@ async def test_record_crawl_complete_aggregates_metrics(db_session):
 
     # Verify session updated
     result = await db_session.execute(
-        select(CrawlSession).where(CrawlSession.crawl_id == "complete_test_crawl")
+        select(CrawlSession).where(CrawlSession.job_id == "complete_test_crawl")
     )
     updated = result.scalar_one()
 

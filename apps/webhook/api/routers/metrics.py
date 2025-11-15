@@ -335,7 +335,7 @@ async def get_crawl_metrics(
         HTTPException: 404 if crawl not found
     """
     # Fetch crawl session
-    result = await db.execute(select(CrawlSession).where(CrawlSession.crawl_id == crawl_id))
+    result = await db.execute(select(CrawlSession).where(CrawlSession.job_id == crawl_id))
     session = result.scalar_one_or_none()
 
     if not session:
@@ -372,8 +372,8 @@ async def get_crawl_metrics(
         ]
 
     return CrawlMetricsResponse(
-        crawl_id=session.crawl_id,
-        crawl_url=session.crawl_url,
+        crawl_id=session.job_id,
+        crawl_url=session.base_url,
         status=session.status,
         success=session.success,
         started_at=session.started_at,

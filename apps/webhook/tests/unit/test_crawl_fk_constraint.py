@@ -13,8 +13,9 @@ async def test_operation_metric_fk_constraint_valid(db_session):
     """Test OperationMetric with valid crawl_id reference."""
     # Create crawl session first
     session = CrawlSession(
-        crawl_id="fk_test_crawl",
-        crawl_url="https://example.com",
+        job_id="fk_test_crawl",
+        base_url="https://example.com",
+        operation_type="crawl",
         started_at=datetime.now(UTC),
         status="in_progress",
     )
@@ -45,8 +46,9 @@ async def test_operation_metric_fk_cascade_on_delete(db_session):
     """Test SET NULL behavior when crawl session deleted."""
     # Create crawl session
     session = CrawlSession(
-        crawl_id="cascade_test",
-        crawl_url="https://example.com",
+        job_id="cascade_test",
+        base_url="https://example.com",
+        operation_type="crawl",
         started_at=datetime.now(UTC),
         status="in_progress",
     )

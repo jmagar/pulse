@@ -69,8 +69,9 @@ async def test_get_crawl_metrics_success(client: AsyncClient, db_session):
     """Test GET /api/metrics/crawls/{crawl_id} returns metrics."""
     # Create test session
     session = CrawlSession(
-        crawl_id="api_test_crawl",
-        crawl_url="https://example.com",
+        job_id="api_test_crawl",
+        base_url="https://example.com",
+        operation_type="crawl",
         started_at=datetime.now(UTC),
         completed_at=datetime.now(UTC),
         status="completed",
