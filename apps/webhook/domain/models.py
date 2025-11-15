@@ -330,7 +330,7 @@ class ScrapeCache(Base):
 
     # Screenshot support
     screenshot: Mapped[bytes | None] = mapped_column(
-        Text, nullable=True, comment="Base64 decoded screenshot binary"
+        LargeBinary, nullable=True, comment="Screenshot binary data (PNG)"
     )
     screenshot_format: Mapped[str | None] = mapped_column(
         String(20), nullable=True, comment="Screenshot MIME type: image/png"

@@ -46,6 +46,8 @@ os.environ.setdefault("REDIS_URL", "memory://")
 os.environ.setdefault("WEBHOOK_TEST_MODE", "true")
 os.environ.setdefault("WEBHOOK_ENABLE_WORKER", "false")
 os.environ.setdefault("WEBHOOK_VECTOR_DIM", "3")
+os.environ.setdefault("WEBHOOK_FIRECRAWL_API_URL", "http://firecrawl:3002")
+os.environ.setdefault("WEBHOOK_FIRECRAWL_API_KEY", "test-firecrawl-key")
 
 # Reload configuration and database modules so they pick up the test settings.
 import config as app_config  # noqa: E402
