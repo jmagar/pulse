@@ -148,6 +148,22 @@ Website change detection and monitoring service.
 - **Storage:** File-based in `/datastore` volume
 - **Integration:** Notifies webhook bridge on change detection
 
+### Web UI
+
+**Purpose**: Interactive web interface for the Pulse platform
+
+**Key Features**:
+- Chat interface with AI assistant
+- Source management and research
+- Audio studio for podcast generation
+- Real-time hot reload during development
+
+**Technology**: Next.js 16, React 19, TailwindCSS v4, shadcn/ui
+
+**Documentation**: See [apps/web/README.md](apps/web/README.md)
+
+**Port**: `3000` (configurable via `WEB_PORT`)
+
 ## Quick Start
 
 ### Using Docker Compose (Recommended)
@@ -200,6 +216,17 @@ Services will be available at:
 - Firecrawl API: `http://localhost:50102`
 - MCP Server: `http://localhost:50107`
 - Webhook Bridge: `http://localhost:50108`
+- Web UI: `http://localhost:3000`
+
+### Accessing the Web UI
+
+The web interface runs at http://localhost:3000 (configurable via `WEB_PORT`).
+
+**Features:**
+- Chat interface with AI assistant
+- Source management and research
+- Audio studio for podcast generation
+- Real-time hot reload during development
 
 ### Local Development
 
@@ -326,6 +353,8 @@ pnpm dev
 # Run all services together (MCP, web, webhook)
 pnpm dev:all
 ```
+
+**Hot Reload:** The web service uses volume mounts for instant feedback. Edit files in `apps/web/` and see changes immediately without rebuilding the container.
 
 **Note**: External services (TEI, Qdrant) must be running separately. See `docs/external-services.md`.
 
