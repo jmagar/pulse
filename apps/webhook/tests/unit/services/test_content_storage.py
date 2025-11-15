@@ -5,7 +5,6 @@ These tests verify the permanent storage of Firecrawl scraped content.
 """
 
 import hashlib
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -14,16 +13,31 @@ import pytest
 @pytest.mark.asyncio
 async def test_store_scraped_content_creates_record():
     """Test storing a single scraped document creates a record."""
+    from domain.models import ScrapedContent
     from services.content_storage import store_scraped_content
 
-    # Mock database session
+    # Mock database session - INSERT ON CONFLICT returns new record
+    markdown = "# Test Document\n\nThis is a test."
+    content_hash = hashlib.sha256(markdown.encode("utf-8")).hexdigest()
+    new_content = ScrapedContent(
+        id=1,
+        crawl_session_id="test-session-123",
+        url="https://example.com/test",
+        source_url="https://example.com/test",
+        content_source="firecrawl_scrape",
+        markdown=markdown,
+        html="<h1>Test Document</h1><p>This is a test.</p>",
+        content_hash=content_hash,
+        extra_metadata={"sourceURL": "https://example.com/test"}
+    )
+
     mock_session = AsyncMock()
     mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = None  # No existing content
+    mock_result.scalar_one_or_none.return_value = new_content  # INSERT succeeded
     mock_session.execute.return_value = mock_result
 
     document = {
-        "markdown": "# Test Document\n\nThis is a test.",
+        "markdown": markdown,
         "html": "<h1>Test Document</h1><p>This is a test.</p>",
         "metadata": {"sourceURL": "https://example.com/test"}
     }
@@ -36,25 +50,25 @@ async def test_store_scraped_content_creates_record():
         content_source="firecrawl_scrape"
     )
 
-    # Verify record was created with correct fields
-    assert result.markdown == "# Test Document\n\nThis is a test."
+    # Verify correct record was returned
+    assert result is new_content
+    assert result.markdown == markdown
     assert result.html == "<h1>Test Document</h1><p>This is a test.</p>"
-    assert result.content_hash is not None
+    assert result.content_hash == content_hash
     assert result.crawl_session_id == "test-session-123"
     assert result.url == "https://example.com/test"
     assert result.source_url == "https://example.com/test"
     assert result.content_source == "firecrawl_scrape"
 
-    # Verify session methods were called
-    mock_session.add.assert_called_once()
+    # Verify flush was called (new INSERT ON CONFLICT implementation)
     mock_session.flush.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_store_scraped_content_deduplication():
     """Test that duplicate content is not stored twice."""
-    from services.content_storage import store_scraped_content
     from domain.models import ScrapedContent
+    from services.content_storage import store_scraped_content
 
     # Create existing content record
     markdown = "# Test Document\n\nThis is a test."
@@ -70,11 +84,19 @@ async def test_store_scraped_content_deduplication():
         extra_metadata={}
     )
 
-    # Mock database session to return existing content
+    # Mock database session for INSERT ON CONFLICT deduplication
+    # First execute (INSERT ON CONFLICT) returns None (conflict occurred)
+    # Second execute (SELECT existing) returns existing_content
     mock_session = AsyncMock()
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = existing_content
-    mock_session.execute.return_value = mock_result
+
+    mock_insert_result = MagicMock()
+    mock_insert_result.scalar_one_or_none.return_value = None  # Conflict
+
+    mock_select_result = MagicMock()
+    mock_select_result.scalar_one.return_value = existing_content
+
+    # Mock execute to return different results for INSERT vs SELECT
+    mock_session.execute.side_effect = [mock_insert_result, mock_select_result]
 
     document = {
         "markdown": markdown,
@@ -89,11 +111,12 @@ async def test_store_scraped_content_deduplication():
         content_source="firecrawl_scrape"
     )
 
-    # Should return existing content without creating new record
+    # Should return existing content (fetched via SELECT after conflict)
     assert result is existing_content
     assert result.id == 42
-    mock_session.add.assert_not_called()
-    mock_session.flush.assert_not_called()
+
+    # Verify two executes: INSERT ON CONFLICT, then SELECT
+    assert mock_session.execute.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -142,8 +165,8 @@ async def test_store_content_async(monkeypatch):
 @pytest.mark.asyncio
 async def test_get_content_by_url():
     """Test retrieving content by URL."""
-    from services.content_storage import get_content_by_url
     from domain.models import ScrapedContent
+    from services.content_storage import get_content_by_url
 
     # Create mock content records
     content1 = ScrapedContent(
@@ -188,8 +211,8 @@ async def test_get_content_by_url():
 @pytest.mark.asyncio
 async def test_get_content_by_session():
     """Test retrieving content by session ID."""
-    from services.content_storage import get_content_by_session
     from domain.models import ScrapedContent
+    from services.content_storage import get_content_by_session
 
     # Create mock content records
     content1 = ScrapedContent(
@@ -228,3 +251,68 @@ async def test_get_content_by_session():
     assert len(results) == 2
     assert results[0].id == 1
     assert results[1].id == 2
+
+
+@pytest.mark.asyncio
+async def test_concurrent_duplicate_insert_handling(db_session):
+    """Test that concurrent duplicate inserts are handled gracefully (ON CONFLICT)."""
+    import asyncio
+    from domain.models import CrawlSession, ScrapedContent
+    from services.content_storage import store_scraped_content
+
+    # Create crawl session
+    crawl_session = CrawlSession(
+        job_id="concurrent-test",
+        base_url="https://example.com",
+        status="processing",
+    )
+    db_session.add(crawl_session)
+    await db_session.commit()
+
+    # Identical document data
+    document = {
+        "markdown": "# Test Content",
+        "html": "<h1>Test Content</h1>",
+        "metadata": {"sourceURL": "https://example.com/page"},
+    }
+
+    # Simulate concurrent inserts (race condition scenario)
+    async def insert_content():
+        # Each coroutine gets its own session
+        from infra.database import get_db_context
+        async with get_db_context() as session:
+            result = await store_scraped_content(
+                session=session,
+                crawl_session_id="concurrent-test",
+                url="https://example.com/page",
+                document=document,
+                content_source="firecrawl_scrape"
+            )
+            await session.commit()
+            return result
+
+    # Launch two concurrent inserts
+    results = await asyncio.gather(
+        insert_content(),
+        insert_content(),
+        return_exceptions=False  # Should NOT raise exceptions
+    )
+
+    # Both should succeed (one inserts, one returns existing)
+    assert len(results) == 2
+    assert results[0] is not None
+    assert results[1] is not None
+
+    # Should have same ID (same record returned)
+    assert results[0].id == results[1].id
+    assert results[0].content_hash == results[1].content_hash
+
+    # Verify only ONE record in database
+    from sqlalchemy import select, func
+    count_result = await db_session.execute(
+        select(func.count(ScrapedContent.id)).where(
+            ScrapedContent.crawl_session_id == "concurrent-test"
+        )
+    )
+    count = count_result.scalar()
+    assert count == 1, f"Expected 1 record, found {count}"

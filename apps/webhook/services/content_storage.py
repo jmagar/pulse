@@ -9,6 +9,7 @@ import logging
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.models import ScrapedContent
@@ -26,6 +27,9 @@ async def store_scraped_content(
     """
     Store scraped content permanently in PostgreSQL.
 
+    Uses INSERT ... ON CONFLICT to handle race conditions atomically.
+    If duplicate content exists (same session+url+hash), returns existing record.
+
     Args:
         session: Database session
         crawl_session_id: job_id from CrawlSession (String field)
@@ -34,7 +38,7 @@ async def store_scraped_content(
         content_source: Source type (firecrawl_scrape, firecrawl_crawl, etc.)
 
     Returns:
-        ScrapedContent instance
+        ScrapedContent instance (new or existing)
     """
     markdown = document.get("markdown", "")
     html = document.get("html")
@@ -45,22 +49,9 @@ async def store_scraped_content(
     # Compute content hash for deduplication
     content_hash = hashlib.sha256(markdown.encode("utf-8")).hexdigest()
 
-    # Check if this exact content already exists for this session+URL
-    existing = await session.execute(
-        select(ScrapedContent).where(
-            ScrapedContent.crawl_session_id == crawl_session_id,
-            ScrapedContent.url == url,
-            ScrapedContent.content_hash == content_hash
-        )
-    )
-    existing_content = existing.scalar_one_or_none()
-
-    if existing_content:
-        # Already stored, skip duplicate
-        return existing_content
-
-    # Create new record
-    scraped_content = ScrapedContent(
+    # Use INSERT ... ON CONFLICT DO NOTHING with RETURNING
+    # This is atomic and handles race conditions at database level
+    stmt = pg_insert(ScrapedContent).values(
         crawl_session_id=crawl_session_id,
         url=url,
         source_url=metadata.get("sourceURL", url),
@@ -71,12 +62,27 @@ async def store_scraped_content(
         screenshot=screenshot,
         extra_metadata=metadata,
         content_hash=content_hash
+    ).on_conflict_do_nothing(
+        constraint='uq_content_per_session_url'
+    ).returning(ScrapedContent)
+
+    result = await session.execute(stmt)
+    content = result.scalar_one_or_none()
+
+    if content:
+        # Successfully inserted new record
+        await session.flush()
+        return content
+
+    # Conflict occurred - fetch existing record
+    existing = await session.execute(
+        select(ScrapedContent).where(
+            ScrapedContent.crawl_session_id == crawl_session_id,
+            ScrapedContent.url == url,
+            ScrapedContent.content_hash == content_hash
+        )
     )
-
-    session.add(scraped_content)
-    await session.flush()  # Get ID without committing
-
-    return scraped_content
+    return existing.scalar_one()
 
 
 async def store_content_async(
