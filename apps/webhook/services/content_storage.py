@@ -177,6 +177,9 @@ async def get_content_by_session(
     """
     Retrieve content for a crawl session with pagination.
 
+    Returns content ordered by database insertion time (created_at),
+    not scrape time (scraped_at), to ensure stable pagination ordering.
+
     Args:
         session: Database session
         crawl_session_id: job_id of CrawlSession (String field)

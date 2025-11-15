@@ -77,7 +77,7 @@ async def get_content_for_session(
     Retrieve content for a crawl session with pagination.
 
     Returns up to `limit` items starting from `offset`.
-    Content is ordered by scraped_at timestamp ascending (chronological).
+    Content is ordered by created_at timestamp ascending (insertion order).
 
     Args:
         session_id: The crawl session ID (job_id from Firecrawl)
