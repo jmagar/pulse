@@ -7,7 +7,7 @@ with Redis caching for performance.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -118,7 +118,7 @@ async def get_content_for_session(
 
 @router.get("/{content_id}")
 async def get_content_by_id(
-    content_id: int,
+    content_id: Annotated[int, Path(gt=0)],
     _verified: None = Depends(verify_api_secret),
     session: AsyncSession = Depends(get_db_session),
 ) -> ContentResponse:
@@ -153,9 +153,14 @@ async def get_content_by_id(
     return ContentResponse(
         id=content.id,
         url=content.url,
+        source_url=content.source_url,
         markdown=content.markdown,
         html=content.html,
+        links=content.links,
+        screenshot=content.screenshot,
         metadata=content.extra_metadata,
-        scraped_at=content.scraped_at.isoformat() if content.scraped_at else "",
+        content_source=content.content_source,
+        scraped_at=content.scraped_at.isoformat() if content.scraped_at else None,
+        created_at=content.created_at.isoformat() if content.created_at else None,
         crawl_session_id=content.crawl_session_id,
     )

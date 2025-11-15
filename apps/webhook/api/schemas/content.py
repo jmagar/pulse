@@ -17,10 +17,15 @@ class ContentResponse(BaseModel):
 
     id: int
     url: str
+    source_url: str | None = None
     markdown: str | None
     html: str | None
+    links: dict | None = None
+    screenshot: str | None = None
     metadata: dict
-    scraped_at: str
+    content_source: str
+    scraped_at: str | None = None
+    created_at: str | None = None
     crawl_session_id: str
 
     class Config:

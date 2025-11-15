@@ -55,10 +55,16 @@ async def test_get_content_by_id(db_session):
     data = response.json()
     assert data["id"] == 999
     assert data["url"] == "https://example.com/test"
+    assert data["source_url"] == "https://example.com/test"
     assert data["markdown"] == "# Test Content"
     assert data["html"] == "<h1>Test Content</h1>"
+    assert data["links"] is None  # Not set in test data
+    assert data["screenshot"] is None  # Not set in test data
+    assert data["content_source"] == "firecrawl_scrape"
     assert data["crawl_session_id"] == "test-job"
     assert data["metadata"]["title"] == "Test Page"
+    assert data["scraped_at"] is not None  # Should have a timestamp
+    assert data["created_at"] is not None  # Should have a timestamp
 
 
 @pytest.mark.asyncio
