@@ -316,3 +316,103 @@ async def test_concurrent_duplicate_insert_handling(db_session):
     )
     count = count_result.scalar()
     assert count == 1, f"Expected 1 record, found {count}"
+
+
+@pytest.mark.asyncio
+async def test_storage_failure_metrics_recorded(db_session):
+    """Test that storage failures are recorded in operation_metrics."""
+    from services.content_storage import store_content_async
+    from domain.models import OperationMetric
+    from sqlalchemy import select
+
+    # Create crawl session
+    from domain.models import CrawlSession
+    crawl_session = CrawlSession(
+        job_id="metrics-test",
+        base_url="https://example.com",
+        status="processing",
+    )
+    db_session.add(crawl_session)
+    await db_session.commit()
+
+    # Document with invalid data (will cause error)
+    invalid_document = {
+        "metadata": {},  # Missing sourceURL
+        # Missing markdown field will cause hash error
+    }
+
+    # Call fire-and-forget storage (should not raise)
+    await store_content_async(
+        crawl_session_id="metrics-test",
+        documents=[invalid_document],
+        content_source="firecrawl_scrape"
+    )
+
+    # Give async operation time to complete
+    import asyncio
+    await asyncio.sleep(0.5)
+
+    # Check operation_metrics table for failure record
+    result = await db_session.execute(
+        select(OperationMetric).where(
+            OperationMetric.operation_type == "content_storage",
+            OperationMetric.crawl_id == "metrics-test"
+        )
+    )
+    metrics = result.scalars().all()
+
+    assert len(metrics) == 1, "Expected 1 metric record"
+    metric = metrics[0]
+    assert metric.success is False, "Expected failure to be recorded"
+    assert metric.error_message is not None, "Expected error message"
+    assert "sourceURL" in metric.error_message or "markdown" in metric.error_message
+
+
+@pytest.mark.asyncio
+async def test_storage_success_metrics_recorded(db_session):
+    """Test that successful storage is recorded in operation_metrics."""
+    from services.content_storage import store_content_async
+    from domain.models import OperationMetric
+    from sqlalchemy import select
+
+    # Create crawl session
+    from domain.models import CrawlSession
+    crawl_session = CrawlSession(
+        job_id="success-metrics-test",
+        base_url="https://example.com",
+        status="processing",
+    )
+    db_session.add(crawl_session)
+    await db_session.commit()
+
+    # Valid document
+    document = {
+        "markdown": "# Test",
+        "metadata": {"sourceURL": "https://example.com/page"},
+    }
+
+    # Call fire-and-forget storage
+    await store_content_async(
+        crawl_session_id="success-metrics-test",
+        documents=[document],
+        content_source="firecrawl_scrape"
+    )
+
+    # Give async operation time to complete
+    import asyncio
+    await asyncio.sleep(0.5)
+
+    # Check operation_metrics table for success record
+    result = await db_session.execute(
+        select(OperationMetric).where(
+            OperationMetric.operation_type == "content_storage",
+            OperationMetric.crawl_id == "success-metrics-test"
+        )
+    )
+    metrics = result.scalars().all()
+
+    assert len(metrics) == 1, "Expected 1 metric record"
+    metric = metrics[0]
+    assert metric.success is True, "Expected success to be recorded"
+    assert metric.error_message is None, "Expected no error message"
+    assert metric.extra_metadata.get("stored_count") == 1

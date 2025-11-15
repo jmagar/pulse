@@ -91,7 +91,9 @@ async def store_content_async(
     content_source: str
 ) -> None:
     """
-    Fire-and-forget async storage of content (doesn't block webhook response).
+    Fire-and-forget async storage of content with metrics tracking.
+
+    Records success/failure in operation_metrics table for monitoring.
 
     Args:
         crawl_session_id: job_id from CrawlSession
@@ -99,22 +101,46 @@ async def store_content_async(
         content_source: Source type
     """
     from infra.database import get_db_context
+    from utils.timing import TimingContext
 
-    try:
-        async with get_db_context() as session:
-            for document in documents:
-                url = document.get("metadata", {}).get("sourceURL", "")
-                await store_scraped_content(
-                    session=session,
-                    crawl_session_id=crawl_session_id,
-                    url=url,
-                    document=document,
-                    content_source=content_source
-                )
-            # Auto-commits on context exit
-    except Exception as e:
-        # Log but don't raise (fire-and-forget)
-        logger.error(f"Failed to store content for session {crawl_session_id}: {e}")
+    async with TimingContext(
+        operation_type="content_storage",
+        operation_name="store_batch",
+        crawl_id=crawl_session_id,
+        metadata={"document_count": len(documents), "source": content_source}
+    ) as ctx:
+        try:
+            stored_count = 0
+            async with get_db_context() as session:
+                for document in documents:
+                    url = document.get("metadata", {}).get("sourceURL", "")
+                    await store_scraped_content(
+                        session=session,
+                        crawl_session_id=crawl_session_id,
+                        url=url,
+                        document=document,
+                        content_source=content_source
+                    )
+                    stored_count += 1
+                # Auto-commits on context exit
+
+            # Update metadata with success details
+            ctx.metadata["stored_count"] = stored_count
+
+        except Exception as e:
+            # Mark as failure in metrics
+            ctx.success = False
+            ctx.error_message = str(e)
+
+            # Still log for immediate visibility
+            logger.error(
+                "Content storage failed",
+                crawl_session_id=crawl_session_id,
+                document_count=len(documents),
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
 
 
 async def get_content_by_url(
