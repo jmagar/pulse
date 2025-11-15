@@ -116,10 +116,10 @@ class ChangeEvent(Base):
 
 class CrawlSession(Base):
     """
-    Tracks complete crawl lifecycle with aggregate metrics.
+    Tracks complete Firecrawl operation lifecycle with aggregate metrics.
 
-    Records lifecycle from crawl.started → crawl.completed and aggregates
-    per-page operation metrics for holistic performance analysis.
+    Supports all Firecrawl v2 operations: scrape, batch scrape, crawl, map, search.
+    Records lifecycle and aggregates per-page operation metrics for performance analysis.
     """
     __tablename__ = "crawl_sessions"
     __table_args__ = {"schema": "webhook"}
@@ -127,9 +127,12 @@ class CrawlSession(Base):
     # Primary key
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
 
-    # Crawl identification
-    crawl_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    crawl_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    # Job identification (renamed from crawl_id for v2 API)
+    job_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    base_url: Mapped[str] = mapped_column(String(500), nullable=False)
+
+    # Operation type (scrape, scrape_batch, crawl, map, search, extract)
+    operation_type: Mapped[str] = mapped_column(String(50), nullable=False)
 
     # Lifecycle timestamps
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
@@ -139,10 +142,15 @@ class CrawlSession(Base):
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="in_progress", index=True)
     success: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
-    # Page statistics
+    # Page statistics (for backward compatibility with old metrics)
     total_pages: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     pages_indexed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     pages_failed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # URL statistics (new for v2 API - supports all operation types)
+    total_urls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    completed_urls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    failed_urls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     # Aggregate timing in milliseconds
     total_chunking_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
@@ -157,10 +165,17 @@ class CrawlSession(Base):
     initiated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     e2e_duration_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
 
+    # Auto-indexing control
+    auto_index: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    # Job expiration
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Metadata
     extra_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
 
     def __repr__(self) -> str:
-        return f"<CrawlSession(crawl_id={self.crawl_id}, status={self.status}, pages={self.total_pages})>"
+        return f"<CrawlSession(job_id={self.job_id}, operation={self.operation_type}, status={self.status}, urls={self.total_urls})>"
