@@ -2,13 +2,11 @@ import { getEnvSnapshot } from "../config/environment.js";
 import { ResourceStorage } from "./types.js";
 import { MemoryResourceStorage } from "./memory.js";
 import { FileSystemResourceStorage } from "./filesystem.js";
-import { PostgresResourceStorage } from "./postgres.js";
 import { WebhookPostgresStorage } from "./webhook-postgres.js";
 
 export type StorageType =
   | "memory"
   | "filesystem"
-  | "postgres"
   | "webhook-postgres";
 
 export class ResourceStorageFactory {
@@ -24,12 +22,11 @@ export class ResourceStorageFactory {
     const validTypes: StorageType[] = [
       "memory",
       "filesystem",
-      "postgres",
       "webhook-postgres",
     ];
     if (!validTypes.includes(rawType as StorageType)) {
       throw new Error(
-        `Unsupported storage type: ${rawType}. Supported types: memory, filesystem, postgres, webhook-postgres`,
+        `Unsupported storage type: ${rawType}. Supported types: memory, filesystem, webhook-postgres`,
       );
     }
     const storageType = rawType as StorageType;
@@ -45,11 +42,6 @@ export class ResourceStorageFactory {
         const fsStorage = new FileSystemResourceStorage(rootDir);
         await fsStorage.init();
         this.instance = fsStorage;
-        break;
-      }
-
-      case "postgres": {
-        this.instance = new PostgresResourceStorage();
         break;
       }
 
@@ -78,7 +70,7 @@ export class ResourceStorageFactory {
 
       default:
         throw new Error(
-          `Unsupported storage type: ${storageType}. Supported types: memory, filesystem, postgres, webhook-postgres`,
+          `Unsupported storage type: ${storageType}. Supported types: memory, filesystem, webhook-postgres`,
         );
     }
 

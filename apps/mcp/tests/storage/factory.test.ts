@@ -100,7 +100,7 @@ describe("ResourceStorageFactory", () => {
       process.env.MCP_RESOURCE_STORAGE = "unsupported";
 
       await expect(ResourceStorageFactory.create()).rejects.toThrow(
-        "Unsupported storage type: unsupported. Supported types: memory, filesystem, postgres, webhook-postgres",
+        "Unsupported storage type: unsupported. Supported types: memory, filesystem, webhook-postgres",
       );
     });
 
