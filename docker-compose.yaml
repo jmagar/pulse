@@ -114,7 +114,9 @@ services:
     build:
       context: ./apps/webhook
       dockerfile: Dockerfile
-    # No container_name - allows scaling with --scale flag
+    # No container_name - allows scaling with deploy.replicas
+    deploy:
+      replicas: ${WEBHOOK_WORKER_REPLICAS:-8}
     command:
       - "python"
       - "-m"
@@ -166,6 +168,36 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  pulse_web:
+    <<: *common-service
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: builder  # Use builder stage for dev (has dev dependencies)
+    container_name: pulse_web
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      # Mount source code for hot reload (no rebuild needed)
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      # Preserve node_modules from image
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/packages/firecrawl-client/node_modules
+    command: sh -c "cd /app/apps/web && pnpm dev"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - pulse_mcp
+      - pulse_webhook
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
 networks:
   pulse:
