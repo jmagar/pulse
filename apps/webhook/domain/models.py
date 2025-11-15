@@ -278,3 +278,98 @@ class ScrapedContent(Base):
 
     def __repr__(self) -> str:
         return f"<ScrapedContent(id={self.id}, url={self.url}, source={self.content_source})>"
+
+
+class ScrapeCache(Base):
+    """
+    Cache for scraped content with intelligent invalidation.
+
+    Stores raw HTML, cleaned Markdown, and LLM-extracted content with
+    cache keys based on URL + scraping parameters.
+    """
+
+    __tablename__ = "scrape_cache"
+    __table_args__ = {"schema": "webhook"}
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    url: Mapped[str] = mapped_column(Text, nullable=False, comment="Full URL that was scraped")
+    url_hash: Mapped[str] = mapped_column(
+        Text, nullable=False, unique=True, comment="SHA-256 hash of URL for fast lookups"
+    )
+
+    # Content versions
+    raw_content: Mapped[str | None] = mapped_column(
+        Text, nullable=True, comment="Raw HTML/text from scraper"
+    )
+    cleaned_content: Mapped[str | None] = mapped_column(
+        Text, nullable=True, comment="Cleaned Markdown/text after processing"
+    )
+    extracted_content: Mapped[str | None] = mapped_column(
+        Text, nullable=True, comment="LLM-extracted content"
+    )
+    extract_query: Mapped[str | None] = mapped_column(
+        Text, nullable=True, comment="LLM extraction query used (for cache key)"
+    )
+
+    # Metadata
+    source: Mapped[str] = mapped_column(
+        String(50), nullable=False, comment="Scraping source: firecrawl, native"
+    )
+    content_type: Mapped[str | None] = mapped_column(
+        String(100), nullable=True, comment="MIME type of content"
+    )
+    content_length_raw: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Length of raw_content in characters"
+    )
+    content_length_cleaned: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Length of cleaned_content in characters"
+    )
+    content_length_extracted: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Length of extracted_content in characters"
+    )
+
+    # Screenshot support
+    screenshot: Mapped[bytes | None] = mapped_column(
+        Text, nullable=True, comment="Base64 decoded screenshot binary"
+    )
+    screenshot_format: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, comment="Screenshot MIME type: image/png"
+    )
+
+    # Scraping details
+    strategy_used: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, comment="Specific strategy that succeeded"
+    )
+    scrape_options: Mapped[dict | None] = mapped_column(
+        JSONB(astext_type=Text()), nullable=True, comment="Full request options for debugging"
+    )
+
+    # Cache control
+    scraped_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        comment="When content was scraped"
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Computed expiration time (scraped_at + maxAge)"
+    )
+    cache_key: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        unique=True,
+        comment="SHA-256 hash of (url + extract_query + key scraping options)"
+    )
+
+    # Tracking
+    access_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0", comment="Number of times cached content was accessed"
+    )
+    last_accessed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, comment="Last time this cache entry was used"
+    )
+
+    def __repr__(self) -> str:
+        return f"<ScrapeCache(id={self.id}, url={self.url}, source={self.source})>"
