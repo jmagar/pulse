@@ -11,6 +11,7 @@
 import { z } from "zod";
 import { ExtractClientFactory } from "../../processing/extraction/index.js";
 import { browserActionsArraySchema } from "./action-types.js";
+import { preprocessUrl } from "../../utils/url-validation.js";
 
 /**
  * Parameter descriptions for scraping tool options
@@ -148,33 +149,6 @@ const resolveScrapeCommand = (data: {
   return data.command ?? "start";
 };
 
-/**
- * Normalize and validate URL format
- *
- * Preprocesses user input to make URL handling more forgiving by:
- * - Trimming whitespace
- * - Adding https:// protocol if missing
- *
- * @param url - Raw URL string from user input
- * @returns Normalized URL with protocol
- *
- * @example
- * ```typescript
- * preprocessUrl('example.com') // Returns: 'https://example.com'
- * preprocessUrl(' https://example.com ') // Returns: 'https://example.com'
- * ```
- */
-export function preprocessUrl(url: string): string {
-  // Trim whitespace
-  url = url.trim();
-
-  // If no protocol is specified, add https://
-  if (!url.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:/)) {
-    url = "https://" + url;
-  }
-
-  return url;
-}
 
 /**
  * Build Zod validation schema for scrape tool arguments
@@ -350,7 +324,7 @@ export const buildScrapeArgsSchema = () => {
       const command = resolveScrapeCommand(data);
       const urls = data.urls ?? (data.url ? [data.url] : undefined);
       const primaryUrl = data.url ?? urls?.[0];
-      const { cancel, ...rest } = data;
+      const { cancel: _cancel, ...rest } = data;
 
       return {
         ...rest,
