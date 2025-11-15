@@ -63,6 +63,9 @@ export function registerTools(
     baseUrl: currentEnv.firecrawlBaseUrl || "http://firecrawl:3002",
   };
 
+  // Create clients for tools that use the factory pattern
+  const clients = clientFactory();
+
   // Create tool instances with tracking
   // Each tool is wrapped in a factory to enable error handling during registration
   const toolConfigs = [
@@ -71,7 +74,7 @@ export function registerTools(
       factory: () => scrapeTool(server, clientFactory, strategyConfigFactory),
     },
     { name: "search", factory: () => createSearchTool(firecrawlConfig) },
-    { name: "map", factory: () => createMapTool(firecrawlConfig) },
+    { name: "map", factory: () => createMapTool(clients) },
     { name: "crawl", factory: () => createCrawlTool(firecrawlConfig) },
     {
       name: "query",

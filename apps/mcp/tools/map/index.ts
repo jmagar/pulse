@@ -1,13 +1,10 @@
-import { FirecrawlMapClient } from "@firecrawl/client";
-import type { FirecrawlConfig } from "../../types.js";
+import type { IScrapingClients } from "../../server.js";
 import { mapOptionsSchema, buildMapInputSchema } from "./schema.js";
 import { mapPipeline } from "./pipeline.js";
 import { formatMapResponse } from "./response.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
-export function createMapTool(config: FirecrawlConfig): Tool {
-  const client = new FirecrawlMapClient(config);
-
+export function createMapTool(clients: IScrapingClients): Tool {
   return {
     name: "map",
     description:
@@ -19,7 +16,14 @@ export function createMapTool(config: FirecrawlConfig): Tool {
     handler: async (args: unknown) => {
       try {
         const validatedArgs = mapOptionsSchema.parse(args);
-        const result = await mapPipeline(client, validatedArgs);
+
+        // Get map client from injected clients
+        const mapClient = clients.firecrawl;
+        if (!mapClient || typeof mapClient.map !== "function") {
+          throw new Error("Map operation not supported by Firecrawl client");
+        }
+
+        const result = await mapPipeline(mapClient as { map: NonNullable<typeof mapClient.map> }, validatedArgs);
         return formatMapResponse(
           result,
           validatedArgs.url,

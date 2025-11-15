@@ -1,12 +1,11 @@
 import type {
-  FirecrawlMapClient,
   MapOptions as ClientMapOptions,
   MapResult,
 } from "@firecrawl/client";
 import type { MapOptions } from "./schema.js";
 
 export async function mapPipeline(
-  client: FirecrawlMapClient,
+  client: { map: (options: ClientMapOptions) => Promise<MapResult> },
   options: MapOptions,
 ): Promise<MapResult> {
   const clientOptions: ClientMapOptions = {
