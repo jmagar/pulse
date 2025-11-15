@@ -1,12 +1,11 @@
 import type {
-  FirecrawlSearchClient,
   SearchOptions as ClientSearchOptions,
   SearchResult,
 } from "@firecrawl/client";
 import type { SearchOptions } from "./schema.js";
 
 export async function searchPipeline(
-  client: FirecrawlSearchClient,
+  client: { search: (options: ClientSearchOptions) => Promise<SearchResult> },
   options: SearchOptions,
 ): Promise<SearchResult> {
   const clientOptions: ClientSearchOptions = {

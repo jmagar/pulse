@@ -73,7 +73,7 @@ export function registerTools(
       name: "scrape",
       factory: () => scrapeTool(server, clientFactory, strategyConfigFactory),
     },
-    { name: "search", factory: () => createSearchTool(firecrawlConfig) },
+    { name: "search", factory: () => createSearchTool(clients) },
     { name: "map", factory: () => createMapTool(clients) },
     { name: "crawl", factory: () => createCrawlTool(firecrawlConfig) },
     {
