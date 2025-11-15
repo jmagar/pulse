@@ -95,7 +95,7 @@ describe("MCP Registration with Tracking", () => {
       registerTools(server, mockClientFactory, mockStrategyFactory);
 
       const tools = registrationTracker.getToolRegistrations();
-      expect(tools.length).toBe(5);
+      expect(tools.length).toBe(7);
       expect(tools.every((t) => t.success)).toBe(true);
     });
 
@@ -119,7 +119,9 @@ describe("MCP Registration with Tracking", () => {
       expect(toolNames).toContain("search");
       expect(toolNames).toContain("map");
       expect(toolNames).toContain("crawl");
+      expect(toolNames).toContain("extract");
       expect(toolNames).toContain("query");
+      expect(toolNames).toContain("profile_crawl");
     });
 
     it("should continue registration if one tool fails", async () => {
@@ -146,17 +148,17 @@ describe("MCP Registration with Tracking", () => {
 
       const tools = registrationTracker.getToolRegistrations();
 
-      // Should have exactly 5 tool registration attempts (scrape, search, map, crawl, query)
-      expect(tools.length).toBe(5);
+      // Should have exactly 7 tool registration attempts (scrape, search, map, crawl, extract, query, profile_crawl)
+      expect(tools.length).toBe(7);
 
       // Should have exactly one failure (scrape)
       const failures = tools.filter((t) => !t.success);
       expect(failures.length).toBe(1);
       expect(failures[0].name).toBe("scrape");
 
-      // Should have four successes
+      // Should have six successes
       const successes = tools.filter((t) => t.success);
-      expect(successes.length).toBe(4);
+      expect(successes.length).toBe(6);
     });
 
     it("should record error messages for failed registrations", async () => {

@@ -24,6 +24,7 @@ import { createMapTool } from "./map/index.js";
 import { createCrawlTool } from "./crawl/index.js";
 import { createQueryTool } from "./query/index.js";
 import { createProfileTool } from "./profile/index.js";
+import { createExtractTool } from "./extract/index.js";
 import { ResourceStorageFactory } from "../storage/index.js";
 import type { FirecrawlConfig } from "../types.js";
 import { logInfo, logError } from "../utils/logging.js";
@@ -76,6 +77,7 @@ export function registerTools(
     { name: "search", factory: () => createSearchTool(clients) },
     { name: "map", factory: () => createMapTool(clients) },
     { name: "crawl", factory: () => createCrawlTool(firecrawlConfig) },
+    { name: "extract", factory: () => createExtractTool(clients) },
     {
       name: "query",
       factory: () => {
