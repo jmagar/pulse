@@ -10,7 +10,7 @@ Pulse is a **multi-language monorepo** combining Firecrawl API, MCP server, webh
 
 **Node.js (pnpm workspace):**
 - `apps/mcp` - Model Context Protocol server (consolidated single package)
-- `apps/web` - Next.js web UI
+- `apps/web` - Next.js web UI (containerized with hot reload)
 - `packages/firecrawl-client` - Shared Firecrawl client library
 
 **Python (independent):**
@@ -61,12 +61,14 @@ pnpm dev:webhook            # Start webhook only on port 50108
 | 50108 | Webhook Bridge | pulse_webhook | 52100 | Search indexing & API |
 | 50109 | changedetection.io | pulse_change-detection | 5000 | Change monitoring |
 | 50210-50211 | Neo4j | pulse_neo4j | 7474/7687 | Graph database |
+| 3000 | Web UI | pulse_web | 3000 | Next.js frontend |
 
 **Internal URLs (within Docker network):**
 ```
 - Firecrawl API: http://firecrawl:3002
 - MCP Server: http://pulse_mcp:3060
 - Webhook Bridge: http://pulse_webhook:52100    [NOTE: internal port 52100, NOT 3000]
+- Web UI: http://pulse_web:3000
 - Redis: redis://pulse_redis:6379
 - PostgreSQL: postgresql://pulse_postgres:5432/pulse_postgres
 - Playwright: http://pulse_playwright:3000
