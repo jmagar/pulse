@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -20,6 +21,7 @@ from config import settings
 from domain.models import CrawlSession, OperationMetric
 from infra.database import get_db_context
 from services.auto_watch import create_watch_for_url
+from services.content_storage import store_content_async
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -74,6 +76,7 @@ async def _handle_page_event(
 
     # Extract crawl_id from event
     crawl_id = getattr(event, "id", None)
+    event_type = getattr(event, "type", None)
 
     try:
         documents = _coerce_documents(getattr(event, "data", []))
@@ -81,7 +84,7 @@ async def _handle_page_event(
         logger.error(
             "Failed to coerce documents from webhook data",
             event_id=getattr(event, "id", None),
-            event_type=getattr(event, "type", None),
+            event_type=event_type,
             error=str(e),
             error_type=type(e).__name__,
             data_sample=str(getattr(event, "data", [])[:1]),
@@ -92,9 +95,25 @@ async def _handle_page_event(
         logger.info(
             "Page event received with no documents",
             event_id=getattr(event, "id", None),
-            event_type=getattr(event, "type", None),
+            event_type=event_type,
         )
         return {"status": "no_documents", "queued_jobs": 0, "job_ids": []}
+
+    # NEW: Fire-and-forget content storage (doesn't block response)
+    # Detect content source from event type
+    content_source = _detect_content_source(event_type)
+
+    # Convert Pydantic models to dicts for storage
+    document_dicts = [_document_to_dict(doc) for doc in documents]
+
+    # Fire-and-forget async task (doesn't block webhook response)
+    asyncio.create_task(
+        store_content_async(
+            crawl_session_id=crawl_id,
+            documents=document_dicts,
+            content_source=content_source
+        )
+    )
 
     job_ids: list[str] = []
     failed_documents: list[dict[str, Any]] = []
@@ -176,7 +195,6 @@ async def _handle_page_event(
     for document in documents:
         try:
             # Fire-and-forget auto-watch creation
-            import asyncio
             asyncio.create_task(create_watch_for_url(document.metadata.url))
         except Exception as watch_error:
             logger.warning(
@@ -485,3 +503,39 @@ def _document_to_index_payload(document: FirecrawlDocumentPayload) -> dict[str, 
             metadata_attrs=dir(document.metadata) if hasattr(document, "metadata") else None,
         )
         raise
+
+
+def _detect_content_source(event_type: str | None) -> str:
+    """
+    Detect content source from Firecrawl event type.
+
+    Args:
+        event_type: Firecrawl webhook event type
+
+    Returns:
+        Content source identifier for storage
+    """
+    if event_type == "crawl.page":
+        return "firecrawl_crawl"
+    elif event_type == "batch_scrape.page":
+        return "firecrawl_batch"
+    else:
+        # Fallback for unknown event types
+        return "firecrawl_unknown"
+
+
+def _document_to_dict(document: FirecrawlDocumentPayload) -> dict[str, Any]:
+    """
+    Convert Pydantic FirecrawlDocumentPayload to dict for content storage.
+
+    Args:
+        document: Firecrawl document payload
+
+    Returns:
+        Dictionary representation suitable for storage
+    """
+    return {
+        "markdown": document.markdown,
+        "html": document.html,
+        "metadata": document.metadata.model_dump(by_alias=True),
+    }
