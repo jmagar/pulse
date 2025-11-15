@@ -79,41 +79,70 @@ Backends:
 - **memory** - In-memory Map with TTL (development only)
 - **filesystem** - Persistent files (path: `MCP_RESOURCE_FILESYSTEM_ROOT`)
 
-### Webhook-Postgres Storage (Recommended)
+### Webhook-Postgres Storage (Default & Recommended)
 
-**Benefits:**
-- **Single Source of Truth**: Reads from `webhook.scraped_content` table
-- **Redis Caching**: Sub-5ms response for hot data via webhook's ContentCacheService
-- **Zero Duplication**: No separate MCP storage, shares data with webhook service
-- **Automatic Indexing**: Content automatically indexed for semantic search
+**Why webhook-postgres is the default:**
+Webhook-postgres provides a unified storage layer that eliminates data duplication while maintaining high performance through Redis caching. All scraped content flows through the webhook service pipeline and is stored in PostgreSQL, making it the single source of truth for both indexing and resource retrieval.
+
+**Architecture Benefits:**
+- **Single Source of Truth**: All scraped content in `webhook.scraped_content` table
+- **Redis Caching**: Sub-5ms response times for frequently accessed content via ContentCacheService
+- **Zero Duplication**: No separate MCP storage - shares data with webhook service
+- **Automatic Indexing**: Content automatically indexed for semantic search via query tool
 - **Persistence**: PostgreSQL backend survives container restarts
+- **Consistency**: Same data visible to all MCP tools (scrape, query, profile)
 
 **Configuration:**
 ```bash
-MCP_RESOURCE_STORAGE=webhook-postgres
-MCP_WEBHOOK_BASE_URL=http://pulse_webhook:52100
-MCP_WEBHOOK_API_SECRET=your-secret-key
-MCP_RESOURCE_TTL=3600  # Optional, TTL in seconds (default: 1 hour)
+# Required for webhook-postgres storage
+MCP_RESOURCE_STORAGE=webhook-postgres           # Default backend
+MCP_WEBHOOK_BASE_URL=http://pulse_webhook:52100 # Internal Docker URL
+MCP_WEBHOOK_API_SECRET=your-secret-key          # Shared secret for auth
+
+# Optional
+MCP_RESOURCE_TTL=3600  # Cache TTL in seconds (default: 1 hour)
 ```
 
 **API Endpoints Used:**
-- `GET /api/content/by-url?url={url}&limit=10` - Find content by URL
-- `GET /api/content/{id}` - Read content by ID
+- `GET /api/content/by-url?url={url}&limit=10` - Find content by URL (with Redis cache)
+- `GET /api/content/{id}` - Read content by ID (with Redis cache)
 
 **URI Format**: `webhook://{content_id}` (e.g., `webhook://42`)
 
+**Data Flow:**
+```
+User → MCP scrape tool → Firecrawl API → Webhook event
+                                       ↓
+                              webhook.scraped_content (PostgreSQL)
+                                       ↓
+                              ContentCacheService (Redis)
+                                       ↓
+                       MCP resources (via WebhookPostgresStorage)
+```
+
+**Implementation Details:**
+1. User scrapes URL via MCP scrape tool
+2. Firecrawl API scrapes content and sends webhook
+3. Webhook service receives event and stores in `webhook.scraped_content`
+4. Redis cache populated via ContentCacheService
+5. MCP reads content via `WebhookPostgresStorage.findByUrl()`
+6. Subsequent reads served from Redis cache (<5ms)
+
+**Performance Characteristics:**
+- First read (cache miss): ~50-100ms (PostgreSQL query)
+- Cached reads: <5ms (Redis)
+- Cache invalidation: Automatic on new scrapes of same URL
+- Retention: 30 days (configurable via webhook service)
+
 **Limitations:**
 - Read-only from MCP perspective (writes happen via Firecrawl → webhook pipeline)
-- No list() operation (webhook API doesn't expose full content listing)
+- No list() operation (webhook API doesn't expose full content listing for security)
 - No delete() operation (content lifecycle managed by webhook retention policy)
+- Requires webhook service to be running (fallback to memory storage if unavailable)
 
-**Data Flow:**
-1. User scrapes URL via MCP scrape tool
-2. Firecrawl API scrapes content
-3. Webhook receives webhook event
-4. Content stored in `webhook.scraped_content` table
-5. MCP reads content via `WebhookPostgresStorage.findByUrl()`
-6. Redis cache provides fast subsequent reads
+**When to Use Legacy Storage:**
+- **Memory storage**: Quick testing without PostgreSQL/Redis (data lost on restart)
+- **Filesystem storage**: Debugging or offline development (slower than Redis cache)
 
 ### Legacy Storage Backends
 
