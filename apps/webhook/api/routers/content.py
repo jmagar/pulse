@@ -2,18 +2,21 @@
 Content retrieval API router.
 
 Provides endpoints for retrieving stored Firecrawl scraped content
-after the 1-hour expiration period.
+with Redis caching for performance.
 """
 
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import verify_api_secret
 from api.schemas.content import ContentResponse
+from domain.models import ScrapedContent
 from infra.database import get_db_session
-from services.content_storage import get_content_by_session, get_content_by_url
+from infra.redis import get_redis_connection
+from services.content_cache import ContentCacheService
 
 router = APIRouter(prefix="/api/content", tags=["content"])
 
@@ -26,10 +29,11 @@ async def get_content_for_url(
     _verified: None = Depends(verify_api_secret),
 ) -> list[ContentResponse]:
     """
-    Retrieve all scraped versions of a URL (newest first).
+    Retrieve all scraped versions of a URL (newest first) with Redis caching.
 
     Returns up to `limit` versions of the scraped content for the given URL.
     Content is ordered by scraped_at timestamp descending (newest first).
+    Cache TTL: 1 hour (configurable).
 
     Args:
         url: The URL to retrieve content for
@@ -44,25 +48,20 @@ async def get_content_for_url(
         HTTPException: 404 if no content found for URL
         HTTPException: 401 if authentication fails
     """
-    contents = await get_content_by_url(session, url, limit)
+    # Create cache service
+    redis_conn = get_redis_connection()
+    cache_service = ContentCacheService(redis=redis_conn, db=session)
 
-    if not contents:
+    # Get content (uses cache automatically)
+    content_dicts = await cache_service.get_by_url(url, limit=limit)
+
+    if not content_dicts:
         raise HTTPException(
             status_code=404, detail=f"No content found for URL: {url}"
         )
 
-    return [
-        ContentResponse(
-            id=content.id,
-            url=content.url,
-            markdown=content.markdown,
-            html=content.html,
-            metadata=content.extra_metadata,
-            scraped_at=content.scraped_at.isoformat(),
-            crawl_session_id=content.crawl_session_id,
-        )
-        for content in contents
-    ]
+    # Convert to response models
+    return [ContentResponse(**c) for c in content_dicts]
 
 
 @router.get("/by-session/{session_id}")
@@ -74,10 +73,11 @@ async def get_content_for_session(
     _verified: None = Depends(verify_api_secret),
 ) -> list[ContentResponse]:
     """
-    Retrieve content for a crawl session with pagination.
+    Retrieve content for a crawl session with pagination and Redis caching.
 
     Returns up to `limit` items starting from `offset`.
     Content is ordered by created_at timestamp ascending (insertion order).
+    Cache TTL: 1 hour per page (configurable).
 
     Args:
         session_id: The crawl session ID (job_id from Firecrawl)
@@ -97,23 +97,65 @@ async def get_content_for_session(
     Example:
         GET /api/content/by-session/abc123?limit=50&offset=100
     """
-    contents = await get_content_by_session(session, session_id, limit, offset)
+    # Create cache service
+    redis_conn = get_redis_connection()
+    cache_service = ContentCacheService(redis=redis_conn, db=session)
 
-    if not contents:
+    # Get content (uses cache automatically)
+    content_dicts = await cache_service.get_by_session(
+        session_id, limit=limit, offset=offset
+    )
+
+    if not content_dicts:
         raise HTTPException(
             status_code=404,
             detail=f"No content found for session: {session_id}",
         )
 
-    return [
-        ContentResponse(
-            id=content.id,
-            url=content.url,
-            markdown=content.markdown,
-            html=content.html,
-            metadata=content.extra_metadata,
-            scraped_at=content.scraped_at.isoformat(),
-            crawl_session_id=content.crawl_session_id,
+    # Convert to response models
+    return [ContentResponse(**c) for c in content_dicts]
+
+
+@router.get("/{content_id}")
+async def get_content_by_id(
+    content_id: int,
+    _verified: None = Depends(verify_api_secret),
+    session: AsyncSession = Depends(get_db_session),
+) -> ContentResponse:
+    """
+    Get scraped content by ID.
+
+    Retrieves a single content item by its unique identifier.
+    Useful for MCP read() method with content ID URIs.
+
+    Args:
+        content_id: Unique content identifier
+        _verified: API authentication (injected)
+        session: Database session (injected)
+
+    Returns:
+        Single ContentResponse
+
+    Raises:
+        HTTPException: 404 if content not found
+        HTTPException: 401 if authentication fails
+    """
+    result = await session.execute(
+        select(ScrapedContent).where(ScrapedContent.id == content_id)
+    )
+    content = result.scalar_one_or_none()
+
+    if not content:
+        raise HTTPException(
+            status_code=404, detail=f"Content {content_id} not found"
         )
-        for content in contents
-    ]
+
+    return ContentResponse(
+        id=content.id,
+        url=content.url,
+        markdown=content.markdown,
+        html=content.html,
+        metadata=content.extra_metadata,
+        scraped_at=content.scraped_at.isoformat() if content.scraped_at else "",
+        crawl_session_id=content.crawl_session_id,
+    )
