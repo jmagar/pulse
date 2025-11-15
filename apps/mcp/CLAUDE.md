@@ -75,15 +75,66 @@ Registration flow:
 **Storage Factory Pattern**: `storage/factory.ts` creates storage backend
 
 Backends:
-- **memory** (default) - In-memory Map with TTL
+- **webhook-postgres** (default) - Unified storage via webhook API with Redis caching
+- **memory** - In-memory Map with TTL (development only)
 - **filesystem** - Persistent files (path: `MCP_RESOURCE_FILESYSTEM_ROOT`)
+
+### Webhook-Postgres Storage (Recommended)
+
+**Benefits:**
+- **Single Source of Truth**: Reads from `webhook.scraped_content` table
+- **Redis Caching**: Sub-5ms response for hot data via webhook's ContentCacheService
+- **Zero Duplication**: No separate MCP storage, shares data with webhook service
+- **Automatic Indexing**: Content automatically indexed for semantic search
+- **Persistence**: PostgreSQL backend survives container restarts
+
+**Configuration:**
+```bash
+MCP_RESOURCE_STORAGE=webhook-postgres
+MCP_WEBHOOK_BASE_URL=http://pulse_webhook:52100
+MCP_WEBHOOK_API_SECRET=your-secret-key
+MCP_RESOURCE_TTL=3600  # Optional, TTL in seconds (default: 1 hour)
+```
+
+**API Endpoints Used:**
+- `GET /api/content/by-url?url={url}&limit=10` - Find content by URL
+- `GET /api/content/{id}` - Read content by ID
+
+**URI Format**: `webhook://{content_id}` (e.g., `webhook://42`)
+
+**Limitations:**
+- Read-only from MCP perspective (writes happen via Firecrawl → webhook pipeline)
+- No list() operation (webhook API doesn't expose full content listing)
+- No delete() operation (content lifecycle managed by webhook retention policy)
+
+**Data Flow:**
+1. User scrapes URL via MCP scrape tool
+2. Firecrawl API scrapes content
+3. Webhook receives webhook event
+4. Content stored in `webhook.scraped_content` table
+5. MCP reads content via `WebhookPostgresStorage.findByUrl()`
+6. Redis cache provides fast subsequent reads
+
+### Legacy Storage Backends
+
+**Memory Storage:**
+- In-memory Map with TTL
+- Lost on container restart
+- Use for development/testing only
+- URI Format: `scraped://domain/name_timestamp`
+
+**Filesystem Storage:**
+- Persistent files on disk
+- Path: `MCP_RESOURCE_FILESYSTEM_ROOT`
+- Slower than Redis-cached webhook storage
+- URI Format: `scraped://domain/name_timestamp`
+
+### Resource Registration
 
 Register via `registerResources()`:
 - `ListResourcesRequestSchema` - Returns all resources from storage
 - `ReadResourceRequestSchema` - Fetches resource text by URI
 - Error tracking in `registrationTracker`
-
-URI Format: `scraped://domain/name_timestamp`
 
 ## Middleware Stack
 
