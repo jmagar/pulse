@@ -15,7 +15,7 @@ import httpx
 from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import get_db
+from infra.database import get_db_session
 from config import settings
 from services.crawl_session import create_crawl_session
 from utils.logging import get_logger
@@ -204,7 +204,7 @@ async def proxy_to_firecrawl(
 
 # Core Operations
 @router.post("/v2/scrape")
-async def scrape_url(request: Request, db: AsyncSession = Depends(get_db)) -> Response:
+async def scrape_url(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Single URL scrape → proxy + session tracking + auto-index"""
     return await proxy_with_session_tracking(
         request, "/scrape", "scrape", db, "POST"
@@ -218,7 +218,7 @@ async def get_scrape_status(request: Request, job_id: str) -> Response:
 
 
 @router.post("/v2/batch/scrape")
-async def batch_scrape(request: Request, db: AsyncSession = Depends(get_db)) -> Response:
+async def batch_scrape(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Batch scrape → proxy + session tracking + auto-index"""
     return await proxy_with_session_tracking(
         request, "/batch/scrape", "scrape_batch", db, "POST"
@@ -237,8 +237,14 @@ async def cancel_batch_scrape(request: Request, job_id: str) -> Response:
     return await proxy_to_firecrawl(request, f"/batch/scrape/{job_id}", "DELETE")
 
 
+@router.get("/v2/batch/scrape/{job_id}/errors")
+async def get_batch_scrape_errors(request: Request, job_id: str) -> Response:
+    """Batch scrape errors → proxy"""
+    return await proxy_to_firecrawl(request, f"/batch/scrape/{job_id}/errors", "GET")
+
+
 @router.post("/v2/crawl")
-async def start_crawl(request: Request, db: AsyncSession = Depends(get_db)) -> Response:
+async def start_crawl(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Start crawl → proxy + session tracking + auto-index"""
     return await proxy_with_session_tracking(
         request, "/crawl", "crawl", db, "POST"
@@ -282,7 +288,7 @@ async def list_active_crawls(request: Request) -> Response:
 
 
 @router.post("/v2/map")
-async def map_urls(request: Request, db: AsyncSession = Depends(get_db)) -> Response:
+async def map_urls(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """URL discovery → proxy + session tracking"""
     return await proxy_with_session_tracking(
         request, "/map", "map", db, "POST"
@@ -290,7 +296,7 @@ async def map_urls(request: Request, db: AsyncSession = Depends(get_db)) -> Resp
 
 
 @router.post("/v2/search")
-async def web_search(request: Request, db: AsyncSession = Depends(get_db)) -> Response:
+async def web_search(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Web search → proxy + session tracking"""
     return await proxy_with_session_tracking(
         request, "/search", "search", db, "POST"
@@ -299,7 +305,7 @@ async def web_search(request: Request, db: AsyncSession = Depends(get_db)) -> Re
 
 # AI Features
 @router.post("/v2/extract")
-async def extract_data(request: Request, db: AsyncSession = Depends(get_db)) -> Response:
+async def extract_data(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Extract structured data → proxy + session tracking"""
     return await proxy_with_session_tracking(
         request, "/extract", "extract", db, "POST"
