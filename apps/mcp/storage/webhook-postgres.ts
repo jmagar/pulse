@@ -43,7 +43,7 @@ export class WebhookPostgresStorage implements ResourceStorage {
     try {
       const response = await fetch(apiUrl, {
         headers: {
-          "X-API-Secret": this.apiSecret,
+          "Authorization": `Bearer ${this.apiSecret}`,
         },
       });
 
@@ -112,7 +112,7 @@ export class WebhookPostgresStorage implements ResourceStorage {
     try {
       const response = await fetch(apiUrl, {
         headers: {
-          "X-API-Secret": this.apiSecret,
+          "Authorization": `Bearer ${this.apiSecret}`,
         },
       });
 

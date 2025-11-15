@@ -41,7 +41,7 @@ describe('WebhookPostgresStorage', () => {
       global.fetch = async (url: string, options?: RequestInit) => {
         expect(url).toBe('http://pulse_webhook:52100/api/content/by-url?url=https%3A%2F%2Fexample.com&limit=10');
         expect(options?.headers).toMatchObject({
-          'X-API-Secret': 'test-secret-key',
+          'Authorization': 'Bearer test-secret-key',
         });
         return {
           ok: true,
@@ -97,7 +97,7 @@ describe('WebhookPostgresStorage', () => {
       global.fetch = async (url: string, options?: RequestInit) => {
         expect(url).toBe('http://pulse_webhook:52100/api/content/42');
         expect(options?.headers).toMatchObject({
-          'X-API-Secret': 'test-secret-key',
+          'Authorization': 'Bearer test-secret-key',
         });
         return {
           ok: true,
