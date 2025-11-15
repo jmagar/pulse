@@ -78,6 +78,19 @@ export interface IFirecrawlClient {
   // Map and search operations
   map?: (options: FirecrawlMapOptions) => Promise<MapResult>;
   search?: (options: FirecrawlSearchOptions) => Promise<SearchResult>;
+
+  // Extract operation
+  extract?: (options: {
+    urls: string[];
+    prompt?: string;
+    schema?: Record<string, unknown>;
+    scrapeOptions?: Record<string, unknown>;
+    timeout?: number;
+  }) => Promise<{
+    success: boolean;
+    data?: Array<Record<string, unknown>>;
+    error?: string;
+  }>;
 }
 
 /**
@@ -363,6 +376,31 @@ export class WebhookBridgeClient implements IFirecrawlClient {
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`Search request failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async extract(options: {
+    urls: string[];
+    prompt?: string;
+    schema?: Record<string, unknown>;
+    scrapeOptions?: Record<string, unknown>;
+    timeout?: number;
+  }): Promise<{
+    success: boolean;
+    data?: Array<Record<string, unknown>>;
+    error?: string;
+  }> {
+    const response = await fetch(`${this.baseUrl}/v2/extract`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(options),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Extract request failed: ${error}`);
     }
 
     return response.json();
