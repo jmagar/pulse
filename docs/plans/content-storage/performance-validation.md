@@ -85,18 +85,21 @@ ORDER BY p95_ms DESC;
 
 ---
 
-## 2. Database Connection Pool Sizing ⚠️ SHARED POOL
+## 2. Database Connection Pool Sizing ✅ UPDATED
 
 ### Current Configuration
-**File:** `/compose/pulse/apps/webhook/infra/database.py:22-28`
+**File:** `/compose/pulse/apps/webhook/infra/database.py:31-37`
 ```python
 engine = create_async_engine(
     settings.database_url,
-    pool_size=20,        # Base connections
-    max_overflow=10,     # Burst capacity
+    pool_size=40,        # Base connections (supports 3-4 concurrent crawls)
+    max_overflow=20,     # Burst capacity (transient metric writes)
 )
-# Total capacity: 30 connections
+# Total capacity: 60 connections
 ```
+
+**Update date:** 2025-11-15 (Commit: `ac6d848b`)
+**Rationale:** Increased from 20+10 to 40+20 based on capacity analysis for multi-crawl support.
 
 ### Pool Consumers (Validated from Code)
 
@@ -135,22 +138,16 @@ engine = create_async_engine(
 - Content storage: 12 connections
 - **Peak:** 39+ connections → **EXCEEDS pool capacity (30 total)**
 
-### ⚠️ RECOMMENDATION: Increase Pool for Multi-Crawl Support
+### ✅ IMPLEMENTED: Pool Increased for Multi-Crawl Support
 
-```python
-# Updated configuration for production
-engine = create_async_engine(
-    settings.database_url,
-    pool_size=40,        # Support 3-4 concurrent crawls
-    max_overflow=20,     # Burst capacity for spikes
-    pool_timeout=30,     # Wait up to 30s for connection
-)
-```
+**Implementation date:** 2025-11-15 (Commit: `ac6d848b`)
 
-**Rationale:**
+Pool configuration has been updated with inline documentation:
 - 40 base = 10 connections per concurrent crawl (4 workers × 2.5 operations)
 - 20 overflow = handles transient metrics writes
-- Total 60 = safe headroom
+- Total 60 = safe headroom within PostgreSQL default of 100 connections
+
+See [infra/database.py:21-37](/compose/pulse/apps/webhook/infra/database.py#L21-L37) for implementation.
 
 ---
 
@@ -467,20 +464,13 @@ logger.info("BM25 index size", doc_count=len(bm25_engine._documents))
 
 **Impact:** Optimizing BM25 could **reduce total indexing time by 50-75%**.
 
-### 🔴 CRITICAL 2: Increase Connection Pool
+### ✅ COMPLETED 2: Connection Pool Increased
 
-**Issue:** Pool will exhaust under concurrent multi-crawl load.
+**Status:** IMPLEMENTED (2025-11-15, Commit: `ac6d848b`)
 
-**Action:**
-```python
-# infra/database.py
-engine = create_async_engine(
-    settings.database_url,
-    pool_size=40,        # Support 3-4 concurrent crawls
-    max_overflow=20,     # Burst capacity
-    pool_timeout=30,     # Wait timeout
-)
-```
+Pool configuration updated to support 3-4 concurrent crawls with comprehensive inline documentation explaining capacity calculation and monitoring approach.
+
+See [infra/database.py:21-37](/compose/pulse/apps/webhook/infra/database.py#L21-L37).
 
 ### 🟡 IMPORTANT 3: Add Compression Monitoring
 
@@ -511,17 +501,16 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### 🟡 IMPORTANT 4: Async Content Storage
+### ✅ COMPLETED 4: Async Content Storage with Metrics
 
-**Issue:** Don't block worker on content INSERT.
+**Status:** IMPLEMENTED (2025-11-15, Commits: `e92c18bb`, `5ed9c0eb`)
 
-**Action:**
-```python
-# Fire-and-forget content storage
-asyncio.create_task(_store_content_async(url, markdown, html))
+Content storage implemented as fire-and-forget with TimingContext integration:
+- Race condition prevention via INSERT ON CONFLICT (atomic database operation)
+- Automatic metrics recording for success/failure tracking
+- Non-blocking worker execution
 
-# Worker continues to next document immediately
-```
+See [services/content_storage.py:20-143](/compose/pulse/apps/webhook/services/content_storage.py#L20-L143).
 
 ### 🟢 VALIDATED 5: Performance Impact
 
@@ -590,39 +579,38 @@ ORDER BY p95_ms DESC;
 
 ## 10. Final Verdict
 
-### ✅ SAFE TO PROCEED with these CHANGES:
+### ✅ IMPLEMENTATION STATUS:
 
-1. **Increase connection pool** (CRITICAL):
-   ```python
-   pool_size=40, max_overflow=20
-   ```
+1. ✅ **Connection pool increased** (COMPLETED 2025-11-15):
+   - Commit: `ac6d848b`
+   - Configuration: `pool_size=40, max_overflow=20`
+   - Documentation: Inline comments with capacity analysis
 
-2. **Add compression monitoring** (IMPORTANT):
-   ```sql
-   SELECT pg_column_size(markdown), pg_column_size(html) ...
-   ```
+2. ⏳ **Compression monitoring** (PENDING):
+   - SQL monitoring query available in this doc (lines 490-512)
+   - Needs deployment after content storage goes live
+   - Target: Validate 50% compression assumption
 
-3. **Update storage projections** (VALIDATED):
-   ```
-   1M documents = 12.5 GB (realistic 50% compression)
-   ```
+3. ✅ **Storage projections updated** (VALIDATED):
+   - Conservative estimate: 1M documents = 12.5 GB (50% compression)
+   - Optimistic estimate: 10 GB (60% compression)
+   - Pessimistic estimate: 15 GB (40% compression)
 
-4. **Make content storage async** (RECOMMENDED):
-   ```python
-   asyncio.create_task(store_content(...))
-   ```
+4. ✅ **Content storage async with metrics** (COMPLETED 2025-11-15):
+   - Commits: `e92c18bb`, `5ed9c0eb`
+   - Fire-and-forget pattern with TimingContext
+   - Race condition prevention via INSERT ON CONFLICT
 
-5. **Investigate BM25 performance** (CRITICAL):
-   ```
-   P95: 3,101ms is abnormal for in-memory operation
-   Optimize or replace with async implementation
-   ```
+5. ⏳ **BM25 performance investigation** (PENDING):
+   - P95: 3,101ms is abnormal for in-memory operation
+   - Bottleneck consumes 78% of indexing time
+   - Separate optimization effort needed
 
-### ❌ DO NOT PROCEED without addressing:
+### ⚠️ REMAINING CONCERNS:
 
-1. **BM25 bottleneck** - Consuming 78% of indexing time
-2. **Pool sizing** - Will exhaust under concurrent load
-3. **Compression assumptions** - 40% is optimistic (use 50%)
+1. ✅ ~~**Pool sizing** - Will exhaust under concurrent load~~ (RESOLVED 2025-11-15)
+2. ✅ ~~**Compression assumptions** - 40% is optimistic (use 50%)~~ (UPDATED - now using 50%)
+3. ⏳ **BM25 bottleneck** - Consuming 78% of indexing time (PENDING - separate optimization)
 
 ---
 
