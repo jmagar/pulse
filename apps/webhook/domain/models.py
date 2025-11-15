@@ -5,13 +5,16 @@ These models store performance metrics for all operations.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, func
+from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:
+    pass
 
 
 class Base(DeclarativeBase):
@@ -177,5 +180,90 @@ class CrawlSession(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
 
+    # Relationships
+    scraped_contents: Mapped[list["ScrapedContent"]] = relationship(
+        "ScrapedContent",
+        back_populates="crawl_session",
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self) -> str:
         return f"<CrawlSession(job_id={self.job_id}, operation={self.operation_type}, status={self.status}, urls={self.total_urls})>"
+
+
+class ScrapedContent(Base):
+    """Permanent storage of all Firecrawl scraped content."""
+
+    __tablename__ = "scraped_content"
+    __table_args__ = {"schema": "webhook"}
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    # Foreign key to crawl_sessions.job_id (String field, NOT UUID primary key)
+    crawl_session_id: Mapped[str] = mapped_column(
+        String(255),
+        ForeignKey(
+            "webhook.crawl_sessions.job_id",
+            ondelete="CASCADE",
+            name="fk_scraped_content_crawl_session"
+        ),
+        nullable=False
+    )
+
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Use String instead of ENUM (no ENUMs in webhook schema)
+    content_source: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        comment="firecrawl_scrape, firecrawl_crawl, firecrawl_map, firecrawl_batch"
+    )
+
+    # Content fields (NOTE: no raw_html - Firecrawl doesn't provide this)
+    markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
+    html: Mapped[str | None] = mapped_column(Text, nullable=True)
+    links: Mapped[dict | None] = mapped_column(
+        JSONB(astext_type=Text()),
+        nullable=True
+    )
+    screenshot: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Metadata from Firecrawl (statusCode, openGraph, dublinCore, etc.)
+    # Note: Use "extra_metadata" attribute name since "metadata" is reserved by SQLAlchemy
+    extra_metadata: Mapped[dict] = mapped_column(
+        "metadata",  # Column name in database
+        JSONB(astext_type=Text()),
+        nullable=False,
+        server_default="{}"
+    )
+
+    # Deduplication
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    # Timestamps (onupdate handles updated_at, no trigger needed)
+    scraped_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=func.now()
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now()
+    )
+
+    # Relationships
+    crawl_session: Mapped["CrawlSession"] = relationship(
+        "CrawlSession",
+        back_populates="scraped_contents"
+    )
+
+    def __repr__(self) -> str:
+        return f"<ScrapedContent(id={self.id}, url={self.url}, source={self.content_source})>"

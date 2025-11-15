@@ -1,0 +1,1844 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Firecrawl API",
+    "version": "2.0.0",
+    "description": "Firecrawl API allows you to turn any website into clean markdown or structured data. With Firecrawl, you can scrape web pages, crawl entire websites, and extract structured information.\n\n## Authentication\n\nAll requests require an API key in the Authorization header:\n```\nAuthorization: Bearer fc-YOUR_API_KEY\n```\n\n## Base URL\n\nAll API requests are made to:\n```\nhttps://api.firecrawl.dev\n```\n\n## Rate Limiting\n\nThe API enforces rate limits to ensure fair usage. Exceeding the rate limit returns a 429 status code.",
+    "contact": {
+      "email": "support@firecrawl.com",
+      "url": "https://firecrawl.dev"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.firecrawl.dev",
+      "description": "Production server"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v2/scrape": {
+      "post": {
+        "summary": "Scrape a single URL",
+        "description": "Extract content from a single webpage in markdown or structured format. Supports JavaScript rendering, custom actions, and various output formats.",
+        "operationId": "scrape",
+        "tags": ["Core Operations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrapeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful scrape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "408": {
+            "$ref": "#/components/responses/Timeout"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v2/scrape/{jobId}": {
+      "get": {
+        "summary": "Get scrape job status",
+        "description": "Retrieve the status and result of a scrape job",
+        "operationId": "getScrapeStatus",
+        "tags": ["Core Operations"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The ID of the scrape job"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scrape job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeStatusResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v2/batch/scrape": {
+      "post": {
+        "summary": "Batch scrape multiple URLs",
+        "description": "Scrape multiple URLs in a single request. Returns job IDs for each URL that can be polled for results.",
+        "operationId": "batchScrape",
+        "tags": ["Core Operations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchScrapeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch scrape job created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchScrapeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/v2/batch/scrape/{jobId}": {
+      "get": {
+        "summary": "Get batch scrape status",
+        "description": "Retrieve the status and results of a batch scrape job",
+        "operationId": "getBatchScrapeStatus",
+        "tags": ["Core Operations"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch scrape status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrawlStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel batch scrape job",
+        "description": "Cancel an ongoing batch scrape job",
+        "operationId": "cancelBatchScrape",
+        "tags": ["Core Operations"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch scrape cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/crawl": {
+      "post": {
+        "summary": "Start a crawl job",
+        "description": "Crawl an entire website starting from a given URL. Supports sitemap integration, path filtering, and natural language prompts for configuration.",
+        "operationId": "crawl",
+        "tags": ["Core Operations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrawlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Crawl job created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrawlResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/v2/crawl/params-preview": {
+      "post": {
+        "summary": "Preview crawl parameters",
+        "description": "Preview the parameters that would be used for a crawl without actually starting it. Useful for testing natural language prompts.",
+        "operationId": "previewCrawlParams",
+        "tags": ["Core Operations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrawlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Crawl parameters preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "parameters": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/crawl/{jobId}": {
+      "get": {
+        "summary": "Get crawl status",
+        "description": "Retrieve the status and results of a crawl job",
+        "operationId": "getCrawlStatus",
+        "tags": ["Core Operations"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Crawl status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrawlStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel crawl job",
+        "description": "Cancel an ongoing crawl job",
+        "operationId": "cancelCrawl",
+        "tags": ["Core Operations"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Crawl cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/crawl/{jobId}/errors": {
+      "get": {
+        "summary": "Get crawl errors",
+        "description": "Retrieve all errors encountered during a crawl job",
+        "operationId": "getCrawlErrors",
+        "tags": ["Core Operations"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Crawl errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string"
+                          },
+                          "error": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/crawl/ongoing": {
+      "get": {
+        "summary": "List ongoing crawls",
+        "description": "Get a list of all currently active crawl jobs for your account",
+        "operationId": "listOngoingCrawls",
+        "tags": ["Core Operations"],
+        "responses": {
+          "200": {
+            "description": "List of ongoing crawls",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "crawls": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": ["active", "paused", "waiting"]
+                          },
+                          "createdAt": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/crawl/active": {
+      "get": {
+        "summary": "List active crawls (alias)",
+        "description": "Alias for /v2/crawl/ongoing - lists all currently active crawl jobs",
+        "operationId": "listActiveCrawls",
+        "tags": ["Core Operations"],
+        "responses": {
+          "200": {
+            "description": "List of active crawls",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "crawls": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/map": {
+      "post": {
+        "summary": "Map website URLs",
+        "description": "Discover and list all URLs on a website quickly. Supports sitemap integration, subdomain inclusion, and search filtering.",
+        "operationId": "map",
+        "tags": ["Core Operations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MapRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "URL mapping results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapResponse"
+                }
+              }
+            }
+          },
+          "408": {
+            "$ref": "#/components/responses/Timeout"
+          }
+        }
+      }
+    },
+    "/v2/search": {
+      "post": {
+        "summary": "Search the web",
+        "description": "Search the web using SERP and optionally scrape the results. Supports web, news, and image search with category filtering.",
+        "operationId": "search",
+        "tags": ["Core Operations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/extract": {
+      "post": {
+        "summary": "Extract structured data",
+        "description": "Extract structured data from URLs using natural language prompts or JSON schemas. Supports multi-page extraction and agent-based workflows.",
+        "operationId": "extract",
+        "tags": ["AI Features"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Extraction job created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/extract/{jobId}": {
+      "get": {
+        "summary": "Get extraction status",
+        "description": "Retrieve the status and results of an extraction job",
+        "operationId": "getExtractStatus",
+        "tags": ["AI Features"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extraction status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/team/credit-usage": {
+      "get": {
+        "summary": "Get current credit usage",
+        "description": "Retrieve current credit usage statistics for your team",
+        "operationId": "getCreditUsage",
+        "tags": ["Account Management"],
+        "responses": {
+          "200": {
+            "description": "Credit usage statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "credits": {
+                      "type": "number"
+                    },
+                    "creditsUsed": {
+                      "type": "number"
+                    },
+                    "creditsRemaining": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/team/credit-usage/historical": {
+      "get": {
+        "summary": "Get historical credit usage",
+        "description": "Retrieve historical credit usage data for your team over time",
+        "operationId": "getHistoricalCreditUsage",
+        "tags": ["Account Management"],
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Start date for historical data (ISO 8601)"
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "End date for historical data (ISO 8601)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical credit usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "credits": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/team/token-usage": {
+      "get": {
+        "summary": "Get current token usage",
+        "description": "Retrieve current LLM token usage statistics for your team",
+        "operationId": "getTokenUsage",
+        "tags": ["Account Management"],
+        "responses": {
+          "200": {
+            "description": "Token usage statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "tokensUsed": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/team/token-usage/historical": {
+      "get": {
+        "summary": "Get historical token usage",
+        "description": "Retrieve historical LLM token usage data for your team",
+        "operationId": "getHistoricalTokenUsage",
+        "tags": ["Account Management"],
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical token usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/team/queue-status": {
+      "get": {
+        "summary": "Get queue status",
+        "description": "Monitor the status of your team's job queue",
+        "operationId": "getQueueStatus",
+        "tags": ["Monitoring"],
+        "responses": {
+          "200": {
+            "description": "Queue status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "queued": {
+                      "type": "number"
+                    },
+                    "processing": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/concurrency-check": {
+      "get": {
+        "summary": "Check concurrency limits",
+        "description": "Check your team's concurrency limits and current usage",
+        "operationId": "checkConcurrency",
+        "tags": ["Monitoring"],
+        "responses": {
+          "200": {
+            "description": "Concurrency status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "current": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/x402/search": {
+      "post": {
+        "summary": "Search with micropayment (X402)",
+        "description": "Enhanced search endpoint protected by X402 micropayment protocol. Combines web search with full page scraping.",
+        "operationId": "x402Search",
+        "tags": ["Experimental"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results with scraped content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key",
+        "description": "API key authentication. Format: `Bearer fc-YOUR_API_KEY`"
+      }
+    },
+    "schemas": {
+      "ScrapeRequest": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to scrape"
+          },
+          "formats": {
+            "type": "array",
+            "description": "Output formats to include in response",
+            "default": ["markdown"],
+            "items": {
+              "type": "string",
+              "enum": ["markdown", "html", "rawHtml", "links", "screenshot", "full@screenshot"]
+            }
+          },
+          "onlyMainContent": {
+            "type": "boolean",
+            "default": true,
+            "description": "Extract only main content, excluding navigation and boilerplate"
+          },
+          "includeTags": {
+            "type": "array",
+            "description": "HTML tags to include (whitelist filter)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludeTags": {
+            "type": "array",
+            "description": "HTML tags to exclude (blacklist filter)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "headers": {
+            "type": "object",
+            "description": "Custom HTTP headers to send with request",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "waitFor": {
+            "type": "number",
+            "description": "Milliseconds to wait for page load before scraping",
+            "minimum": 0,
+            "maximum": 60000
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Request timeout in milliseconds",
+            "minimum": 0,
+            "maximum": 300000,
+            "default": 120000
+          },
+          "mobile": {
+            "type": "boolean",
+            "description": "Use mobile user agent and viewport",
+            "default": false
+          },
+          "skipTlsVerification": {
+            "type": "boolean",
+            "description": "Skip TLS certificate verification",
+            "default": false
+          },
+          "removeBase64Images": {
+            "type": "boolean",
+            "description": "Remove base64-encoded images from output",
+            "default": true
+          },
+          "actions": {
+            "type": "array",
+            "description": "Browser actions to perform before scraping",
+            "items": {
+              "$ref": "#/components/schemas/Action"
+            }
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          }
+        }
+      },
+      "ScrapeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Document"
+          },
+          "scrape_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ScrapeStatusResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed", "cancelled"]
+          },
+          "data": {
+            "$ref": "#/components/schemas/Document"
+          }
+        }
+      },
+      "BatchScrapeRequest": {
+        "type": "object",
+        "required": ["urls"],
+        "properties": {
+          "urls": {
+            "type": "array",
+            "description": "Array of URLs to scrape",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1,
+            "maxItems": 1000
+          },
+          "formats": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["markdown", "html", "rawHtml", "links", "screenshot"]
+            }
+          },
+          "onlyMainContent": {
+            "type": "boolean",
+            "default": true
+          },
+          "webhook": {
+            "$ref": "#/components/schemas/Webhook"
+          }
+        }
+      },
+      "BatchScrapeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL to check batch scrape status"
+          }
+        }
+      },
+      "CrawlRequest": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Starting URL for the crawl"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of pages to crawl",
+            "minimum": 1,
+            "maximum": 100000,
+            "default": 100
+          },
+          "includePaths": {
+            "type": "array",
+            "description": "URL patterns to include (regex)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludePaths": {
+            "type": "array",
+            "description": "URL patterns to exclude (regex)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxDepth": {
+            "type": "number",
+            "description": "Maximum depth to crawl from starting URL",
+            "minimum": 1
+          },
+          "ignoreQueryParameters": {
+            "type": "boolean",
+            "description": "Ignore query parameters when determining URL uniqueness",
+            "default": true
+          },
+          "allowExternalLinks": {
+            "type": "boolean",
+            "description": "Follow links to external domains",
+            "default": false
+          },
+          "allowSubdomains": {
+            "type": "boolean",
+            "description": "Include subdomains of the base domain",
+            "default": false
+          },
+          "sitemap": {
+            "type": "string",
+            "enum": ["include", "skip", "only"],
+            "description": "How to handle sitemap URLs",
+            "default": "include"
+          },
+          "scrapeOptions": {
+            "$ref": "#/components/schemas/ScrapeRequest"
+          },
+          "webhook": {
+            "$ref": "#/components/schemas/Webhook"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Natural language description to configure crawl parameters automatically"
+          },
+          "maxConcurrency": {
+            "type": "number",
+            "description": "Maximum concurrent requests",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      },
+      "CrawlResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL to check crawl status"
+          },
+          "warning": {
+            "type": "string",
+            "description": "Optional warning message"
+          },
+          "promptGeneratedOptions": {
+            "type": "object",
+            "description": "Options generated from natural language prompt"
+          },
+          "finalCrawlerOptions": {
+            "type": "object",
+            "description": "Final merged crawler options"
+          }
+        }
+      },
+      "CrawlStatusResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed", "cancelled"]
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of pages to crawl"
+          },
+          "completed": {
+            "type": "number",
+            "description": "Number of pages completed"
+          },
+          "creditsUsed": {
+            "type": "number"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Document"
+            }
+          },
+          "next": {
+            "type": "string",
+            "description": "Cursor for pagination"
+          }
+        }
+      },
+      "MapRequest": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Base URL to map"
+          },
+          "search": {
+            "type": "string",
+            "description": "Search query to filter discovered URLs"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of URLs to return",
+            "minimum": 1,
+            "maximum": 5000,
+            "default": 5000
+          },
+          "includeSubdomains": {
+            "type": "boolean",
+            "description": "Include subdomains in URL discovery",
+            "default": true
+          },
+          "allowExternalLinks": {
+            "type": "boolean",
+            "description": "Allow external domain URLs",
+            "default": false
+          },
+          "ignoreQueryParameters": {
+            "type": "boolean",
+            "description": "Ignore query parameters in URL deduplication",
+            "default": true
+          },
+          "sitemap": {
+            "type": "string",
+            "enum": ["include", "skip", "only"],
+            "description": "How to handle sitemap URLs",
+            "default": "include"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Request timeout in milliseconds",
+            "minimum": 0,
+            "maximum": 300000
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          }
+        }
+      },
+      "MapResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "warning": {
+            "type": "string"
+          }
+        }
+      },
+      "SearchRequest": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "sources": {
+            "type": "array",
+            "description": "Search sources to query",
+            "default": [{"type": "web"}],
+            "items": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["web", "news", "images"]
+                }
+              }
+            }
+          },
+          "categories": {
+            "type": "array",
+            "description": "Category filters for search results",
+            "items": {
+              "type": "string",
+              "enum": ["github", "research", "pdf"]
+            }
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum results per source",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 5
+          },
+          "lang": {
+            "type": "string",
+            "description": "Language code (e.g., 'en', 'es')",
+            "default": "en"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country code for localized results (e.g., 'us', 'gb')"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "tbs": {
+            "type": "string",
+            "description": "Time-based search filter (e.g., 'qdr:d' for past day, 'qdr:w' for past week)"
+          },
+          "scrapeOptions": {
+            "$ref": "#/components/schemas/ScrapeRequest",
+            "description": "Options for scraping search results"
+          },
+          "asyncScraping": {
+            "type": "boolean",
+            "description": "Return job IDs for async scraping instead of waiting for results",
+            "default": false
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Request timeout in milliseconds",
+            "default": 30000
+          }
+        }
+      },
+      "SearchResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "web": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "markdown": {
+                      "type": "string",
+                      "description": "Present when scraping is enabled"
+                    }
+                  }
+                }
+              },
+              "news": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "snippet": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "markdown": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "images": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "markdown": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "scrapeIds": {
+            "type": "object",
+            "description": "Job IDs when asyncScraping is true",
+            "properties": {
+              "web": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "news": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "images": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "creditsUsed": {
+            "type": "number"
+          }
+        }
+      },
+      "ExtractRequest": {
+        "type": "object",
+        "required": ["urls", "schema"],
+        "properties": {
+          "urls": {
+            "type": "array",
+            "description": "URLs to extract data from",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "schema": {
+            "type": "object",
+            "description": "JSON Schema defining the structure to extract"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Natural language extraction prompt"
+          },
+          "agent": {
+            "type": "string",
+            "description": "Agent configuration for multi-page extraction",
+            "enum": ["auto", "custom"]
+          },
+          "ignoreInvalidURLs": {
+            "type": "boolean",
+            "description": "Continue extraction even if some URLs are invalid",
+            "default": false
+          },
+          "showSources": {
+            "type": "boolean",
+            "description": "Include source URLs in extraction results",
+            "default": false
+          }
+        }
+      },
+      "ExtractResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "urlTrace": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "invalidURLs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ExtractStatusResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "data": {
+            "type": "object",
+            "description": "Extracted data matching the provided schema"
+          },
+          "creditsUsed": {
+            "type": "number"
+          }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "properties": {
+          "markdown": {
+            "type": "string",
+            "description": "Page content in markdown format"
+          },
+          "html": {
+            "type": "string",
+            "description": "Cleaned HTML content"
+          },
+          "rawHtml": {
+            "type": "string",
+            "description": "Original raw HTML"
+          },
+          "links": {
+            "type": "array",
+            "description": "All links found on the page",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "screenshot": {
+            "type": "string",
+            "description": "Base64-encoded screenshot image"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "language": {
+                "type": "string"
+              },
+              "keywords": {
+                "type": "string"
+              },
+              "robots": {
+                "type": "string"
+              },
+              "ogTitle": {
+                "type": "string"
+              },
+              "ogDescription": {
+                "type": "string"
+              },
+              "ogImage": {
+                "type": "string"
+              },
+              "ogUrl": {
+                "type": "string"
+              },
+              "statusCode": {
+                "type": "number"
+              },
+              "contentType": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Action": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["wait"]
+              },
+              "milliseconds": {
+                "type": "number",
+                "description": "Time to wait in milliseconds"
+              },
+              "selector": {
+                "type": "string",
+                "description": "CSS selector to wait for"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "selector"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["click"]
+              },
+              "selector": {
+                "type": "string",
+                "description": "CSS selector of element to click"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "text"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["write"]
+              },
+              "text": {
+                "type": "string",
+                "description": "Text to type"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "key"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["press"]
+              },
+              "key": {
+                "type": "string",
+                "description": "Key to press (e.g., 'Enter', 'Escape')"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["scroll"]
+              },
+              "direction": {
+                "type": "string",
+                "enum": ["up", "down"],
+                "default": "down"
+              },
+              "selector": {
+                "type": "string",
+                "description": "CSS selector of element to scroll"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "script"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["executeJavascript"]
+              },
+              "script": {
+                "type": "string",
+                "description": "JavaScript code to execute"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["screenshot"]
+              },
+              "fullPage": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        ]
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string",
+            "description": "Country code for geolocation"
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Webhook URL to receive notifications"
+          },
+          "events": {
+            "type": "array",
+            "description": "Events to subscribe to",
+            "items": {
+              "type": "string",
+              "enum": ["completed", "page", "failed", "started"]
+            }
+          },
+          "headers": {
+            "type": "object",
+            "description": "Custom headers to send with webhook requests",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Custom metadata to include in webhook payload"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [false]
+          },
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid API key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Access forbidden (e.g., URL is blocklisted, insufficient permissions)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Timeout": {
+        "description": "Request timeout",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Core Operations",
+      "description": "Core scraping, crawling, mapping, and search operations"
+    },
+    {
+      "name": "AI Features",
+      "description": "AI-powered extraction and structured data operations"
+    },
+    {
+      "name": "Account Management",
+      "description": "Credit and token usage tracking"
+    },
+    {
+      "name": "Monitoring",
+      "description": "Queue and concurrency monitoring"
+    },
+    {
+      "name": "Experimental",
+      "description": "Experimental features (X402 micropayments)"
+    }
+  ]
+}

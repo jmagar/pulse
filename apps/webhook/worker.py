@@ -305,11 +305,14 @@ def run_worker() -> None:
     # Connect to Redis
     redis_conn = get_redis_connection()
 
-    # Create worker with specific queues
+    # Create worker with unique name (hostname ensures uniqueness across replicas)
+    import socket
+    worker_name = f"search-bridge-worker-{socket.gethostname()}"
+
     worker = Worker(
         queues=["indexing"],
         connection=redis_conn,
-        name="search-bridge-worker",
+        name=worker_name,
     )
 
     logger.info("Worker initialized, listening for jobs...")

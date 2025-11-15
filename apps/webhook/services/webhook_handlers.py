@@ -264,7 +264,7 @@ async def _record_crawl_start(crawl_id: str, event: FirecrawlLifecycleEvent) -> 
         async with get_db_context() as db:
             # Check if session already exists
             result = await db.execute(
-                select(CrawlSession).where(CrawlSession.crawl_id == crawl_id)
+                select(CrawlSession).where(CrawlSession.job_id == crawl_id)
             )
             existing = result.scalar_one_or_none()
 
@@ -277,8 +277,9 @@ async def _record_crawl_start(crawl_id: str, event: FirecrawlLifecycleEvent) -> 
                 return
 
             session = CrawlSession(
-                crawl_id=crawl_id,
-                crawl_url=crawl_url,
+                job_id=crawl_id,
+                base_url=crawl_url,
+                operation_type="crawl",
                 started_at=datetime.now(UTC),
                 initiated_at=initiated_at,
                 status="in_progress",
@@ -315,7 +316,7 @@ async def _record_crawl_complete(crawl_id: str, event: FirecrawlLifecycleEvent) 
         async with get_db_context() as db:
             # Fetch existing session
             result = await db.execute(
-                select(CrawlSession).where(CrawlSession.crawl_id == crawl_id)
+                select(CrawlSession).where(CrawlSession.job_id == crawl_id)
             )
             session = result.scalar_one_or_none()
 
@@ -344,7 +345,7 @@ async def _record_crawl_complete(crawl_id: str, event: FirecrawlLifecycleEvent) 
             page_count_result = await db.execute(
                 select(func.count(func.distinct(OperationMetric.document_url)))
                 .select_from(OperationMetric)
-                .where(OperationMetric.crawl_id == crawl_id)
+                .where(OperationMetric.job_id == crawl_id)
                 .where(OperationMetric.operation_type == "worker")
                 .where(OperationMetric.operation_name == "index_document")
                 .where(OperationMetric.document_url.isnot(None))
@@ -355,7 +356,7 @@ async def _record_crawl_complete(crawl_id: str, event: FirecrawlLifecycleEvent) 
             success_count_result = await db.execute(
                 select(func.count(func.distinct(OperationMetric.document_url)))
                 .select_from(OperationMetric)
-                .where(OperationMetric.crawl_id == crawl_id)
+                .where(OperationMetric.job_id == crawl_id)
                 .where(OperationMetric.operation_type == "worker")
                 .where(OperationMetric.operation_name == "index_document")
                 .where(OperationMetric.success == True)
@@ -370,7 +371,7 @@ async def _record_crawl_complete(crawl_id: str, event: FirecrawlLifecycleEvent) 
                     OperationMetric.operation_type,
                     func.sum(OperationMetric.duration_ms).label("total_ms"),
                 )
-                .where(OperationMetric.crawl_id == crawl_id)
+                .where(OperationMetric.job_id == crawl_id)
                 .where(OperationMetric.success == True)
                 .group_by(OperationMetric.operation_type)
             )

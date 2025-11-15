@@ -38,7 +38,7 @@ export class ProfileClient {
     const response = await fetch(`${url}${params}`, {
       method: "GET",
       headers: {
-        "X-API-Secret": this.apiSecret,
+        "Authorization": `Bearer ${this.apiSecret}`,
         "Content-Type": "application/json",
       },
       signal: AbortSignal.timeout(this.timeout),
