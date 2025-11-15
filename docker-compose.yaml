@@ -174,21 +174,17 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      target: builder  # Use builder stage for dev (has dev dependencies)
+      target: development  # Use development stage with hot reload
     container_name: pulse_web
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - "${WEB_PORT:-50110}:3000"
     volumes:
-      # Mount source code for hot reload (no rebuild needed)
-      - ./apps/web:/app/apps/web
-      - ./packages:/app/packages
-      # Preserve node_modules from image
-      - /app/node_modules
-      - /app/apps/web/node_modules
-      - /app/packages/firecrawl-client/node_modules
-    command: sh -c "cd /app/apps/web && pnpm dev"
+      # Mount entire monorepo for hot reload (absolute paths for Unraid compatibility)
+      - /mnt/cache/compose/pulse:/app
+    command: sh -c "pnpm install && pnpm --filter web dev"
     environment:
       - NODE_ENV=development
+      - WATCHPACK_POLLING=true  # Enable Next.js hot reload in Docker
     depends_on:
       - pulse_mcp
       - pulse_webhook
