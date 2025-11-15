@@ -4,7 +4,6 @@ Integration tests for content retrieval API.
 Tests the /api/content endpoints for retrieving stored scraped content.
 """
 
-from datetime import UTC, datetime
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -244,3 +243,104 @@ async def test_get_content_by_url_validates_limit(api_secret_header):
             headers=api_secret_header,
         )
     assert response.status_code == 422  # Validation error
+
+
+@pytest.mark.asyncio
+async def test_get_content_by_session_pagination(db_session, api_secret_header):
+    """Test pagination works correctly for by-session endpoint."""
+    # Create 10 URLs for session
+    for i in range(10):
+        content = ScrapedContent(
+            crawl_session_id="pagination-test",
+            url=f"https://example.com/page{i}",
+            source_url=f"https://example.com/page{i}",
+            content_source="firecrawl_crawl",
+            markdown=f"# Page {i}",
+            html=None,
+            links=None,
+            screenshot=None,
+            extra_metadata={"index": i},
+            content_hash=f"hash-{i}",
+        )
+        db_session.add(content)
+    await db_session.commit()
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Test limit parameter
+        response = await client.get(
+            "/api/content/by-session/pagination-test?limit=5",
+            headers=api_secret_header,
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 5, "Expected 5 results with limit=5"
+
+        # Test offset parameter
+        response = await client.get(
+            "/api/content/by-session/pagination-test?limit=5&offset=5",
+            headers=api_secret_header,
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 5, "Expected 5 results with offset=5"
+
+        # Verify different pages
+        response1 = await client.get(
+            "/api/content/by-session/pagination-test?limit=3&offset=0",
+            headers=api_secret_header,
+        )
+        response2 = await client.get(
+            "/api/content/by-session/pagination-test?limit=3&offset=3",
+            headers=api_secret_header,
+        )
+        data1 = response1.json()
+        data2 = response2.json()
+
+        # Pages should have different URLs
+        urls1 = {item["url"] for item in data1}
+        urls2 = {item["url"] for item in data2}
+        assert len(urls1 & urls2) == 0, "Pages should not overlap"
+
+
+@pytest.mark.asyncio
+async def test_get_content_by_session_pagination_limits(db_session, api_secret_header):
+    """Test pagination parameter validation."""
+    # Create test data
+    content = ScrapedContent(
+        crawl_session_id="limit-test",
+        url="https://example.com/page",
+        source_url="https://example.com/page",
+        content_source="firecrawl_scrape",
+        markdown="# Test",
+        html=None,
+        links=None,
+        screenshot=None,
+        extra_metadata={},
+        content_hash="test-hash",
+    )
+    db_session.add(content)
+    await db_session.commit()
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Test limit too high
+        response = await client.get(
+            "/api/content/by-session/limit-test?limit=1001",
+            headers=api_secret_header,
+        )
+        assert response.status_code == 422, "Should reject limit > 1000"
+
+        # Test limit too low
+        response = await client.get(
+            "/api/content/by-session/limit-test?limit=0",
+            headers=api_secret_header,
+        )
+        assert response.status_code == 422, "Should reject limit < 1"
+
+        # Test negative offset
+        response = await client.get(
+            "/api/content/by-session/limit-test?offset=-1",
+            headers=api_secret_header,
+        )
+        assert response.status_code == 422, "Should reject negative offset"

@@ -170,14 +170,18 @@ async def get_content_by_url(
 
 async def get_content_by_session(
     session: AsyncSession,
-    crawl_session_id: str
+    crawl_session_id: str,
+    limit: int = 100,
+    offset: int = 0
 ) -> list[ScrapedContent]:
     """
-    Retrieve all content for a crawl session.
+    Retrieve content for a crawl session with pagination.
 
     Args:
         session: Database session
         crawl_session_id: job_id of CrawlSession (String field)
+        limit: Maximum results to return (default 100, max 1000)
+        offset: Number of results to skip (default 0)
 
     Returns:
         List of ScrapedContent instances
@@ -186,5 +190,7 @@ async def get_content_by_session(
         select(ScrapedContent)
         .where(ScrapedContent.crawl_session_id == crawl_session_id)
         .order_by(ScrapedContent.created_at.asc())
+        .limit(limit)
+        .offset(offset)
     )
     return list(result.scalars().all())

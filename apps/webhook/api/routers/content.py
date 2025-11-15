@@ -68,17 +68,21 @@ async def get_content_for_url(
 @router.get("/by-session/{session_id}")
 async def get_content_for_session(
     session_id: str,
+    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
     session: AsyncSession = Depends(get_db_session),
     _verified: None = Depends(verify_api_secret),
 ) -> list[ContentResponse]:
     """
-    Retrieve all content for a crawl session.
+    Retrieve content for a crawl session with pagination.
 
-    Returns all scraped content associated with the given crawl session ID.
+    Returns up to `limit` items starting from `offset`.
     Content is ordered by scraped_at timestamp ascending (chronological).
 
     Args:
         session_id: The crawl session ID (job_id from Firecrawl)
+        limit: Maximum number of results to return (1-1000, default 100)
+        offset: Number of results to skip (default 0)
         session: Database session (injected)
         _verified: API authentication (injected)
 
@@ -88,8 +92,12 @@ async def get_content_for_session(
     Raises:
         HTTPException: 404 if no content found for session
         HTTPException: 401 if authentication fails
+        HTTPException: 422 if parameters invalid
+
+    Example:
+        GET /api/content/by-session/abc123?limit=50&offset=100
     """
-    contents = await get_content_by_session(session, session_id)
+    contents = await get_content_by_session(session, session_id, limit, offset)
 
     if not contents:
         raise HTTPException(
