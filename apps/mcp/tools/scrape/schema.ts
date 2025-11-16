@@ -9,7 +9,6 @@
  */
 
 import { z } from "zod";
-import { ExtractClientFactory } from "../../processing/extraction/index.js";
 import { browserActionsArraySchema } from "./action-types.js";
 import { preprocessUrl } from "../../utils/url-validation.js";
 
@@ -153,9 +152,9 @@ const resolveScrapeCommand = (data: {
 /**
  * Build Zod validation schema for scrape tool arguments
  *
- * Creates a Zod schema that validates scraping parameters. The schema
- * dynamically includes the 'extract' parameter only when LLM extraction
- * is available (configured with API keys).
+ * Creates a Zod schema that validates scraping parameters. The extract
+ * parameter is always available - the webhook service validates LLM
+ * availability and returns appropriate errors if extraction is unavailable.
  *
  * @returns Zod schema for validating scrape arguments
  *
@@ -165,7 +164,7 @@ const resolveScrapeCommand = (data: {
  * const validated = schema.parse({
  *   url: 'example.com', // Will be normalized to https://example.com
  *   timeout: 30000,
- *   extract: 'the main article text' // Only if LLM is available
+ *   extract: 'the main article text'
  * });
  * ```
  */
@@ -291,17 +290,10 @@ export const buildScrapeArgsSchema = () => {
     actions: browserActionsArraySchema
       .optional()
       .describe(PARAM_DESCRIPTIONS.actions),
+    extract: z.string().optional().describe(PARAM_DESCRIPTIONS.extract),
   };
 
-  let schema = z.object(baseSchema);
-
-  if (ExtractClientFactory.isAvailable()) {
-    schema = schema.extend({
-      extract: z.string().optional().describe(PARAM_DESCRIPTIONS.extract),
-    });
-  }
-
-  return schema
+  return z.object(baseSchema)
     .superRefine((data, ctx) => {
       const command = resolveScrapeCommand(data);
       const hasUrl = Boolean(data.url) || Boolean(data.urls?.length);
@@ -339,8 +331,8 @@ export const buildScrapeArgsSchema = () => {
  * Build MCP-compatible input schema for scrape tool
  *
  * Creates a JSON Schema compatible with the MCP protocol for tool registration.
- * Like buildScrapeArgsSchema, this dynamically includes the 'extract' parameter
- * only when LLM extraction is available.
+ * The extract parameter is always available - the webhook service validates LLM
+ * availability and returns appropriate errors if extraction is unavailable.
  *
  * @returns MCP input schema object with properties and required fields
  *
@@ -582,22 +574,11 @@ export const buildInputSchema = () => {
       },
       description: PARAM_DESCRIPTIONS.actions,
     },
+    extract: {
+      type: "string",
+      description: PARAM_DESCRIPTIONS.extract,
+    },
   };
-
-  // Only include extract parameter if extraction is available
-  if (ExtractClientFactory.isAvailable()) {
-    return {
-      type: "object" as const,
-      properties: {
-        ...baseProperties,
-        extract: {
-          type: "string",
-          description: PARAM_DESCRIPTIONS.extract,
-        },
-      },
-      required: [],
-    };
-  }
 
   return {
     type: "object" as const,

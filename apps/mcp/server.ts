@@ -11,9 +11,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { registerResources, registerTools } from "./tools/registration.js";
 import { env } from "./config/environment.js";
-import type { IStrategyConfigClient } from "./scraping/strategies/learned/index.js";
-import { FilesystemStrategyConfigClient } from "./scraping/strategies/learned/index.js";
-import { NativeScrapingClient } from "./scraping/clients/native/native-scrape-client.js";
 import type {
   BatchScrapeOptions,
   BatchScrapeStartResult,
@@ -90,67 +87,6 @@ export interface IFirecrawlClient {
     data?: Array<Record<string, unknown>>;
     error?: string;
   }>;
-}
-
-/**
- * Interface for native HTTP fetcher
- *
- * Defines the contract for basic HTTP scraping using native fetch API.
- * Provides a simple, fast scraping method for public websites.
- */
-export interface INativeFetcher {
-  scrape(
-    url: string,
-    options?: { timeout?: number } & RequestInit,
-  ): Promise<{
-    success: boolean;
-    status?: number;
-    data?: string;
-    error?: string;
-  }>;
-}
-
-/**
- * Default implementation of native HTTP fetcher
- *
- * Uses the enhanced NativeScrapingClient to perform basic HTTP scraping
- * operations. This is the fastest scraping method and works for most
- * public websites without JavaScript rendering requirements.
- *
- * @example
- * ```typescript
- * const fetcher = new NativeFetcher();
- * const result = await fetcher.scrape('https://example.com', {
- *   timeout: 30000
- * });
- * ```
- */
-export class NativeFetcher implements INativeFetcher {
-  private client = new NativeScrapingClient();
-
-  async scrape(
-    url: string,
-    options?: { timeout?: number } & RequestInit,
-  ): Promise<{
-    success: boolean;
-    status?: number;
-    data?: string;
-    error?: string;
-  }> {
-    const result = await this.client.scrape(url, {
-      timeout: options?.timeout,
-      headers: options?.headers as Record<string, string>,
-      method: options?.method as "GET" | "POST",
-      body: options?.body as string,
-    });
-
-    return {
-      success: result.success,
-      status: result.statusCode,
-      data: result.data,
-      error: result.error,
-    };
-  }
 }
 
 /**
