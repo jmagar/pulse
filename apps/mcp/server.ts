@@ -343,34 +343,12 @@ export class WebhookBridgeClient implements IFirecrawlClient {
 }
 
 /**
- * Collection of available scraping clients
+ * Factory function type for creating Firecrawl client
  *
- * Bundles native and optional Firecrawl clients for use by the scraping
- * strategy selector. The firecrawl client is only present when configured
- * with an API key.
- */
-export interface IScrapingClients {
-  /** Native HTTP fetcher (always available) */
-  native: INativeFetcher;
-  /** Firecrawl client (optional, requires API key) */
-  firecrawl?: IFirecrawlClient;
-}
-
-/**
- * Factory function type for creating scraping clients
- *
- * Returns a collection of configured scraping clients. Used for dependency
+ * Returns a configured Firecrawl client (webhook bridge proxy). Used for dependency
  * injection to allow testing with mock clients.
  */
-export type ClientFactory = () => IScrapingClients;
-
-/**
- * Factory function type for creating strategy config clients
- *
- * Returns a client for loading and saving learned scraping strategies.
- * Used for dependency injection to allow testing with mock implementations.
- */
-export type StrategyConfigFactory = () => IStrategyConfigClient;
+export type FirecrawlClientFactory = () => IFirecrawlClient;
 
 /**
  * Create and configure an MCP server instance
@@ -409,30 +387,18 @@ export function createMCPServer() {
 
   const registerHandlers = async (
     server: Server,
-    clientFactory?: ClientFactory,
-    strategyConfigFactory?: StrategyConfigFactory,
+    firecrawlClientFactory?: FirecrawlClientFactory,
   ) => {
-    // Use provided factory or create default clients
+    // Use provided factory or create default webhook bridge client
     const factory =
-      clientFactory ||
+      firecrawlClientFactory ||
       (() => {
         const webhookBridgeUrl = env.webhookBaseUrl;
-
-        const clients: IScrapingClients = {
-          native: new NativeFetcher(),
-          // Use webhook bridge as Firecrawl proxy (always available)
-          firecrawl: new WebhookBridgeClient(webhookBridgeUrl),
-        };
-
-        return clients;
+        return new WebhookBridgeClient(webhookBridgeUrl);
       });
 
-    // Use provided strategy config factory or create default
-    const configFactory =
-      strategyConfigFactory || (() => new FilesystemStrategyConfigClient());
-
     registerResources(server);
-    registerTools(server, factory, configFactory);
+    registerTools(server, factory);
   };
 
   return { server, registerHandlers };

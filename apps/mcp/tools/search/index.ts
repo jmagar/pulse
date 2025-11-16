@@ -1,10 +1,10 @@
-import type { IScrapingClients } from "../../server.js";
+import type { IFirecrawlClient } from "../../server.js";
 import { searchOptionsSchema, buildSearchInputSchema } from "./schema.js";
 import { searchPipeline } from "./pipeline.js";
 import { formatSearchResponse } from "./response.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
-export function createSearchTool(clients: IScrapingClients): Tool {
+export function createSearchTool(firecrawlClient: IFirecrawlClient): Tool {
   return {
     name: "search",
     description:
@@ -15,13 +15,12 @@ export function createSearchTool(clients: IScrapingClients): Tool {
       try {
         const validatedArgs = searchOptionsSchema.parse(args);
 
-        // Get search client from injected clients
-        const searchClient = clients.firecrawl;
-        if (!searchClient || typeof searchClient.search !== "function") {
+        // Verify search capability
+        if (!firecrawlClient || typeof firecrawlClient.search !== "function") {
           throw new Error("Search operation not supported by Firecrawl client");
         }
 
-        const result = await searchPipeline(searchClient as { search: NonNullable<typeof searchClient.search> }, validatedArgs);
+        const result = await searchPipeline(firecrawlClient as { search: NonNullable<typeof firecrawlClient.search> }, validatedArgs);
         return formatSearchResponse(result, validatedArgs.query);
       } catch (error) {
         return {

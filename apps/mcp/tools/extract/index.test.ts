@@ -1,38 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createExtractTool } from "./index.js";
 import type { ToolResponse } from "../../types.js";
-import type { IScrapingClients } from "../../server.js";
+import type { IFirecrawlClient } from "../../server.js";
 
 describe("Extract Tool", () => {
-  let clients: IScrapingClients;
+  let firecrawlClient: IFirecrawlClient;
 
   beforeEach(() => {
-    // Create mock clients with extract method
-    clients = {
-      native: {} as any, // Not used by extract tool
-      firecrawl: {
-        scrape: vi.fn() as any,
-        extract: vi.fn(async (options: {
-          urls: string[];
-          prompt?: string;
-          schema?: Record<string, unknown>;
-        }) => {
-          // Mock successful extraction
-          return {
-            success: true,
-            data: options.urls.map((url) => ({
-              url,
-              title: "Example Title",
-              description: "Example description",
-            })),
-          };
-        }),
-      } as any,
-    };
+    // Create mock Firecrawl client with extract method
+    firecrawlClient = {
+      scrape: vi.fn() as any,
+      extract: vi.fn(async (options: {
+        urls: string[];
+        prompt?: string;
+        schema?: Record<string, unknown>;
+      }) => {
+        // Mock successful extraction
+        return {
+          success: true,
+          data: options.urls.map((url) => ({
+            url,
+            title: "Example Title",
+            description: "Example description",
+          })),
+        };
+      }),
+    } as any;
   });
 
   it("should create extract tool with proper structure", () => {
-    const tool = createExtractTool(clients);
+    const tool = createExtractTool(firecrawlClient);
 
     expect(tool.name).toBe("extract");
     expect(tool.description).toContain("Extract structured data");
@@ -41,7 +38,7 @@ describe("Extract Tool", () => {
   });
 
   it("should extract data using prompt", async () => {
-    const tool = createExtractTool(clients);
+    const tool = createExtractTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       urls: ["https://example.com"],
@@ -56,7 +53,7 @@ describe("Extract Tool", () => {
   });
 
   it("should extract data using schema", async () => {
-    const tool = createExtractTool(clients);
+    const tool = createExtractTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       urls: ["https://example.com"],
@@ -76,7 +73,7 @@ describe("Extract Tool", () => {
   });
 
   it("should handle multiple URLs", async () => {
-    const tool = createExtractTool(clients);
+    const tool = createExtractTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       urls: [
@@ -94,12 +91,12 @@ describe("Extract Tool", () => {
   });
 
   it("should handle extraction errors gracefully", async () => {
-    clients.firecrawl!.extract = vi.fn(async () => ({
+    firecrawlClient.extract = vi.fn(async () => ({
       success: false,
       error: "API rate limit exceeded",
     }));
 
-    const tool = createExtractTool(clients);
+    const tool = createExtractTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       urls: ["https://example.com"],
@@ -133,7 +130,7 @@ describe("Extract Tool", () => {
   });
 
   it("should validate required urls parameter", async () => {
-    const tool = createExtractTool(clients);
+    const tool = createExtractTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       prompt: "Extract data",
@@ -149,9 +146,9 @@ describe("Extract Tool", () => {
       success: true,
       data: [{ title: "Test" }],
     }));
-    clients.firecrawl!.extract = extractMock;
+    firecrawlClient.extract = extractMock;
 
-    const tool = createExtractTool(clients);
+    const tool = createExtractTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     await handler({
       urls: ["https://example.com"],
@@ -177,9 +174,9 @@ describe("Extract Tool", () => {
       success: true,
       data: [{ title: "Test" }],
     }));
-    clients.firecrawl!.extract = extractMock;
+    firecrawlClient.extract = extractMock;
 
-    const tool = createExtractTool(clients);
+    const tool = createExtractTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     await handler({
       urls: ["https://example.com"],

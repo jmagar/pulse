@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { registrationTracker } from "../../utils/mcp-status.js";
-import type { ClientFactory, StrategyConfigFactory } from "../../server.js";
+import type { FirecrawlClientFactory } from "../../server.js";
 
 // Mock the query tool
 vi.mock("./index.js", () => ({
@@ -43,15 +43,14 @@ describe("Query Tool Registration", () => {
     // Import after mocks are set up
     const { registerTools } = await import("../registration.js");
 
-    const mockClientFactory = vi.fn() as unknown as ClientFactory;
-    const mockStrategyFactory = vi.fn(() => ({
-      loadConfig: vi.fn().mockResolvedValue([]),
-      saveConfig: vi.fn().mockResolvedValue(undefined),
-      upsertEntry: vi.fn().mockResolvedValue(undefined),
-      getStrategyForUrl: vi.fn().mockResolvedValue(null),
-    })) as unknown as StrategyConfigFactory;
+    const mockFirecrawlClientFactory = vi.fn(() => ({
+      scrape: vi.fn(),
+      search: vi.fn(),
+      map: vi.fn(),
+      extract: vi.fn(),
+    })) as unknown as FirecrawlClientFactory;
 
-    registerTools(server, mockClientFactory, mockStrategyFactory);
+    registerTools(server, mockFirecrawlClientFactory);
 
     // Verify query tool is registered via tracker
     const tools = registrationTracker.getToolRegistrations();

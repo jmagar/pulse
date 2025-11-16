@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createMapTool } from "./index.js";
 import type { ToolResponse } from "../../types.js";
-import type { IScrapingClients } from "../../server.js";
+import type { IFirecrawlClient } from "../../server.js";
 import type { MapOptions, MapResult } from "@firecrawl/client";
 
 describe("Map Tool", () => {
-  let clients: IScrapingClients;
+  let firecrawlClient: IFirecrawlClient;
 
   beforeEach(() => {
     global.fetch = vi.fn().mockResolvedValue({
@@ -19,24 +19,21 @@ describe("Map Tool", () => {
       }),
     });
 
-    // Create mock clients with map method
-    clients = {
-      native: {} as any, // Not used by map tool
-      firecrawl: {
-        scrape: vi.fn() as any,
-        map: vi.fn(async (options: MapOptions): Promise<MapResult> => {
-          const response = await fetch(
-            `https://api.firecrawl.dev/v2/map?url=${encodeURIComponent(options.url)}`,
-          );
-          const data = await response.json();
-          return data as MapResult;
-        }),
-      } as any,
-    };
+    // Create mock Firecrawl client with map method
+    firecrawlClient = {
+      scrape: vi.fn() as any,
+      map: vi.fn(async (options: MapOptions): Promise<MapResult> => {
+        const response = await fetch(
+          `https://api.firecrawl.dev/v2/map?url=${encodeURIComponent(options.url)}`,
+        );
+        const data = await response.json();
+        return data as MapResult;
+      }),
+    } as any;
   });
 
   it("should create map tool with proper structure", () => {
-    const tool = createMapTool(clients);
+    const tool = createMapTool(firecrawlClient);
 
     expect(tool.name).toBe("map");
     expect(tool.description).toContain("Discover URLs");
@@ -45,7 +42,7 @@ describe("Map Tool", () => {
   });
 
   it("should handle pagination parameters", async () => {
-    const tool = createMapTool(clients);
+    const tool = createMapTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       url: "https://example.com",
@@ -59,7 +56,7 @@ describe("Map Tool", () => {
   });
 
   it("should handle resultHandling parameter", async () => {
-    const tool = createMapTool(clients);
+    const tool = createMapTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       url: "https://example.com",
@@ -71,7 +68,7 @@ describe("Map Tool", () => {
   });
 
   it("should use default pagination values", async () => {
-    const tool = createMapTool(clients);
+    const tool = createMapTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       url: "https://example.com",
@@ -89,7 +86,7 @@ describe("Map Tool", () => {
       text: async () => "Payment required",
     });
 
-    const tool = createMapTool(clients);
+    const tool = createMapTool(firecrawlClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       url: "https://example.com",

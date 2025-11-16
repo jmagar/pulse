@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { registrationTracker } from "../utils/mcp-status.js";
-import type { ClientFactory, StrategyConfigFactory } from "../server.js";
+import type { FirecrawlClientFactory } from "../server.js";
 import { ResourceStorageFactory } from "../storage/index.js";
 
 // Mock the tool creation functions
@@ -84,15 +84,14 @@ describe("MCP Registration with Tracking", () => {
       // Import after mocks are set up
       const { registerTools } = await import("./registration.js");
 
-      const mockClientFactory = vi.fn() as unknown as ClientFactory;
-      const mockStrategyFactory = vi.fn(() => ({
-        loadConfig: vi.fn().mockResolvedValue([]),
-        saveConfig: vi.fn().mockResolvedValue(undefined),
-        upsertEntry: vi.fn().mockResolvedValue(undefined),
-        getStrategyForUrl: vi.fn().mockResolvedValue(null),
-      })) as unknown as StrategyConfigFactory;
+      const mockFirecrawlClientFactory = vi.fn(() => ({
+        scrape: vi.fn(),
+        search: vi.fn(),
+        map: vi.fn(),
+        extract: vi.fn(),
+      })) as unknown as FirecrawlClientFactory;
 
-      registerTools(server, mockClientFactory, mockStrategyFactory);
+      registerTools(server, mockFirecrawlClientFactory);
 
       const tools = registrationTracker.getToolRegistrations();
       expect(tools.length).toBe(7);
@@ -102,15 +101,14 @@ describe("MCP Registration with Tracking", () => {
     it("should record all tool names correctly", async () => {
       const { registerTools } = await import("./registration.js");
 
-      const mockClientFactory = vi.fn() as unknown as ClientFactory;
-      const mockStrategyFactory = vi.fn(() => ({
-        loadConfig: vi.fn().mockResolvedValue([]),
-        saveConfig: vi.fn().mockResolvedValue(undefined),
-        upsertEntry: vi.fn().mockResolvedValue(undefined),
-        getStrategyForUrl: vi.fn().mockResolvedValue(null),
-      })) as unknown as StrategyConfigFactory;
+      const mockFirecrawlClientFactory = vi.fn(() => ({
+        scrape: vi.fn(),
+        search: vi.fn(),
+        map: vi.fn(),
+        extract: vi.fn(),
+      })) as unknown as FirecrawlClientFactory;
 
-      registerTools(server, mockClientFactory, mockStrategyFactory);
+      registerTools(server, mockFirecrawlClientFactory);
 
       const tools = registrationTracker.getToolRegistrations();
       const toolNames = tools.map((t) => t.name);
@@ -133,17 +131,16 @@ describe("MCP Registration with Tracking", () => {
 
       const { registerTools } = await import("./registration.js");
 
-      const mockClientFactory = vi.fn() as unknown as ClientFactory;
-      const mockStrategyFactory = vi.fn(() => ({
-        loadConfig: vi.fn().mockResolvedValue([]),
-        saveConfig: vi.fn().mockResolvedValue(undefined),
-        upsertEntry: vi.fn().mockResolvedValue(undefined),
-        getStrategyForUrl: vi.fn().mockResolvedValue(null),
-      })) as unknown as StrategyConfigFactory;
+      const mockFirecrawlClientFactory = vi.fn(() => ({
+        scrape: vi.fn(),
+        search: vi.fn(),
+        map: vi.fn(),
+        extract: vi.fn(),
+      })) as unknown as FirecrawlClientFactory;
 
       // Should not throw even if one tool fails
       expect(() =>
-        registerTools(server, mockClientFactory, mockStrategyFactory),
+        registerTools(server, mockFirecrawlClientFactory),
       ).not.toThrow();
 
       const tools = registrationTracker.getToolRegistrations();
@@ -170,15 +167,14 @@ describe("MCP Registration with Tracking", () => {
 
       const { registerTools } = await import("./registration.js");
 
-      const mockClientFactory = vi.fn() as unknown as ClientFactory;
-      const mockStrategyFactory = vi.fn(() => ({
-        loadConfig: vi.fn().mockResolvedValue([]),
-        saveConfig: vi.fn().mockResolvedValue(undefined),
-        upsertEntry: vi.fn().mockResolvedValue(undefined),
-        getStrategyForUrl: vi.fn().mockResolvedValue(null),
-      })) as unknown as StrategyConfigFactory;
+      const mockFirecrawlClientFactory = vi.fn(() => ({
+        scrape: vi.fn(),
+        search: vi.fn(),
+        map: vi.fn(),
+        extract: vi.fn(),
+      })) as unknown as FirecrawlClientFactory;
 
-      registerTools(server, mockClientFactory, mockStrategyFactory);
+      registerTools(server, mockFirecrawlClientFactory);
 
       const tools = registrationTracker.getToolRegistrations();
       const failedTool = tools.find((t) => !t.success);

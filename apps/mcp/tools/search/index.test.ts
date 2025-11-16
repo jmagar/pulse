@@ -1,24 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createSearchTool } from "./index.js";
-import type { IScrapingClients } from "../../server.js";
+import type { IFirecrawlClient } from "../../server.js";
 import { FirecrawlClient } from "@firecrawl/client";
 
 describe("Search Tool", () => {
-  let clients: IScrapingClients;
+  let firecrawlClient: IFirecrawlClient;
 
   beforeEach(() => {
-    const firecrawlClient = new FirecrawlClient({
+    firecrawlClient = new FirecrawlClient({
       apiKey: "fc-test-key",
       baseUrl: "https://api.firecrawl.dev/v2",
     });
-    clients = {
-      native: {} as any, // Not used by search tool
-      firecrawl: firecrawlClient,
-    };
   });
 
   it("should create search tool with proper structure", () => {
-    const tool = createSearchTool(clients);
+    const tool = createSearchTool(firecrawlClient);
 
     expect(tool.name).toBe("search");
     expect(tool.description).toBeDefined();
@@ -39,7 +35,7 @@ describe("Search Tool", () => {
       }),
     }) as typeof fetch;
 
-    const tool = createSearchTool(clients);
+    const tool = createSearchTool(firecrawlClient);
     const result = await (
       tool.handler as (
         args: unknown,

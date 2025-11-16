@@ -14,7 +14,9 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.models import ScrapeCache
-from utils.logging import logger
+from utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class ScrapeCacheEntry(BaseModel):

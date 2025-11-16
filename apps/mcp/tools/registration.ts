@@ -17,7 +17,7 @@ import {
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
-import type { ClientFactory, StrategyConfigFactory } from "../server.js";
+import type { FirecrawlClientFactory } from "../server.js";
 import { scrapeTool } from "./scrape/index.js";
 import { createSearchTool } from "./search/index.js";
 import { createMapTool } from "./map/index.js";
@@ -42,20 +42,18 @@ import { DockerLogsProvider } from "../resources/docker-logs.js";
  * to handle ListTools and CallTool requests.
  *
  * @param server - MCP server instance to register tools with
- * @param clientFactory - Factory function for creating scraping clients
- * @param strategyConfigFactory - Factory for loading/saving learned strategies
+ * @param firecrawlClientFactory - Factory function for creating Firecrawl client
  *
  * @example
  * ```typescript
  * const server = new Server({ name: 'pulse', version: '1.0.0' }, {});
- * registerTools(server, () => createClients(), strategyFactory);
+ * registerTools(server, () => new WebhookBridgeClient(url));
  * // Server now handles tool requests
  * ```
  */
 export function registerTools(
   server: Server,
-  clientFactory: ClientFactory,
-  strategyConfigFactory: StrategyConfigFactory,
+  firecrawlClientFactory: FirecrawlClientFactory,
 ): void {
   const currentEnv = getEnvSnapshot();
   // Create Firecrawl config from centralized environment
@@ -64,8 +62,8 @@ export function registerTools(
     baseUrl: currentEnv.firecrawlBaseUrl || "http://firecrawl:3002",
   };
 
-  // Create clients for tools that use the factory pattern
-  const clients = clientFactory();
+  // Create Firecrawl client for tools
+  const firecrawlClient = firecrawlClientFactory();
 
   // Create tool instances with tracking
   // Each tool is wrapped in a factory to enable error handling during registration
@@ -74,10 +72,10 @@ export function registerTools(
       name: "scrape",
       factory: () => scrapeTool(server),
     },
-    { name: "search", factory: () => createSearchTool(clients) },
-    { name: "map", factory: () => createMapTool(clients) },
+    { name: "search", factory: () => createSearchTool(firecrawlClient) },
+    { name: "map", factory: () => createMapTool(firecrawlClient) },
     { name: "crawl", factory: () => createCrawlTool(firecrawlConfig) },
-    { name: "extract", factory: () => createExtractTool(clients) },
+    { name: "extract", factory: () => createExtractTool(firecrawlClient) },
     {
       name: "query",
       factory: () => {

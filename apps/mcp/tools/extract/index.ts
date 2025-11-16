@@ -1,10 +1,10 @@
-import type { IScrapingClients } from "../../server.js";
+import type { IFirecrawlClient } from "../../server.js";
 import { extractOptionsSchema, buildExtractInputSchema } from "./schema.js";
 import { extractPipeline } from "./pipeline.js";
 import { formatExtractResponse } from "./response.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
-export function createExtractTool(clients: IScrapingClients): Tool {
+export function createExtractTool(firecrawlClient: IFirecrawlClient): Tool {
   return {
     name: "extract",
     description:
@@ -17,13 +17,12 @@ export function createExtractTool(clients: IScrapingClients): Tool {
       try {
         const validatedArgs = extractOptionsSchema.parse(args);
 
-        // Get extract client from injected clients
-        const extractClient = clients.firecrawl;
-        if (!extractClient || typeof extractClient.extract !== "function") {
+        // Verify extract capability
+        if (!firecrawlClient || typeof firecrawlClient.extract !== "function") {
           throw new Error("Extract operation not supported by Firecrawl client");
         }
 
-        const result = await extractPipeline(extractClient as { extract: NonNullable<typeof extractClient.extract> }, validatedArgs);
+        const result = await extractPipeline(firecrawlClient as { extract: NonNullable<typeof firecrawlClient.extract> }, validatedArgs);
         return formatExtractResponse(result, validatedArgs.urls);
       } catch (error) {
         return {
