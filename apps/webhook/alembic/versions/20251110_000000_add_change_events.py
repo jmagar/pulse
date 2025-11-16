@@ -18,7 +18,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     op.create_table(
         "change_events",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -55,7 +55,7 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade() -> None:
     op.drop_index("idx_change_events_detected_at", table_name="change_events", schema="webhook")
     op.drop_index("idx_change_events_watch_id", table_name="change_events", schema="webhook")
     op.drop_table("change_events", schema="webhook")

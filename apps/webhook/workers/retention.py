@@ -48,13 +48,13 @@ async def enforce_retention_policy(retention_days: int = 90) -> dict[str, int]:
         request_result = await session.execute(
             delete(RequestMetric).where(RequestMetric.timestamp < cutoff_date)
         )
-        deleted_requests = request_result.rowcount or 0
+        deleted_requests = request_result.rowcount or 0  # type: ignore[attr-defined]
 
         # Delete old operation metrics
         operation_result = await session.execute(
             delete(OperationMetric).where(OperationMetric.timestamp < cutoff_date)
         )
-        deleted_operations = operation_result.rowcount or 0
+        deleted_operations = operation_result.rowcount or 0  # type: ignore[attr-defined]
 
         await session.commit()
 

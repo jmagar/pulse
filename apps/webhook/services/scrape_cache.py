@@ -285,7 +285,7 @@ class ScrapeCacheService:
         result = await session.execute(stmt)
         await session.flush()
 
-        deleted_count = result.rowcount or 0
+        deleted_count = result.rowcount or 0  # type: ignore[attr-defined]
 
         logger.info("Invalidated cache entries", url=url, deleted_count=deleted_count)
 
@@ -312,7 +312,7 @@ class ScrapeCacheService:
         result = await session.execute(stmt)
         await session.flush()
 
-        deleted_count = result.rowcount or 0
+        deleted_count = result.rowcount or 0  # type: ignore[attr-defined]
 
         if deleted_count > 0:
             logger.info("Cleaned up expired cache entries", deleted_count=deleted_count)

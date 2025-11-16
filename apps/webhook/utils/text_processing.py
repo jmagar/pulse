@@ -11,7 +11,7 @@ library designed for parallel processing and high-throughput workloads.
 from typing import Any
 
 from semantic_text_splitter import TextSplitter
-from tokenizers import Tokenizer
+from tokenizers import Tokenizer  # type: ignore[import-untyped]
 
 from utils.logging import get_logger
 

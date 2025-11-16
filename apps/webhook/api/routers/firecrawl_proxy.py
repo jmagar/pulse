@@ -61,7 +61,14 @@ async def proxy_with_session_tracking(
     if 200 <= response.status_code < 300:
         try:
             # Parse response body
-            response_data = json.loads(response.body)
+            # Handle bytes, memoryview, or str body types
+            if isinstance(response.body, bytes):
+                body_str = response.body.decode()
+            elif isinstance(response.body, memoryview):
+                body_str = bytes(response.body).decode()
+            else:
+                body_str = str(response.body)
+            response_data = json.loads(body_str)
 
             # Extract job_id from response (different endpoints may use different keys)
             job_id = response_data.get("id") or response_data.get("jobId")

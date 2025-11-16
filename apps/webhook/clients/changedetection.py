@@ -158,7 +158,7 @@ class ChangeDetectionClient:
                 # changedetection.io returns a dict keyed by UUIDs. Older versions may return a list,
                 # so support both formats for forward/backward compatibility.
                 if isinstance(raw_data, dict):
-                    watch_iterable = raw_data.values()
+                    watch_iterable = list(raw_data.values())
                 elif isinstance(raw_data, list):
                     watch_iterable = raw_data
                 else:

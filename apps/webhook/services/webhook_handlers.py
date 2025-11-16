@@ -75,7 +75,7 @@ async def _handle_page_event(
     """Process crawl page events with crawl_id propagation."""
 
     # Extract crawl_id from event
-    crawl_id = getattr(event, "id", None)
+    crawl_id: str | None = getattr(event, "id", None)
     event_type = getattr(event, "type", None)
 
     try:
@@ -107,11 +107,12 @@ async def _handle_page_event(
     document_dicts = [_document_to_dict(doc) for doc in documents]
 
     # Fire-and-forget async task (doesn't block webhook response)
-    asyncio.create_task(
-        store_content_async(
-            crawl_session_id=crawl_id, documents=document_dicts, content_source=content_source
+    if crawl_id:  # Type guard: only store if crawl_id is present
+        asyncio.create_task(
+            store_content_async(
+                crawl_session_id=crawl_id, documents=document_dicts, content_source=content_source
+            )
         )
-    )
 
     job_ids: list[str] = []
     failed_documents: list[dict[str, Any]] = []
@@ -223,13 +224,14 @@ async def _handle_lifecycle_event(event: FirecrawlLifecycleEvent | Any) -> dict[
     """Process lifecycle events with crawl session tracking."""
 
     event_type = getattr(event, "type", None)
-    crawl_id = getattr(event, "id", None)
+    crawl_id: str | None = getattr(event, "id", None)
 
-    # Record lifecycle events
-    if event_type == "crawl.started":
-        await _record_crawl_start(crawl_id, event)
-    elif event_type == "crawl.completed":
-        await _record_crawl_complete(crawl_id, event)
+    # Record lifecycle events (only if crawl_id is present)
+    if crawl_id:
+        if event_type == "crawl.started":
+            await _record_crawl_start(crawl_id, event)
+        elif event_type == "crawl.completed":
+            await _record_crawl_complete(crawl_id, event)
 
     # Existing logging
     metadata = getattr(event, "metadata", {})
@@ -487,7 +489,7 @@ def _document_to_index_payload(document: FirecrawlDocumentPayload) -> dict[str, 
             markdown_length=len(document.markdown) if document.markdown else 0,
         )
 
-        return cast(dict[str, Any], normalized.model_dump(by_alias=True))
+        return normalized.model_dump(by_alias=True)
 
     except AttributeError as e:
         logger.error(

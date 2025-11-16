@@ -135,11 +135,11 @@ async def store_content_async(
 
             # Still log for immediate visibility
             logger.error(
-                "Content storage failed",
-                crawl_session_id=crawl_session_id,
-                document_count=len(documents),
-                error=str(e),
-                error_type=type(e).__name__,
+                "Content storage failed: crawl_session_id=%s, document_count=%d, error=%s, error_type=%s",
+                crawl_session_id,
+                len(documents),
+                str(e),
+                type(e).__name__,
                 exc_info=True,
             )
 

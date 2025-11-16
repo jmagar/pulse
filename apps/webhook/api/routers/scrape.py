@@ -219,9 +219,13 @@ async def _handle_start_single_url(request: ScrapeRequest, session: AsyncSession
             if cached_entry.raw_content:
                 cached_saved_uris.raw = _build_saved_uri(url, "raw", cached_entry.scraped_at)
             if cached_entry.cleaned_content:
-                cached_saved_uris.cleaned = _build_saved_uri(url, "cleaned", cached_entry.scraped_at)
+                cached_saved_uris.cleaned = _build_saved_uri(
+                    url, "cleaned", cached_entry.scraped_at
+                )
             if cached_entry.extracted_content:
-                cached_saved_uris.extracted = _build_saved_uri(url, "extracted", cached_entry.scraped_at)
+                cached_saved_uris.extracted = _build_saved_uri(
+                    url, "extracted", cached_entry.scraped_at
+                )
 
             return ScrapeResponse(
                 success=True,

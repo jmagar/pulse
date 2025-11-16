@@ -242,12 +242,12 @@ class ScrapedContent(Base):
     # Content fields (NOTE: no raw_html - Firecrawl doesn't provide this)
     markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
     html: Mapped[str | None] = mapped_column(Text, nullable=True)
-    links: Mapped[dict | None] = mapped_column(JSONB(astext_type=Text()), nullable=True)
+    links: Mapped[dict[str, Any] | None] = mapped_column(JSONB(astext_type=Text()), nullable=True)
     screenshot: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Metadata from Firecrawl (statusCode, openGraph, dublinCore, etc.)
     # Note: Use "extra_metadata" attribute name since "metadata" is reserved by SQLAlchemy
-    extra_metadata: Mapped[dict] = mapped_column(
+    extra_metadata: Mapped[dict[str, Any]] = mapped_column(
         "metadata",  # Column name in database
         JSONB(astext_type=Text()),
         nullable=False,
@@ -337,7 +337,7 @@ class ScrapeCache(Base):
     strategy_used: Mapped[str | None] = mapped_column(
         String(50), nullable=True, comment="Specific strategy that succeeded"
     )
-    scrape_options: Mapped[dict | None] = mapped_column(
+    scrape_options: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB(astext_type=Text()), nullable=True, comment="Full request options for debugging"
     )
 

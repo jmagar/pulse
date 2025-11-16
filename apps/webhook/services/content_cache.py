@@ -69,7 +69,7 @@ class ContentCacheService:
         cached = self.redis.get(cache_key)
         if cached:
             logger.debug("Cache hit for URL", url=url, cache_key=cache_key)
-            return json.loads(cached.decode())
+            return json.loads(cached.decode())  # type: ignore[no-any-return, union-attr]
 
         logger.debug("Cache miss for URL", url=url, cache_key=cache_key)
 
@@ -119,7 +119,7 @@ class ContentCacheService:
 
         if cached:
             logger.debug("Cache hit for session", session_id=session_id, cache_key=cache_key)
-            return json.loads(cached.decode())
+            return json.loads(cached.decode())  # type: ignore[no-any-return, union-attr]
 
         logger.debug("Cache miss for session", session_id=session_id, cache_key=cache_key)
 
@@ -180,7 +180,7 @@ class ContentCacheService:
         keys = self.redis.keys(pattern)
 
         if keys:
-            deleted = self.redis.delete(*keys)
+            deleted = self.redis.delete(*keys)  # type: ignore[misc]
             logger.info(
                 "Invalidated session cache",
                 session_id=session_id,
