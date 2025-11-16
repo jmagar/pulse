@@ -1,10 +1,10 @@
 """Unit tests for ContentCacheService."""
 
 import json
-from datetime import datetime, UTC
-import pytest
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 
+import pytest
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 

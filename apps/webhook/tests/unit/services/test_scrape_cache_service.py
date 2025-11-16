@@ -3,12 +3,13 @@ Unit tests for ScrapeCacheService.
 
 Tests cache storage, retrieval, expiration, and invalidation logic.
 """
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.scrape_cache import ScrapeCacheService, ScrapeCacheEntry
 from domain.models import ScrapeCache
+from services.scrape_cache import ScrapeCacheService
 
 
 @pytest.mark.asyncio
@@ -161,7 +162,7 @@ class TestScrapeCacheService:
         """Test expired entries are not returned."""
         # Create expired entry
         cache_key = "expired_entry"
-        past_time = datetime.now(timezone.utc) - timedelta(days=3)
+        past_time = datetime.now(UTC) - timedelta(days=3)
 
         # Manually insert expired entry
         expired_entry = ScrapeCache(
@@ -321,7 +322,7 @@ class TestScrapeCacheService:
         db_session: AsyncSession
     ) -> None:
         """Test expires_at is computed correctly from max_age."""
-        before_time = datetime.now(timezone.utc)
+        before_time = datetime.now(UTC)
 
         entry = await cache_service.save_scrape(
             session=db_session,
@@ -332,7 +333,7 @@ class TestScrapeCacheService:
             max_age=86400000  # 1 day in milliseconds
         )
 
-        after_time = datetime.now(timezone.utc) + timedelta(days=1)
+        after_time = datetime.now(UTC) + timedelta(days=1)
 
         assert entry.expires_at is not None
         assert entry.expires_at > before_time + timedelta(days=1, seconds=-5)

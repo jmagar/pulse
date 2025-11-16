@@ -4,18 +4,15 @@ Integration tests for /api/v2/scrape endpoint.
 Tests the complete scrape pipeline: cache lookup, Firecrawl integration,
 content processing, and cache storage.
 """
-import base64
 from collections.abc import Generator
-from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api import deps, router
-from services.scrape_cache import ScrapeCacheService
 
 
 @pytest.fixture

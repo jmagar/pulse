@@ -1,6 +1,7 @@
 """Test scrape endpoint uses Firecrawl markdown without re-processing."""
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from pydantic import HttpUrl
 
 from api.routers.scrape import _handle_start_single_url

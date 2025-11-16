@@ -4,8 +4,9 @@ Unit tests for scrape_cache table schema validation.
 Tests verify that the scrape_cache table schema supports all required
 operations for the webhook scrape API.
 """
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timedelta, timezone
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -132,7 +133,7 @@ class TestScrapeCacheSchema:
 
     async def test_insert_full_record(self, db_session: AsyncSession) -> None:
         """Test inserting a complete record with all fields."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires = now + timedelta(days=2)
 
         await db_session.execute(text("""
@@ -267,7 +268,7 @@ class TestScrapeCacheSchema:
 
     async def test_expiration_query_performance(self, db_session: AsyncSession) -> None:
         """Verify expired entries can be efficiently queried."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         past = now - timedelta(days=1)
         future = now + timedelta(days=1)
 

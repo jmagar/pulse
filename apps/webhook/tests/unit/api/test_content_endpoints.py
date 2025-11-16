@@ -4,13 +4,14 @@ Unit tests for content retrieval API endpoints.
 Tests the /api/content endpoints for retrieving stored scraped content by ID.
 """
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, UTC
 from httpx import ASGITransport, AsyncClient
 
-from domain.models import ScrapedContent, CrawlSession
-from main import app
 from config import settings
+from domain.models import CrawlSession, ScrapedContent
+from main import app
 
 
 @pytest.mark.asyncio

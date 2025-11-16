@@ -11,7 +11,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Pool } from "pg";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "fs";
 import { join } from "path";
-import { runMigrations } from "../../scripts/run-migrations.js";
 
 // Mock the environment module
 vi.mock("../../config/environment.js", () => ({
@@ -35,7 +34,7 @@ describe("Migration Runner", () => {
     // Clean up test schema if it exists
     try {
       await pool.query("DROP SCHEMA IF EXISTS mcp_test CASCADE");
-    } catch (error) {
+    } catch (_error) {
       // Ignore if schema doesn't exist
     }
   });
@@ -44,7 +43,7 @@ describe("Migration Runner", () => {
     // Clean up test migration directory
     try {
       rmSync(testMigrationDir, { recursive: true, force: true });
-    } catch (error) {
+    } catch (_error) {
       // Ignore if directory doesn't exist
     }
 

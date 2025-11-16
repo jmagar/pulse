@@ -6,8 +6,8 @@ and access tracking for the /api/v2/scrape endpoint.
 """
 import hashlib
 import json
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from pydantic import BaseModel
 from sqlalchemy import delete, select, update
@@ -25,24 +25,24 @@ class ScrapeCacheEntry(BaseModel):
     id: int
     url: str
     url_hash: str
-    raw_content: Optional[str]
-    cleaned_content: Optional[str]
-    extracted_content: Optional[str]
-    extract_query: Optional[str]
+    raw_content: str | None
+    cleaned_content: str | None
+    extracted_content: str | None
+    extract_query: str | None
     source: str
-    content_type: Optional[str]
-    content_length_raw: Optional[int]
-    content_length_cleaned: Optional[int]
-    content_length_extracted: Optional[int]
-    screenshot: Optional[bytes]
-    screenshot_format: Optional[str]
-    strategy_used: Optional[str]
-    scrape_options: Optional[dict[str, Any]]
+    content_type: str | None
+    content_length_raw: int | None
+    content_length_cleaned: int | None
+    content_length_extracted: int | None
+    screenshot: bytes | None
+    screenshot_format: str | None
+    strategy_used: str | None
+    scrape_options: dict[str, Any] | None
     scraped_at: datetime
-    expires_at: Optional[datetime]
+    expires_at: datetime | None
     cache_key: str
     access_count: int
-    last_accessed_at: Optional[datetime]
+    last_accessed_at: datetime | None
 
     model_config = {"from_attributes": True}
 
@@ -71,12 +71,12 @@ class ScrapeCacheService:
     @staticmethod
     def compute_cache_key(
         url: str,
-        extract: Optional[str] = None,
+        extract: str | None = None,
         cleanScrape: bool = True,
         onlyMainContent: bool = True,
-        includeTags: Optional[list[str]] = None,
-        excludeTags: Optional[list[str]] = None,
-        formats: Optional[list[str]] = None,
+        includeTags: list[str] | None = None,
+        excludeTags: list[str] | None = None,
+        formats: list[str] | None = None,
         **_kwargs: Any
     ) -> str:
         """
@@ -127,7 +127,7 @@ class ScrapeCacheService:
         Returns:
             Expiration datetime (now + max_age)
         """
-        return datetime.now(timezone.utc) + timedelta(milliseconds=max_age)
+        return datetime.now(UTC) + timedelta(milliseconds=max_age)
 
     async def save_scrape(
         self,
@@ -137,14 +137,14 @@ class ScrapeCacheService:
         source: str,
         cache_key: str,
         max_age: int,
-        cleaned_content: Optional[str] = None,
-        extracted_content: Optional[str] = None,
-        extract_query: Optional[str] = None,
-        content_type: Optional[str] = None,
-        strategy_used: Optional[str] = None,
-        scrape_options: Optional[dict[str, Any]] = None,
-        screenshot: Optional[bytes] = None,
-        screenshot_format: Optional[str] = None,
+        cleaned_content: str | None = None,
+        extracted_content: str | None = None,
+        extract_query: str | None = None,
+        content_type: str | None = None,
+        strategy_used: str | None = None,
+        scrape_options: dict[str, Any] | None = None,
+        screenshot: bytes | None = None,
+        screenshot_format: str | None = None,
     ) -> ScrapeCacheEntry:
         """
         Save scrape results to cache.
@@ -187,7 +187,7 @@ class ScrapeCacheService:
             screenshot_format=screenshot_format,
             strategy_used=strategy_used,
             scrape_options=scrape_options,
-            scraped_at=datetime.now(timezone.utc),
+            scraped_at=datetime.now(UTC),
             expires_at=expires_at,
             cache_key=cache_key,
             access_count=0,
@@ -215,7 +215,7 @@ class ScrapeCacheService:
         session: AsyncSession,
         cache_key: str,
         max_age: int,
-    ) -> Optional[ScrapeCacheEntry]:
+    ) -> ScrapeCacheEntry | None:
         """
         Retrieve cached scrape if exists and not expired.
 
@@ -229,7 +229,7 @@ class ScrapeCacheService:
         Returns:
             Cached entry if found and not expired, None otherwise
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Query for non-expired entry
         stmt = select(ScrapeCache).where(
@@ -316,7 +316,7 @@ class ScrapeCacheService:
         Returns:
             Number of entries deleted
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         stmt = delete(ScrapeCache).where(
             ScrapeCache.expires_at.isnot(None),

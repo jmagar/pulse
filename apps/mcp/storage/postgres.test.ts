@@ -147,7 +147,7 @@ describe("PostgresResourceStorage", () => {
             contentType: { invalid: "object" },
           },
         });
-      } catch (error) {
+      } catch (_error) {
         // Expected error
       }
 

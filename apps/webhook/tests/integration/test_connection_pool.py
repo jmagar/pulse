@@ -5,6 +5,7 @@ Validates pool sizing and monitoring capabilities.
 """
 
 import pytest
+
 from infra.database import engine
 
 
@@ -39,8 +40,9 @@ async def test_connection_pool_status():
 @pytest.mark.asyncio
 async def test_pool_capacity_limits():
     """Test that pool respects configured capacity."""
-    from infra.database import AsyncSessionLocal
     import asyncio
+
+    from infra.database import AsyncSessionLocal
 
     # Create multiple sessions concurrently
     sessions = []

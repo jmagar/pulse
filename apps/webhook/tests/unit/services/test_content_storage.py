@@ -257,6 +257,7 @@ async def test_get_content_by_session():
 async def test_concurrent_duplicate_insert_handling(db_session):
     """Test that concurrent duplicate inserts are handled gracefully (ON CONFLICT)."""
     import asyncio
+
     from domain.models import CrawlSession, ScrapedContent
     from services.content_storage import store_scraped_content
 
@@ -308,7 +309,7 @@ async def test_concurrent_duplicate_insert_handling(db_session):
     assert results[0].content_hash == results[1].content_hash
 
     # Verify only ONE record in database
-    from sqlalchemy import select, func
+    from sqlalchemy import func, select
     count_result = await db_session.execute(
         select(func.count(ScrapedContent.id)).where(
             ScrapedContent.crawl_session_id == "concurrent-test"
@@ -321,12 +322,11 @@ async def test_concurrent_duplicate_insert_handling(db_session):
 @pytest.mark.asyncio
 async def test_storage_failure_metrics_recorded(db_session):
     """Test that storage failures are recorded in operation_metrics."""
-    from services.content_storage import store_content_async
-    from domain.models import OperationMetric
     from sqlalchemy import select
 
     # Create crawl session
-    from domain.models import CrawlSession
+    from domain.models import CrawlSession, OperationMetric
+    from services.content_storage import store_content_async
     crawl_session = CrawlSession(
         job_id="metrics-test",
         base_url="https://example.com",
@@ -371,12 +371,11 @@ async def test_storage_failure_metrics_recorded(db_session):
 @pytest.mark.asyncio
 async def test_storage_success_metrics_recorded(db_session):
     """Test that successful storage is recorded in operation_metrics."""
-    from services.content_storage import store_content_async
-    from domain.models import OperationMetric
     from sqlalchemy import select
 
     # Create crawl session
-    from domain.models import CrawlSession
+    from domain.models import CrawlSession, OperationMetric
+    from services.content_storage import store_content_async
     crawl_session = CrawlSession(
         job_id="success-metrics-test",
         base_url="https://example.com",

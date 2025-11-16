@@ -4,7 +4,7 @@ Scrape API endpoint router.
 POST /api/v2/scrape - Multi-stage web scraping with caching
 """
 import base64
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 import httpx
@@ -230,7 +230,7 @@ async def _handle_start_single_url(
             content = cached_entry.extracted_content or cached_entry.cleaned_content or cached_entry.raw_content
 
             # Calculate cache age
-            cache_age = int((datetime.now(timezone.utc) - cached_entry.scraped_at).total_seconds() * 1000)
+            cache_age = int((datetime.now(UTC) - cached_entry.scraped_at).total_seconds() * 1000)
 
             # Build response
             saved_uris = SavedUris()
@@ -285,7 +285,7 @@ async def _handle_start_single_url(
         )
 
     # Save to cache (unless returnOnly)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if request.resultHandling != "returnOnly":
         await cache_service.save_scrape(
             session=session,
@@ -381,7 +381,7 @@ async def _handle_status(request: ScrapeRequest) -> ScrapeResponse:
 
     total = fc_response.get("total", 0)
     completed = fc_response.get("completed", 0)
-    percentage = int((completed / total * 100)) if total > 0 else 0
+    percentage = int(completed / total * 100) if total > 0 else 0
 
     return ScrapeResponse(
         success=True,
@@ -435,7 +435,7 @@ async def _handle_errors(request: ScrapeRequest) -> ScrapeResponse:
         errors.append(BatchError(
             url=error.get("url", "unknown"),
             error=error.get("error", "Unknown error"),
-            timestamp=error.get("timestamp", datetime.now(timezone.utc).isoformat())
+            timestamp=error.get("timestamp", datetime.now(UTC).isoformat())
         ))
 
     return ScrapeResponse(

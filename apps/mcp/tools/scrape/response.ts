@@ -589,7 +589,7 @@ export function buildWebhookResponse(
 
   // Handle single URL scrape
   if ("content" in data || "savedUris" in data) {
-    let content = data.content || "";
+    const content = data.content || "";
 
     // Apply pagination
     const { processedContent, wasTruncated } = applyPagination(

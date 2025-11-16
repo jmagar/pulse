@@ -1,6 +1,7 @@
 """Test scrape endpoint routes extract requests to Firecrawl."""
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi import HTTPException
 from pydantic import HttpUrl
 

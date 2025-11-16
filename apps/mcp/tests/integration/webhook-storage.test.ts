@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { WebhookPostgresStorage } from "../../storage/webhook-postgres.js";
-import type { ResourceData } from "../../storage/types.js";
 
 /**
  * Full end-to-end tests that hit the webhook service API.

@@ -70,14 +70,14 @@ export class WebhookPostgresStorage implements ResourceStorage {
   }
 
   async write(
-    url: string,
-    content: string,
-    metadata?: Partial<ResourceMetadata>,
+    _url: string,
+    _content: string,
+    _metadata?: Partial<ResourceMetadata>,
   ): Promise<string> {
     throw new Error("Not implemented");
   }
 
-  async writeMulti(data: MultiResourceWrite): Promise<MultiResourceUris> {
+  async writeMulti(_data: MultiResourceWrite): Promise<MultiResourceUris> {
     // Webhook API doesn't have a /api/content/store endpoint yet
     // Write operations happen via Firecrawl → webhook pipeline, not directly via MCP
     throw new Error(
@@ -100,7 +100,7 @@ export class WebhookPostgresStorage implements ResourceStorage {
     }
   }
 
-  async delete(uri: string): Promise<void> {
+  async delete(_uri: string): Promise<void> {
     // Webhook API doesn't expose delete operation
     throw new Error("delete not supported by webhook storage");
   }
@@ -170,7 +170,7 @@ export class WebhookPostgresStorage implements ResourceStorage {
 
   async findByUrlAndExtract(
     url: string,
-    extractPrompt?: string,
+    _extractPrompt?: string,
   ): Promise<ResourceData[]> {
     // Webhook API doesn't support extraction prompt filtering
     // Webhook markdown content represents the "cleaned" tier

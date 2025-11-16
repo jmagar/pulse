@@ -5,9 +5,10 @@ Revises: 20251113_add_foreign_keys
 Create Date: 2025-11-15 18:45:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '20251115_scrape_cache'
