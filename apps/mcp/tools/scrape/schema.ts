@@ -20,11 +20,10 @@ import { preprocessUrl } from "../../utils/url-validation.js";
  */
 export const PARAM_DESCRIPTIONS = {
   url: 'The webpage URL to scrape (e.g., "https://example.com/article", "https://api.example.com/docs")',
-  urls:
-    'List of URLs to scrape in a single batch request. When more than one URL is provided the tool uses Firecrawl batch scraping.',
+  urls: "List of URLs to scrape in a single batch request. When more than one URL is provided the tool uses Firecrawl batch scraping.",
   command:
-    'Operation to perform: start (default), status, cancel, errors. Legacy inputs without command default to start.',
-  jobId: 'Batch scrape job identifier returned by the start command.',
+    "Operation to perform: start (default), status, cancel, errors. Legacy inputs without command default to start.",
+  jobId: "Batch scrape job identifier returned by the start command.",
   timeout:
     "Maximum time to wait for page load in milliseconds. Increase for slow-loading sites (e.g., 120000 for 2 minutes). Default: 60000 (1 minute)",
   maxChars:
@@ -148,7 +147,6 @@ const resolveScrapeCommand = (data: {
   return data.command ?? "start";
 };
 
-
 /**
  * Build Zod validation schema for scrape tool arguments
  *
@@ -183,12 +181,7 @@ export const buildScrapeArgsSchema = () => {
       .optional()
       .describe(PARAM_DESCRIPTIONS.url),
     urls: z
-      .array(
-        z
-          .string()
-          .transform(preprocessUrl)
-          .pipe(z.string().url()),
-      )
+      .array(z.string().transform(preprocessUrl).pipe(z.string().url()))
       .min(1)
       .optional()
       .describe(PARAM_DESCRIPTIONS.urls),
@@ -293,7 +286,8 @@ export const buildScrapeArgsSchema = () => {
     extract: z.string().optional().describe(PARAM_DESCRIPTIONS.extract),
   };
 
-  return z.object(baseSchema)
+  return z
+    .object(baseSchema)
     .superRefine((data, ctx) => {
       const command = resolveScrapeCommand(data);
       const hasUrl = Boolean(data.url) || Boolean(data.urls?.length);
@@ -301,7 +295,8 @@ export const buildScrapeArgsSchema = () => {
       if (command === "start" && !hasUrl) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Provide at least one "url" or an "urls" array to start a scrape',
+          message:
+            'Provide at least one "url" or an "urls" array to start a scrape',
         });
       }
 

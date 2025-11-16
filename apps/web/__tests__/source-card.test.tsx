@@ -3,25 +3,13 @@ import { SourceCard } from "@/components/source-card"
 
 describe("SourceCard", () => {
   it("should render source title", () => {
-    render(
-      <SourceCard
-        type="pdf"
-        title="document.pdf"
-        meta="125 pages"
-      />
-    )
+    render(<SourceCard type="pdf" title="document.pdf" meta="125 pages" />)
 
     expect(screen.getByText("document.pdf")).toBeInTheDocument()
   })
 
   it("should render metadata", () => {
-    render(
-      <SourceCard
-        type="pdf"
-        title="document.pdf"
-        meta="125 pages"
-      />
-    )
+    render(<SourceCard type="pdf" title="document.pdf" meta="125 pages" />)
 
     expect(screen.getByText("125 pages")).toBeInTheDocument()
   })

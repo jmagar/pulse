@@ -102,10 +102,7 @@ def sample_documents():
 @pytest.fixture
 def sample_documents_with_crawl_id(sample_documents):
     """Sample documents with crawl_id for correlation tracking."""
-    return [
-        {**doc, "crawl_id": "test-crawl-123"}
-        for doc in sample_documents
-    ]
+    return [{**doc, "crawl_id": "test-crawl-123"} for doc in sample_documents]
 
 
 # Test 1: Basic batch processing
@@ -306,6 +303,7 @@ async def test_batch_worker_handles_large_batches(mock_service_pool):
         batch_worker = BatchWorker()
 
         import time
+
         start = time.perf_counter()
         results = await batch_worker.process_batch(large_batch)
         duration = time.perf_counter() - start
@@ -439,6 +437,7 @@ def _is_redis_available() -> bool:
     """Check if Redis is available for testing."""
     try:
         from redis import Redis
+
         redis_conn = Redis(host="localhost", port=50104, socket_connect_timeout=1)
         redis_conn.ping()
         return True
@@ -449,8 +448,7 @@ def _is_redis_available() -> bool:
 # Test 13: Skip Redis tests if unavailable
 @pytest.mark.asyncio
 @pytest.mark.skipif(
-    not _is_redis_available(),
-    reason="Redis not available - skipping queue integration test"
+    not _is_redis_available(), reason="Redis not available - skipping queue integration test"
 )
 async def test_batch_worker_with_real_redis_queue():
     """Test batch worker with real Redis queue (if available)."""
@@ -475,10 +473,12 @@ async def test_batch_worker_with_real_redis_queue():
         ]
 
         from worker import index_document_batch_job
+
         job = queue.enqueue(index_document_batch_job, documents, job_timeout="5m")
 
         # Wait for job completion (with timeout)
         import time
+
         timeout = 10
         start = time.time()
         while not job.is_finished and not job.is_failed:

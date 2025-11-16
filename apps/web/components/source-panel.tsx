@@ -1,13 +1,18 @@
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip"
 import { Plus } from "lucide-react"
 import { EmptySources } from "@/components/empty-sources"
 import { SourceCard } from "@/components/source-card"
 
 export function SourcePanel() {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <div className="flex h-14 items-center justify-between border-b px-4">
         <h2 className="text-sm font-semibold">Sources</h2>
 
@@ -17,7 +22,7 @@ export function SourcePanel() {
               <Button
                 size="icon"
                 variant="ghost"
-                className="rounded-full h-8 w-8"
+                className="h-8 w-8 rounded-full"
                 aria-label="Add source"
               >
                 <Plus className="h-5 w-5" />

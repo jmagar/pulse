@@ -80,9 +80,7 @@ def test_health_endpoint_requires_auth_invalid_token(client: TestClient) -> None
     assert "Invalid credentials" in data["detail"]
 
 
-def test_health_endpoint_accepts_valid_bearer_token(
-    client: TestClient, api_secret: str
-) -> None:
+def test_health_endpoint_accepts_valid_bearer_token(client: TestClient, api_secret: str) -> None:
     """Test that health endpoint accepts valid Bearer token authentication."""
     response = client.get(
         "/health",
@@ -95,9 +93,7 @@ def test_health_endpoint_accepts_valid_bearer_token(
     assert "services" in data
 
 
-def test_health_endpoint_accepts_valid_raw_token(
-    client: TestClient, api_secret: str
-) -> None:
+def test_health_endpoint_accepts_valid_raw_token(client: TestClient, api_secret: str) -> None:
     """Test that health endpoint accepts raw token for backwards compatibility."""
     response = client.get(
         "/health",
@@ -131,9 +127,7 @@ def test_stats_endpoint_requires_auth_invalid_token(client: TestClient) -> None:
     assert "Invalid credentials" in data["detail"]
 
 
-def test_stats_endpoint_accepts_valid_bearer_token(
-    client: TestClient, api_secret: str
-) -> None:
+def test_stats_endpoint_accepts_valid_bearer_token(client: TestClient, api_secret: str) -> None:
     """Test that stats endpoint accepts valid Bearer token authentication."""
     response = client.get(
         "/api/stats",
@@ -146,9 +140,7 @@ def test_stats_endpoint_accepts_valid_bearer_token(
     assert "total_chunks" in data
 
 
-def test_stats_endpoint_accepts_valid_raw_token(
-    client: TestClient, api_secret: str
-) -> None:
+def test_stats_endpoint_accepts_valid_raw_token(client: TestClient, api_secret: str) -> None:
     """Test that stats endpoint accepts raw token for backwards compatibility."""
     response = client.get(
         "/api/stats",

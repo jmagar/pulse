@@ -2,7 +2,10 @@ import express from "express";
 import request from "supertest";
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 
-import { createRateLimiter, RateLimiter } from "../../server/middleware/rateLimit.js";
+import {
+  createRateLimiter,
+  RateLimiter,
+} from "../../server/middleware/rateLimit.js";
 
 describe("rate limiter middleware", () => {
   it("limits requests after threshold", async () => {

@@ -76,10 +76,7 @@ describe("Extract Options Schema", () => {
         urls: ["https://example.com", "https://test.com"],
         prompt: "Extract data",
       });
-      expect(result.urls).toEqual([
-        "https://example.com",
-        "https://test.com",
-      ]);
+      expect(result.urls).toEqual(["https://example.com", "https://test.com"]);
     });
   });
 

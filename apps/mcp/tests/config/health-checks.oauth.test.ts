@@ -77,8 +77,8 @@ describe("health checks", () => {
     const { runHealthChecks } = await import("../../config/health-checks.js");
     const checks = await runHealthChecks();
     expect(checks.find((c) => c.service === "OAuth")?.success).toBe(true);
-    expect(
-      checks.find((c) => c.service === "Redis (sessions)")?.success,
-    ).toBe(true);
+    expect(checks.find((c) => c.service === "Redis (sessions)")?.success).toBe(
+      true,
+    );
   });
 });

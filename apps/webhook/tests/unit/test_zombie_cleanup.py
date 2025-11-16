@@ -35,7 +35,7 @@ async def test_cleanup_identifies_zombie_jobs(db_session):
     async def mock_db_context():
         yield db_session
 
-    with patch('workers.cleanup.get_db_context', return_value=mock_db_context()):
+    with patch("workers.cleanup.get_db_context", return_value=mock_db_context()):
         # Run cleanup
         result = await cleanup_zombie_jobs(max_age_minutes=15)
 
@@ -76,7 +76,7 @@ async def test_cleanup_preserves_completed_jobs(db_session):
     async def mock_db_context():
         yield db_session
 
-    with patch('workers.cleanup.get_db_context', return_value=mock_db_context()):
+    with patch("workers.cleanup.get_db_context", return_value=mock_db_context()):
         # Run cleanup
         result = await cleanup_zombie_jobs(max_age_minutes=15)
 
@@ -108,7 +108,7 @@ async def test_cleanup_handles_no_zombie_jobs(db_session):
     async def mock_db_context():
         yield db_session
 
-    with patch('workers.cleanup.get_db_context', return_value=mock_db_context()):
+    with patch("workers.cleanup.get_db_context", return_value=mock_db_context()):
         # Run cleanup
         result = await cleanup_zombie_jobs(max_age_minutes=15)
 

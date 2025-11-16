@@ -16,9 +16,7 @@ describe("formatCrawlResponse", () => {
   it("formats active crawl list", () => {
     const result = formatCrawlResponse({
       success: true,
-      crawls: [
-        { id: "job-1", teamId: "team-1", url: "https://example.com" },
-      ],
+      crawls: [{ id: "job-1", teamId: "team-1", url: "https://example.com" }],
     });
 
     expect(result.content[0].text).toContain("Active Crawls");

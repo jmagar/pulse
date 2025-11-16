@@ -4,6 +4,7 @@ Scrape cache service for storing and retrieving scraped content.
 Provides intelligent caching with cache key generation, expiration handling,
 and access tracking for the /api/v2/scrape endpoint.
 """
+
 import hashlib
 import json
 from datetime import UTC, datetime, timedelta
@@ -66,7 +67,7 @@ class ScrapeCacheService:
         Returns:
             64-character hex string (SHA-256 digest)
         """
-        return hashlib.sha256(url.encode('utf-8')).hexdigest()
+        return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
     @staticmethod
     def compute_cache_key(
@@ -77,7 +78,7 @@ class ScrapeCacheService:
         includeTags: list[str] | None = None,
         excludeTags: list[str] | None = None,
         formats: list[str] | None = None,
-        **_kwargs: Any
+        **_kwargs: Any,
     ) -> str:
         """
         Compute deterministic cache key from scraping parameters.
@@ -114,7 +115,7 @@ class ScrapeCacheService:
         }
 
         json_str = json.dumps(key_options, sort_keys=True)
-        return hashlib.sha256(json_str.encode('utf-8')).hexdigest()
+        return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
 
     @staticmethod
     def _compute_expires_at(max_age: int) -> datetime:
@@ -234,7 +235,7 @@ class ScrapeCacheService:
         # Query for non-expired entry
         stmt = select(ScrapeCache).where(
             ScrapeCache.cache_key == cache_key,
-            (ScrapeCache.expires_at.is_(None) | (ScrapeCache.expires_at > now))
+            (ScrapeCache.expires_at.is_(None) | (ScrapeCache.expires_at > now)),
         )
 
         result = await session.execute(stmt)
@@ -248,10 +249,7 @@ class ScrapeCacheService:
         await session.execute(
             update(ScrapeCache)
             .where(ScrapeCache.id == cache_entry.id)
-            .values(
-                access_count=ScrapeCache.access_count + 1,
-                last_accessed_at=now
-            )
+            .values(access_count=ScrapeCache.access_count + 1, last_accessed_at=now)
         )
         await session.flush()
 
@@ -263,16 +261,12 @@ class ScrapeCacheService:
             cache_key=cache_key,
             url=cache_entry.url,
             age_seconds=(now - cache_entry.scraped_at).total_seconds(),
-            access_count=cache_entry.access_count
+            access_count=cache_entry.access_count,
         )
 
         return ScrapeCacheEntry.model_validate(cache_entry)
 
-    async def invalidate_url(
-        self,
-        session: AsyncSession,
-        url: str
-    ) -> int:
+    async def invalidate_url(self, session: AsyncSession, url: str) -> int:
         """
         Invalidate all cache entries for a URL.
 
@@ -293,18 +287,11 @@ class ScrapeCacheService:
 
         deleted_count = result.rowcount or 0
 
-        logger.info(
-            "Invalidated cache entries",
-            url=url,
-            deleted_count=deleted_count
-        )
+        logger.info("Invalidated cache entries", url=url, deleted_count=deleted_count)
 
         return deleted_count
 
-    async def cleanup_expired(
-        self,
-        session: AsyncSession
-    ) -> int:
+    async def cleanup_expired(self, session: AsyncSession) -> int:
         """
         Remove expired cache entries.
 
@@ -319,8 +306,7 @@ class ScrapeCacheService:
         now = datetime.now(UTC)
 
         stmt = delete(ScrapeCache).where(
-            ScrapeCache.expires_at.isnot(None),
-            ScrapeCache.expires_at < now
+            ScrapeCache.expires_at.isnot(None), ScrapeCache.expires_at < now
         )
 
         result = await session.execute(stmt)
@@ -329,9 +315,6 @@ class ScrapeCacheService:
         deleted_count = result.rowcount or 0
 
         if deleted_count > 0:
-            logger.info(
-                "Cleaned up expired cache entries",
-                deleted_count=deleted_count
-            )
+            logger.info("Cleaned up expired cache entries", deleted_count=deleted_count)
 
         return deleted_count

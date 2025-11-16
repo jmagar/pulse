@@ -28,7 +28,9 @@ async def cleanup_zombie_jobs(max_age_minutes: int = 15) -> dict[str, int]:
     """
     cutoff_time = datetime.now(UTC) - timedelta(minutes=max_age_minutes)
 
-    logger.info("Starting zombie job cleanup", cutoff_time=cutoff_time, max_age_minutes=max_age_minutes)
+    logger.info(
+        "Starting zombie job cleanup", cutoff_time=cutoff_time, max_age_minutes=max_age_minutes
+    )
 
     async with get_db_context() as session:
         # Find zombie jobs

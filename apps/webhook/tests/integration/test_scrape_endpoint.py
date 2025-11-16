@@ -4,6 +4,7 @@ Integration tests for /api/v2/scrape endpoint.
 Tests the complete scrape pipeline: cache lookup, Firecrawl integration,
 content processing, and cache storage.
 """
+
 from collections.abc import Generator
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -37,7 +38,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Generator[TestClient]:
 
 def test_scrape_single_url_cache_miss(client: TestClient):
     """Should scrape, process, and cache a new URL."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         # Mock Firecrawl API response
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
@@ -46,11 +47,8 @@ def test_scrape_single_url_cache_miss(client: TestClient):
             "data": {
                 "markdown": "# Test Article\n\nContent here",
                 "html": "<article><h1>Test Article</h1><p>Content here</p></article>",
-                "metadata": {
-                    "title": "Test Article",
-                    "sourceURL": "https://example.com/article"
-                }
-            }
+                "metadata": {"title": "Test Article", "sourceURL": "https://example.com/article"},
+            },
         }
 
         mock_fc_client = AsyncMock()
@@ -65,8 +63,8 @@ def test_scrape_single_url_cache_miss(client: TestClient):
                 "command": "start",
                 "url": "https://example.com/article",
                 "resultHandling": "saveAndReturn",
-                "cleanScrape": True
-            }
+                "cleanScrape": True,
+            },
         )
 
         assert response.status_code == 200
@@ -80,11 +78,10 @@ def test_scrape_single_url_cache_miss(client: TestClient):
         assert "raw" in data["data"]["savedUris"]
 
 
-
 def test_scrape_single_url_cache_hit(client: TestClient):
     """Should return cached content without hitting Firecrawl."""
     # First request to populate cache
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
         mock_fc_response.json.return_value = {
@@ -92,8 +89,8 @@ def test_scrape_single_url_cache_hit(client: TestClient):
             "data": {
                 "markdown": "# Cached Content",
                 "html": "<h1>Cached Content</h1>",
-                "metadata": {"title": "Cached"}
-            }
+                "metadata": {"title": "Cached"},
+            },
         }
 
         mock_fc_client = AsyncMock()
@@ -107,18 +104,14 @@ def test_scrape_single_url_cache_hit(client: TestClient):
             json={
                 "command": "start",
                 "url": "https://example.com/cached",
-                "maxAge": 3600000  # 1 hour
-            }
+                "maxAge": 3600000,  # 1 hour
+            },
         )
 
     # Second request should hit cache
     response = client.post(
         "/api/v2/scrape",
-        json={
-            "command": "start",
-            "url": "https://example.com/cached",
-            "maxAge": 3600000
-        }
+        json={"command": "start", "url": "https://example.com/cached", "maxAge": 3600000},
     )
 
     assert response.status_code == 200
@@ -128,11 +121,10 @@ def test_scrape_single_url_cache_hit(client: TestClient):
     assert data["data"]["url"] == "https://example.com/cached"
 
 
-
 def test_scrape_force_rescrape_bypasses_cache(client: TestClient):
     """Should bypass cache when forceRescrape=true."""
     # First request to populate cache
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
         mock_fc_response.json.return_value = {
@@ -140,8 +132,8 @@ def test_scrape_force_rescrape_bypasses_cache(client: TestClient):
             "data": {
                 "markdown": "# Fresh Content",
                 "html": "<h1>Fresh Content</h1>",
-                "metadata": {"title": "Fresh"}
-            }
+                "metadata": {"title": "Fresh"},
+            },
         }
 
         mock_fc_client = AsyncMock()
@@ -152,21 +144,13 @@ def test_scrape_force_rescrape_bypasses_cache(client: TestClient):
 
         client.post(
             "/api/v2/scrape",
-            json={
-                "command": "start",
-                "url": "https://example.com/force",
-                "maxAge": 3600000
-            }
+            json={"command": "start", "url": "https://example.com/force", "maxAge": 3600000},
         )
 
         # Force rescrape
         response = client.post(
             "/api/v2/scrape",
-            json={
-                "command": "start",
-                "url": "https://example.com/force",
-                "forceRescrape": True
-            }
+            json={"command": "start", "url": "https://example.com/force", "forceRescrape": True},
         )
 
         assert response.status_code == 200
@@ -174,18 +158,14 @@ def test_scrape_force_rescrape_bypasses_cache(client: TestClient):
         assert data["data"]["cached"] is False
 
 
-
 def test_scrape_return_only_mode(client: TestClient):
     """Should return content without saving to cache."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
         mock_fc_response.json.return_value = {
             "success": True,
-            "data": {
-                "markdown": "# Return Only",
-                "metadata": {"title": "Test"}
-            }
+            "data": {"markdown": "# Return Only", "metadata": {"title": "Test"}},
         }
 
         mock_fc_client = AsyncMock()
@@ -199,8 +179,8 @@ def test_scrape_return_only_mode(client: TestClient):
             json={
                 "command": "start",
                 "url": "https://example.com/return-only",
-                "resultHandling": "returnOnly"
-            }
+                "resultHandling": "returnOnly",
+            },
         )
 
         assert response.status_code == 200
@@ -210,18 +190,14 @@ def test_scrape_return_only_mode(client: TestClient):
         assert "savedUris" not in data["data"]
 
 
-
 def test_scrape_save_only_mode(client: TestClient):
     """Should save to cache without returning full content."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
         mock_fc_response.json.return_value = {
             "success": True,
-            "data": {
-                "markdown": "# Save Only",
-                "metadata": {"title": "Test"}
-            }
+            "data": {"markdown": "# Save Only", "metadata": {"title": "Test"}},
         }
 
         mock_fc_client = AsyncMock()
@@ -235,8 +211,8 @@ def test_scrape_save_only_mode(client: TestClient):
             json={
                 "command": "start",
                 "url": "https://example.com/save-only",
-                "resultHandling": "saveOnly"
-            }
+                "resultHandling": "saveOnly",
+            },
         )
 
         assert response.status_code == 200
@@ -247,7 +223,6 @@ def test_scrape_save_only_mode(client: TestClient):
         assert data["data"]["message"] == "Content saved to cache"
 
 
-
 def test_scrape_with_extraction(client: TestClient):
     """Should raise error for deprecated extract parameter."""
     response = client.post(
@@ -256,8 +231,8 @@ def test_scrape_with_extraction(client: TestClient):
             "command": "start",
             "url": "https://example.com/extract",
             "extract": "extract the author name and publication date",
-            "resultHandling": "returnOnly"
-        }
+            "resultHandling": "returnOnly",
+        },
     )
 
     # Extract parameter is now deprecated and should return 400 or 422
@@ -280,16 +255,15 @@ def test_scrape_with_extraction(client: TestClient):
         assert "extract" in error_messages
 
 
-
 def test_scrape_batch_start(client: TestClient):
     """Should start batch scrape job."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
         mock_fc_response.json.return_value = {
             "success": True,
             "id": "fc-batch-abc123",
-            "url": "https://api.firecrawl.dev/v1/batch/scrape/fc-batch-abc123"
+            "url": "https://api.firecrawl.dev/v1/batch/scrape/fc-batch-abc123",
         }
 
         mock_fc_client = AsyncMock()
@@ -305,9 +279,9 @@ def test_scrape_batch_start(client: TestClient):
                 "urls": [
                     "https://example.com/page1",
                     "https://example.com/page2",
-                    "https://example.com/page3"
-                ]
-            }
+                    "https://example.com/page3",
+                ],
+            },
         )
 
         assert response.status_code == 200
@@ -319,10 +293,9 @@ def test_scrape_batch_start(client: TestClient):
         assert data["data"]["urls"] == 3
 
 
-
 def test_scrape_batch_status(client: TestClient):
     """Should get batch scrape status."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
         mock_fc_response.json.return_value = {
@@ -331,7 +304,7 @@ def test_scrape_batch_status(client: TestClient):
             "total": 25,
             "completed": 18,
             "creditsUsed": 54,
-            "expiresAt": "2025-11-15T19:00:00Z"
+            "expiresAt": "2025-11-15T19:00:00Z",
         }
 
         mock_fc_client = AsyncMock()
@@ -341,11 +314,7 @@ def test_scrape_batch_status(client: TestClient):
         mock_httpx.return_value = mock_fc_client
 
         response = client.post(
-            "/api/v2/scrape",
-            json={
-                "command": "status",
-                "jobId": "fc-batch-abc123"
-            }
+            "/api/v2/scrape", json={"command": "status", "jobId": "fc-batch-abc123"}
         )
 
         assert response.status_code == 200
@@ -357,15 +326,12 @@ def test_scrape_batch_status(client: TestClient):
         assert data["data"]["total"] == 25
 
 
-
 def test_scrape_batch_cancel(client: TestClient):
     """Should cancel batch scrape job."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
-        mock_fc_response.json.return_value = {
-            "success": True
-        }
+        mock_fc_response.json.return_value = {"success": True}
 
         mock_fc_client = AsyncMock()
         mock_fc_client.delete.return_value = mock_fc_response
@@ -374,11 +340,7 @@ def test_scrape_batch_cancel(client: TestClient):
         mock_httpx.return_value = mock_fc_client
 
         response = client.post(
-            "/api/v2/scrape",
-            json={
-                "command": "cancel",
-                "jobId": "fc-batch-abc123"
-            }
+            "/api/v2/scrape", json={"command": "cancel", "jobId": "fc-batch-abc123"}
         )
 
         assert response.status_code == 200
@@ -388,7 +350,6 @@ def test_scrape_batch_cancel(client: TestClient):
         assert data["data"]["status"] == "cancelled"
 
 
-
 def test_scrape_validation_missing_url(client: TestClient):
     """Should return validation error for missing url."""
     response = client.post(
@@ -396,7 +357,7 @@ def test_scrape_validation_missing_url(client: TestClient):
         json={
             "command": "start"
             # Missing url
-        }
+        },
     )
 
     assert response.status_code == 422  # Unprocessable Entity
@@ -404,15 +365,10 @@ def test_scrape_validation_missing_url(client: TestClient):
     assert "detail" in data
 
 
-
 def test_scrape_validation_invalid_command(client: TestClient):
     """Should return validation error for invalid command."""
     response = client.post(
-        "/api/v2/scrape",
-        json={
-            "command": "invalid",
-            "url": "https://example.com"
-        }
+        "/api/v2/scrape", json={"command": "invalid", "url": "https://example.com"}
     )
 
     assert response.status_code == 422
@@ -420,10 +376,9 @@ def test_scrape_validation_invalid_command(client: TestClient):
     assert "detail" in data
 
 
-
 def test_scrape_firecrawl_error(client: TestClient):
     """Should handle Firecrawl API errors gracefully."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 500
         mock_fc_response.text = "Internal Server Error"
@@ -435,18 +390,13 @@ def test_scrape_firecrawl_error(client: TestClient):
         mock_httpx.return_value = mock_fc_client
 
         response = client.post(
-            "/api/v2/scrape",
-            json={
-                "command": "start",
-                "url": "https://example.com/error"
-            }
+            "/api/v2/scrape", json={"command": "start", "url": "https://example.com/error"}
         )
 
         assert response.status_code == 500
         data = response.json()
         assert data["success"] is False
         assert "error" in data
-
 
 
 def test_scrape_unauthorized_missing_auth():
@@ -457,20 +407,15 @@ def test_scrape_unauthorized_missing_auth():
 
     unauth_client = TestClient(app)
     response = unauth_client.post(
-        "/api/v2/scrape",
-        json={
-            "command": "start",
-            "url": "https://example.com"
-        }
+        "/api/v2/scrape", json={"command": "start", "url": "https://example.com"}
     )
 
     assert response.status_code == 401
 
 
-
 def test_scrape_with_screenshots(client: TestClient):
     """Should handle screenshot format requests."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx:
+    with patch("api.routers.scrape.httpx.AsyncClient") as mock_httpx:
         mock_fc_response = AsyncMock()
         mock_fc_response.status_code = 200
         # Base64 encoded 1x1 transparent PNG
@@ -480,8 +425,8 @@ def test_scrape_with_screenshots(client: TestClient):
             "data": {
                 "markdown": "# Screenshot Test",
                 "metadata": {"title": "Test"},
-                "screenshot": screenshot_data
-            }
+                "screenshot": screenshot_data,
+            },
         }
 
         mock_fc_client = AsyncMock()
@@ -495,8 +440,8 @@ def test_scrape_with_screenshots(client: TestClient):
             json={
                 "command": "start",
                 "url": "https://example.com/screenshot",
-                "formats": ["markdown", "screenshot"]
-            }
+                "formats": ["markdown", "screenshot"],
+            },
         )
 
         assert response.status_code == 200

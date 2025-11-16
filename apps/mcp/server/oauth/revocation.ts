@@ -3,7 +3,9 @@ import type { TokenManager } from "./token-manager.js";
 
 export async function revokeTokens(options: {
   tokenManager: TokenManager;
-  googleClient: ReturnType<typeof import("./google-client.js").createGoogleOAuthClient>;
+  googleClient: ReturnType<
+    typeof import("./google-client.js").createGoogleOAuthClient
+  >;
   userId: string;
   accessToken?: string;
   refreshToken?: string;

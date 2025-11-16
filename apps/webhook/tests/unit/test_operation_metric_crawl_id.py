@@ -1,6 +1,5 @@
 """Unit tests for OperationMetric crawl_id field."""
 
-
 import pytest
 from sqlalchemy import select
 

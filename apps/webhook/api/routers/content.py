@@ -56,9 +56,7 @@ async def get_content_for_url(
     content_dicts = await cache_service.get_by_url(url, limit=limit)
 
     if not content_dicts:
-        raise HTTPException(
-            status_code=404, detail=f"No content found for URL: {url}"
-        )
+        raise HTTPException(status_code=404, detail=f"No content found for URL: {url}")
 
     # Convert to response models
     return [ContentResponse(**c) for c in content_dicts]
@@ -102,9 +100,7 @@ async def get_content_for_session(
     cache_service = ContentCacheService(redis=redis_conn, db=session)
 
     # Get content (uses cache automatically)
-    content_dicts = await cache_service.get_by_session(
-        session_id, limit=limit, offset=offset
-    )
+    content_dicts = await cache_service.get_by_session(session_id, limit=limit, offset=offset)
 
     if not content_dicts:
         raise HTTPException(
@@ -140,15 +136,11 @@ async def get_content_by_id(
         HTTPException: 404 if content not found
         HTTPException: 401 if authentication fails
     """
-    result = await session.execute(
-        select(ScrapedContent).where(ScrapedContent.id == content_id)
-    )
+    result = await session.execute(select(ScrapedContent).where(ScrapedContent.id == content_id))
     content = result.scalar_one_or_none()
 
     if not content:
-        raise HTTPException(
-            status_code=404, detail=f"Content {content_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Content {content_id} not found")
 
     return ContentResponse(
         id=content.id,

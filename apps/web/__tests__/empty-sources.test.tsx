@@ -9,7 +9,9 @@ describe("EmptySources", () => {
 
   it("should render add source button", () => {
     render(<EmptySources />)
-    expect(screen.getByRole("button", { name: /add source/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /add source/i })
+    ).toBeInTheDocument()
   })
 
   it("should render icon", () => {

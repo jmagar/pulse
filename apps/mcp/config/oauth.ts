@@ -25,7 +25,9 @@ const OAuthEnvSchema = z.object({
   clientSecret: z.string().min(1, "clientSecret is required"),
   redirectUri: z.string().url("redirectUri must be a valid URL"),
   scopes: z.array(z.string().min(1)).min(1, "At least one scope is required"),
-  sessionSecret: z.string().min(32, "sessionSecret must be at least 32 characters"),
+  sessionSecret: z
+    .string()
+    .min(32, "sessionSecret must be at least 32 characters"),
   tokenEncryptionKey: z
     .string()
     .min(32, "tokenEncryptionKey must be at least 32 characters"),
@@ -80,8 +82,7 @@ export function loadOAuthConfig(options: LoadOptions = {}): OAuthConfig | null {
     scopes: parseScopes(env.googleScopes),
     sessionSecret: env.oauthSessionSecret,
     tokenEncryptionKey: env.oauthTokenKey,
-    resourceIndicator:
-      env.oauthResourceIndicator ?? DEFAULT_RESOURCE_INDICATOR,
+    resourceIndicator: env.oauthResourceIndicator ?? DEFAULT_RESOURCE_INDICATOR,
     authorizationServer:
       env.oauthAuthorizationServer ?? DEFAULT_AUTHORIZATION_SERVER,
     tokenTtlSeconds: getNumber(env.oauthTokenTtl, 3600),

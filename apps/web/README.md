@@ -65,6 +65,7 @@ pnpm test:watch # Watch mode for development
 ## Design Tokens
 
 Custom HSL values in `:root.dark`:
+
 - **Background**: `220 18% 9%` (~#141820)
 - **Primary**: `199 98% 49%` (#03A9F4 - Material Light Blue)
 - **Card**: `220 18% 11%`
@@ -82,6 +83,7 @@ All components built with TDD (Red-Green-Refactor):
 5. Commit
 
 **Test Coverage:**
+
 - Unit tests for all 13 components
 - Integration tests for complete application
 - 47 tests passing (100% of planned coverage)
@@ -118,6 +120,7 @@ NEXT_PUBLIC_GRAPH_URL=http://localhost:50210         # Neo4j Browser
 ### Mobile Layout (< 768px)
 
 Three vertically stacked sections with 600px fixed height:
+
 1. Sources Panel - Manage and view data sources
 2. Chat Panel - Interact with AI assistant
 3. Studio Panel - Access AI-powered features
@@ -125,6 +128,7 @@ Three vertically stacked sections with 600px fixed height:
 ### Desktop Layout (≥ 768px)
 
 Three-panel resizable layout using `react-resizable-panels`:
+
 - **Sources** (left, 28%): Collapsible source list with add/manage controls
 - **Chat** (center, 48%): Primary workspace for conversation
 - **Studio** (right, 24%): Quick access to AI features
@@ -134,9 +138,11 @@ Panels can be resized by dragging handles between them.
 ## Components
 
 ### Header
+
 Sticky header with Pulse branding, notebook title, and settings button.
 
 ### Source Panel
+
 - Empty state with "Add source" CTA
 - Source cards with type icons (PDF, Web, GitHub, YouTube, Audio)
 - Progress bars for processing sources
@@ -144,6 +150,7 @@ Sticky header with Pulse branding, notebook title, and settings button.
 - Dropdown menu for source actions
 
 ### Chat Panel
+
 - Empty state with suggested prompts
 - Message bubbles (Assistant/User with different styling)
 - Auto-expanding textarea composer
@@ -151,6 +158,7 @@ Sticky header with Pulse branding, notebook title, and settings button.
 - Send button (disabled when empty)
 
 ### Studio Panel
+
 - Feature tiles for AI capabilities:
   - **Audio Overview**: Generate podcast-style discussion
   - **Video Overview**: Create summary video
@@ -166,14 +174,14 @@ Sticky header with Pulse branding, notebook title, and settings button.
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start Next dev server on port 3000 |
-| `pnpm build` | Production build with lint/type checks |
-| `pnpm start` | Run production build |
-| `pnpm test` | Run all tests |
-| `pnpm test:watch` | Watch mode for TDD |
-| `pnpm lint` | ESLint code quality checks |
+| Command           | Description                            |
+| ----------------- | -------------------------------------- |
+| `pnpm dev`        | Start Next dev server on port 3000     |
+| `pnpm build`      | Production build with lint/type checks |
+| `pnpm start`      | Run production build                   |
+| `pnpm test`       | Run all tests                          |
+| `pnpm test:watch` | Watch mode for TDD                     |
+| `pnpm lint`       | ESLint code quality checks             |
 
 ## Accessibility
 

@@ -24,7 +24,7 @@ export function ChatComposer() {
 
   return (
     <div className="relative">
-      <div className="rounded-2xl border bg-card/60 shadow-sm ring-offset-background focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
+      <div className="bg-card/60 ring-offset-background focus-within:ring-primary rounded-2xl border shadow-sm focus-within:ring-2 focus-within:ring-offset-2">
         <div className="flex items-end gap-2 p-2">
           <Textarea
             ref={ref}
@@ -37,14 +37,14 @@ export function ChatComposer() {
               }
             }}
             placeholder="Ask anything…"
-            className="min-h-[44px] max-h-[200px] w-full resize-none border-0 bg-transparent px-2 py-2 text-sm focus-visible:ring-0"
+            className="max-h-[200px] min-h-[44px] w-full resize-none border-0 bg-transparent px-2 py-2 text-sm focus-visible:ring-0"
           />
 
           <Button
             onClick={send}
             disabled={!value.trim()}
             size="icon"
-            className="h-9 w-9 shrink-0 rounded-full mb-1"
+            className="mb-1 h-9 w-9 shrink-0 rounded-full"
             aria-label="Send"
           >
             <ArrowUp className="h-4 w-4" />

@@ -10,10 +10,7 @@ describe("crawl-config", () => {
   it("mergeExcludePaths appends custom patterns without duplicates", () => {
     const merged = mergeExcludePaths(["^/custom/", "^/es/"]);
 
-    expect(merged).toEqual([
-      ...DEFAULT_LANGUAGE_EXCLUDES,
-      "^/custom/",
-    ]);
+    expect(merged).toEqual([...DEFAULT_LANGUAGE_EXCLUDES, "^/custom/"]);
     // Ensure duplicate entry was not re-added
     const occurrences = merged.filter((pattern) => pattern === "^/es/").length;
     expect(occurrences).toBe(1);

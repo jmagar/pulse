@@ -21,7 +21,10 @@ describe("Query Response Formatter", () => {
       offset: 0,
     };
 
-    const result = formatQueryResponse(searchResponse, "firecrawl scrape options");
+    const result = formatQueryResponse(
+      searchResponse,
+      "firecrawl scrape options",
+    );
     expect(result.content).toHaveLength(1);
     const text = result.content[0].text;
     expect(text).toContain("1. Result 1");
@@ -31,7 +34,13 @@ describe("Query Response Formatter", () => {
   });
 
   it("handles empty result sets", () => {
-    const response = { results: [], total: 0, query: "q", mode: "hybrid", offset: 0 };
+    const response = {
+      results: [],
+      total: 0,
+      query: "q",
+      mode: "hybrid",
+      offset: 0,
+    };
     const result = formatQueryResponse(response, "q");
     expect(result.content[0].text).toContain("No results found");
   });

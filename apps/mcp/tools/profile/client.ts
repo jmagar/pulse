@@ -30,7 +30,7 @@ export class ProfileClient {
    */
   async getMetrics(
     crawl_id: string,
-    include_per_page: boolean = false
+    include_per_page: boolean = false,
   ): Promise<CrawlMetricsResponse> {
     const url = `${this.baseUrl}/api/metrics/crawls/${crawl_id}`;
     const params = include_per_page ? "?include_per_page=true" : "";
@@ -38,7 +38,7 @@ export class ProfileClient {
     const response = await fetch(`${url}${params}`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${this.apiSecret}`,
+        Authorization: `Bearer ${this.apiSecret}`,
         "Content-Type": "application/json",
       },
       signal: AbortSignal.timeout(this.timeout),
@@ -48,7 +48,7 @@ export class ProfileClient {
       if (response.status === 404) {
         throw new Error(
           `Crawl not found: ${crawl_id}. The crawl may not have started yet, ` +
-          `or the crawl_id may be invalid.`
+            `or the crawl_id may be invalid.`,
         );
       }
       if (response.status === 401 || response.status === 403) {

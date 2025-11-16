@@ -43,11 +43,7 @@ describe("OAuth config loader", () => {
     const config = await loadConfig();
     expect(config).not.toBeNull();
     expect(config?.clientId).toBe("test-client");
-    expect(config?.scopes).toEqual([
-      "openid",
-      "email",
-      "profile",
-    ]);
+    expect(config?.scopes).toEqual(["openid", "email", "profile"]);
   });
 
   it("throws when required values missing", async () => {

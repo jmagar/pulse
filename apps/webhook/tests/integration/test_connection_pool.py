@@ -16,23 +16,23 @@ async def test_connection_pool_status():
     pool = engine.pool
 
     # Should be able to get pool size
-    assert hasattr(pool, 'size'), "Pool should have size() method"
+    assert hasattr(pool, "size"), "Pool should have size() method"
     size = pool.size()
     assert size == 40, f"Expected pool size 40, got {size}"
 
     # Should be able to get checked out connections
-    assert hasattr(pool, 'checkedout'), "Pool should have checkedout() method"
+    assert hasattr(pool, "checkedout"), "Pool should have checkedout() method"
     checked_out = pool.checkedout()
     assert isinstance(checked_out, int), "Checked out count should be integer"
     assert checked_out >= 0, "Checked out count should be non-negative"
 
     # Should be able to get overflow
-    assert hasattr(pool, 'overflow'), "Pool should have overflow() method"
+    assert hasattr(pool, "overflow"), "Pool should have overflow() method"
     overflow = pool.overflow()
     assert isinstance(overflow, int), "Overflow count should be integer"
 
     # Should be able to get checked in connections
-    assert hasattr(pool, 'checkedin'), "Pool should have checkedin() method"
+    assert hasattr(pool, "checkedin"), "Pool should have checkedin() method"
     checked_in = pool.checkedin()
     assert isinstance(checked_in, int), "Checked in count should be integer"
 

@@ -20,7 +20,12 @@ export function createSearchTool(firecrawlClient: IFirecrawlClient): Tool {
           throw new Error("Search operation not supported by Firecrawl client");
         }
 
-        const result = await searchPipeline(firecrawlClient as { search: NonNullable<typeof firecrawlClient.search> }, validatedArgs);
+        const result = await searchPipeline(
+          firecrawlClient as {
+            search: NonNullable<typeof firecrawlClient.search>;
+          },
+          validatedArgs,
+        );
         return formatSearchResponse(result, validatedArgs.query);
       } catch (error) {
         return {

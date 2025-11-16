@@ -180,12 +180,14 @@ async def process_batch_async(documents: list[dict[str, Any]]) -> list[dict[str,
                 error=str(result),
                 error_type=type(result).__name__,
             )
-            processed_results.append({
-                "success": False,
-                "url": documents[i].get("url"),
-                "error": str(result),
-                "error_type": type(result).__name__,
-            })
+            processed_results.append(
+                {
+                    "success": False,
+                    "url": documents[i].get("url"),
+                    "error": str(result),
+                    "error_type": type(result).__name__,
+                }
+            )
         else:
             processed_results.append(result)
 
@@ -307,6 +309,7 @@ def run_worker() -> None:
 
     # Create worker with unique name (hostname ensures uniqueness across replicas)
     import socket
+
     worker_name = f"search-bridge-worker-{socket.gethostname()}"
 
     worker = Worker(

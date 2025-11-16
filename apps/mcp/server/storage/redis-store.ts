@@ -12,10 +12,7 @@ export interface RedisTokenStoreOptions {
   ttlSeconds?: number;
 }
 
-type RedisClient = Pick<
-  RedisClientType,
-  "get" | "set" | "del" | "expire"
->;
+type RedisClient = Pick<RedisClientType, "get" | "set" | "del" | "expire">;
 
 const DEFAULT_TTL_SECONDS = 3600;
 
@@ -23,13 +20,8 @@ function buildKey(userId: string): string {
   return `oauth:token:${userId}`;
 }
 
-function computeTtl(
-  record: TokenRecord,
-  fallback: number,
-): number {
-  const delta = Math.floor(
-    (record.expiresAt.getTime() - Date.now()) / 1000,
-  );
+function computeTtl(record: TokenRecord, fallback: number): number {
+  const delta = Math.floor((record.expiresAt.getTime() - Date.now()) / 1000);
   return delta > 0 ? delta : fallback;
 }
 

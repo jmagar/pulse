@@ -22,7 +22,7 @@ async def store_scraped_content(
     crawl_session_id: str,
     url: str,
     document: dict[str, Any],
-    content_source: str
+    content_source: str,
 ) -> ScrapedContent:
     """
     Store scraped content permanently in PostgreSQL.
@@ -51,20 +51,23 @@ async def store_scraped_content(
 
     # Use INSERT ... ON CONFLICT DO NOTHING with RETURNING
     # This is atomic and handles race conditions at database level
-    stmt = pg_insert(ScrapedContent).values(
-        crawl_session_id=crawl_session_id,
-        url=url,
-        source_url=metadata.get("sourceURL", url),
-        content_source=content_source,
-        markdown=markdown,
-        html=html,
-        links=links if links else None,
-        screenshot=screenshot,
-        extra_metadata=metadata,
-        content_hash=content_hash
-    ).on_conflict_do_nothing(
-        constraint='uq_content_per_session_url'
-    ).returning(ScrapedContent)
+    stmt = (
+        pg_insert(ScrapedContent)
+        .values(
+            crawl_session_id=crawl_session_id,
+            url=url,
+            source_url=metadata.get("sourceURL", url),
+            content_source=content_source,
+            markdown=markdown,
+            html=html,
+            links=links if links else None,
+            screenshot=screenshot,
+            extra_metadata=metadata,
+            content_hash=content_hash,
+        )
+        .on_conflict_do_nothing(constraint="uq_content_per_session_url")
+        .returning(ScrapedContent)
+    )
 
     result = await session.execute(stmt)
     content = result.scalar_one_or_none()
@@ -79,16 +82,14 @@ async def store_scraped_content(
         select(ScrapedContent).where(
             ScrapedContent.crawl_session_id == crawl_session_id,
             ScrapedContent.url == url,
-            ScrapedContent.content_hash == content_hash
+            ScrapedContent.content_hash == content_hash,
         )
     )
     return existing.scalar_one()
 
 
 async def store_content_async(
-    crawl_session_id: str,
-    documents: list[dict[str, Any]],
-    content_source: str
+    crawl_session_id: str, documents: list[dict[str, Any]], content_source: str
 ) -> None:
     """
     Fire-and-forget async storage of content with metrics tracking.
@@ -107,7 +108,7 @@ async def store_content_async(
         operation_type="content_storage",
         operation_name="store_batch",
         crawl_id=crawl_session_id,
-        metadata={"document_count": len(documents), "source": content_source}
+        metadata={"document_count": len(documents), "source": content_source},
     ) as ctx:
         try:
             stored_count = 0
@@ -119,7 +120,7 @@ async def store_content_async(
                         crawl_session_id=crawl_session_id,
                         url=url,
                         document=document,
-                        content_source=content_source
+                        content_source=content_source,
                     )
                     stored_count += 1
                 # Auto-commits on context exit
@@ -139,14 +140,12 @@ async def store_content_async(
                 document_count=len(documents),
                 error=str(e),
                 error_type=type(e).__name__,
-                exc_info=True
+                exc_info=True,
             )
 
 
 async def get_content_by_url(
-    session: AsyncSession,
-    url: str,
-    limit: int = 10
+    session: AsyncSession, url: str, limit: int = 10
 ) -> list[ScrapedContent]:
     """
     Retrieve all scraped versions of a URL (newest first).
@@ -169,10 +168,7 @@ async def get_content_by_url(
 
 
 async def get_content_by_session(
-    session: AsyncSession,
-    crawl_session_id: str,
-    limit: int = 100,
-    offset: int = 0
+    session: AsyncSession, crawl_session_id: str, limit: int = 100, offset: int = 0
 ) -> list[ScrapedContent]:
     """
     Retrieve content for a crawl session with pagination.

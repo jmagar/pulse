@@ -4,10 +4,7 @@ import { MemoryResourceStorage } from "./memory.js";
 import { FileSystemResourceStorage } from "./filesystem.js";
 import { WebhookPostgresStorage } from "./webhook-postgres.js";
 
-export type StorageType =
-  | "memory"
-  | "filesystem"
-  | "webhook-postgres";
+export type StorageType = "memory" | "filesystem" | "webhook-postgres";
 
 export class ResourceStorageFactory {
   private static instance: ResourceStorage | null = null;

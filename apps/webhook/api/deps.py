@@ -102,7 +102,9 @@ class _StubIndexingService:
 
 
 class _StubSearchOrchestrator:
-    async def search(self, query: str, mode: str, limit: int, **kwargs: Any) -> list[dict[str, Any]]:
+    async def search(
+        self, query: str, mode: str, limit: int, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         return [
             {
                 "id": f"stub-{mode}",
@@ -128,7 +130,9 @@ def get_text_chunker() -> TextChunker:
         if settings.test_mode:
             # Use lightweight stub to avoid loading HF models during tests
             class _StubTextChunker:
-                def chunk_text(self, text: str, metadata: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+                def chunk_text(
+                    self, text: str, metadata: dict[str, Any] | None = None
+                ) -> list[dict[str, Any]]:
                     return [{"text": text, "metadata": metadata or {}}]
 
             _text_chunker = _StubTextChunker()  # type: ignore[assignment]

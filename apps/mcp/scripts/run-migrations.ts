@@ -116,7 +116,9 @@ async function runMigrations(dryRun = false): Promise<void> {
 
         console.log(`   ✓ Completed in ${duration}ms\n`);
       } catch (error) {
-        console.error(`   ✗ FAILED: ${error instanceof Error ? error.message : String(error)}\n`);
+        console.error(
+          `   ✗ FAILED: ${error instanceof Error ? error.message : String(error)}\n`,
+        );
         throw error;
       }
     }

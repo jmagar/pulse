@@ -56,7 +56,7 @@ function percentage(part: number, total: number): string {
  */
 function buildErrorSection(
   metrics: CrawlMetricsResponse,
-  options: Partial<ProfileOptions>
+  options: Partial<ProfileOptions>,
 ): string {
   if (!metrics.per_page_metrics || metrics.per_page_metrics.length === 0) {
     return "";
@@ -67,7 +67,7 @@ function buildErrorSection(
     .filter((m) => !m.success)
     .sort(
       (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
 
   if (errors.length === 0) {
@@ -76,7 +76,10 @@ function buildErrorSection(
 
   // Apply pagination
   const { error_offset = 0, error_limit = 5 } = options;
-  const paginatedErrors = errors.slice(error_offset, error_offset + error_limit);
+  const paginatedErrors = errors.slice(
+    error_offset,
+    error_offset + error_limit,
+  );
   const hasMore = errors.length > error_offset + error_limit;
 
   // Group by operation type
@@ -158,7 +161,7 @@ function buildInsights(metrics: CrawlMetricsResponse): string {
 
     if (aggregate_timing.embedding_ms > 0) {
       const avgEmbedding = Math.round(
-        aggregate_timing.embedding_ms / total_pages
+        aggregate_timing.embedding_ms / total_pages,
       );
       insights += `- Average ${avgEmbedding.toLocaleString()}ms/page for embeddings`;
       if (avgEmbedding > 1000) {
@@ -182,7 +185,7 @@ function buildInsights(metrics: CrawlMetricsResponse): string {
  */
 export function formatProfileResponse(
   metrics: CrawlMetricsResponse,
-  options: Partial<ProfileOptions>
+  options: Partial<ProfileOptions>,
 ): ToolResponse {
   const lines: string[] = [];
 
@@ -195,14 +198,14 @@ export function formatProfileResponse(
     metrics.status === "completed"
       ? "✓"
       : metrics.status === "failed"
-      ? "❌"
-      : "🔄";
+        ? "❌"
+        : "🔄";
   const successText =
     metrics.success === true
       ? "(succeeded)"
       : metrics.success === false
-      ? "(failed)"
-      : "";
+        ? "(failed)"
+        : "";
   lines.push(`Status: ${metrics.status} ${statusIcon} ${successText}`);
 
   // Timestamps
@@ -234,26 +237,26 @@ export function formatProfileResponse(
     lines.push(
       `├─ Chunking:   ${aggregate_timing.chunking_ms.toLocaleString()}ms (${percentage(
         aggregate_timing.chunking_ms,
-        totalIndexing
-      )})`
+        totalIndexing,
+      )})`,
     );
     lines.push(
       `├─ Embedding: ${aggregate_timing.embedding_ms.toLocaleString()}ms (${percentage(
         aggregate_timing.embedding_ms,
-        totalIndexing
-      )})`
+        totalIndexing,
+      )})`,
     );
     lines.push(
       `├─ Qdrant:     ${aggregate_timing.qdrant_ms.toLocaleString()}ms (${percentage(
         aggregate_timing.qdrant_ms,
-        totalIndexing
-      )})`
+        totalIndexing,
+      )})`,
     );
     lines.push(
       `└─ BM25:       ${aggregate_timing.bm25_ms.toLocaleString()}ms (${percentage(
         aggregate_timing.bm25_ms,
-        totalIndexing
-      )})`
+        totalIndexing,
+      )})`,
     );
 
     lines.push("");
@@ -268,7 +271,7 @@ export function formatProfileResponse(
   if (metrics.e2e_duration_ms !== null) {
     lines.push("");
     lines.push(
-      `End-to-end latency: ${formatDuration(metrics.e2e_duration_ms)} (from MCP request to completion)`
+      `End-to-end latency: ${formatDuration(metrics.e2e_duration_ms)} (from MCP request to completion)`,
     );
   }
 
@@ -294,7 +297,7 @@ export function formatProfileResponse(
   if (metrics.status === "in_progress") {
     lines.push("");
     lines.push(
-      "💡 Crawl is still in progress. Use profile_crawl again to see updated metrics."
+      "💡 Crawl is still in progress. Use profile_crawl again to see updated metrics.",
     );
   }
 

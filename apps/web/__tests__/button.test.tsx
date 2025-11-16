@@ -10,7 +10,7 @@ describe("Button component", () => {
     render(
       <Button className="custom-class" variant="secondary">
         Save
-      </Button>,
+      </Button>
     )
 
     const button = screen.getByRole("button", { name: "Save" })

@@ -42,7 +42,11 @@ export async function csrfProtection(
 ): Promise<void> {
   ensureSession(req);
 
-  if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
+  if (
+    req.method === "GET" ||
+    req.method === "HEAD" ||
+    req.method === "OPTIONS"
+  ) {
     return next();
   }
 

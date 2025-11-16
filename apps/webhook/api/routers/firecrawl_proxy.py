@@ -68,11 +68,7 @@ async def proxy_with_session_tracking(
 
             if job_id:
                 # Extract base_url from cached request body
-                base_url = (
-                    request_body.get("url")
-                    or request_body.get("urls", [""])[0]
-                    or "unknown"
-                )
+                base_url = request_body.get("url") or request_body.get("urls", [""])[0] or "unknown"
 
                 # Create crawl session
                 await create_crawl_session(
@@ -137,9 +133,7 @@ async def proxy_to_firecrawl(
 
     # Forward headers (exclude host and content-length)
     headers = {
-        k: v
-        for k, v in request.headers.items()
-        if k.lower() not in ("host", "content-length")
+        k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")
     }
 
     # Add Firecrawl API key
@@ -205,9 +199,7 @@ async def proxy_to_firecrawl(
 @router.post("/v2/scrape")
 async def scrape_url(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Single URL scrape → proxy + session tracking + auto-index"""
-    return await proxy_with_session_tracking(
-        request, "/scrape", "scrape", db, "POST"
-    )
+    return await proxy_with_session_tracking(request, "/scrape", "scrape", db, "POST")
 
 
 @router.get("/v2/scrape/{job_id}")
@@ -219,9 +211,7 @@ async def get_scrape_status(request: Request, job_id: str) -> Response:
 @router.post("/v2/batch/scrape")
 async def batch_scrape(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Batch scrape → proxy + session tracking + auto-index"""
-    return await proxy_with_session_tracking(
-        request, "/batch/scrape", "scrape_batch", db, "POST"
-    )
+    return await proxy_with_session_tracking(request, "/batch/scrape", "scrape_batch", db, "POST")
 
 
 @router.get("/v2/batch/scrape/{job_id}")
@@ -245,9 +235,7 @@ async def get_batch_scrape_errors(request: Request, job_id: str) -> Response:
 @router.post("/v2/crawl")
 async def start_crawl(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Start crawl → proxy + session tracking + auto-index"""
-    return await proxy_with_session_tracking(
-        request, "/crawl", "crawl", db, "POST"
-    )
+    return await proxy_with_session_tracking(request, "/crawl", "crawl", db, "POST")
 
 
 @router.get("/v2/crawl/{job_id}")
@@ -289,26 +277,20 @@ async def list_active_crawls(request: Request) -> Response:
 @router.post("/v2/map")
 async def map_urls(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """URL discovery → proxy + session tracking"""
-    return await proxy_with_session_tracking(
-        request, "/map", "map", db, "POST"
-    )
+    return await proxy_with_session_tracking(request, "/map", "map", db, "POST")
 
 
 @router.post("/v2/search")
 async def web_search(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Web search → proxy + session tracking"""
-    return await proxy_with_session_tracking(
-        request, "/search", "search", db, "POST"
-    )
+    return await proxy_with_session_tracking(request, "/search", "search", db, "POST")
 
 
 # AI Features
 @router.post("/v2/extract")
 async def extract_data(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
     """Extract structured data → proxy + session tracking"""
-    return await proxy_with_session_tracking(
-        request, "/extract", "extract", db, "POST"
-    )
+    return await proxy_with_session_tracking(request, "/extract", "extract", db, "POST")
 
 
 @router.get("/v2/extract/{job_id}")

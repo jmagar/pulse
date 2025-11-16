@@ -96,24 +96,26 @@ async def test_get_by_url_cache_miss():
     db_mock.execute.assert_called_once()
 
     # Verify result cached
-    expected_cache_value = json.dumps([{
-        "id": 2,
-        "url": "https://example.com",
-        "source_url": None,
-        "markdown": "from db",
-        "html": "<p>from db</p>",
-        "links": [],
-        "screenshot": None,
-        "metadata": {},
-        "content_source": "firecrawl_scrape",
-        "scraped_at": "2025-01-15T12:00:00+00:00",
-        "created_at": "2025-01-15T12:00:00+00:00",
-        "crawl_session_id": "job-123"
-    }])
+    expected_cache_value = json.dumps(
+        [
+            {
+                "id": 2,
+                "url": "https://example.com",
+                "source_url": None,
+                "markdown": "from db",
+                "html": "<p>from db</p>",
+                "links": [],
+                "screenshot": None,
+                "metadata": {},
+                "content_source": "firecrawl_scrape",
+                "scraped_at": "2025-01-15T12:00:00+00:00",
+                "created_at": "2025-01-15T12:00:00+00:00",
+                "crawl_session_id": "job-123",
+            }
+        ]
+    )
     redis_mock.setex.assert_called_once_with(
-        "content:url:https://example.com",
-        7200,
-        expected_cache_value
+        "content:url:https://example.com", 7200, expected_cache_value
     )
 
     assert len(result) == 1
@@ -127,10 +129,12 @@ async def test_get_by_session_cache_hit():
     redis_mock = Mock(spec=Redis)
     db_mock = AsyncMock(spec=AsyncSession)
 
-    cached_data = json.dumps([
-        {"id": 1, "url": "https://page1.com", "markdown": "cached page 1"},
-        {"id": 2, "url": "https://page2.com", "markdown": "cached page 2"}
-    ])
+    cached_data = json.dumps(
+        [
+            {"id": 1, "url": "https://page1.com", "markdown": "cached page 1"},
+            {"id": 2, "url": "https://page2.com", "markdown": "cached page 2"},
+        ]
+    )
     redis_mock.get.return_value = cached_data.encode()
 
     service = ContentCacheService(redis_mock, db_mock)
@@ -230,11 +234,13 @@ async def test_invalidate_session_cache():
     redis_mock = Mock(spec=Redis)
 
     # Setup: Redis has multiple pages cached
-    redis_mock.keys = Mock(return_value=[
-        b"content:session:job-123:limit:10:offset:0",
-        b"content:session:job-123:limit:10:offset:10",
-        b"content:session:job-123:limit:10:offset:20",
-    ])
+    redis_mock.keys = Mock(
+        return_value=[
+            b"content:session:job-123:limit:10:offset:0",
+            b"content:session:job-123:limit:10:offset:10",
+            b"content:session:job-123:limit:10:offset:20",
+        ]
+    )
     redis_mock.delete = Mock(return_value=3)
 
     db_mock = AsyncMock(spec=AsyncSession)

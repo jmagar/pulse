@@ -60,7 +60,10 @@ describe("Query Tool", () => {
 
     expect(result.content).toBeDefined();
     expect(result.content[0]).toEqual(
-      expect.objectContaining({ type: "text", text: expect.stringContaining("1. Test") }),
+      expect.objectContaining({
+        type: "text",
+        text: expect.stringContaining("1. Test"),
+      }),
     );
     expect(result.isError).toBeUndefined();
   });
@@ -79,7 +82,10 @@ describe("Query Tool", () => {
     const result = await (
       tool.handler as (
         args: unknown,
-      ) => Promise<{ isError?: boolean; content: { type: string; text: string }[] }>
+      ) => Promise<{
+        isError?: boolean;
+        content: { type: string; text: string }[];
+      }>
     )({
       query: "test",
       mode: "hybrid",
@@ -100,7 +106,10 @@ describe("Query Tool", () => {
     const result = await (
       tool.handler as (
         args: unknown,
-      ) => Promise<{ isError?: boolean; content: { type: string; text: string }[] }>
+      ) => Promise<{
+        isError?: boolean;
+        content: { type: string; text: string }[];
+      }>
     )({
       query: "",
       mode: "invalid",

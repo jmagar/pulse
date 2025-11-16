@@ -16,7 +16,15 @@
  * @module storage/postgres.test
  */
 
-import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+} from "vitest";
 import { PostgresResourceStorage } from "./postgres.js";
 import { getPool, closePool } from "./postgres-pool.js";
 import { ResourceMetadata } from "./types.js";

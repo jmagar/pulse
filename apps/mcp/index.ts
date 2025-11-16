@@ -93,8 +93,7 @@ async function main(): Promise<void> {
       allowedHosts: process.env.ALLOWED_HOSTS?.split(",").filter(Boolean) || [],
       oauthEnabled: process.env.ENABLE_OAUTH === "true",
       oauthRedirectUri:
-        process.env.MCP_GOOGLE_REDIRECT_URI ||
-        process.env.GOOGLE_REDIRECT_URI,
+        process.env.MCP_GOOGLE_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI,
       resumabilityEnabled: process.env.ENABLE_RESUMABILITY === "true",
     };
 

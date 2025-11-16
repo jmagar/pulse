@@ -39,7 +39,9 @@ describe("scrape schema", () => {
 
 describe("scrape input schema", () => {
   it("includes command and urls properties", () => {
-    const schema = buildInputSchema() as { properties: Record<string, unknown> };
+    const schema = buildInputSchema() as {
+      properties: Record<string, unknown>;
+    };
     expect(schema.properties.command).toBeDefined();
     expect(schema.properties.urls).toBeDefined();
     expect(schema.properties.jobId).toBeDefined();

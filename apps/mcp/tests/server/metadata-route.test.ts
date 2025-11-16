@@ -27,7 +27,9 @@ describe("OAuth metadata route", () => {
     vi.doMock("../../config/oauth.js", () => ({
       loadOAuthConfig: () => baseConfig,
     }));
-    const { oauthProtectedResource: handler } = await import("../../server/routes/metadata.js");
+    const { oauthProtectedResource: handler } = await import(
+      "../../server/routes/metadata.js"
+    );
     const app = express();
     app.get("/.well-known/oauth-protected-resource", handler);
 

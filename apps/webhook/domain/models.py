@@ -136,6 +136,7 @@ class CrawlSession(Base):
     Supports all Firecrawl v2 operations: scrape, batch scrape, crawl, map, search.
     Records lifecycle and aggregates per-page operation metrics for performance analysis.
     """
+
     __tablename__ = "crawl_sessions"
     __table_args__ = {"schema": "webhook"}
 
@@ -150,11 +151,15 @@ class CrawlSession(Base):
     operation_type: Mapped[str] = mapped_column(String(50), nullable=False)
 
     # Lifecycle timestamps
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Status tracking
-    status: Mapped[str] = mapped_column(String(50), nullable=False, default="in_progress", index=True)
+    status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="in_progress", index=True
+    )
     success: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
     # Page statistics (for backward compatibility with old metrics)
@@ -189,14 +194,16 @@ class CrawlSession(Base):
     # Metadata
     extra_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     scraped_contents: Mapped[list["ScrapedContent"]] = relationship(
-        "ScrapedContent",
-        back_populates="crawl_session",
-        cascade="all, delete-orphan"
+        "ScrapedContent", back_populates="crawl_session", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
@@ -217,9 +224,9 @@ class ScrapedContent(Base):
         ForeignKey(
             "webhook.crawl_sessions.job_id",
             ondelete="CASCADE",
-            name="fk_scraped_content_crawl_session"
+            name="fk_scraped_content_crawl_session",
         ),
-        nullable=False
+        nullable=False,
     )
 
     url: Mapped[str] = mapped_column(Text, nullable=False)
@@ -229,16 +236,13 @@ class ScrapedContent(Base):
     content_source: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
-        comment="firecrawl_scrape, firecrawl_crawl, firecrawl_map, firecrawl_batch"
+        comment="firecrawl_scrape, firecrawl_crawl, firecrawl_map, firecrawl_batch",
     )
 
     # Content fields (NOTE: no raw_html - Firecrawl doesn't provide this)
     markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
     html: Mapped[str | None] = mapped_column(Text, nullable=True)
-    links: Mapped[dict | None] = mapped_column(
-        JSONB(astext_type=Text()),
-        nullable=True
-    )
+    links: Mapped[dict | None] = mapped_column(JSONB(astext_type=Text()), nullable=True)
     screenshot: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Metadata from Firecrawl (statusCode, openGraph, dublinCore, etc.)
@@ -247,7 +251,7 @@ class ScrapedContent(Base):
         "metadata",  # Column name in database
         JSONB(astext_type=Text()),
         nullable=False,
-        server_default="{}"
+        server_default="{}",
     )
 
     # Deduplication
@@ -255,26 +259,18 @@ class ScrapedContent(Base):
 
     # Timestamps (onupdate handles updated_at, no trigger needed)
     scraped_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True),
-        nullable=False,
-        server_default=func.now()
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True),
-        nullable=False,
-        server_default=func.now()
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now()
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
     # Relationships
     crawl_session: Mapped["CrawlSession"] = relationship(
-        "CrawlSession",
-        back_populates="scraped_contents"
+        "CrawlSession", back_populates="scraped_contents"
     )
 
     def __repr__(self) -> str:
@@ -350,23 +346,26 @@ class ScrapeCache(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        comment="When content was scraped"
+        comment="When content was scraped",
     )
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
-        comment="Computed expiration time (scraped_at + maxAge)"
+        comment="Computed expiration time (scraped_at + maxAge)",
     )
     cache_key: Mapped[str] = mapped_column(
         Text,
         nullable=False,
         unique=True,
-        comment="SHA-256 hash of (url + extract_query + key scraping options)"
+        comment="SHA-256 hash of (url + extract_query + key scraping options)",
     )
 
     # Tracking
     access_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="0", comment="Number of times cached content was accessed"
+        Integer,
+        nullable=False,
+        server_default="0",
+        comment="Number of times cached content was accessed",
     )
     last_accessed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, comment="Last time this cache entry was used"

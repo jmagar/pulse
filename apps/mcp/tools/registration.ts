@@ -83,9 +83,7 @@ export function registerTools(
           throw new Error("WEBHOOK_BASE_URL is required for the query tool");
         }
         if (!currentEnv.webhookApiSecret) {
-          throw new Error(
-            "WEBHOOK_API_SECRET is required for the query tool",
-          );
+          throw new Error("WEBHOOK_API_SECRET is required for the query tool");
         }
 
         return createQueryTool({
@@ -98,7 +96,9 @@ export function registerTools(
       name: "profile_crawl",
       factory: () => {
         if (!currentEnv.webhookBaseUrl) {
-          throw new Error("WEBHOOK_BASE_URL is required for the profile_crawl tool");
+          throw new Error(
+            "WEBHOOK_BASE_URL is required for the profile_crawl tool",
+          );
         }
         if (!currentEnv.webhookApiSecret) {
           throw new Error(
@@ -258,7 +258,11 @@ export function registerResources(server: Server): void {
 
       // Add external services from remote Docker contexts (if configured)
       // Example: GPU services on remote host
-      let externalServices: Array<{ name: string; description: string; context?: string }> = [];
+      let externalServices: Array<{
+        name: string;
+        description: string;
+        context?: string;
+      }> = [];
       if (currentEnv.dockerExternalServices) {
         try {
           externalServices = JSON.parse(currentEnv.dockerExternalServices);
@@ -326,10 +330,7 @@ export function registerResources(server: Server): void {
 
       try {
         // Check if this is a Docker logs resource
-        if (
-          dockerLogsProvider &&
-          DockerLogsProvider.isDockerLogsUri(uri)
-        ) {
+        if (dockerLogsProvider && DockerLogsProvider.isDockerLogsUri(uri)) {
           const resource = await dockerLogsProvider.read(uri);
 
           logInfo("resources/read", `Docker logs read successfully: ${uri}`, {

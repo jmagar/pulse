@@ -1,4 +1,5 @@
 """Test foreign key constraint enforcement."""
+
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
@@ -35,7 +36,7 @@ async def test_operation_metric_requires_valid_request_id(db_session):
         operation_name="test",
         duration_ms=100,
         success=True,
-        request_id="non-existent-uuid"  # Invalid FK reference
+        request_id="non-existent-uuid",  # Invalid FK reference
     )
 
     db_session.add(orphaned_metric)
@@ -45,7 +46,10 @@ async def test_operation_metric_requires_valid_request_id(db_session):
         await db_session.commit()
 
     # Verify it's specifically a foreign key violation
-    assert "foreign key" in str(exc_info.value).lower() or "violates foreign key constraint" in str(exc_info.value).lower()
+    assert (
+        "foreign key" in str(exc_info.value).lower()
+        or "violates foreign key constraint" in str(exc_info.value).lower()
+    )
 
 
 @pytest.mark.asyncio
@@ -56,7 +60,7 @@ async def test_operation_metric_allows_null_request_id(db_session):
         operation_name="background_job",
         duration_ms=200,
         success=True,
-        request_id=None  # NULL is allowed
+        request_id=None,  # NULL is allowed
     )
 
     db_session.add(standalone_metric)

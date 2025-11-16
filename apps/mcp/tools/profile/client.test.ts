@@ -33,9 +33,9 @@ describe("ProfileClient", () => {
         expect.objectContaining({
           method: "GET",
           headers: expect.objectContaining({
-            "Authorization": "Bearer test-secret",
+            Authorization: "Bearer test-secret",
           }),
-        })
+        }),
       );
     });
 
@@ -49,7 +49,7 @@ describe("ProfileClient", () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         "http://localhost:52100/api/metrics/crawls/test123?include_per_page=true",
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -79,7 +79,7 @@ describe("ProfileClient", () => {
       });
 
       await expect(client.getMetrics("unknown")).rejects.toThrow(
-        "Crawl not found: unknown"
+        "Crawl not found: unknown",
       );
     });
 
@@ -91,7 +91,7 @@ describe("ProfileClient", () => {
       });
 
       await expect(client.getMetrics("test")).rejects.toThrow(
-        "Authentication failed"
+        "Authentication failed",
       );
     });
 
@@ -103,7 +103,7 @@ describe("ProfileClient", () => {
       });
 
       await expect(client.getMetrics("test")).rejects.toThrow(
-        "Authentication failed"
+        "Authentication failed",
       );
     });
 
@@ -116,7 +116,7 @@ describe("ProfileClient", () => {
       });
 
       await expect(client.getMetrics("test")).rejects.toThrow(
-        "Metrics API error (500)"
+        "Metrics API error (500)",
       );
     });
 

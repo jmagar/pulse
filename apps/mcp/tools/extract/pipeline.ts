@@ -25,7 +25,9 @@ interface ClientExtractOptions {
  * Execute extract operation using Firecrawl client
  */
 export async function extractPipeline(
-  client: { extract: (options: ClientExtractOptions) => Promise<ExtractResult> },
+  client: {
+    extract: (options: ClientExtractOptions) => Promise<ExtractResult>;
+  },
   options: ExtractOptions,
 ): Promise<ExtractResult> {
   const clientOptions: ClientExtractOptions = {

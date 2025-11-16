@@ -1,6 +1,5 @@
 """Tests for configurable job timeout setting."""
 
-
 from config import Settings
 
 

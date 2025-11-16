@@ -37,19 +37,19 @@ describe("Profile Tool Schema", () => {
 
     it("should enforce error_limit maximum of 50", () => {
       expect(() =>
-        profileOptionsSchema.parse({ crawl_id: "test", error_limit: 100 })
+        profileOptionsSchema.parse({ crawl_id: "test", error_limit: 100 }),
       ).toThrow();
     });
 
     it("should enforce error_offset minimum of 0", () => {
       expect(() =>
-        profileOptionsSchema.parse({ crawl_id: "test", error_offset: -1 })
+        profileOptionsSchema.parse({ crawl_id: "test", error_offset: -1 }),
       ).toThrow();
     });
 
     it("should enforce error_limit minimum of 1", () => {
       expect(() =>
-        profileOptionsSchema.parse({ crawl_id: "test", error_limit: 0 })
+        profileOptionsSchema.parse({ crawl_id: "test", error_limit: 0 }),
       ).toThrow();
     });
   });

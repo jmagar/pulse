@@ -1,8 +1,20 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { FileText, Globe, Github, Play, Music2, MoreHorizontal } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  FileText,
+  Globe,
+  Github,
+  Play,
+  Music2,
+  MoreHorizontal,
+} from "lucide-react"
 
 type SourceType = "pdf" | "web" | "youtube" | "text" | "github" | "audio"
 
@@ -14,7 +26,13 @@ interface SourceCardProps {
   error?: string
 }
 
-export function SourceCard({ title, meta, type, processing, error }: SourceCardProps) {
+export function SourceCard({
+  title,
+  meta,
+  type,
+  processing,
+  error,
+}: SourceCardProps) {
   const icons = {
     pdf: FileText,
     web: Globe,
@@ -30,7 +48,7 @@ export function SourceCard({ title, meta, type, processing, error }: SourceCardP
     <Card className="hover:bg-muted transition-colors">
       <CardContent className="p-3">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 text-primary shrink-0">
+          <div className="text-primary mt-0.5 shrink-0">
             <Icon className="h-5 w-5" />
           </div>
 
@@ -59,7 +77,7 @@ export function SourceCard({ title, meta, type, processing, error }: SourceCardP
               </DropdownMenu>
             </div>
 
-            <p className="truncate text-xs text-muted-foreground mt-0.5">
+            <p className="text-muted-foreground mt-0.5 truncate text-xs">
               {meta}
             </p>
 
@@ -69,9 +87,7 @@ export function SourceCard({ title, meta, type, processing, error }: SourceCardP
               </div>
             )}
 
-            {error && (
-              <p className="mt-2 text-xs text-red-500">{error}</p>
-            )}
+            {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
           </div>
         </div>
       </CardContent>

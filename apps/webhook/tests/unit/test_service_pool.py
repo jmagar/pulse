@@ -23,11 +23,12 @@ def mock_services():
     - VectorStore from creating Qdrant client (may attempt connection)
     - BM25Engine from loading from disk
     """
-    with patch('services.service_pool.TextChunker') as mock_chunker, \
-         patch('services.service_pool.EmbeddingService') as mock_embed, \
-         patch('services.service_pool.VectorStore') as mock_vector, \
-         patch('services.service_pool.BM25Engine') as mock_bm25:
-
+    with (
+        patch("services.service_pool.TextChunker") as mock_chunker,
+        patch("services.service_pool.EmbeddingService") as mock_embed,
+        patch("services.service_pool.VectorStore") as mock_vector,
+        patch("services.service_pool.BM25Engine") as mock_bm25,
+    ):
         # Create mock instances with async close methods
         mock_chunker_instance = Mock()
         mock_embed_instance = Mock()
@@ -42,10 +43,10 @@ def mock_services():
         mock_bm25.return_value = mock_bm25_instance
 
         yield {
-            'chunker': mock_chunker_instance,
-            'embed': mock_embed_instance,
-            'vector': mock_vector_instance,
-            'bm25': mock_bm25_instance,
+            "chunker": mock_chunker_instance,
+            "embed": mock_embed_instance,
+            "vector": mock_vector_instance,
+            "bm25": mock_bm25_instance,
         }
 
         # Reset singleton after each test for isolation

@@ -1,4 +1,5 @@
 """Tests for Firecrawl /v2/extract proxy endpoint."""
+
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -29,12 +30,12 @@ def test_extract_endpoint_proxies_to_firecrawl(auth_headers):
         "data": {
             "name": "Model Context Protocol",
             "creator": "Anthropic",
-            "capabilities": ["sampling", "resources", "tools"]
+            "capabilities": ["sampling", "resources", "tools"],
         },
-        "llmUsage": 150
+        "llmUsage": 150,
     }
 
-    with patch('api.routers.firecrawl_proxy.proxy_to_firecrawl') as mock_proxy:
+    with patch("api.routers.firecrawl_proxy.proxy_to_firecrawl") as mock_proxy:
         # Mock the proxy call to return Firecrawl response
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -43,13 +44,13 @@ def test_extract_endpoint_proxies_to_firecrawl(auth_headers):
         mock_proxy.return_value = mock_response
 
         # Mock database session
-        with patch('api.routers.firecrawl_proxy.get_db_session') as mock_db:
+        with patch("api.routers.firecrawl_proxy.get_db_session") as mock_db:
             mock_db_session = MagicMock()
             mock_db.return_value.__aenter__ = AsyncMock(return_value=mock_db_session)
             mock_db.return_value.__aexit__ = AsyncMock()
 
             # Mock create_crawl_session
-            with patch('api.routers.firecrawl_proxy.create_crawl_session') as mock_session:
+            with patch("api.routers.firecrawl_proxy.create_crawl_session") as mock_session:
                 mock_session.return_value = AsyncMock()
 
                 response = client.post(
@@ -62,11 +63,11 @@ def test_extract_endpoint_proxies_to_firecrawl(auth_headers):
                             "properties": {
                                 "name": {"type": "string"},
                                 "creator": {"type": "string"},
-                                "capabilities": {"type": "array"}
-                            }
+                                "capabilities": {"type": "array"},
+                            },
                         },
-                        "prompt": "Extract protocol name, creator, and capabilities"
-                    }
+                        "prompt": "Extract protocol name, creator, and capabilities",
+                    },
                 )
 
     assert response.status_code == 200
@@ -87,27 +88,24 @@ def test_extract_endpoint_exists():
 
     # Verify endpoint exists by checking it doesn't return 404
     # Note: Will fail due to missing Firecrawl service, but that's expected
-    with patch('api.routers.firecrawl_proxy.proxy_to_firecrawl') as mock_proxy:
+    with patch("api.routers.firecrawl_proxy.proxy_to_firecrawl") as mock_proxy:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.body = b'{"success": true, "id": "test-123"}'
         mock_response.headers = {"content-type": "application/json"}
         mock_proxy.return_value = mock_response
 
-        with patch('api.routers.firecrawl_proxy.get_db_session') as mock_db:
+        with patch("api.routers.firecrawl_proxy.get_db_session") as mock_db:
             mock_db_session = MagicMock()
             mock_db.return_value.__aenter__ = AsyncMock(return_value=mock_db_session)
             mock_db.return_value.__aexit__ = AsyncMock()
 
-            with patch('api.routers.firecrawl_proxy.create_crawl_session') as mock_session:
+            with patch("api.routers.firecrawl_proxy.create_crawl_session") as mock_session:
                 mock_session.return_value = AsyncMock()
 
                 response = client.post(
                     "/v2/extract",
-                    json={
-                        "urls": ["https://example.com"],
-                        "schema": {"type": "object"}
-                    }
+                    json={"urls": ["https://example.com"], "schema": {"type": "object"}},
                 )
 
     # Endpoint should exist and handle request (not 404)
@@ -122,31 +120,28 @@ def test_extract_endpoint_creates_crawl_session(auth_headers):
         "success": True,
         "id": "extract-456",
         "status": "processing",
-        "data": {}
+        "data": {},
     }
 
-    with patch('api.routers.firecrawl_proxy.proxy_to_firecrawl') as mock_proxy:
+    with patch("api.routers.firecrawl_proxy.proxy_to_firecrawl") as mock_proxy:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.body = json.dumps(mock_firecrawl_response).encode()
         mock_response.headers = {"content-type": "application/json"}
         mock_proxy.return_value = mock_response
 
-        with patch('api.routers.firecrawl_proxy.get_db_session') as mock_db:
+        with patch("api.routers.firecrawl_proxy.get_db_session") as mock_db:
             mock_db_session = MagicMock()
             mock_db.return_value.__aenter__ = AsyncMock(return_value=mock_db_session)
             mock_db.return_value.__aexit__ = AsyncMock()
 
-            with patch('api.routers.firecrawl_proxy.create_crawl_session') as mock_session:
+            with patch("api.routers.firecrawl_proxy.create_crawl_session") as mock_session:
                 mock_session.return_value = AsyncMock()
 
                 response = client.post(
                     "/v2/extract",
                     headers=auth_headers,
-                    json={
-                        "urls": ["https://example.com"],
-                        "schema": {"type": "object"}
-                    }
+                    json={"urls": ["https://example.com"], "schema": {"type": "object"}},
                 )
 
         assert response.status_code == 200
@@ -168,34 +163,31 @@ def test_extract_endpoint_handles_multiple_urls(auth_headers):
         "success": True,
         "id": "extract-789",
         "status": "processing",
-        "data": {}
+        "data": {},
     }
 
-    with patch('api.routers.firecrawl_proxy.proxy_to_firecrawl') as mock_proxy:
+    with patch("api.routers.firecrawl_proxy.proxy_to_firecrawl") as mock_proxy:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.body = json.dumps(mock_firecrawl_response).encode()
         mock_response.headers = {"content-type": "application/json"}
         mock_proxy.return_value = mock_response
 
-        with patch('api.routers.firecrawl_proxy.get_db_session') as mock_db:
+        with patch("api.routers.firecrawl_proxy.get_db_session") as mock_db:
             mock_db_session = MagicMock()
             mock_db.return_value.__aenter__ = AsyncMock(return_value=mock_db_session)
             mock_db.return_value.__aexit__ = AsyncMock()
 
-            with patch('api.routers.firecrawl_proxy.create_crawl_session') as mock_session:
+            with patch("api.routers.firecrawl_proxy.create_crawl_session") as mock_session:
                 mock_session.return_value = AsyncMock()
 
                 response = client.post(
                     "/v2/extract",
                     headers=auth_headers,
                     json={
-                        "urls": [
-                            "https://example.com/page1",
-                            "https://example.com/page2"
-                        ],
-                        "schema": {"type": "object"}
-                    }
+                        "urls": ["https://example.com/page1", "https://example.com/page2"],
+                        "schema": {"type": "object"},
+                    },
                 )
 
         assert response.status_code == 200
@@ -213,12 +205,10 @@ def test_extract_get_status_endpoint():
         "success": True,
         "id": "extract-123",
         "status": "completed",
-        "data": {
-            "name": "Test Result"
-        }
+        "data": {"name": "Test Result"},
     }
 
-    with patch('api.routers.firecrawl_proxy.proxy_to_firecrawl') as mock_proxy:
+    with patch("api.routers.firecrawl_proxy.proxy_to_firecrawl") as mock_proxy:
         # Mock returns Response directly (GET endpoints don't wrap response)
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -237,7 +227,7 @@ def test_extract_endpoint_handles_non_success_without_session():
     """Test that extract endpoint doesn't create session for error responses."""
     client = TestClient(app)
 
-    with patch('api.routers.firecrawl_proxy.proxy_to_firecrawl') as mock_proxy:
+    with patch("api.routers.firecrawl_proxy.proxy_to_firecrawl") as mock_proxy:
         # Mock error response from Firecrawl
         mock_response = MagicMock()
         mock_response.status_code = 400
@@ -246,20 +236,17 @@ def test_extract_endpoint_handles_non_success_without_session():
         mock_proxy.return_value = mock_response
 
         # Mock database session
-        with patch('api.routers.firecrawl_proxy.get_db_session') as mock_db:
+        with patch("api.routers.firecrawl_proxy.get_db_session") as mock_db:
             mock_db_session = MagicMock()
             mock_db.return_value.__aenter__ = AsyncMock(return_value=mock_db_session)
             mock_db.return_value.__aexit__ = AsyncMock()
 
-            with patch('api.routers.firecrawl_proxy.create_crawl_session') as mock_session:
+            with patch("api.routers.firecrawl_proxy.create_crawl_session") as mock_session:
                 mock_session.return_value = AsyncMock()
 
-                response = client.post(
+                _response = client.post(
                     "/v2/extract",
-                    json={
-                        "urls": ["https://example.com"],
-                        "schema": {"type": "object"}
-                    }
+                    json={"urls": ["https://example.com"], "schema": {"type": "object"}},
                 )
 
     # Verify session was NOT created for error response
@@ -276,22 +263,22 @@ def test_extract_endpoint_validates_schema(auth_headers):
         "success": True,
         "id": "extract-999",
         "status": "processing",
-        "data": {}
+        "data": {},
     }
 
-    with patch('api.routers.firecrawl_proxy.proxy_to_firecrawl') as mock_proxy:
+    with patch("api.routers.firecrawl_proxy.proxy_to_firecrawl") as mock_proxy:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.body = json.dumps(mock_firecrawl_response).encode()
         mock_response.headers = {"content-type": "application/json"}
         mock_proxy.return_value = mock_response
 
-        with patch('api.routers.firecrawl_proxy.get_db_session') as mock_db:
+        with patch("api.routers.firecrawl_proxy.get_db_session") as mock_db:
             mock_db_session = MagicMock()
             mock_db.return_value.__aenter__ = AsyncMock(return_value=mock_db_session)
             mock_db.return_value.__aexit__ = AsyncMock()
 
-            with patch('api.routers.firecrawl_proxy.create_crawl_session') as mock_session:
+            with patch("api.routers.firecrawl_proxy.create_crawl_session") as mock_session:
                 mock_session.return_value = AsyncMock()
 
                 response = client.post(
@@ -303,11 +290,11 @@ def test_extract_endpoint_validates_schema(auth_headers):
                             "type": "object",
                             "properties": {
                                 "title": {"type": "string"},
-                                "author": {"type": "string"}
+                                "author": {"type": "string"},
                             },
-                            "required": ["title"]
-                        }
-                    }
+                            "required": ["title"],
+                        },
+                    },
                 )
 
     assert response.status_code == 200

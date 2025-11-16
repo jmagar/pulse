@@ -125,9 +125,7 @@ def test_watch_id_sql_injection():
     }
 
     body = str(malicious_payload).encode()
-    signature = hmac.new(
-        settings.webhook_secret.encode(), body, hashlib.sha256
-    ).hexdigest()
+    signature = hmac.new(settings.webhook_secret.encode(), body, hashlib.sha256).hexdigest()
 
     response = client.post(
         "/api/webhook/changedetection",

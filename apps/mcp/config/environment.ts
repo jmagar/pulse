@@ -170,14 +170,8 @@ function buildEnv(): EnvConfig {
       "WEBHOOK_BASE_URL",
       "http://pulse_webhook:52100",
     ),
-    webhookApiSecret: getEnvVar(
-      "MCP_WEBHOOK_API_SECRET",
-      "WEBHOOK_API_SECRET",
-    ),
-    googleClientId: getEnvVar(
-      "MCP_GOOGLE_CLIENT_ID",
-      "GOOGLE_CLIENT_ID",
-    ),
+    webhookApiSecret: getEnvVar("MCP_WEBHOOK_API_SECRET", "WEBHOOK_API_SECRET"),
+    googleClientId: getEnvVar("MCP_GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_ID"),
     googleClientSecret: getEnvVar(
       "MCP_GOOGLE_CLIENT_SECRET",
       "GOOGLE_CLIENT_SECRET",
@@ -195,10 +189,7 @@ function buildEnv(): EnvConfig {
       "MCP_OAUTH_SESSION_SECRET",
       "OAUTH_SESSION_SECRET",
     ),
-    oauthTokenKey: getEnvVar(
-      "MCP_OAUTH_TOKEN_KEY",
-      "OAUTH_TOKEN_KEY",
-    ),
+    oauthTokenKey: getEnvVar("MCP_OAUTH_TOKEN_KEY", "OAUTH_TOKEN_KEY"),
     oauthResourceIndicator: getEnvVar(
       "MCP_OAUTH_RESOURCE_IDENTIFIER",
       "MCP_RESOURCE_IDENTIFIER",
@@ -208,27 +199,15 @@ function buildEnv(): EnvConfig {
       "OAUTH_AUTHORIZATION_SERVER",
       "https://accounts.google.com",
     ),
-    oauthTokenTtl: getEnvVar(
-      "MCP_OAUTH_TOKEN_TTL",
-      "OAUTH_TOKEN_TTL",
-      "3600",
-    ),
+    oauthTokenTtl: getEnvVar("MCP_OAUTH_TOKEN_TTL", "OAUTH_TOKEN_TTL", "3600"),
     oauthRefreshTtl: getEnvVar(
       "MCP_OAUTH_REFRESH_TTL",
       "OAUTH_REFRESH_TTL",
       "2592000",
     ),
     redisUrl: getEnvVar("MCP_REDIS_URL", "REDIS_URL"),
-    databaseUrl: getEnvVar(
-      "MCP_DATABASE_URL",
-      "DATABASE_URL",
-      nuqDatabaseUrl,
-    ),
-    webhookEvents: getEnvVar(
-      "MCP_WEBHOOK_EVENTS",
-      "WEBHOOK_EVENTS",
-      "page",
-    ),
+    databaseUrl: getEnvVar("MCP_DATABASE_URL", "DATABASE_URL", nuqDatabaseUrl),
+    webhookEvents: getEnvVar("MCP_WEBHOOK_EVENTS", "WEBHOOK_EVENTS", "page"),
     dockerComposePath: getEnvVar(
       "MCP_DOCKER_COMPOSE_PATH",
       "DOCKER_COMPOSE_PATH",
@@ -293,7 +272,10 @@ export function parseArray(value: string | undefined): string[] {
   if (value === undefined || value === "") {
     return [];
   }
-  return value.split(",").map((s) => s.trim()).filter((s) => s !== "");
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s !== "");
 }
 
 /**

@@ -13,9 +13,11 @@ import { createProfileTool } from "./index.js";
  * npm test -- --run --testNamePattern="^((?!integration).)*$"
  */
 
-const WEBHOOK_BASE_URL = process.env.WEBHOOK_BASE_URL || "http://localhost:52100";
+const WEBHOOK_BASE_URL =
+  process.env.WEBHOOK_BASE_URL || "http://localhost:52100";
 const WEBHOOK_API_SECRET = process.env.WEBHOOK_API_SECRET || "";
-const SKIP_INTEGRATION = !WEBHOOK_API_SECRET || WEBHOOK_BASE_URL.includes("localhost");
+const SKIP_INTEGRATION =
+  !WEBHOOK_API_SECRET || WEBHOOK_BASE_URL.includes("localhost");
 
 describe.skipIf(SKIP_INTEGRATION)("ProfileTool Integration", () => {
   let tool: ReturnType<typeof createProfileTool>;

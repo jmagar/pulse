@@ -21,9 +21,7 @@ class ContentCacheService:
     - L2: PostgreSQL for persistent storage and fallback
     """
 
-    def __init__(
-        self, redis: Redis, db: AsyncSession, default_ttl: int = 3600
-    ) -> None:
+    def __init__(self, redis: Redis, db: AsyncSession, default_ttl: int = 3600) -> None:
         """Initialize content cache service.
 
         Args:
@@ -120,14 +118,10 @@ class ContentCacheService:
         cached = self.redis.get(cache_key)
 
         if cached:
-            logger.debug(
-                "Cache hit for session", session_id=session_id, cache_key=cache_key
-            )
+            logger.debug("Cache hit for session", session_id=session_id, cache_key=cache_key)
             return json.loads(cached.decode())
 
-        logger.debug(
-            "Cache miss for session", session_id=session_id, cache_key=cache_key
-        )
+        logger.debug("Cache miss for session", session_id=session_id, cache_key=cache_key)
 
         # 2. Query PostgreSQL with pagination
         result = await self.db.execute(
@@ -144,9 +138,7 @@ class ContentCacheService:
 
         # 4. Cache result
         if content_dicts:
-            self.redis.setex(
-                cache_key, self.default_ttl, json.dumps(content_dicts, default=str)
-            )
+            self.redis.setex(cache_key, self.default_ttl, json.dumps(content_dicts, default=str))
             logger.debug(
                 "Cached content for session",
                 session_id=session_id,

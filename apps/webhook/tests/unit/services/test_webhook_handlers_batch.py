@@ -57,12 +57,11 @@ async def test_batch_enqueue_uses_pipeline(mock_queue_with_pipeline, monkeypatch
             FirecrawlDocumentPayload(
                 markdown=f"# Doc {i}",
                 metadata=FirecrawlDocumentMetadata(
-                    url=f"https://example.com/page-{i}",
-                    status_code=200
-                )
+                    url=f"https://example.com/page-{i}", status_code=200
+                ),
             )
             for i in range(3)
-        ]
+        ],
     )
 
     result = await _handle_page_event(event, mock_queue_with_pipeline)
@@ -99,12 +98,11 @@ async def test_batch_enqueue_performance(mock_queue_with_pipeline, monkeypatch):
             FirecrawlDocumentPayload(
                 markdown=f"# Doc {i}",
                 metadata=FirecrawlDocumentMetadata(
-                    url=f"https://example.com/page-{i}",
-                    status_code=200
-                )
+                    url=f"https://example.com/page-{i}", status_code=200
+                ),
             )
             for i in range(50)
-        ]
+        ],
     )
 
     start = time.perf_counter()

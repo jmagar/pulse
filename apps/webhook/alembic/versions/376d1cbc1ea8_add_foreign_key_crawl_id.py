@@ -5,13 +5,14 @@ Revises: 3a4d9b64ac20
 Create Date: 2025-11-13 22:03:39.559473
 
 """
+
 from collections.abc import Sequence
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '376d1cbc1ea8'
-down_revision: str | Sequence[str] | None = '3a4d9b64ac20'
+revision: str = "376d1cbc1ea8"
+down_revision: str | Sequence[str] | None = "3a4d9b64ac20"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -33,8 +34,5 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Remove FK constraint."""
     op.drop_constraint(
-        "fk_operation_metrics_crawl_id",
-        "operation_metrics",
-        schema="webhook",
-        type_="foreignkey"
+        "fk_operation_metrics_crawl_id", "operation_metrics", schema="webhook", type_="foreignkey"
     )

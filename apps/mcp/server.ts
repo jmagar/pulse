@@ -56,13 +56,9 @@ export interface IFirecrawlClient {
 
   getBatchScrapeStatus?: (jobId: string) => Promise<CrawlStatusResult>;
 
-  cancelBatchScrape?: (
-    jobId: string,
-  ) => Promise<BatchScrapeCancelResult>;
+  cancelBatchScrape?: (jobId: string) => Promise<BatchScrapeCancelResult>;
 
-  getBatchScrapeErrors?: (
-    jobId: string,
-  ) => Promise<CrawlErrorsResult>;
+  getBatchScrapeErrors?: (jobId: string) => Promise<CrawlErrorsResult>;
 
   // Crawl operations
   startCrawl?: (options: FirecrawlCrawlOptions) => Promise<StartCrawlResult>;
@@ -188,9 +184,7 @@ export class WebhookBridgeClient implements IFirecrawlClient {
     return response.json();
   }
 
-  async cancelBatchScrape(
-    jobId: string,
-  ): Promise<BatchScrapeCancelResult> {
+  async cancelBatchScrape(jobId: string): Promise<BatchScrapeCancelResult> {
     const response = await fetch(`${this.baseUrl}/v2/batch/scrape/${jobId}`, {
       method: "DELETE",
     });

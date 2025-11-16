@@ -224,7 +224,9 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
         )
         await session.commit()
 
-    logger.info("Rescrape completed successfully", change_event_id=change_event_id, document_id=doc_id)
+    logger.info(
+        "Rescrape completed successfully", change_event_id=change_event_id, document_id=doc_id
+    )
 
     return {
         "status": "success",

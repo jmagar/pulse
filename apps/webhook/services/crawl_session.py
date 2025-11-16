@@ -75,9 +75,7 @@ async def get_crawl_session(db: AsyncSession, job_id: str) -> CrawlSession | Non
     Returns:
         CrawlSession if found, None otherwise
     """
-    result = await db.execute(
-        select(CrawlSession).where(CrawlSession.job_id == job_id)
-    )
+    result = await db.execute(select(CrawlSession).where(CrawlSession.job_id == job_id))
     return result.scalar_one_or_none()
 
 

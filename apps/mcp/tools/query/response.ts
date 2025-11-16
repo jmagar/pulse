@@ -37,9 +37,12 @@ const formatResult = (result: SearchResult, index: number) => {
   lines.push(`   Snippet: ${snippet}`);
 
   const metadataParts: string[] = [];
-  if (result.metadata.domain) metadataParts.push(`Domain=${result.metadata.domain}`);
-  if (result.metadata.language) metadataParts.push(`Lang=${result.metadata.language}`);
-  if (result.metadata.country) metadataParts.push(`Country=${result.metadata.country}`);
+  if (result.metadata.domain)
+    metadataParts.push(`Domain=${result.metadata.domain}`);
+  if (result.metadata.language)
+    metadataParts.push(`Lang=${result.metadata.language}`);
+  if (result.metadata.country)
+    metadataParts.push(`Country=${result.metadata.country}`);
   metadataParts.push(`Score=${result.score.toFixed(2)}`);
 
   lines.push(`   Meta: ${metadataParts.join(" | ")}`);

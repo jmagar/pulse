@@ -52,7 +52,11 @@ cache-dir = ".cache/ruff"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "N815",   # mixedCase variable in class scope (Pydantic models matching TypeScript API)
+    "N803",   # Argument name should be lowercase (Pydantic models matching TypeScript API)
+]
 
 [tool.mypy]
 python_version = "3.13"

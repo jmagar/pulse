@@ -19,9 +19,10 @@ export function formatCrawlResponse(
     | ActiveCrawlsResult,
 ): CallToolResult {
   if ("errors" in result && "robotsBlocked" in result) {
-    const errorsText = result.errors
-      .map((error) => `• ${error.error}${error.url ? ` (${error.url})` : ""}`)
-      .join("\n") || "No error entries reported.";
+    const errorsText =
+      result.errors
+        .map((error) => `• ${error.error}${error.url ? ` (${error.url})` : ""}`)
+        .join("\n") || "No error entries reported.";
     const robotsText = result.robotsBlocked.length
       ? result.robotsBlocked.map((url) => `- ${url}`).join("\n")
       : "None";

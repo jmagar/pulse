@@ -20,6 +20,7 @@ Error handling: All tools wrap in try/catch, parse args with Zod, return `isErro
 Intelligently scrapes webpage content with caching, strategy selection, and batch operations.
 
 **Key Features**:
+
 - Single/batch scraping (auto-upgrades to Firecrawl batch when multiple URLs)
 - Smart strategy selection (native → Firecrawl fallback)
 - 3 result modes: `returnOnly`, `saveAndReturn`, `saveOnly`
@@ -28,6 +29,7 @@ Intelligently scrapes webpage content with caching, strategy selection, and batc
 - LLM-powered extraction (if LLM available)
 
 **Commands**:
+
 - `scrape <url>` — Single URL scrape (cached)
 - `scrape <url1> <url2> ...` — Batch scrape (returns jobId)
 - `scrape status <jobId>` — Check batch progress
@@ -35,6 +37,7 @@ Intelligently scrapes webpage content with caching, strategy selection, and batc
 - `scrape errors <jobId>` — List batch errors
 
 **Response Formats**:
+
 - `returnOnly`: Plain text response, no caching
 - `saveAndReturn`: Embedded MCP resource + content (default)
 - `saveOnly`: Linked MCP resource reference only (token-efficient)
@@ -44,6 +47,7 @@ Intelligently scrapes webpage content with caching, strategy selection, and batc
 Multi-page crawling with job-based architecture.
 
 **Commands**:
+
 - `crawl <url>` — Start crawl (with prompt, limit, excludePaths, etc.)
 - `crawl status <jobId>` — Fetch job progress + data pagination hints
 - `crawl cancel <jobId>` — Cancel crawl
@@ -51,6 +55,7 @@ Multi-page crawling with job-based architecture.
 - `crawl list` — Enumerate active crawl jobs
 
 **Features**:
+
 - Natural language prompts for auto-config (Firecrawl generates optimal parameters)
 - Pagination (warns when results exceed 10MB)
 - Sitemap integration (include/skip)
@@ -62,6 +67,7 @@ Multi-page crawling with job-based architecture.
 Fast site URL discovery (8x faster than crawl).
 
 **Features**:
+
 - URL extraction with pagination support
 - Sitemap processing (include/skip/only)
 - Subdomain handling
@@ -70,6 +76,7 @@ Fast site URL discovery (8x faster than crawl).
 - Returns ~200 URLs per request (~13k tokens)
 
 **Parameters**:
+
 - `url` (required) - Base domain
 - `maxResults` - URLs per request (1-5000, default 200)
 - `startIndex` - Pagination offset
@@ -83,6 +90,7 @@ Fast site URL discovery (8x faster than crawl).
 Web search via Firecrawl with scraping integration.
 
 **Features**:
+
 - Web, image, news search
 - Category filtering (GitHub, research papers, PDFs)
 - Time-based filtering (past hour/day/week/month/year)
@@ -90,6 +98,7 @@ Web search via Firecrawl with scraping integration.
 - Location/language filtering
 
 **Parameters**:
+
 - `query` (required)
 - `sources` - web/images/news
 - `categories` - github/research/pdf
@@ -102,6 +111,7 @@ Web search via Firecrawl with scraping integration.
 Search indexed documentation via webhook service.
 
 **Features**:
+
 - Hybrid search (vector + BM25)
 - Semantic-only search (vector)
 - Keyword search (BM25)
@@ -109,6 +119,7 @@ Search indexed documentation via webhook service.
 - Domain/language/country filtering
 
 **Parameters**:
+
 - `query` (required)
 - `mode` - hybrid/semantic/keyword/bm25 (default: hybrid)
 - `limit` - Results per page (1-100, default 5)
@@ -118,23 +129,27 @@ Search indexed documentation via webhook service.
 ## Schema Validation
 
 **Zod Pattern**:
+
 ```typescript
-const schema = z.object({
-  // Field definitions with .describe() for documentation
-  url: z.string().url().describe("The URL to scrape"),
-  // ... more fields
-}).superRefine((data, ctx) => {
-  // Cross-field validation
-  if (needsValidation) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Error message"
-    });
-  }
-}).transform((data) => ({
-  // Normalize/resolve command logic
-  command: resolveCommand(data)
-}));
+const schema = z
+  .object({
+    // Field definitions with .describe() for documentation
+    url: z.string().url().describe("The URL to scrape"),
+    // ... more fields
+  })
+  .superRefine((data, ctx) => {
+    // Cross-field validation
+    if (needsValidation) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Error message",
+      });
+    }
+  })
+  .transform((data) => ({
+    // Normalize/resolve command logic
+    command: resolveCommand(data),
+  }));
 ```
 
 **MCP JSON Schema**: Manually constructed (not zodToJsonSchema) to avoid instanceof issues across module boundaries. Built in `buildInputSchema()` functions.
@@ -142,6 +157,7 @@ const schema = z.object({
 ## Pipeline Patterns
 
 **Single-URL Scrape**:
+
 1. Validate args with Zod
 2. Check cache (unless forceRescrape)
 3. Select strategy + scrape
@@ -150,6 +166,7 @@ const schema = z.object({
 6. Return paginated response
 
 **Batch Scrape**:
+
 1. Validate args
 2. Create batch job via Firecrawl
 3. Return jobId for polling
@@ -158,6 +175,7 @@ const schema = z.object({
 6. `errors` → list failures
 
 **Crawl/Map/Search**:
+
 1. Validate args
 2. Create Firecrawl client
 3. Call pipeline (maps args → client options)
@@ -180,6 +198,7 @@ All tools return `CallToolResult`:
 ```
 
 **Content Types**:
+
 - `text`: Plain text (CLI-style)
 - `resource`: Embedded MCP resource (full content)
 - `resource_link`: Linked resource reference (uri + name only)
@@ -189,6 +208,7 @@ All tools return `CallToolResult`:
 ## Configuration
 
 **Environment Variables** (from root `.env`):
+
 - `FIRECRAWL_API_KEY` - Firecrawl API key (optional, uses self-hosted if not set)
 - `FIRECRAWL_BASE_URL` - Firecrawl service URL (default: `http://firecrawl:3002`)
 - `WEBHOOK_BASE_URL` - Query tool service URL
@@ -196,6 +216,7 @@ All tools return `CallToolResult`:
 - `LLM_PROVIDER` - Enables extraction (optional)
 
 **Tool Registration** (in `registration.ts`):
+
 1. Create Firecrawl config from env
 2. Instantiate each tool with factory
 3. Register with MCP server
@@ -207,11 +228,13 @@ All tools return `CallToolResult`:
 Tests follow naming pattern: `[name]/[name].test.ts`
 
 **Coverage**:
+
 - Unit: Schema validation, response formatting
 - Integration: Full pipeline with mocked clients
 - E2E: Real service calls (optional)
 
 **Test Pattern**:
+
 ```typescript
 import { buildScrapeArgsSchema } from "./schema.js";
 
@@ -226,6 +249,7 @@ describe("scrape schema", () => {
 ## Known Patterns
 
 **Command Resolution**: scrape/crawl use `resolveCommand()` to infer command from args for backward compatibility:
+
 - `cancel: true` → "cancel"
 - `jobId` only → "status"
 - `url` → "start"

@@ -81,9 +81,7 @@ export class DockerLogsProvider {
    */
   async read(uri: string): Promise<ResourceContent> {
     // Parse URI: docker://compose/{project}/{service}/logs
-    const match = uri.match(
-      /^docker:\/\/compose\/([^/]+)\/([^/]+)\/logs$/,
-    );
+    const match = uri.match(/^docker:\/\/compose\/([^/]+)\/([^/]+)\/logs$/);
     if (!match) {
       throw new Error(`Invalid Docker logs URI: ${uri}`);
     }

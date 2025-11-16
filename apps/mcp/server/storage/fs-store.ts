@@ -25,9 +25,7 @@ function recordPath(basePath: string, userId: string): string {
   return path.join(basePath, `${encodeFileName(userId)}.json`);
 }
 
-async function readRecord(
-  filePath: string,
-): Promise<TokenRecord | null> {
+async function readRecord(filePath: string): Promise<TokenRecord | null> {
   try {
     const raw = await fs.readFile(filePath, "utf8");
     const payload = JSON.parse(raw);

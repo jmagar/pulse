@@ -1,4 +1,5 @@
 """Redis connection factory and queue management."""
+
 from redis import Redis
 from rq import Queue
 

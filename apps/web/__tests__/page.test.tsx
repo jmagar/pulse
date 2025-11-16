@@ -19,7 +19,7 @@ describe("Home Page", () => {
     render(<Home />)
     const mains = screen.getAllByRole("main")
     // Find the mobile layout (has md:hidden class)
-    const mobileMain = mains.find(m => m.className.includes("md:hidden"))
+    const mobileMain = mains.find((m) => m.className.includes("md:hidden"))
     expect(mobileMain).toBeDefined()
     expect(mobileMain).toHaveClass("space-y-4")
   })
@@ -44,7 +44,7 @@ describe("Desktop Layout", () => {
     const mains = screen.getAllByRole("main")
 
     // Desktop layout should exist (has md:block class)
-    const desktopMain = mains.find(m => m.className.includes("md:block"))
+    const desktopMain = mains.find((m) => m.className.includes("md:block"))
     expect(desktopMain).toBeDefined()
   })
 })

@@ -71,8 +71,10 @@ def test_extract_domain_invalid_url() -> None:
 
 def test_text_chunker_uses_hf_tokenizer() -> None:
     """Ensure TextChunker wires HuggingFace tokenizer into semantic-text-splitter."""
-    with patch("tokenizers.Tokenizer.from_pretrained") as mock_from_pretrained, \
-        patch("semantic_text_splitter.TextSplitter.from_huggingface_tokenizer") as mock_from_hf:
+    with (
+        patch("tokenizers.Tokenizer.from_pretrained") as mock_from_pretrained,
+        patch("semantic_text_splitter.TextSplitter.from_huggingface_tokenizer") as mock_from_hf,
+    ):
         mock_splitter = MagicMock()
         mock_from_hf.return_value = mock_splitter
 

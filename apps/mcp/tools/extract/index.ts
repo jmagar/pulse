@@ -19,10 +19,17 @@ export function createExtractTool(firecrawlClient: IFirecrawlClient): Tool {
 
         // Verify extract capability
         if (!firecrawlClient || typeof firecrawlClient.extract !== "function") {
-          throw new Error("Extract operation not supported by Firecrawl client");
+          throw new Error(
+            "Extract operation not supported by Firecrawl client",
+          );
         }
 
-        const result = await extractPipeline(firecrawlClient as { extract: NonNullable<typeof firecrawlClient.extract> }, validatedArgs);
+        const result = await extractPipeline(
+          firecrawlClient as {
+            extract: NonNullable<typeof firecrawlClient.extract>;
+          },
+          validatedArgs,
+        );
         return formatExtractResponse(result, validatedArgs.urls);
       } catch (error) {
         return {

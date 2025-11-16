@@ -20,10 +20,7 @@ describe("authMiddleware", () => {
     app.use(express.json());
     app.post("/mcp", authMiddleware, (_req, res) => res.json({ ok: true }));
 
-    await request(app)
-      .post("/mcp")
-      .send({ method: "tools/list" })
-      .expect(200);
+    await request(app).post("/mcp").send({ method: "tools/list" }).expect(200);
   });
 
   it("allows initialization requests without session", async () => {
@@ -32,10 +29,7 @@ describe("authMiddleware", () => {
     app.use(express.json());
     app.post("/mcp", authMiddleware, (_req, res) => res.json({ ok: true }));
 
-    await request(app)
-      .post("/mcp")
-      .send({ method: "initialize" })
-      .expect(200);
+    await request(app).post("/mcp").send({ method: "initialize" }).expect(200);
   });
 
   it("blocks non-initialized requests without session", async () => {
@@ -44,10 +38,7 @@ describe("authMiddleware", () => {
     app.use(express.json());
     app.post("/mcp", authMiddleware, (_req, res) => res.json({ ok: true }));
 
-    await request(app)
-      .post("/mcp")
-      .send({ method: "tools/list" })
-      .expect(401);
+    await request(app).post("/mcp").send({ method: "tools/list" }).expect(401);
   });
 
   it("passes through when session user exists", async () => {
@@ -60,10 +51,7 @@ describe("authMiddleware", () => {
     });
     app.post("/mcp", authMiddleware, (_req, res) => res.json({ ok: true }));
 
-    await request(app)
-      .post("/mcp")
-      .send({ method: "tools/list" })
-      .expect(200);
+    await request(app).post("/mcp").send({ method: "tools/list" }).expect(200);
   });
 });
 
@@ -82,10 +70,7 @@ describe("scopeMiddleware", () => {
     });
     app.post("/mcp", scopeMiddleware, (_req, res) => res.json({ ok: true }));
 
-    await request(app)
-      .post("/mcp")
-      .send({ method: "tools/list" })
-      .expect(200);
+    await request(app).post("/mcp").send({ method: "tools/list" }).expect(200);
   });
 
   it("blocks requests when required scopes missing", async () => {

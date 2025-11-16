@@ -1,4 +1,8 @@
-import { OAuth2Client, type TokenPayload, type Credentials } from "google-auth-library";
+import {
+  OAuth2Client,
+  type TokenPayload,
+  type Credentials,
+} from "google-auth-library";
 import type { CodeChallengeMethod } from "google-auth-library/build/src/auth/oauth2client.js";
 
 import type { OAuthConfig } from "../../config/oauth.js";
@@ -59,7 +63,9 @@ export function createGoogleOAuthClient(config: OAuthConfig) {
     return normalizeTokens(response.tokens);
   }
 
-  async function refreshAccessToken(refreshToken?: string): Promise<TokenResult> {
+  async function refreshAccessToken(
+    refreshToken?: string,
+  ): Promise<TokenResult> {
     if (refreshToken) {
       client.setCredentials({ refresh_token: refreshToken });
     }
@@ -71,7 +77,9 @@ export function createGoogleOAuthClient(config: OAuthConfig) {
     await client.revokeToken(token);
   }
 
-  async function verifyIdToken(idToken: string): Promise<TokenPayload | undefined> {
+  async function verifyIdToken(
+    idToken: string,
+  ): Promise<TokenPayload | undefined> {
     const ticket = await client.verifyIdToken({
       idToken,
       audience: config.clientId,

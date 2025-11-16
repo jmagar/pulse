@@ -7,9 +7,12 @@ import type { OAuthConfig } from "../../config/oauth.js";
 import type { createGoogleOAuthClient } from "../../server/oauth/google-client.js";
 import type { createTokenManager } from "../../server/oauth/token-manager.js";
 import type { TokenRecord } from "../../server/storage/token-store.js";
-type SessionMiddlewareFactory = typeof import("../../server/middleware/session.js")["createSessionMiddleware"];
-type AuthRouterFactory = typeof import("../../server/routes/auth.js")["createAuthRouter"];
-type CsrfMiddlewareFactory = typeof import("../../server/middleware/csrf.js")["csrfTokenMiddleware"];
+type SessionMiddlewareFactory =
+  (typeof import("../../server/middleware/session.js"))["createSessionMiddleware"];
+type AuthRouterFactory =
+  (typeof import("../../server/routes/auth.js"))["createAuthRouter"];
+type CsrfMiddlewareFactory =
+  (typeof import("../../server/middleware/csrf.js"))["csrfTokenMiddleware"];
 
 const baseConfig: OAuthConfig = {
   enabled: true,
@@ -47,9 +50,17 @@ function buildRecord(overrides: Partial<TokenRecord> = {}): TokenRecord {
   };
 }
 
-function createMocks(): { googleClient: GoogleClient; tokenManager: TokenManager } {
+function createMocks(): {
+  googleClient: GoogleClient;
+  tokenManager: TokenManager;
+} {
   const googleClient: GoogleClient = {
-    createAuthUrl: vi.fn().mockImplementation(({ state }) => `https://accounts.google.com/o/oauth2/v2/auth?state=${state}`),
+    createAuthUrl: vi
+      .fn()
+      .mockImplementation(
+        ({ state }) =>
+          `https://accounts.google.com/o/oauth2/v2/auth?state=${state}`,
+      ),
     exchangeCode: vi.fn().mockResolvedValue({
       accessToken: "access-token",
       refreshToken: "refresh-token",
@@ -64,7 +75,9 @@ function createMocks(): { googleClient: GoogleClient; tokenManager: TokenManager
       scope: "openid email",
     }),
     revokeToken: vi.fn().mockResolvedValue(undefined),
-    verifyIdToken: vi.fn().mockResolvedValue({ sub: "user-123", email: "user@example.com" } as any),
+    verifyIdToken: vi
+      .fn()
+      .mockResolvedValue({ sub: "user-123", email: "user@example.com" } as any),
   };
 
   const tokenManager: TokenManager = {
@@ -77,7 +90,10 @@ function createMocks(): { googleClient: GoogleClient; tokenManager: TokenManager
   return { googleClient, tokenManager };
 }
 
-async function buildApp(deps: { googleClient: GoogleClient; tokenManager: TokenManager }) {
+async function buildApp(deps: {
+  googleClient: GoogleClient;
+  tokenManager: TokenManager;
+}) {
   const app = express();
   app.use(express.json());
   const store = new session.MemoryStore();
@@ -104,7 +120,9 @@ describe("Auth routes", () => {
     process.env.MCP_OAUTH_REFRESH_TTL = "2592000";
     process.env.NODE_ENV = "test";
     vi.resetModules();
-    ({ createSessionMiddleware } = await import("../../server/middleware/session.js"));
+    ({ createSessionMiddleware } = await import(
+      "../../server/middleware/session.js"
+    ));
     ({ createAuthRouter } = await import("../../server/routes/auth.js"));
     ({ csrfTokenMiddleware } = await import("../../server/middleware/csrf.js"));
   });
@@ -116,7 +134,10 @@ describe("Auth routes", () => {
     const response = await agent.get("/auth/google").expect(302);
     expect(response.headers.location).toContain("accounts.google.com");
     expect(mocks.googleClient.createAuthUrl).toHaveBeenCalledWith(
-      expect.objectContaining({ codeChallenge: expect.any(String), state: expect.any(String) }),
+      expect.objectContaining({
+        codeChallenge: expect.any(String),
+        state: expect.any(String),
+      }),
     );
   });
 
@@ -143,7 +164,9 @@ describe("Auth routes", () => {
     const agent = request.agent(app);
     const start = await agent.get("/auth/google");
     const state = getStateFromLocation(start.headers.location);
-    await agent.get("/auth/google/callback").query({ code: "auth-code", state });
+    await agent
+      .get("/auth/google/callback")
+      .query({ code: "auth-code", state });
     const status = await agent.get("/auth/status").expect(200);
     expect(status.body.user.id).toBe("user-123");
   });
@@ -154,7 +177,9 @@ describe("Auth routes", () => {
     const agent = request.agent(app);
     const start = await agent.get("/auth/google");
     const state = getStateFromLocation(start.headers.location);
-    await agent.get("/auth/google/callback").query({ code: "auth-code", state });
+    await agent
+      .get("/auth/google/callback")
+      .query({ code: "auth-code", state });
     const status = await agent.get("/auth/status");
     const csrfToken = status.headers["x-csrf-token"];
     await agent
@@ -171,13 +196,12 @@ describe("Auth routes", () => {
     const agent = request.agent(app);
     const start = await agent.get("/auth/google");
     const state = getStateFromLocation(start.headers.location);
-    await agent.get("/auth/google/callback").query({ code: "auth-code", state });
+    await agent
+      .get("/auth/google/callback")
+      .query({ code: "auth-code", state });
     const status = await agent.get("/auth/status");
     const csrfToken = status.headers["x-csrf-token"];
-    await agent
-      .post("/auth/logout")
-      .set("X-CSRF-Token", csrfToken)
-      .expect(204);
+    await agent.post("/auth/logout").set("X-CSRF-Token", csrfToken).expect(204);
     expect(mocks.googleClient.revokeToken).toHaveBeenCalled();
     await agent.get("/auth/status").expect(401);
   });

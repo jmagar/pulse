@@ -135,9 +135,9 @@ def test_concurrent_request_handling():
 
     # Most should succeed (200) or be rate-limited (429)
     # None should crash (500)
-    assert all(
-        status in [200, 429] for status in results
-    ), f"Unexpected status codes in concurrent requests: {results}"
+    assert all(status in [200, 429] for status in results), (
+        f"Unexpected status codes in concurrent requests: {results}"
+    )
 
 
 def test_webhook_replay_attack_prevention():
@@ -161,9 +161,7 @@ def test_webhook_replay_attack_prevention():
     import json
 
     body = json.dumps(payload).encode()
-    signature = hmac.new(
-        settings.webhook_secret.encode(), body, hashlib.sha256
-    ).hexdigest()
+    signature = hmac.new(settings.webhook_secret.encode(), body, hashlib.sha256).hexdigest()
 
     # Send same webhook multiple times rapidly
     responses = []
@@ -178,9 +176,9 @@ def test_webhook_replay_attack_prevention():
 
     # All should process (idempotent) or be rejected
     # Should not cause resource exhaustion or duplicate processing
-    assert all(
-        status in [200, 400, 401, 409, 422] for status in responses
-    ), f"Unexpected webhook replay handling: {responses}"
+    assert all(status in [200, 400, 401, 409, 422] for status in responses), (
+        f"Unexpected webhook replay handling: {responses}"
+    )
 
 
 def test_null_byte_injection():
@@ -261,9 +259,7 @@ def test_memory_exhaustion_prevention():
         result = response.json()
         # Should have reasonable maximum (e.g., 100 results)
         if "results" in result:
-            assert (
-                len(result["results"]) <= 100
-            ), "Should enforce reasonable result limit"
+            assert len(result["results"]) <= 100, "Should enforce reasonable result limit"
 
 
 def test_http_method_restriction():

@@ -12,11 +12,7 @@ from utils.timing import TimingContext
 @pytest.mark.asyncio
 async def test_timing_context_stores_crawl_id(db_session):
     """Test TimingContext stores crawl_id in database."""
-    async with TimingContext(
-        "test_op",
-        "test_name",
-        crawl_id="timing_test_123"
-    ):
+    async with TimingContext("test_op", "test_name", crawl_id="timing_test_123"):
         await asyncio.sleep(0.01)
 
     # Verify stored in database

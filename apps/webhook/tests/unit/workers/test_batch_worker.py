@@ -25,7 +25,9 @@ def test_batch_worker_processes_multiple_documents():
             {"success": True, "url": "https://example.com/3", "chunks_indexed": 7},
         ]
 
-        with patch("workers.batch_worker._index_document_async", new_callable=AsyncMock) as mock_index:
+        with patch(
+            "workers.batch_worker._index_document_async", new_callable=AsyncMock
+        ) as mock_index:
             mock_index.side_effect = mock_results
 
             # Create BatchWorker instance
@@ -65,7 +67,9 @@ def test_batch_worker_handles_partial_failures():
                 raise Exception("Indexing failed for doc 2")
             return {"success": True, "url": doc["url"], "chunks_indexed": 5}
 
-        with patch("workers.batch_worker._index_document_async", new_callable=AsyncMock) as mock_index:
+        with patch(
+            "workers.batch_worker._index_document_async", new_callable=AsyncMock
+        ) as mock_index:
             mock_index.side_effect = mock_index_side_effect
 
             batch_worker = BatchWorker()
@@ -110,8 +114,7 @@ def test_batch_worker_preserves_document_order():
 
     async def run_test():
         documents = [
-            {"url": f"https://example.com/{i}", "markdown": f"Content {i}"}
-            for i in range(10)
+            {"url": f"https://example.com/{i}", "markdown": f"Content {i}"} for i in range(10)
         ]
 
         async def mock_index_with_delay(doc: dict[str, Any]) -> dict[str, Any]:
@@ -121,7 +124,9 @@ def test_batch_worker_preserves_document_order():
             await asyncio.sleep(0.01 * (10 - url_num))
             return {"success": True, "url": doc["url"], "chunks_indexed": url_num}
 
-        with patch("workers.batch_worker._index_document_async", new_callable=AsyncMock) as mock_index:
+        with patch(
+            "workers.batch_worker._index_document_async", new_callable=AsyncMock
+        ) as mock_index:
             mock_index.side_effect = mock_index_with_delay
 
             batch_worker = BatchWorker()
@@ -151,7 +156,9 @@ def test_batch_worker_synchronous_wrapper():
         {"success": True, "url": "https://example.com/2", "chunks_indexed": 3},
     ]
 
-    with patch("workers.batch_worker.BatchWorker.process_batch", new_callable=AsyncMock) as mock_batch:
+    with patch(
+        "workers.batch_worker.BatchWorker.process_batch", new_callable=AsyncMock
+    ) as mock_batch:
         mock_batch.return_value = mock_results
 
         batch_worker = BatchWorker()
@@ -187,7 +194,9 @@ def test_batch_worker_logs_batch_metrics():
                 raise Exception("Indexing failed")
             return {"success": True, "url": doc["url"]}
 
-        with patch("workers.batch_worker._index_document_async", new_callable=AsyncMock) as mock_index:
+        with patch(
+            "workers.batch_worker._index_document_async", new_callable=AsyncMock
+        ) as mock_index:
             mock_index.side_effect = mock_index_side_effect
 
             with patch("workers.batch_worker.logger") as mock_logger:
@@ -199,13 +208,19 @@ def test_batch_worker_logs_batch_metrics():
                 assert mock_logger.info.call_count >= 2
 
                 # Check for batch start log
-                start_calls = [call for call in mock_logger.info.call_args_list
-                              if "batch processing" in str(call).lower()]
+                start_calls = [
+                    call
+                    for call in mock_logger.info.call_args_list
+                    if "batch processing" in str(call).lower()
+                ]
                 assert len(start_calls) > 0
 
                 # Check for completion log with success/failure counts
-                completion_calls = [call for call in mock_logger.info.call_args_list
-                                  if "complete" in str(call).lower()]
+                completion_calls = [
+                    call
+                    for call in mock_logger.info.call_args_list
+                    if "complete" in str(call).lower()
+                ]
                 assert len(completion_calls) > 0
 
     # Run async test in synchronous context

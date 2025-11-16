@@ -109,9 +109,7 @@ async def _handle_page_event(
     # Fire-and-forget async task (doesn't block webhook response)
     asyncio.create_task(
         store_content_async(
-            crawl_session_id=crawl_id,
-            documents=document_dicts,
-            content_source=content_source
+            crawl_session_id=crawl_id, documents=document_dicts, content_source=content_source
         )
     )
 
@@ -281,9 +279,7 @@ async def _record_crawl_start(crawl_id: str, event: FirecrawlLifecycleEvent) -> 
     try:
         async with get_db_context() as db:
             # Check if session already exists
-            result = await db.execute(
-                select(CrawlSession).where(CrawlSession.job_id == crawl_id)
-            )
+            result = await db.execute(select(CrawlSession).where(CrawlSession.job_id == crawl_id))
             existing = result.scalar_one_or_none()
 
             if existing:
@@ -333,9 +329,7 @@ async def _record_crawl_complete(crawl_id: str, event: FirecrawlLifecycleEvent) 
     try:
         async with get_db_context() as db:
             # Fetch existing session
-            result = await db.execute(
-                select(CrawlSession).where(CrawlSession.job_id == crawl_id)
-            )
+            result = await db.execute(select(CrawlSession).where(CrawlSession.job_id == crawl_id))
             session = result.scalar_one_or_none()
 
             if not session:

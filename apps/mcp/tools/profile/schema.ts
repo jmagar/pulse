@@ -4,25 +4,21 @@ import { z } from "zod";
  * Parameter descriptions for profile tool
  */
 export const PARAM_DESCRIPTIONS = {
-  crawl_id: 'Firecrawl crawl/job identifier returned by the crawl tool',
+  crawl_id: "Firecrawl crawl/job identifier returned by the crawl tool",
   include_details:
-    'Include per-page operation breakdowns and detailed performance metrics. ' +
-    'Use this to see which specific pages were slow or failed. Default: false',
+    "Include per-page operation breakdowns and detailed performance metrics. " +
+    "Use this to see which specific pages were slow or failed. Default: false",
   error_offset:
-    'Error pagination offset (0-based). Use to page through errors when total ' +
-    'exceeds error_limit. Default: 0',
-  error_limit:
-    'Maximum number of errors to return per page (1-50). Default: 5',
+    "Error pagination offset (0-based). Use to page through errors when total " +
+    "exceeds error_limit. Default: 0",
+  error_limit: "Maximum number of errors to return per page (1-50). Default: 5",
 };
 
 /**
  * Profile tool options schema
  */
 export const profileOptionsSchema = z.object({
-  crawl_id: z
-    .string()
-    .min(1)
-    .describe(PARAM_DESCRIPTIONS.crawl_id),
+  crawl_id: z.string().min(1).describe(PARAM_DESCRIPTIONS.crawl_id),
   include_details: z
     .boolean()
     .optional()

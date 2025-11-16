@@ -190,9 +190,7 @@ describe("handleScrapeRequest", () => {
   });
 
   it("should handle webhook service errors", async () => {
-    mockWebhookClient.scrape.mockRejectedValue(
-      new Error("Connection refused"),
-    );
+    mockWebhookClient.scrape.mockRejectedValue(new Error("Connection refused"));
 
     const result = await handleScrapeRequest({
       url: "https://example.com",

@@ -45,9 +45,17 @@ def test_summarize_payload_counts_metrics(fake_token_counter: Callable[[str], in
     assert document["html"]["token_count"] == fake_token_counter("<p>Hello world</p>")
 
     totals = summary["totals"]
-    assert totals["byte_length"] == document["markdown"]["byte_length"] + document["html"]["byte_length"]
-    assert totals["word_count"] == document["markdown"]["word_count"] + document["html"]["word_count"]
-    assert totals["token_count"] == document["markdown"]["token_count"] + document["html"]["token_count"]
+    assert (
+        totals["byte_length"]
+        == document["markdown"]["byte_length"] + document["html"]["byte_length"]
+    )
+    assert (
+        totals["word_count"] == document["markdown"]["word_count"] + document["html"]["word_count"]
+    )
+    assert (
+        totals["token_count"]
+        == document["markdown"]["token_count"] + document["html"]["token_count"]
+    )
 
 
 def test_summarize_payload_handles_missing_fields(fake_token_counter: Callable[[str], int]) -> None:

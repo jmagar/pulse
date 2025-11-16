@@ -19,9 +19,7 @@ client = TestClient(app)
 
 def compute_signature(body: bytes) -> str:
     """Compute valid HMAC-SHA256 signature for request body."""
-    return hmac.new(
-        settings.webhook_secret.encode(), body, hashlib.sha256
-    ).hexdigest()
+    return hmac.new(settings.webhook_secret.encode(), body, hashlib.sha256).hexdigest()
 
 
 def test_changedetection_hmac_constant_time():
@@ -49,9 +47,7 @@ def test_changedetection_hmac_constant_time():
             "/api/webhook/changedetection",
             headers={"X-Signature": f"sha256={sig}"},
             content=body,
-            headers_override={
-                "Content-Type": "application/json"
-            },  # Ensure proper content type
+            headers_override={"Content-Type": "application/json"},  # Ensure proper content type
         )
         elapsed = time.perf_counter() - start
         timings.append(elapsed)
@@ -66,9 +62,9 @@ def test_changedetection_hmac_constant_time():
 
     # Allow up to 5ms variance (network jitter, scheduling)
     # Production systems should aim for < 1ms
-    assert (
-        variance < 0.005
-    ), f"High timing variance detected: {variance:.6f}s. Potential timing attack vulnerability."
+    assert variance < 0.005, (
+        f"High timing variance detected: {variance:.6f}s. Potential timing attack vulnerability."
+    )
 
 
 def test_api_secret_constant_time():
@@ -82,8 +78,7 @@ def test_api_secret_constant_time():
     # Test with varying degrees of correctness
     test_secrets = [
         "a" * len(correct_secret),  # All wrong
-        correct_secret[: len(correct_secret) // 2]
-        + "a" * (len(correct_secret) // 2),  # Half right
+        correct_secret[: len(correct_secret) // 2] + "a" * (len(correct_secret) // 2),  # Half right
         correct_secret[:-1] + "a",  # Almost all right
         correct_secret,  # Correct
     ]
@@ -105,9 +100,9 @@ def test_api_secret_constant_time():
     variance = stdev(timings) if len(timings) > 1 else 0.0
 
     # Allow up to 5ms variance for network/scheduling jitter
-    assert (
-        variance < 0.005
-    ), f"High timing variance detected: {variance:.6f}s. API secret comparison may be vulnerable to timing attacks."
+    assert variance < 0.005, (
+        f"High timing variance detected: {variance:.6f}s. API secret comparison may be vulnerable to timing attacks."
+    )
 
 
 def test_hmac_signature_format_validation():
@@ -136,9 +131,9 @@ def test_hmac_signature_format_validation():
         )
 
         # Should reject with 401, not crash with 500
-        assert (
-            response.status_code == 401
-        ), f"Malformed signature '{sig}' should return 401, got {response.status_code}"
+        assert response.status_code == 401, (
+            f"Malformed signature '{sig}' should return 401, got {response.status_code}"
+        )
 
 
 def test_timing_attack_with_statistical_analysis():

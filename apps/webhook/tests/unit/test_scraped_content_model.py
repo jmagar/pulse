@@ -17,7 +17,7 @@ async def test_create_scraped_content(db_session):
         base_url="https://example.com",
         operation_type="scrape",
         started_at=datetime.now(UTC),
-        status="active"
+        status="active",
     )
     db_session.add(session)
     await db_session.flush()
@@ -27,7 +27,7 @@ async def test_create_scraped_content(db_session):
         url="https://example.com",
         content_source="firecrawl_scrape",
         markdown="# Test",
-        content_hash="abc123"
+        content_hash="abc123",
     )
 
     db_session.add(content)
@@ -48,7 +48,7 @@ async def test_scraped_content_all_fields(db_session):
         base_url="https://example.com",
         operation_type="crawl",
         started_at=datetime.now(UTC),
-        status="active"
+        status="active",
     )
     db_session.add(session)
     await db_session.flush()
@@ -63,7 +63,7 @@ async def test_scraped_content_all_fields(db_session):
         links={"internal": ["https://example.com/page2"], "external": []},
         screenshot="https://example.com/screenshot.png",
         extra_metadata={"statusCode": 200, "title": "Page 1"},
-        content_hash="hash123"
+        content_hash="hash123",
     )
 
     db_session.add(content)
@@ -96,7 +96,7 @@ async def test_crawl_session_relationship(db_session):
         base_url="https://example.com",
         operation_type="crawl",
         started_at=datetime.now(UTC),
-        status="active"
+        status="active",
     )
     db_session.add(session)
     await db_session.flush()
@@ -106,23 +106,21 @@ async def test_crawl_session_relationship(db_session):
         url="https://example.com/page1",
         content_source="firecrawl_crawl",
         markdown="# Page 1",
-        content_hash="hash1"
+        content_hash="hash1",
     )
     content2 = ScrapedContent(
         crawl_session_id=session.job_id,
         url="https://example.com/page2",
         content_source="firecrawl_crawl",
         markdown="# Page 2",
-        content_hash="hash2"
+        content_hash="hash2",
     )
     db_session.add(content1)
     db_session.add(content2)
     await db_session.commit()
 
     # Verify relationship
-    result = await db_session.execute(
-        select(CrawlSession).where(CrawlSession.job_id == "test-123")
-    )
+    result = await db_session.execute(select(CrawlSession).where(CrawlSession.job_id == "test-123"))
     loaded_session = result.scalar_one()
 
     assert len(loaded_session.scraped_contents) == 2
@@ -138,7 +136,7 @@ async def test_cascade_delete(db_session):
         base_url="https://example.com",
         operation_type="crawl",
         started_at=datetime.now(UTC),
-        status="active"
+        status="active",
     )
     db_session.add(session)
     await db_session.flush()
@@ -148,7 +146,7 @@ async def test_cascade_delete(db_session):
         url="https://example.com/page1",
         content_source="firecrawl_crawl",
         markdown="# Page 1",
-        content_hash="hash1"
+        content_hash="hash1",
     )
     db_session.add(content)
     await db_session.commit()

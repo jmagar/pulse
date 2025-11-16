@@ -40,7 +40,7 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      if (result.data && 'content' in result.data) {
+      if (result.data && "content" in result.data) {
         expect(result.data.content).toBe("# Test Content");
       }
       expect(mockFetch).toHaveBeenCalledWith(
@@ -125,7 +125,7 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      if (result.data && 'cached' in result.data && 'cacheAge' in result.data) {
+      if (result.data && "cached" in result.data && "cacheAge" in result.data) {
         expect(result.data.cached).toBe(true);
         expect(result.data.cacheAge).toBe(30000);
       }
@@ -156,14 +156,11 @@ describe("WebhookScrapeClient", () => {
 
       const result = await client.scrape({
         command: "start",
-        urls: [
-          "https://example.com/1",
-          "https://example.com/2",
-        ],
+        urls: ["https://example.com/1", "https://example.com/2"],
       });
 
       expect(result.success).toBe(true);
-      if (result.data && 'jobId' in result.data && 'status' in result.data) {
+      if (result.data && "jobId" in result.data && "status" in result.data) {
         expect(result.data.jobId).toBe("batch-job-123");
         expect(result.data.status).toBe("scraping");
       }
@@ -207,7 +204,7 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      if (result.data && 'completed' in result.data && 'total' in result.data) {
+      if (result.data && "completed" in result.data && "total" in result.data) {
         expect(result.data.completed).toBe(7);
         expect(result.data.total).toBe(10);
       }
@@ -245,7 +242,7 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      if (result.data && 'status' in result.data) {
+      if (result.data && "status" in result.data) {
         expect(result.data.status).toBe("cancelled");
       }
     });
@@ -282,7 +279,11 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      if (result.data && 'errors' in result.data && Array.isArray(result.data.errors)) {
+      if (
+        result.data &&
+        "errors" in result.data &&
+        Array.isArray(result.data.errors)
+      ) {
         expect(result.data.errors).toHaveLength(1);
         expect(result.data.errors[0].url).toBe("https://example.com/failed");
       }
@@ -335,9 +336,7 @@ describe("WebhookScrapeClient", () => {
     });
 
     it("should handle network errors", async () => {
-      const mockFetch = vi
-        .fn()
-        .mockRejectedValue(new Error("Network error"));
+      const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"));
       global.fetch = mockFetch;
 
       const client = new WebhookScrapeClient({

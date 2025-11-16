@@ -15,7 +15,9 @@ import { join } from "path";
 // Mock the environment module
 vi.mock("../../config/environment.js", () => ({
   env: {
-    databaseUrl: process.env.TEST_DATABASE_URL || "postgresql://test:test@localhost:5432/test",
+    databaseUrl:
+      process.env.TEST_DATABASE_URL ||
+      "postgresql://test:test@localhost:5432/test",
   },
 }));
 
@@ -28,7 +30,9 @@ describe("Migration Runner", () => {
     mkdirSync(testMigrationDir, { recursive: true });
 
     // Initialize database connection
-    const databaseUrl = process.env.TEST_DATABASE_URL || "postgresql://firecrawl:firecrawl@localhost:50105/pulse_postgres";
+    const databaseUrl =
+      process.env.TEST_DATABASE_URL ||
+      "postgresql://firecrawl:firecrawl@localhost:50105/pulse_postgres";
     pool = new Pool({ connectionString: databaseUrl });
 
     // Clean up test schema if it exists
@@ -64,12 +68,18 @@ describe("Migration Runner", () => {
         .filter((f) => f.endsWith(".sql"))
         .sort();
 
-      expect(files).toEqual(["001_first.sql", "002_second.sql", "003_third.sql"]);
+      expect(files).toEqual([
+        "001_first.sql",
+        "002_second.sql",
+        "003_third.sql",
+      ]);
     });
 
     it("should handle empty migration directory", () => {
       const { readdirSync } = await import("fs");
-      const files = readdirSync(testMigrationDir).filter((f) => f.endsWith(".sql"));
+      const files = readdirSync(testMigrationDir).filter((f) =>
+        f.endsWith(".sql"),
+      );
 
       expect(files).toHaveLength(0);
     });
@@ -129,14 +139,14 @@ describe("Migration Runner", () => {
 
       // Verify schema exists
       const schemaResult = await pool.query(
-        "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'mcp_test'"
+        "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'mcp_test'",
       );
       expect(schemaResult.rows).toHaveLength(1);
 
       // Verify table exists
       const tableResult = await pool.query(
         `SELECT table_name FROM information_schema.tables
-         WHERE table_schema = 'mcp_test' AND table_name = 'test_table'`
+         WHERE table_schema = 'mcp_test' AND table_name = 'test_table'`,
       );
       expect(tableResult.rows).toHaveLength(1);
     });
@@ -151,14 +161,14 @@ describe("Migration Runner", () => {
 
       // Verify schema exists
       const schemaResult = await pool.query(
-        "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'mcp'"
+        "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'mcp'",
       );
       expect(schemaResult.rows).toHaveLength(1);
 
       // Verify table exists
       const tableResult = await pool.query(
         `SELECT table_name FROM information_schema.tables
-         WHERE table_schema = 'mcp' AND table_name = 'resources'`
+         WHERE table_schema = 'mcp' AND table_name = 'resources'`,
       );
       expect(tableResult.rows).toHaveLength(1);
 
@@ -167,7 +177,7 @@ describe("Migration Runner", () => {
         `SELECT column_name, data_type, is_nullable
          FROM information_schema.columns
          WHERE table_schema = 'mcp' AND table_name = 'resources'
-         ORDER BY ordinal_position`
+         ORDER BY ordinal_position`,
       );
 
       const columns = columnsResult.rows;
@@ -197,7 +207,7 @@ describe("Migration Runner", () => {
       // Verify indexes exist
       const indexResult = await pool.query(
         `SELECT indexname FROM pg_indexes
-         WHERE schemaname = 'mcp' AND tablename = 'resources'`
+         WHERE schemaname = 'mcp' AND tablename = 'resources'`,
       );
 
       const indexes = indexResult.rows.map((r) => r.indexname);
@@ -218,7 +228,7 @@ describe("Migration Runner", () => {
       // Verify functions exist
       const functionResult = await pool.query(
         `SELECT routine_name FROM information_schema.routines
-         WHERE routine_schema = 'mcp'`
+         WHERE routine_schema = 'mcp'`,
       );
 
       const functions = functionResult.rows.map((r) => r.routine_name);
@@ -230,7 +240,7 @@ describe("Migration Runner", () => {
       // Verify triggers exist
       const triggerResult = await pool.query(
         `SELECT trigger_name FROM information_schema.triggers
-         WHERE trigger_schema = 'mcp' AND event_object_table = 'resources'`
+         WHERE trigger_schema = 'mcp' AND event_object_table = 'resources'`,
       );
 
       const triggers = triggerResult.rows.map((r) => r.trigger_name);
@@ -262,7 +272,7 @@ describe("Migration Runner", () => {
           "test",
           "Test content",
           JSON.stringify({ test: true }),
-        ]
+        ],
       );
 
       expect(insertResult.rows).toHaveLength(1);
@@ -275,7 +285,7 @@ describe("Migration Runner", () => {
         `INSERT INTO mcp.resources
          (uri, url, resource_type, content, metadata)
          VALUES ($1, $2, $3, $4, $5)`,
-        ["test://duplicate", "https://example.com", "raw", "Content", "{}"]
+        ["test://duplicate", "https://example.com", "raw", "Content", "{}"],
       );
 
       // Try to insert duplicate URI
@@ -284,8 +294,8 @@ describe("Migration Runner", () => {
           `INSERT INTO mcp.resources
            (uri, url, resource_type, content, metadata)
            VALUES ($1, $2, $3, $4, $5)`,
-          ["test://duplicate", "https://example.com", "raw", "Content", "{}"]
-        )
+          ["test://duplicate", "https://example.com", "raw", "Content", "{}"],
+        ),
       ).rejects.toThrow();
     });
 
@@ -295,8 +305,14 @@ describe("Migration Runner", () => {
           `INSERT INTO mcp.resources
            (uri, url, resource_type, content, metadata)
            VALUES ($1, $2, $3, $4, $5)`,
-          ["test://invalid", "https://example.com", "invalid_type", "Content", "{}"]
-        )
+          [
+            "test://invalid",
+            "https://example.com",
+            "invalid_type",
+            "Content",
+            "{}",
+          ],
+        ),
       ).rejects.toThrow();
     });
 
@@ -306,33 +322,33 @@ describe("Migration Runner", () => {
         `INSERT INTO mcp.resources
          (uri, url, resource_type, content, metadata)
          VALUES ($1, $2, $3, $4, $5)`,
-        ["test://update", "https://example.com", "raw", "Original", "{}"]
+        ["test://update", "https://example.com", "raw", "Original", "{}"],
       );
 
       // Get initial timestamps
       const before = await pool.query(
         "SELECT created_at, updated_at FROM mcp.resources WHERE uri = $1",
-        ["test://update"]
+        ["test://update"],
       );
 
       // Wait a bit
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Update resource
-      await pool.query(
-        "UPDATE mcp.resources SET content = $1 WHERE uri = $2",
-        ["Updated", "test://update"]
-      );
+      await pool.query("UPDATE mcp.resources SET content = $1 WHERE uri = $2", [
+        "Updated",
+        "test://update",
+      ]);
 
       // Check updated_at changed
       const after = await pool.query(
         "SELECT created_at, updated_at FROM mcp.resources WHERE uri = $1",
-        ["test://update"]
+        ["test://update"],
       );
 
       expect(after.rows[0].created_at).toEqual(before.rows[0].created_at);
       expect(after.rows[0].updated_at.getTime()).toBeGreaterThan(
-        before.rows[0].updated_at.getTime()
+        before.rows[0].updated_at.getTime(),
       );
     });
 
@@ -344,7 +360,7 @@ describe("Migration Runner", () => {
          (uri, url, resource_type, content, metadata, ttl_ms)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING created_at, expires_at`,
-        ["test://ttl", "https://example.com", "raw", "Content", "{}", ttlMs]
+        ["test://ttl", "https://example.com", "raw", "Content", "{}", ttlMs],
       );
 
       const createdAt = new Date(result.rows[0].created_at);
@@ -353,7 +369,9 @@ describe("Migration Runner", () => {
       const expectedExpiry = new Date(createdAt.getTime() + ttlMs);
 
       // Allow 1 second tolerance for processing time
-      expect(Math.abs(expiresAt.getTime() - expectedExpiry.getTime())).toBeLessThan(1000);
+      expect(
+        Math.abs(expiresAt.getTime() - expectedExpiry.getTime()),
+      ).toBeLessThan(1000);
     });
 
     it("should delete expired resources with cleanup function", async () => {
@@ -362,14 +380,16 @@ describe("Migration Runner", () => {
         `INSERT INTO mcp.resources
          (uri, url, resource_type, content, metadata, ttl_ms)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        ["test://expired", "https://example.com", "raw", "Content", "{}", 1]
+        ["test://expired", "https://example.com", "raw", "Content", "{}", 1],
       );
 
       // Wait for expiration
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Run cleanup function
-      const cleanupResult = await pool.query("SELECT mcp.cleanup_expired_resources()");
+      const cleanupResult = await pool.query(
+        "SELECT mcp.cleanup_expired_resources()",
+      );
       const deletedCount = cleanupResult.rows[0].cleanup_expired_resources;
 
       expect(deletedCount).toBeGreaterThan(0);
@@ -377,7 +397,7 @@ describe("Migration Runner", () => {
       // Verify resource was deleted
       const checkResult = await pool.query(
         "SELECT * FROM mcp.resources WHERE uri = $1",
-        ["test://expired"]
+        ["test://expired"],
       );
 
       expect(checkResult.rows).toHaveLength(0);

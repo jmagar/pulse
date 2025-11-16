@@ -82,8 +82,7 @@ export async function createAuthRouter(
       store: options.tokenStore ?? (await createTokenStore()),
       encryptionKey: config.tokenEncryptionKey,
     });
-  const googleClient =
-    options.googleClient ?? createGoogleOAuthClient(config);
+  const googleClient = options.googleClient ?? createGoogleOAuthClient(config);
 
   const router = Router();
 
@@ -113,74 +112,78 @@ export async function createAuthRouter(
     res.redirect(302, url);
   });
 
-  router.get("/auth/google/callback", callbackLimiter, async (req, res, next) => {
-    try {
-      if (!req.session || !req.session.oauth) {
-        res.status(400).json({ error: "Session not initialized" });
-        return;
+  router.get(
+    "/auth/google/callback",
+    callbackLimiter,
+    async (req, res, next) => {
+      try {
+        if (!req.session || !req.session.oauth) {
+          res.status(400).json({ error: "Session not initialized" });
+          return;
+        }
+
+        const { code } = req.query;
+        const state = req.query.state as string | undefined;
+
+        if (typeof code !== "string" || !state) {
+          res.status(400).json({ error: "Missing code or state" });
+          return;
+        }
+
+        if (state !== req.session.oauth.state) {
+          res.status(400).json({ error: "Invalid OAuth state" });
+          return;
+        }
+
+        const tokens = await googleClient.exchangeCode({
+          code,
+          codeVerifier: req.session.oauth.codeVerifier,
+        });
+
+        const payload = tokens.idToken
+          ? await googleClient.verifyIdToken(tokens.idToken)
+          : undefined;
+
+        const userId = payload?.sub ?? req.sessionID;
+        const scopes = buildScopes(tokens, config);
+
+        await saveTokens(
+          userId,
+          req.sessionID,
+          tokens,
+          scopes,
+          tokenManager,
+          config,
+        );
+        await logAuditEvent({
+          type: "login_success",
+          userId,
+          ip: req.ip,
+          userAgent: req.headers["user-agent"] as string | undefined,
+          eventData: { scopes },
+        });
+
+        req.session.user = {
+          id: userId,
+          email: payload?.email,
+          scopes,
+          expiresAt: resolveExpiry(tokens, config).toISOString(),
+        };
+        delete req.session.oauth;
+
+        res.json({ authenticated: true, user: req.session.user });
+      } catch (error) {
+        await logAuditEvent({
+          type: "login_failure",
+          success: false,
+          errorMessage: (error as Error).message,
+          ip: req.ip,
+          userAgent: req.headers["user-agent"] as string | undefined,
+        });
+        next(error);
       }
-
-      const { code } = req.query;
-      const state = req.query.state as string | undefined;
-
-      if (typeof code !== "string" || !state) {
-        res.status(400).json({ error: "Missing code or state" });
-        return;
-      }
-
-      if (state !== req.session.oauth.state) {
-        res.status(400).json({ error: "Invalid OAuth state" });
-        return;
-      }
-
-      const tokens = await googleClient.exchangeCode({
-        code,
-        codeVerifier: req.session.oauth.codeVerifier,
-      });
-
-      const payload = tokens.idToken
-        ? await googleClient.verifyIdToken(tokens.idToken)
-        : undefined;
-
-      const userId = payload?.sub ?? req.sessionID;
-      const scopes = buildScopes(tokens, config);
-
-      await saveTokens(
-        userId,
-        req.sessionID,
-        tokens,
-        scopes,
-        tokenManager,
-        config,
-      );
-      await logAuditEvent({
-        type: "login_success",
-        userId,
-        ip: req.ip,
-        userAgent: req.headers["user-agent"] as string | undefined,
-        eventData: { scopes },
-      });
-
-      req.session.user = {
-        id: userId,
-        email: payload?.email,
-        scopes,
-        expiresAt: resolveExpiry(tokens, config).toISOString(),
-      };
-      delete req.session.oauth;
-
-      res.json({ authenticated: true, user: req.session.user });
-    } catch (error) {
-      await logAuditEvent({
-        type: "login_failure",
-        success: false,
-        errorMessage: (error as Error).message,
-        ip: req.ip,
-        userAgent: req.headers["user-agent"] as string | undefined,
-      });
-      next(error);
-    }
-  });
+    },
+  );
 
   router.get("/auth/status", async (req, res) => {
     if (!req.session?.user) {
@@ -193,31 +196,31 @@ export async function createAuthRouter(
 
   router.post("/auth/logout", csrfProtection, async (req, res, next) => {
     try {
-    if (req.session?.user) {
-      const record = await tokenManager.get(req.session.user.id);
-      if (record?.accessToken) {
-        await googleClient.revokeToken(record.accessToken);
+      if (req.session?.user) {
+        const record = await tokenManager.get(req.session.user.id);
+        if (record?.accessToken) {
+          await googleClient.revokeToken(record.accessToken);
+          await logAuditEvent({
+            type: "token_revoke",
+            userId: req.session.user.id,
+            eventData: { token: "access" },
+          });
+        }
+        if (record?.refreshToken) {
+          await googleClient.revokeToken(record.refreshToken);
+          await logAuditEvent({
+            type: "token_revoke",
+            userId: req.session.user.id,
+            eventData: { token: "refresh" },
+          });
+        }
+        await tokenManager.delete(req.session.user.id);
         await logAuditEvent({
-          type: "token_revoke",
+          type: "logout",
           userId: req.session.user.id,
-          eventData: { token: "access" },
+          ip: req.ip,
         });
       }
-      if (record?.refreshToken) {
-        await googleClient.revokeToken(record.refreshToken);
-        await logAuditEvent({
-          type: "token_revoke",
-          userId: req.session.user.id,
-          eventData: { token: "refresh" },
-        });
-      }
-      await tokenManager.delete(req.session.user.id);
-      await logAuditEvent({
-        type: "logout",
-        userId: req.session.user.id,
-        ip: req.ip,
-      });
-    }
 
       await new Promise<void>((resolve) => {
         req.session?.destroy(() => resolve());
@@ -242,9 +245,7 @@ export async function createAuthRouter(
         return;
       }
 
-      const tokens = await googleClient.refreshAccessToken(
-        record.refreshToken,
-      );
+      const tokens = await googleClient.refreshAccessToken(record.refreshToken);
       const scopes = buildScopes(tokens, config);
       const mergedTokens: TokenResult = {
         accessToken: tokens.accessToken,

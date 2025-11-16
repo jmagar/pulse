@@ -28,7 +28,7 @@ async def test_store_scraped_content_creates_record():
         markdown=markdown,
         html="<h1>Test Document</h1><p>This is a test.</p>",
         content_hash=content_hash,
-        extra_metadata={"sourceURL": "https://example.com/test"}
+        extra_metadata={"sourceURL": "https://example.com/test"},
     )
 
     mock_session = AsyncMock()
@@ -39,7 +39,7 @@ async def test_store_scraped_content_creates_record():
     document = {
         "markdown": markdown,
         "html": "<h1>Test Document</h1><p>This is a test.</p>",
-        "metadata": {"sourceURL": "https://example.com/test"}
+        "metadata": {"sourceURL": "https://example.com/test"},
     }
 
     result = await store_scraped_content(
@@ -47,7 +47,7 @@ async def test_store_scraped_content_creates_record():
         crawl_session_id="test-session-123",
         url="https://example.com/test",
         document=document,
-        content_source="firecrawl_scrape"
+        content_source="firecrawl_scrape",
     )
 
     # Verify correct record was returned
@@ -81,7 +81,7 @@ async def test_store_scraped_content_deduplication():
         content_source="firecrawl_scrape",
         markdown=markdown,
         content_hash=content_hash,
-        extra_metadata={}
+        extra_metadata={},
     )
 
     # Mock database session for INSERT ON CONFLICT deduplication
@@ -98,17 +98,14 @@ async def test_store_scraped_content_deduplication():
     # Mock execute to return different results for INSERT vs SELECT
     mock_session.execute.side_effect = [mock_insert_result, mock_select_result]
 
-    document = {
-        "markdown": markdown,
-        "metadata": {"sourceURL": "https://example.com/test"}
-    }
+    document = {"markdown": markdown, "metadata": {"sourceURL": "https://example.com/test"}}
 
     result = await store_scraped_content(
         session=mock_session,
         crawl_session_id="test-session-123",
         url="https://example.com/test",
         document=document,
-        content_source="firecrawl_scrape"
+        content_source="firecrawl_scrape",
     )
 
     # Should return existing content (fetched via SELECT after conflict)
@@ -151,9 +148,7 @@ async def test_store_content_async(monkeypatch):
     ]
 
     await store_content_async(
-        crawl_session_id="test-session",
-        documents=documents,
-        content_source="firecrawl_batch"
+        crawl_session_id="test-session", documents=documents, content_source="firecrawl_batch"
     )
 
     # Verify all documents were stored
@@ -176,7 +171,7 @@ async def test_get_content_by_url():
         content_source="firecrawl_scrape",
         markdown="# Version 1",
         content_hash="hash1",
-        extra_metadata={}
+        extra_metadata={},
     )
     content2 = ScrapedContent(
         id=2,
@@ -185,7 +180,7 @@ async def test_get_content_by_url():
         content_source="firecrawl_scrape",
         markdown="# Version 2",
         content_hash="hash2",
-        extra_metadata={}
+        extra_metadata={},
     )
 
     # Mock database session
@@ -197,9 +192,7 @@ async def test_get_content_by_url():
     mock_session.execute.return_value = mock_result
 
     results = await get_content_by_url(
-        session=mock_session,
-        url="https://example.com/test",
-        limit=10
+        session=mock_session, url="https://example.com/test", limit=10
     )
 
     # Verify results are ordered newest first
@@ -222,7 +215,7 @@ async def test_get_content_by_session():
         content_source="firecrawl_crawl",
         markdown="# Page 1",
         content_hash="hash1",
-        extra_metadata={}
+        extra_metadata={},
     )
     content2 = ScrapedContent(
         id=2,
@@ -231,7 +224,7 @@ async def test_get_content_by_session():
         content_source="firecrawl_crawl",
         markdown="# Page 2",
         content_hash="hash2",
-        extra_metadata={}
+        extra_metadata={},
     )
 
     # Mock database session
@@ -242,10 +235,7 @@ async def test_get_content_by_session():
     mock_result.scalars.return_value = mock_scalars
     mock_session.execute.return_value = mock_result
 
-    results = await get_content_by_session(
-        session=mock_session,
-        crawl_session_id="session-123"
-    )
+    results = await get_content_by_session(session=mock_session, crawl_session_id="session-123")
 
     # Verify results are ordered oldest first
     assert len(results) == 2
@@ -281,13 +271,14 @@ async def test_concurrent_duplicate_insert_handling(db_session):
     async def insert_content():
         # Each coroutine gets its own session
         from infra.database import get_db_context
+
         async with get_db_context() as session:
             result = await store_scraped_content(
                 session=session,
                 crawl_session_id="concurrent-test",
                 url="https://example.com/page",
                 document=document,
-                content_source="firecrawl_scrape"
+                content_source="firecrawl_scrape",
             )
             await session.commit()
             return result
@@ -296,7 +287,7 @@ async def test_concurrent_duplicate_insert_handling(db_session):
     results = await asyncio.gather(
         insert_content(),
         insert_content(),
-        return_exceptions=False  # Should NOT raise exceptions
+        return_exceptions=False,  # Should NOT raise exceptions
     )
 
     # Both should succeed (one inserts, one returns existing)
@@ -310,6 +301,7 @@ async def test_concurrent_duplicate_insert_handling(db_session):
 
     # Verify only ONE record in database
     from sqlalchemy import func, select
+
     count_result = await db_session.execute(
         select(func.count(ScrapedContent.id)).where(
             ScrapedContent.crawl_session_id == "concurrent-test"
@@ -327,6 +319,7 @@ async def test_storage_failure_metrics_recorded(db_session):
     # Create crawl session
     from domain.models import CrawlSession, OperationMetric
     from services.content_storage import store_content_async
+
     crawl_session = CrawlSession(
         job_id="metrics-test",
         base_url="https://example.com",
@@ -345,18 +338,19 @@ async def test_storage_failure_metrics_recorded(db_session):
     await store_content_async(
         crawl_session_id="metrics-test",
         documents=[invalid_document],
-        content_source="firecrawl_scrape"
+        content_source="firecrawl_scrape",
     )
 
     # Give async operation time to complete
     import asyncio
+
     await asyncio.sleep(0.5)
 
     # Check operation_metrics table for failure record
     result = await db_session.execute(
         select(OperationMetric).where(
             OperationMetric.operation_type == "content_storage",
-            OperationMetric.crawl_id == "metrics-test"
+            OperationMetric.crawl_id == "metrics-test",
         )
     )
     metrics = result.scalars().all()
@@ -376,6 +370,7 @@ async def test_storage_success_metrics_recorded(db_session):
     # Create crawl session
     from domain.models import CrawlSession, OperationMetric
     from services.content_storage import store_content_async
+
     crawl_session = CrawlSession(
         job_id="success-metrics-test",
         base_url="https://example.com",
@@ -394,18 +389,19 @@ async def test_storage_success_metrics_recorded(db_session):
     await store_content_async(
         crawl_session_id="success-metrics-test",
         documents=[document],
-        content_source="firecrawl_scrape"
+        content_source="firecrawl_scrape",
     )
 
     # Give async operation time to complete
     import asyncio
+
     await asyncio.sleep(0.5)
 
     # Check operation_metrics table for success record
     result = await db_session.execute(
         select(OperationMetric).where(
             OperationMetric.operation_type == "content_storage",
-            OperationMetric.crawl_id == "success-metrics-test"
+            OperationMetric.crawl_id == "success-metrics-test",
         )
     )
     metrics = result.scalars().all()

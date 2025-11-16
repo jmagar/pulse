@@ -55,9 +55,7 @@ export function scopeMiddleware(
   }
 
   const userScopes = req.session?.user?.scopes ?? [];
-  const missing = requiredScopes.filter(
-    (scope) => !userScopes.includes(scope),
-  );
+  const missing = requiredScopes.filter((scope) => !userScopes.includes(scope));
 
   if (missing.length > 0) {
     res.status(403).json({

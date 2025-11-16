@@ -616,7 +616,10 @@ export function buildWebhookResponse(
     }
 
     // Handle savedUris (saveOnly or saveAndReturn modes)
-    if (data.savedUris && (data.savedUris.raw || data.savedUris.cleaned || data.savedUris.extracted)) {
+    if (
+      data.savedUris &&
+      (data.savedUris.raw || data.savedUris.cleaned || data.savedUris.extracted)
+    ) {
       const uri =
         data.savedUris.extracted ||
         data.savedUris.cleaned ||

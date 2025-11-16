@@ -57,7 +57,8 @@ export function dbRowToResourceData(row: DbResourceRow): ResourceData {
   return {
     uri: row.uri,
     name: `${row.resource_type}/${extractNameFromUrl(row.url)}`,
-    description: (row.metadata.description as string) || `Fetched content from ${row.url}`,
+    description:
+      (row.metadata.description as string) || `Fetched content from ${row.url}`,
     mimeType: row.content_type,
     metadata,
   };

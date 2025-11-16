@@ -3,6 +3,7 @@ Pydantic schemas for /api/v2/scrape endpoint.
 
 Request/response models matching the complete API specification.
 """
+
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
@@ -11,7 +12,9 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator
 class BrowserAction(BaseModel):
     """Browser automation action schema."""
 
-    type: Literal["wait", "click", "write", "press", "scroll", "screenshot", "scrape", "executeJavascript"]
+    type: Literal[
+        "wait", "click", "write", "press", "scroll", "screenshot", "scrape", "executeJavascript"
+    ]
     milliseconds: int | None = None
     selector: str | None = None
     text: str | None = None

@@ -75,7 +75,15 @@ async def test_indexing_service_propagates_crawl_id(indexing_service: IndexingSe
     timing_contexts = []
 
     class MockTimingContext:
-        def __init__(self, operation_type, operation_name, job_id=None, crawl_id=None, document_url=None, request_id=None):
+        def __init__(
+            self,
+            operation_type,
+            operation_name,
+            job_id=None,
+            crawl_id=None,
+            document_url=None,
+            request_id=None,
+        ):
             self.operation_type = operation_type
             self.operation_name = operation_name
             self.job_id = job_id
@@ -92,9 +100,7 @@ async def test_indexing_service_propagates_crawl_id(indexing_service: IndexingSe
 
     with patch("services.indexing.TimingContext", MockTimingContext):
         result = await indexing_service.index_document(
-            doc,
-            job_id="test_job_123",
-            crawl_id="indexing_test_crawl"
+            doc, job_id="test_job_123", crawl_id="indexing_test_crawl"
         )
 
     # Verify success
@@ -111,5 +117,7 @@ async def test_indexing_service_propagates_crawl_id(indexing_service: IndexingSe
 
     # Verify all contexts received the crawl_id
     for ctx in timing_contexts:
-        assert ctx.crawl_id == "indexing_test_crawl", f"TimingContext for {ctx.operation_type} missing crawl_id"
+        assert ctx.crawl_id == "indexing_test_crawl", (
+            f"TimingContext for {ctx.operation_type} missing crawl_id"
+        )
         assert ctx.job_id == "test_job_123"

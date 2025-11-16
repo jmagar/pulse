@@ -1,4 +1,5 @@
 """Test authentication timing-attack resistance."""
+
 import time
 from statistics import stdev
 
@@ -18,7 +19,7 @@ async def test_api_secret_constant_time_comparison():
     # Test with secrets of varying correctness (but same length)
     test_cases = [
         "a" * len(correct_secret),  # All wrong
-        correct_secret[:len(correct_secret)//2] + "a" * (len(correct_secret)//2),  # Half right
+        correct_secret[: len(correct_secret) // 2] + "a" * (len(correct_secret) // 2),  # Half right
         correct_secret[:-1] + "a",  # Almost all right
         correct_secret,  # All right
     ]
@@ -40,7 +41,9 @@ async def test_api_secret_constant_time_comparison():
             timings_by_case[i].append(elapsed)
 
     # Calculate mean timing for each test case
-    mean_timings = [sum(timings_by_case[i]) / len(timings_by_case[i]) for i in range(len(test_cases))]
+    mean_timings = [
+        sum(timings_by_case[i]) / len(timings_by_case[i]) for i in range(len(test_cases))
+    ]
 
     # Calculate variance between different cases
     # For timing-attack resistance, all cases should have similar mean timing

@@ -1,4 +1,5 @@
 """Test scrape endpoint routes extract requests to Firecrawl."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -35,8 +36,10 @@ async def test_extract_parameter_raises_deprecation_error(db_session):
         "html": "<html><body><h1>Article</h1></body></html>",
     }
 
-    with patch('api.routers.scrape._call_firecrawl_scrape', AsyncMock(return_value=mock_fc_response)):
-        with patch('api.routers.scrape.ScrapeCacheService') as mock_cache:
+    with patch(
+        "api.routers.scrape._call_firecrawl_scrape", AsyncMock(return_value=mock_fc_response)
+    ):
+        with patch("api.routers.scrape.ScrapeCacheService") as mock_cache:
             mock_cache.return_value.get_cached_scrape = AsyncMock(return_value=None)
 
             # Assert: Should raise HTTPException with helpful message
@@ -72,8 +75,10 @@ async def test_scrape_without_extract_still_works(db_session):
         "html": "<html><body><h1>Article</h1></body></html>",
     }
 
-    with patch('api.routers.scrape._call_firecrawl_scrape', AsyncMock(return_value=mock_fc_response)):
-        with patch('api.routers.scrape.ScrapeCacheService') as mock_cache:
+    with patch(
+        "api.routers.scrape._call_firecrawl_scrape", AsyncMock(return_value=mock_fc_response)
+    ):
+        with patch("api.routers.scrape.ScrapeCacheService") as mock_cache:
             mock_cache.return_value.get_cached_scrape = AsyncMock(return_value=None)
 
             response = await _handle_start_single_url(request, db_session)

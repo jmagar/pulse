@@ -11,7 +11,9 @@ def test_worker_starts_with_api_when_enabled(monkeypatch):
 
     # Clear cached modules to ensure fresh import with new env vars
     for module in list(sys.modules.keys()):
-        if module in ("main", "config", "worker_thread") or module.startswith(("api.", "services.", "workers.", "infra.", "domain.")):
+        if module in ("main", "config", "worker_thread") or module.startswith(
+            ("api.", "services.", "workers.", "infra.", "domain.")
+        ):
             del sys.modules[module]
 
     # Mock the worker's _run_worker method to keep thread alive
@@ -50,7 +52,9 @@ def test_worker_does_not_start_when_disabled(monkeypatch):
 
     # Clear cached modules to ensure fresh import with new env vars
     for module in list(sys.modules.keys()):
-        if module in ("main", "config", "worker_thread") or module.startswith(("api.", "services.", "workers.", "infra.", "domain.")):
+        if module in ("main", "config", "worker_thread") or module.startswith(
+            ("api.", "services.", "workers.", "infra.", "domain.")
+        ):
             del sys.modules[module]
 
     # Import after setting env var

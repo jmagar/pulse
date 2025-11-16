@@ -25,26 +25,18 @@ function unwrapValue(value: string, secret: string): string {
   return decrypt(payload, secret);
 }
 
-function encryptRecord(
-  record: TokenRecord,
-  secret: string,
-): TokenRecord {
+function encryptRecord(record: TokenRecord, secret: string): TokenRecord {
   return {
     ...record,
     accessToken: wrapValue(record.accessToken, secret),
     refreshToken: record.refreshToken
       ? wrapValue(record.refreshToken, secret)
       : undefined,
-    idToken: record.idToken
-      ? wrapValue(record.idToken, secret)
-      : undefined,
+    idToken: record.idToken ? wrapValue(record.idToken, secret) : undefined,
   };
 }
 
-function decryptRecord(
-  record: TokenRecord,
-  secret: string,
-): TokenRecord {
+function decryptRecord(record: TokenRecord, secret: string): TokenRecord {
   return {
     ...record,
     accessToken: unwrapValue(record.accessToken, secret),

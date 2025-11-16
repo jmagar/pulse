@@ -39,10 +39,7 @@ export interface PkcePair {
 /**
  * Verify that a verifier/challenge pair match.
  */
-export function verifyPkcePair({
-  verifier,
-  challenge,
-}: PkcePair): boolean {
+export function verifyPkcePair({ verifier, challenge }: PkcePair): boolean {
   if (!verifier || !challenge) {
     return false;
   }

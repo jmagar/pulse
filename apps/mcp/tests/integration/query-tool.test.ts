@@ -20,78 +20,62 @@ const tool = createQueryTool({
 describeIntegration("Query Tool Integration", () => {
   const callTool = (args: Record<string, unknown>) => tool.handler(args);
 
-  it(
-    "should query firecrawl documentation successfully",
-    async () => {
-      const result = await callTool({
-        query: "firecrawl scrape formats",
-        mode: "hybrid",
-        limit: 5,
-      });
+  it("should query firecrawl documentation successfully", async () => {
+    const result = await callTool({
+      query: "firecrawl scrape formats",
+      mode: "hybrid",
+      limit: 5,
+    });
 
-      expect(result.content).toBeDefined();
-      expect(result.content.length).toBeGreaterThan(0);
-      expect(result.isError).toBeUndefined();
+    expect(result.content).toBeDefined();
+    expect(result.content.length).toBeGreaterThan(0);
+    expect(result.isError).toBeUndefined();
 
-      const firstResult = result.content[0];
-      expect(firstResult.type).toBe("resource");
-      expect(firstResult.resource).toBeDefined();
-      expect(firstResult.resource?.uri).toContain("scraped://");
-    },
-    60_000,
-  );
+    const firstResult = result.content[0];
+    expect(firstResult.type).toBe("resource");
+    expect(firstResult.resource).toBeDefined();
+    expect(firstResult.resource?.uri).toContain("scraped://");
+  }, 60_000);
 
-  it(
-    "should handle semantic search",
-    async () => {
-      const result = await callTool({
-        query: "how to extract links from pages",
-        mode: "semantic",
-        limit: 3,
-      });
+  it("should handle semantic search", async () => {
+    const result = await callTool({
+      query: "how to extract links from pages",
+      mode: "semantic",
+      limit: 3,
+    });
 
-      expect(result.content).toBeDefined();
-      expect(result.isError).toBeUndefined();
-    },
-    60_000,
-  );
+    expect(result.content).toBeDefined();
+    expect(result.isError).toBeUndefined();
+  }, 60_000);
 
-  it(
-    "should handle keyword search",
-    async () => {
-      const result = await callTool({
-        query: "markdown html rawHtml",
-        mode: "keyword",
-        limit: 5,
-      });
+  it("should handle keyword search", async () => {
+    const result = await callTool({
+      query: "markdown html rawHtml",
+      mode: "keyword",
+      limit: 5,
+    });
 
-      expect(result.content).toBeDefined();
-      expect(result.isError).toBeUndefined();
-    },
-    60_000,
-  );
+    expect(result.content).toBeDefined();
+    expect(result.isError).toBeUndefined();
+  }, 60_000);
 
-  it(
-    "should filter by domain",
-    async () => {
-      const result = await callTool({
-        query: "search",
-        mode: "hybrid",
-        limit: 5,
-        filters: {
-          domain: "docs.firecrawl.dev",
-        },
-      });
+  it("should filter by domain", async () => {
+    const result = await callTool({
+      query: "search",
+      mode: "hybrid",
+      limit: 5,
+      filters: {
+        domain: "docs.firecrawl.dev",
+      },
+    });
 
-      expect(result.content).toBeDefined();
-      expect(result.isError).toBeUndefined();
+    expect(result.content).toBeDefined();
+    expect(result.isError).toBeUndefined();
 
-      for (const item of result.content) {
-        if (item.type === "resource") {
-          expect(item.resource?.name).toContain("docs.firecrawl.dev");
-        }
+    for (const item of result.content) {
+      if (item.type === "resource") {
+        expect(item.resource?.name).toContain("docs.firecrawl.dev");
       }
-    },
-    60_000,
-  );
+    }
+  }, 60_000);
 });

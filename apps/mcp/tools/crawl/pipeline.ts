@@ -8,7 +8,10 @@ import type {
   ActiveCrawlsResult,
 } from "@firecrawl/client";
 import type { CrawlOptions } from "./schema.js";
-import { mergeExcludePaths, mergeScrapeOptions } from "../../config/crawl-config.js";
+import {
+  mergeExcludePaths,
+  mergeScrapeOptions,
+} from "../../config/crawl-config.js";
 
 export async function crawlPipeline(
   client: FirecrawlCrawlClient,
@@ -62,7 +65,10 @@ export async function crawlPipeline(
     return client.startCrawl(clientOptions);
   }
 
-  if (["status", "cancel", "errors"].includes(command ?? "") && !options.jobId) {
+  if (
+    ["status", "cancel", "errors"].includes(command ?? "") &&
+    !options.jobId
+  ) {
     throw new Error(`Command "${command}" requires a jobId`);
   }
 

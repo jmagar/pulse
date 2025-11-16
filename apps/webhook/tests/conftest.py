@@ -34,12 +34,10 @@ db_host = os.getenv("POSTGRES_HOST", "localhost")
 db_port = os.getenv("POSTGRES_PORT", "5432")
 os.environ.setdefault(
     "WEBHOOK_DATABASE_URL",
-    f"postgresql+asyncpg://{db_user}:{db_pass}@{db_host}:{db_port}/webhook_test"
+    f"postgresql+asyncpg://{db_user}:{db_pass}@{db_host}:{db_port}/webhook_test",
 )
 os.environ.setdefault("WEBHOOK_API_SECRET", "test-api-secret-for-testing-only")
-os.environ.setdefault(
-    "WEBHOOK_SECRET", "test-webhook-secret-for-testing-hmac-verification"
-)
+os.environ.setdefault("WEBHOOK_SECRET", "test-webhook-secret-for-testing-hmac-verification")
 os.environ.setdefault("WEBHOOK_REDIS_URL", "memory://")
 os.environ.setdefault("SEARCH_BRIDGE_REDIS_URL", "memory://")
 os.environ.setdefault("REDIS_URL", "memory://")

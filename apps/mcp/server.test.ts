@@ -54,7 +54,7 @@ describe("WebhookBridgeClient", () => {
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },
-        })
+        }),
       );
 
       expect(result).toEqual(mockResponse);
@@ -133,19 +133,19 @@ describe("WebhookBridgeClient", () => {
       await expect(
         client.map({
           url: "https://example.com",
-        })
+        }),
       ).rejects.toThrow("Map request failed: Internal server error");
     });
 
     it("should throw error on network failure", async () => {
       (global.fetch as any).mockRejectedValueOnce(
-        new Error("Network connection failed")
+        new Error("Network connection failed"),
       );
 
       await expect(
         client.map({
           url: "https://example.com",
-        })
+        }),
       ).rejects.toThrow("Network connection failed");
     });
 
@@ -223,7 +223,7 @@ describe("WebhookBridgeClient", () => {
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },
-        })
+        }),
       );
 
       expect(result).toEqual(mockResponse);
@@ -318,19 +318,19 @@ describe("WebhookBridgeClient", () => {
       await expect(
         client.search({
           query: "",
-        })
+        }),
       ).rejects.toThrow("Search request failed: Invalid query parameter");
     });
 
     it("should throw error on network failure", async () => {
       (global.fetch as any).mockRejectedValueOnce(
-        new Error("Connection timeout")
+        new Error("Connection timeout"),
       );
 
       await expect(
         client.search({
           query: "test",
-        })
+        }),
       ).rejects.toThrow("Connection timeout");
     });
 
@@ -424,7 +424,7 @@ describe("WebhookBridgeClient", () => {
   describe("constructor", () => {
     it("should remove trailing slash from baseUrl", () => {
       const clientWithSlash = new WebhookBridgeClient(
-        "http://pulse_webhook:52100/"
+        "http://pulse_webhook:52100/",
       );
 
       (global.fetch as any).mockResolvedValueOnce({

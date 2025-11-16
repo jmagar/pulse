@@ -47,8 +47,7 @@ async def test_get_content_by_id(db_session):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get(
-            "/api/content/999",
-            headers={"Authorization": f"Bearer {settings.api_secret}"}
+            "/api/content/999", headers={"Authorization": f"Bearer {settings.api_secret}"}
         )
 
     # Verify response
@@ -74,8 +73,7 @@ async def test_get_content_by_id_not_found(db_session):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get(
-            "/api/content/99999",
-            headers={"Authorization": f"Bearer {settings.api_secret}"}
+            "/api/content/99999", headers={"Authorization": f"Bearer {settings.api_secret}"}
         )
 
     assert response.status_code == 404

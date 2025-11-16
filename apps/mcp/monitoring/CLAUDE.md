@@ -15,17 +15,20 @@ Three-tier design with singleton pattern:
 Tracks three metric categories:
 
 ### Cache Metrics
+
 - Hit/miss counts and rates
 - Storage size and write volume
 - Eviction count
 - Item count
 
 ### Strategy Metrics
+
 - Per-strategy: success count, failure count, total duration
 - Aggregated: success rate, average duration, fallback count
 - Error tracking by message
 
 ### Request Metrics
+
 - Total requests and error count
 - Error rate, average response time
 - Latency percentiles (P50, P95, P99)
@@ -52,6 +55,7 @@ try {
 ### Strategy Selector (`../scraping/strategies/selector.ts`)
 
 Records per-strategy execution metrics:
+
 ```typescript
 const metrics = getMetricsCollector();
 const duration = Date.now() - startTime;
@@ -71,7 +75,11 @@ Exposed via metrics middleware (`../server/middleware/metrics.ts`):
 ## Usage
 
 ```typescript
-import { getMetricsCollector, ConsoleExporter, JSONExporter } from "../monitoring";
+import {
+  getMetricsCollector,
+  ConsoleExporter,
+  JSONExporter,
+} from "../monitoring";
 
 const metrics = getMetricsCollector();
 

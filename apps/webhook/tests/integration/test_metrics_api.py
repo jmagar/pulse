@@ -89,10 +89,7 @@ async def test_get_crawl_metrics_success(client: AsyncClient, db_session):
 
     # Request metrics
     headers = {"X-API-Secret": settings.api_secret}
-    response = await client.get(
-        "/api/metrics/crawls/api_test_crawl",
-        headers=headers
-    )
+    response = await client.get("/api/metrics/crawls/api_test_crawl", headers=headers)
 
     assert response.status_code == 200
     data = response.json()
@@ -106,9 +103,6 @@ async def test_get_crawl_metrics_success(client: AsyncClient, db_session):
 async def test_get_crawl_metrics_not_found(client: AsyncClient):
     """Test GET /api/metrics/crawls/{crawl_id} returns 404 for unknown crawl."""
     headers = {"X-API-Secret": settings.api_secret}
-    response = await client.get(
-        "/api/metrics/crawls/nonexistent_crawl",
-        headers=headers
-    )
+    response = await client.get("/api/metrics/crawls/nonexistent_crawl", headers=headers)
 
     assert response.status_code == 404

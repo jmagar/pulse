@@ -32,13 +32,17 @@ export const queryOptionsSchema = z.object({
     .min(1)
     .max(100)
     .default(5)
-    .describe("Number of results to fetch per page (1-100). Output shows only the first five."),
+    .describe(
+      "Number of results to fetch per page (1-100). Output shows only the first five.",
+    ),
   offset: z
     .number()
     .int()
     .min(0)
     .default(0)
-    .describe("Zero-based offset for pagination (e.g., 5 to view results 6-10)"),
+    .describe(
+      "Zero-based offset for pagination (e.g., 5 to view results 6-10)",
+    ),
   filters: searchFiltersSchema.describe("Search filters"),
 });
 

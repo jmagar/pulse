@@ -188,9 +188,9 @@ def test_webhook_detects_content_source_from_event_type(
             assert mock_store.called
 
             call_args = mock_store.call_args
-            assert (
-                call_args.kwargs["content_source"] == expected_source
-            ), f"Event type {event_type} should map to {expected_source}"
+            assert call_args.kwargs["content_source"] == expected_source, (
+                f"Event type {event_type} should map to {expected_source}"
+            )
 
 
 @pytest.mark.asyncio
@@ -251,4 +251,6 @@ async def test_webhook_storage_handles_multiple_documents(
 
         assert mock_store.called
         call_args = mock_store.call_args
-        assert len(call_args.kwargs["documents"]) == 3, "All 3 documents should be passed to storage"
+        assert len(call_args.kwargs["documents"]) == 3, (
+            "All 3 documents should be passed to storage"
+        )

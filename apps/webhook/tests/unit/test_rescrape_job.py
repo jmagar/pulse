@@ -25,9 +25,7 @@ async def test_rescrape_changed_url_success():
             "signature": "sha256=abc123",
             "diff_size": 100,
             "raw_payload_version": "1.0",
-            "detected_at": format_est_timestamp(
-                parse_iso_timestamp("2025-11-10T12:00:00Z")
-            ),
+            "detected_at": format_est_timestamp(parse_iso_timestamp("2025-11-10T12:00:00Z")),
             "webhook_received_at": format_est_timestamp(
                 parse_iso_timestamp("2025-11-10T12:00:01Z")
             ),
@@ -67,9 +65,7 @@ async def test_rescrape_changed_url_success():
             mock_client.post.return_value = mock_response
 
             # Mock indexing helper
-            with patch(
-                "workers.jobs._index_document_helper", new_callable=AsyncMock
-            ) as mock_index:
+            with patch("workers.jobs._index_document_helper", new_callable=AsyncMock) as mock_index:
                 mock_index.return_value = "https://example.com/test"
 
                 result = await rescrape_changed_url(123)

@@ -10,21 +10,23 @@ describe("Extract Tool", () => {
     // Create mock Firecrawl client with extract method
     firecrawlClient = {
       scrape: vi.fn() as any,
-      extract: vi.fn(async (options: {
-        urls: string[];
-        prompt?: string;
-        schema?: Record<string, unknown>;
-      }) => {
-        // Mock successful extraction
-        return {
-          success: true,
-          data: options.urls.map((url) => ({
-            url,
-            title: "Example Title",
-            description: "Example description",
-          })),
-        };
-      }),
+      extract: vi.fn(
+        async (options: {
+          urls: string[];
+          prompt?: string;
+          schema?: Record<string, unknown>;
+        }) => {
+          // Mock successful extraction
+          return {
+            success: true,
+            data: options.urls.map((url) => ({
+              url,
+              title: "Example Title",
+              description: "Example description",
+            })),
+          };
+        },
+      ),
     } as any;
   });
 

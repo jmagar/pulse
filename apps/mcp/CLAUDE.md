@@ -21,6 +21,7 @@ Consolidated MCP server for Firecrawl integration. Single package architecture w
 ### MCP Server Factory (`server.ts`)
 
 Factory function `createMCPServer()` returns `{ server, registerHandlers }`:
+
 - Creates MCP server with name `@pulsemcp/pulse` v0.0.1
 - Capabilities: resources (no subscribe), tools (no listChanged)
 - `registerHandlers()` registers all tools and resources with dependency injection
@@ -28,6 +29,7 @@ Factory function `createMCPServer()` returns `{ server, registerHandlers }`:
 ### HTTP Server (`server/http.ts`)
 
 Express app with:
+
 - CORS middleware (origins/hosts from env)
 - Health check endpoint: `/health`
 - Metrics endpoints: `/metrics`, `/metrics/json`, `/metrics/reset` (auth optional)
@@ -41,7 +43,8 @@ Express app with:
 
 **Source**: `config/environment.ts` - Centralized env variable management
 
-Supports **both MCP_* and legacy names** for backward compatibility:
+Supports **both MCP\_\* and legacy names** for backward compatibility:
+
 - Server: `MCP_PORT`, `MCP_DEBUG`, `MCP_LOG_FORMAT`
 - HTTP: `MCP_ALLOWED_ORIGINS`, `MCP_ALLOWED_HOSTS`, `MCP_ENABLE_OAUTH`
 - Firecrawl: `MCP_FIRECRAWL_API_KEY`, `MCP_FIRECRAWL_BASE_URL`
@@ -57,6 +60,7 @@ Helper functions: `parseBoolean()`, `parseNumber()`, `getAllEnvVars()` (with red
 **Pattern**: `tools/registration.ts` - Registers 5 tools with the server
 
 Tools created in factory:
+
 1. **scrape** - Single URL extraction (native+Firecrawl fallback, caching, pagination)
 2. **search** - Semantic search across cached content
 3. **map** - Site structure mapping and URL discovery
@@ -64,6 +68,7 @@ Tools created in factory:
 5. **query** - Search indexed docs via webhook bridge (requires `WEBHOOK_BASE_URL`, `WEBHOOK_API_SECRET`)
 
 Registration flow:
+
 - `CallToolRequestSchema` handler calls tool functions with tracking
 - Failed tool registration doesn't block others
 - Logs tool schema (if `DEBUG=true`)
@@ -75,6 +80,7 @@ Registration flow:
 **Storage Factory Pattern**: `storage/factory.ts` creates storage backend
 
 Backends:
+
 - **webhook-postgres** (default) - Unified storage via webhook API with Redis caching
 - **memory** - In-memory Map with TTL (development only)
 - **filesystem** - Persistent files (path: `MCP_RESOURCE_FILESYSTEM_ROOT`)
@@ -85,6 +91,7 @@ Backends:
 Webhook-postgres provides a unified storage layer that eliminates data duplication while maintaining high performance through Redis caching. All scraped content flows through the webhook service pipeline and is stored in PostgreSQL, making it the single source of truth for both indexing and resource retrieval.
 
 **Architecture Benefits:**
+
 - **Single Source of Truth**: All scraped content in `webhook.scraped_content` table
 - **Redis Caching**: Sub-5ms response times for frequently accessed content via ContentCacheService
 - **Zero Duplication**: No separate MCP storage - shares data with webhook service
@@ -93,6 +100,7 @@ Webhook-postgres provides a unified storage layer that eliminates data duplicati
 - **Consistency**: Same data visible to all MCP tools (scrape, query, profile)
 
 **Configuration:**
+
 ```bash
 # Required for webhook-postgres storage
 MCP_RESOURCE_STORAGE=webhook-postgres           # Default backend
@@ -104,12 +112,14 @@ MCP_RESOURCE_TTL=3600  # Cache TTL in seconds (default: 1 hour)
 ```
 
 **API Endpoints Used:**
+
 - `GET /api/content/by-url?url={url}&limit=10` - Find content by URL (with Redis cache)
 - `GET /api/content/{id}` - Read content by ID (with Redis cache)
 
 **URI Format**: `webhook://{content_id}` (e.g., `webhook://42`)
 
 **Data Flow:**
+
 ```
 User → MCP scrape tool → Firecrawl API → Webhook event
                                        ↓
@@ -121,6 +131,7 @@ User → MCP scrape tool → Firecrawl API → Webhook event
 ```
 
 **Implementation Details:**
+
 1. User scrapes URL via MCP scrape tool
 2. Firecrawl API scrapes content and sends webhook
 3. Webhook service receives event and stores in `webhook.scraped_content`
@@ -129,30 +140,35 @@ User → MCP scrape tool → Firecrawl API → Webhook event
 6. Subsequent reads served from Redis cache (<5ms)
 
 **Performance Characteristics:**
+
 - First read (cache miss): ~50-100ms (PostgreSQL query)
 - Cached reads: <5ms (Redis)
 - Cache invalidation: Automatic on new scrapes of same URL
 - Retention: 30 days (configurable via webhook service)
 
 **Limitations:**
+
 - Read-only from MCP perspective (writes happen via Firecrawl → webhook pipeline)
 - No list() operation (webhook API doesn't expose full content listing for security)
 - No delete() operation (content lifecycle managed by webhook retention policy)
 - Requires webhook service to be running (fallback to memory storage if unavailable)
 
 **When to Use Legacy Storage:**
+
 - **Memory storage**: Quick testing without PostgreSQL/Redis (data lost on restart)
 - **Filesystem storage**: Debugging or offline development (slower than Redis cache)
 
 ### Legacy Storage Backends
 
 **Memory Storage:**
+
 - In-memory Map with TTL
 - Lost on container restart
 - Use for development/testing only
 - URI Format: `scraped://domain/name_timestamp`
 
 **Filesystem Storage:**
+
 - Persistent files on disk
 - Path: `MCP_RESOURCE_FILESYSTEM_ROOT`
 - Slower than Redis-cached webhook storage
@@ -161,6 +177,7 @@ User → MCP scrape tool → Firecrawl API → Webhook event
 ### Resource Registration
 
 Register via `registerResources()`:
+
 - `ListResourcesRequestSchema` - Returns all resources from storage
 - `ReadResourceRequestSchema` - Fetches resource text by URI
 - Error tracking in `registrationTracker`
@@ -168,6 +185,7 @@ Register via `registerResources()`:
 ## Middleware Stack
 
 **Order in HTTP server**:
+
 1. `express.json()`
 2. `cors()` - Checks allowed origins/hosts
 3. `securityHeaders` - Prevents MIME sniffing, clickjacking, etc.
@@ -186,13 +204,15 @@ Register via `registerResources()`:
 **Session Management**: `transports` map stores active HTTP streaming sessions
 **Health Checks**: Pre-startup validation of authentication services (optional)
 
-## Environment Variables (MCP_* Namespace)
+## Environment Variables (MCP\_\* Namespace)
 
 Required for query tool:
+
 - `MCP_WEBHOOK_BASE_URL` (default: `http://pulse_webhook:52100`)
 - `MCP_WEBHOOK_API_SECRET`
 
 Optional for OAuth:
+
 - `MCP_ENABLE_OAUTH` (default: false)
 - `MCP_GOOGLE_CLIENT_ID`, `MCP_GOOGLE_CLIENT_SECRET`, `MCP_GOOGLE_REDIRECT_URI`
 - `MCP_OAUTH_SESSION_SECRET`, `MCP_OAUTH_TOKEN_KEY` (32+ bytes)

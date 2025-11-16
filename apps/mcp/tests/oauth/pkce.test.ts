@@ -25,16 +25,12 @@ describe("PKCE helpers", () => {
   it("validates matching verifier/challenge pairs", () => {
     const verifier = createPkceVerifier();
     const challenge = createPkceChallenge(verifier);
-    expect(
-      verifyPkcePair({ verifier, challenge }),
-    ).toBe(true);
+    expect(verifyPkcePair({ verifier, challenge })).toBe(true);
   });
 
   it("rejects mismatched pairs", () => {
     const verifier = createPkceVerifier();
     const challenge = createPkceChallenge(createPkceVerifier());
-    expect(
-      verifyPkcePair({ verifier, challenge }),
-    ).toBe(false);
+    expect(verifyPkcePair({ verifier, challenge })).toBe(false);
   });
 });

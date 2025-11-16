@@ -4,7 +4,7 @@ import { Music2, Play, ListTree } from "lucide-react"
 
 export function StudioPanel() {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <div className="flex h-14 items-center border-b px-4">
         <h2 className="text-sm font-semibold">Studio</h2>
       </div>

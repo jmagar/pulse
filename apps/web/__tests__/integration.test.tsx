@@ -33,7 +33,9 @@ describe("NotebookLM Integration", () => {
     render(<Home />)
 
     // Source cards appear in both desktop and mobile layouts
-    expect(screen.getAllByText("document-name.pdf").length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText("document-name.pdf").length
+    ).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/125 pages/).length).toBeGreaterThanOrEqual(1)
   })
 
@@ -41,8 +43,12 @@ describe("NotebookLM Integration", () => {
     render(<Home />)
 
     // Studio features appear in both desktop and mobile layouts
-    expect(screen.getAllByText("Audio Overview").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText("Video Overview").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("Audio Overview").length).toBeGreaterThanOrEqual(
+      1
+    )
+    expect(screen.getAllByText("Video Overview").length).toBeGreaterThanOrEqual(
+      1
+    )
     expect(screen.getAllByText("Mind Map").length).toBeGreaterThanOrEqual(1)
   })
 })

@@ -19,7 +19,10 @@ export interface TokenStore {
   save(record: TokenRecord): Promise<void>;
   get(userId: string): Promise<TokenRecord | null>;
   delete(userId: string): Promise<void>;
-  refresh(userId: string, updates: TokenRecordUpdate): Promise<TokenRecord | null>;
+  refresh(
+    userId: string,
+    updates: TokenRecordUpdate,
+  ): Promise<TokenRecord | null>;
 }
 
 export interface SerializedTokenRecord {
@@ -50,9 +53,7 @@ export function serializeRecord(record: TokenRecord): SerializedTokenRecord {
   };
 }
 
-export function deserializeRecord(
-  payload: SerializedTokenRecord,
-): TokenRecord {
+export function deserializeRecord(payload: SerializedTokenRecord): TokenRecord {
   return {
     userId: payload.userId,
     sessionId: payload.sessionId,

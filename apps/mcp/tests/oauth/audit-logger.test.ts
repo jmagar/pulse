@@ -13,14 +13,18 @@ describe("audit logger", () => {
 
   it("skips logging when database URL missing", async () => {
     delete process.env.MCP_DATABASE_URL;
-    const { logAuditEvent } = await import("../../server/oauth/audit-logger.js");
+    const { logAuditEvent } = await import(
+      "../../server/oauth/audit-logger.js"
+    );
     await logAuditEvent({ type: "login_success", userId: "user" });
     expect(mockQuery).not.toHaveBeenCalled();
   });
 
   it("writes log entry when configured", async () => {
     process.env.MCP_DATABASE_URL = "postgres://example";
-    const { logAuditEvent } = await import("../../server/oauth/audit-logger.js");
+    const { logAuditEvent } = await import(
+      "../../server/oauth/audit-logger.js"
+    );
     await logAuditEvent({ type: "login_success", userId: "user" });
     expect(mockQuery).toHaveBeenCalledTimes(1);
     const args = mockQuery.mock.calls[0];

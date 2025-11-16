@@ -95,7 +95,9 @@ describe("Token Manager", () => {
     });
 
     expect(refreshed?.accessToken).toBe("new-access");
-    expect(refreshed?.expiresAt.getTime()).toBeGreaterThan(record.expiresAt.getTime());
+    expect(refreshed?.expiresAt.getTime()).toBeGreaterThan(
+      record.expiresAt.getTime(),
+    );
 
     const stored = store.records.get("user-123");
     expect(stored?.accessToken).toMatch(/^enc:/);

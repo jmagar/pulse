@@ -43,7 +43,7 @@ export class WebhookPostgresStorage implements ResourceStorage {
     try {
       const response = await fetch(apiUrl, {
         headers: {
-          "Authorization": `Bearer ${this.apiSecret}`,
+          Authorization: `Bearer ${this.apiSecret}`,
         },
       });
 
@@ -92,7 +92,10 @@ export class WebhookPostgresStorage implements ResourceStorage {
       await this.read(uri);
       return true;
     } catch (error) {
-      if (error instanceof Error && error.message.includes("Resource not found")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Resource not found")
+      ) {
         return false;
       }
       // Re-throw other errors (like invalid URI format)
@@ -112,7 +115,7 @@ export class WebhookPostgresStorage implements ResourceStorage {
     try {
       const response = await fetch(apiUrl, {
         headers: {
-          "Authorization": `Bearer ${this.apiSecret}`,
+          Authorization: `Bearer ${this.apiSecret}`,
         },
       });
 
@@ -150,7 +153,8 @@ export class WebhookPostgresStorage implements ResourceStorage {
   ): ResourceData[] {
     return contentList.map((content) => {
       const uri = `webhook://${content.id}`;
-      const timestamp = content.scraped_at || content.created_at || new Date().toISOString();
+      const timestamp =
+        content.scraped_at || content.created_at || new Date().toISOString();
 
       return {
         uri,

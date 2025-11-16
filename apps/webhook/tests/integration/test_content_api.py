@@ -4,7 +4,6 @@ Integration tests for content retrieval API.
 Tests the /api/content endpoints for retrieving stored scraped content.
 """
 
-
 import pytest
 from httpx import ASGITransport, AsyncClient
 

@@ -23,12 +23,12 @@ export function createProfileTool(config: ProfileConfig): Tool {
         const validatedArgs = profileOptionsSchema.parse(args);
         const metrics = await client.getMetrics(
           validatedArgs.crawl_id,
-          validatedArgs.include_details
+          validatedArgs.include_details,
         );
         return formatProfileResponse(metrics, validatedArgs);
       } catch (error) {
         return formatErrorResponse(
-          error instanceof Error ? error : new Error(String(error))
+          error instanceof Error ? error : new Error(String(error)),
         );
       }
     },

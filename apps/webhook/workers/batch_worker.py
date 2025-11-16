@@ -187,12 +187,14 @@ class BatchWorker:
                     error=str(result),
                     error_type=type(result).__name__,
                 )
-                processed_results.append({
-                    "success": False,
-                    "url": documents[i].get("url"),
-                    "error": str(result),
-                    "error_type": type(result).__name__,
-                })
+                processed_results.append(
+                    {
+                        "success": False,
+                        "url": documents[i].get("url"),
+                        "error": str(result),
+                        "error_type": type(result).__name__,
+                    }
+                )
             else:
                 processed_results.append(result)
 

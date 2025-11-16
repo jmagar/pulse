@@ -47,7 +47,9 @@ describe("Google OAuth client wrapper", () => {
   });
 
   it("builds authorization URL with PKCE data", () => {
-    mockGenerateAuthUrl.mockReturnValue("https://accounts.google.com/o/oauth2/v2/auth");
+    mockGenerateAuthUrl.mockReturnValue(
+      "https://accounts.google.com/o/oauth2/v2/auth",
+    );
     const client = createGoogleOAuthClient(baseConfig);
     const url = client.createAuthUrl({
       codeChallenge: "challenge",
@@ -105,7 +107,9 @@ describe("Google OAuth client wrapper", () => {
 
     const client = createGoogleOAuthClient(baseConfig);
     const tokens = await client.refreshAccessToken("1//refresh");
-    expect(mockSetCredentials).toHaveBeenCalledWith({ refresh_token: "1//refresh" });
+    expect(mockSetCredentials).toHaveBeenCalledWith({
+      refresh_token: "1//refresh",
+    });
     expect(tokens.accessToken).toBe("ya29.new");
   });
 

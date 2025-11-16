@@ -22,7 +22,10 @@ export function createMapTool(firecrawlClient: IFirecrawlClient): Tool {
           throw new Error("Map operation not supported by Firecrawl client");
         }
 
-        const result = await mapPipeline(firecrawlClient as { map: NonNullable<typeof firecrawlClient.map> }, validatedArgs);
+        const result = await mapPipeline(
+          firecrawlClient as { map: NonNullable<typeof firecrawlClient.map> },
+          validatedArgs,
+        );
         return formatMapResponse(
           result,
           validatedArgs.url,

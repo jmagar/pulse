@@ -109,95 +109,102 @@ export async function createExpressServer(): Promise<Application> {
     authMiddleware,
     scopeMiddleware,
     async (req, res) => {
-    // Accept session ID from header or query param (for EventSource/GET requests)
-    const sessionId =
-      (req.headers["mcp-session-id"] as string | undefined) ||
-      (req.method === "GET"
-        ? (req.query.sessionId as string | undefined)
-        : undefined);
+      // Accept session ID from header or query param (for EventSource/GET requests)
+      const sessionId =
+        (req.headers["mcp-session-id"] as string | undefined) ||
+        (req.method === "GET"
+          ? (req.query.sessionId as string | undefined)
+          : undefined);
 
-    if (sessionId) {
-      logInfo("MCP", `${req.method} request for session`, {
-        sessionId,
-        method: req.method,
-      });
-    } else {
-      logInfo("MCP", `${req.method} request (no session)`, {
-        method: req.method,
-      });
-    }
-
-    try {
-      let transport: StreamableHTTPServerTransport;
-
-      if (sessionId && transports[sessionId]) {
-        // Reuse existing transport for this session
-        transport = transports[sessionId];
-      } else if (!sessionId && isInitializeRequest(req.body)) {
-        // New initialization request - create transport and server
-        transport = createTransport({
-          enableResumability: process.env.ENABLE_RESUMABILITY === "true",
-          onSessionInitialized: (sid: string) => {
-            logInfo("MCP", "Session initialized", { sessionId: sid });
-            transports[sid] = transport;
-          },
-          onSessionClosed: (sid: string) => {
-            logInfo("MCP", "Session closed", { sessionId: sid });
-            delete transports[sid];
-          },
+      if (sessionId) {
+        logInfo("MCP", `${req.method} request for session`, {
+          sessionId,
+          method: req.method,
         });
-
-        // Set up onclose handler to clean up transport
-        transport.onclose = () => {
-          const sid = transport.sessionId;
-          if (sid && transports[sid]) {
-            logInfo("MCP", "Transport closed for session", { sessionId: sid });
-            delete transports[sid];
-          }
-        };
-
-        // Create and connect MCP server
-        const { server, registerHandlers } = createMCPServer();
-        await registerHandlers(server);
-        await server.connect(transport);
-
-        logInfo("MCP", "New server instance connected");
       } else {
-        // Invalid request - no session ID or not initialization request
-        res.status(400).json({
-          jsonrpc: "2.0",
-          error: {
-            code: -32000,
-            message:
-              "Bad Request: No valid session ID provided or not an initialization request",
-          },
-          id: null,
-        });
-        return;
-      }
-
-      // Copy query param session ID to header for SDK compatibility
-      // The SDK's validateSession checks req.headers['mcp-session-id']
-      if (sessionId && req.method === "GET" && !req.headers["mcp-session-id"]) {
-        req.headers["mcp-session-id"] = sessionId;
-      }
-
-      // Handle the request with the transport
-      await transport.handleRequest(req, res, req.body);
-    } catch (error) {
-      logError("MCP", error, { method: req.method, sessionId });
-      if (!res.headersSent) {
-        res.status(500).json({
-          jsonrpc: "2.0",
-          error: {
-            code: -32603,
-            message: "Internal server error",
-          },
-          id: null,
+        logInfo("MCP", `${req.method} request (no session)`, {
+          method: req.method,
         });
       }
-    }
-  });
+
+      try {
+        let transport: StreamableHTTPServerTransport;
+
+        if (sessionId && transports[sessionId]) {
+          // Reuse existing transport for this session
+          transport = transports[sessionId];
+        } else if (!sessionId && isInitializeRequest(req.body)) {
+          // New initialization request - create transport and server
+          transport = createTransport({
+            enableResumability: process.env.ENABLE_RESUMABILITY === "true",
+            onSessionInitialized: (sid: string) => {
+              logInfo("MCP", "Session initialized", { sessionId: sid });
+              transports[sid] = transport;
+            },
+            onSessionClosed: (sid: string) => {
+              logInfo("MCP", "Session closed", { sessionId: sid });
+              delete transports[sid];
+            },
+          });
+
+          // Set up onclose handler to clean up transport
+          transport.onclose = () => {
+            const sid = transport.sessionId;
+            if (sid && transports[sid]) {
+              logInfo("MCP", "Transport closed for session", {
+                sessionId: sid,
+              });
+              delete transports[sid];
+            }
+          };
+
+          // Create and connect MCP server
+          const { server, registerHandlers } = createMCPServer();
+          await registerHandlers(server);
+          await server.connect(transport);
+
+          logInfo("MCP", "New server instance connected");
+        } else {
+          // Invalid request - no session ID or not initialization request
+          res.status(400).json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32000,
+              message:
+                "Bad Request: No valid session ID provided or not an initialization request",
+            },
+            id: null,
+          });
+          return;
+        }
+
+        // Copy query param session ID to header for SDK compatibility
+        // The SDK's validateSession checks req.headers['mcp-session-id']
+        if (
+          sessionId &&
+          req.method === "GET" &&
+          !req.headers["mcp-session-id"]
+        ) {
+          req.headers["mcp-session-id"] = sessionId;
+        }
+
+        // Handle the request with the transport
+        await transport.handleRequest(req, res, req.body);
+      } catch (error) {
+        logError("MCP", error, { method: req.method, sessionId });
+        if (!res.headersSent) {
+          res.status(500).json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32603,
+              message: "Internal server error",
+            },
+            id: null,
+          });
+        }
+      }
+    },
+  );
 
   // Graceful shutdown handler
   const shutdown = async () => {

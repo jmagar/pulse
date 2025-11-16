@@ -1,4 +1,5 @@
 """Test scrape endpoint uses Firecrawl markdown without re-processing."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -19,7 +20,7 @@ async def test_scrape_uses_firecrawl_markdown_directly(db_session):
     mock_fc_response = {
         "markdown": "# Clean Markdown\n\nNo HTML tags here.",
         "html": "<html><body><h1>Clean Markdown</h1><p>No HTML tags here.</p></body></html>",
-        "screenshot": None
+        "screenshot": None,
     }
 
     # Create mock request (bypass validator issue)
@@ -37,8 +38,10 @@ async def test_scrape_uses_firecrawl_markdown_directly(db_session):
     request.formats = ["markdown", "html"]
 
     # Act: Call scrape with mocked Firecrawl
-    with patch('api.routers.scrape._call_firecrawl_scrape', AsyncMock(return_value=mock_fc_response)):
-        with patch('api.routers.scrape.ScrapeCacheService') as mock_cache:
+    with patch(
+        "api.routers.scrape._call_firecrawl_scrape", AsyncMock(return_value=mock_fc_response)
+    ):
+        with patch("api.routers.scrape.ScrapeCacheService") as mock_cache:
             mock_cache.return_value.get_cached_scrape = AsyncMock(return_value=None)
 
             response = await _handle_start_single_url(request, db_session)
@@ -64,7 +67,7 @@ async def test_scrape_raw_html_when_clean_disabled(db_session):
     mock_fc_response = {
         "html": "<html><body><h1>Raw HTML</h1></body></html>",
         "markdown": "# Raw HTML",
-        "screenshot": None
+        "screenshot": None,
     }
 
     # Create mock request (bypass validator issue)
@@ -81,8 +84,10 @@ async def test_scrape_raw_html_when_clean_disabled(db_session):
     request.excludeTags = None
     request.formats = ["markdown", "html"]
 
-    with patch('api.routers.scrape._call_firecrawl_scrape', AsyncMock(return_value=mock_fc_response)):
-        with patch('api.routers.scrape.ScrapeCacheService') as mock_cache:
+    with patch(
+        "api.routers.scrape._call_firecrawl_scrape", AsyncMock(return_value=mock_fc_response)
+    ):
+        with patch("api.routers.scrape.ScrapeCacheService") as mock_cache:
             mock_cache.return_value.get_cached_scrape = AsyncMock(return_value=None)
 
             response = await _handle_start_single_url(request, db_session)
@@ -102,7 +107,7 @@ async def test_content_processor_not_imported():
     import api.routers.scrape as scrape_module
 
     # Assert: ContentProcessorService should not be in module namespace
-    assert not hasattr(scrape_module, 'ContentProcessorService')
+    assert not hasattr(scrape_module, "ContentProcessorService")
 
     # Assert: No processor instance created
     # This will fail until we remove the instantiation

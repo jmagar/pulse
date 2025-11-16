@@ -49,7 +49,7 @@ async def test_retention_deletes_old_metrics(db_session):
     async def mock_db_context():
         yield db_session
 
-    with patch('workers.retention.get_db_context', return_value=mock_db_context()):
+    with patch("workers.retention.get_db_context", return_value=mock_db_context()):
         # Run retention with 90-day policy
         result = await enforce_retention_policy(retention_days=90)
 
@@ -94,7 +94,7 @@ async def test_retention_preserves_recent_data(db_session):
     async def mock_db_context():
         yield db_session
 
-    with patch('workers.retention.get_db_context', return_value=mock_db_context()):
+    with patch("workers.retention.get_db_context", return_value=mock_db_context()):
         # Run retention with 90-day policy
         result = await enforce_retention_policy(retention_days=90)
 
@@ -139,7 +139,7 @@ async def test_retention_with_custom_days(db_session):
     async def mock_db_context():
         yield db_session
 
-    with patch('workers.retention.get_db_context', return_value=mock_db_context()):
+    with patch("workers.retention.get_db_context", return_value=mock_db_context()):
         # Run retention with 30-day policy
         result = await enforce_retention_policy(retention_days=30)
 
@@ -167,7 +167,7 @@ async def test_retention_empty_database(db_session):
     async def mock_db_context():
         yield db_session
 
-    with patch('workers.retention.get_db_context', return_value=mock_db_context()):
+    with patch("workers.retention.get_db_context", return_value=mock_db_context()):
         # Run retention on empty database
         result = await enforce_retention_policy(retention_days=90)
 

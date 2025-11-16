@@ -183,8 +183,8 @@ export class PostgresResourceStorage implements ResourceStorage {
           | string
           | undefined;
 
-        const { extract: _extract, ...metadataWithoutExtract } = (data.metadata ||
-          {}) as Record<string, unknown>;
+        const { extract: _extract, ...metadataWithoutExtract } =
+          (data.metadata || {}) as Record<string, unknown>;
 
         uris.extracted = await this.writeWithClient(client, {
           url: data.url,

@@ -313,7 +313,11 @@ async def get_metrics_summary(
     }
 
 
-@router.get("/crawls/{crawl_id}", response_model=CrawlMetricsResponse, dependencies=[Depends(verify_api_secret)])
+@router.get(
+    "/crawls/{crawl_id}",
+    response_model=CrawlMetricsResponse,
+    dependencies=[Depends(verify_api_secret)],
+)
 async def get_crawl_metrics(
     crawl_id: str,
     include_per_page: bool = False,
