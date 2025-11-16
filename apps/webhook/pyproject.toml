@@ -26,8 +26,6 @@ dependencies = [
     "asyncpg>=0.30.0",
     "alembic>=1.17.1",
     "semantic-text-splitter>=0.28.0",
-    "beautifulsoup4>=4.12.0",
-    "html2text>=2024.2.26",
 ]
 
 [project.optional-dependencies]
