@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { WebhookPostgresStorage } from './webhook-postgres.js';
 
 describe('WebhookPostgresStorage', () => {
@@ -38,7 +38,7 @@ describe('WebhookPostgresStorage', () => {
         },
       ];
 
-      global.fetch = async (url: string, options?: RequestInit) => {
+      global.fetch = vi.fn(async (url: string | URL | Request, options?: RequestInit) => {
         expect(url).toBe('http://pulse_webhook:52100/api/content/by-url?url=https%3A%2F%2Fexample.com&limit=10');
         expect(options?.headers).toMatchObject({
           'Authorization': 'Bearer test-secret-key',
@@ -47,7 +47,7 @@ describe('WebhookPostgresStorage', () => {
           ok: true,
           json: async () => mockResponse,
         } as Response;
-      };
+      }) as typeof fetch;
 
       const result = await storage.findByUrl('https://example.com');
 
@@ -94,7 +94,7 @@ describe('WebhookPostgresStorage', () => {
         crawl_session_id: 'job-123',
       };
 
-      global.fetch = async (url: string, options?: RequestInit) => {
+      global.fetch = vi.fn(async (url: string | URL | Request, options?: RequestInit) => {
         expect(url).toBe('http://pulse_webhook:52100/api/content/42');
         expect(options?.headers).toMatchObject({
           'Authorization': 'Bearer test-secret-key',
@@ -103,7 +103,7 @@ describe('WebhookPostgresStorage', () => {
           ok: true,
           json: async () => mockContent,
         } as Response;
-      };
+      }) as typeof fetch;
 
       const result = await storage.read('webhook://42');
 
@@ -148,13 +148,13 @@ describe('WebhookPostgresStorage', () => {
         },
       ];
 
-      global.fetch = async (url: string) => {
+      global.fetch = vi.fn(async (url: string | URL | Request) => {
         expect(url).toBe('http://pulse_webhook:52100/api/content/by-url?url=https%3A%2F%2Fexample.com&limit=10');
         return {
           ok: true,
           json: async () => mockResponse,
         } as Response;
-      };
+      }) as typeof fetch;
 
       // Webhook doesn't support extraction filtering - extractPrompt is ignored
       const result = await storage.findByUrlAndExtract('https://example.com', 'Extract pricing info');
@@ -219,7 +219,7 @@ describe('WebhookPostgresStorage', () => {
 
   describe('exists', () => {
     it('should return true when content exists', async () => {
-      global.fetch = async (url: string) => {
+      global.fetch = vi.fn(async (url: string | URL | Request) => {
         expect(url).toBe('http://pulse_webhook:52100/api/content/42');
         return {
           ok: true,
@@ -230,7 +230,7 @@ describe('WebhookPostgresStorage', () => {
             scraped_at: '2025-01-15T12:00:00+00:00',
           }),
         } as Response;
-      };
+      }) as typeof fetch;
 
       const result = await storage.exists('webhook://42');
       expect(result).toBe(true);

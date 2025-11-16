@@ -109,15 +109,12 @@ describe("Extract Tool", () => {
   });
 
   it("should handle missing extract client", async () => {
-    const invalidClients = {
-      native: {} as any,
-      firecrawl: {
-        scrape: vi.fn() as any,
-        // No extract method
-      } as any,
-    };
+    const invalidClient = {
+      scrape: vi.fn() as any,
+      // No extract method
+    } as IFirecrawlClient;
 
-    const tool = createExtractTool(invalidClients);
+    const tool = createExtractTool(invalidClient);
     const handler = tool.handler as (args: unknown) => Promise<ToolResponse>;
     const result = await handler({
       urls: ["https://example.com"],

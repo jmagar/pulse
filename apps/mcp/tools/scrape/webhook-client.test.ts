@@ -40,7 +40,9 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.content).toBe("# Test Content");
+      if (result.data && 'content' in result.data) {
+        expect(result.data.content).toBe("# Test Content");
+      }
       expect(mockFetch).toHaveBeenCalledWith(
         "http://localhost/api/v2/scrape",
         expect.objectContaining({
@@ -123,8 +125,10 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.cached).toBe(true);
-      expect(result.data?.cacheAge).toBe(30000);
+      if (result.data && 'cached' in result.data && 'cacheAge' in result.data) {
+        expect(result.data.cached).toBe(true);
+        expect(result.data.cacheAge).toBe(30000);
+      }
     });
   });
 
@@ -159,8 +163,10 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.jobId).toBe("batch-job-123");
-      expect(result.data?.status).toBe("scraping");
+      if (result.data && 'jobId' in result.data && 'status' in result.data) {
+        expect(result.data.jobId).toBe("batch-job-123");
+        expect(result.data.status).toBe("scraping");
+      }
 
       const callBody = JSON.parse(
         (mockFetch.mock.calls[0] as [string, { body: string }])[1].body,
@@ -201,8 +207,10 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.completed).toBe(7);
-      expect(result.data?.total).toBe(10);
+      if (result.data && 'completed' in result.data && 'total' in result.data) {
+        expect(result.data.completed).toBe(7);
+        expect(result.data.total).toBe(10);
+      }
 
       const callBody = JSON.parse(
         (mockFetch.mock.calls[0] as [string, { body: string }])[1].body,
@@ -237,7 +245,9 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.status).toBe("cancelled");
+      if (result.data && 'status' in result.data) {
+        expect(result.data.status).toBe("cancelled");
+      }
     });
 
     it("should handle batch errors command", async () => {
@@ -272,8 +282,10 @@ describe("WebhookScrapeClient", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.errors).toHaveLength(1);
-      expect(result.data?.errors?.[0].url).toBe("https://example.com/failed");
+      if (result.data && 'errors' in result.data && Array.isArray(result.data.errors)) {
+        expect(result.data.errors).toHaveLength(1);
+        expect(result.data.errors[0].url).toBe("https://example.com/failed");
+      }
     });
   });
 

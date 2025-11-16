@@ -19,7 +19,7 @@ vi.mock("./webhook-client.js", () => ({
 const mockBuildWebhookResponse = vi.hoisted(() => vi.fn());
 
 vi.mock("./response.js", async (importOriginal) => {
-  const original = await importOriginal();
+  const original = (await importOriginal()) as Record<string, unknown>;
   return {
     ...original,
     buildWebhookResponse: mockBuildWebhookResponse,
