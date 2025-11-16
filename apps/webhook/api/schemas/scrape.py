@@ -6,7 +6,7 @@ Request/response models matching the complete API specification.
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 
 class BrowserAction(BaseModel):
@@ -69,28 +69,21 @@ class ScrapeRequest(BaseModel):
     # Batch management (command=status/cancel/errors)
     jobId: str | None = None
 
-    @field_validator("url", "urls", "jobId", mode="before")
-    @classmethod
-    def validate_command_params(cls, v: Any, info: Any) -> Any:
+    @model_validator(mode="after")
+    def validate_command_params(self) -> "ScrapeRequest":
         """Validate command-specific required parameters."""
-        command = info.data.get("command", "start")
-        field_name = info.field_name
-
-        if command == "start":
-            # Must have either url or urls
-            if field_name in ("url", "urls"):
-                url = info.data.get("url")
-                urls = info.data.get("urls")
-                if not url and not urls:
-                    raise ValueError("Either 'url' or 'urls' is required for start command")
-                if url and urls:
-                    raise ValueError("Cannot specify both 'url' and 'urls'")
-        elif command in ("status", "cancel", "errors"):
+        if self.command == "start":
+            # Must have either url or urls (not both)
+            if not self.url and not self.urls:
+                raise ValueError("Either 'url' or 'urls' is required for start command")
+            if self.url and self.urls:
+                raise ValueError("Cannot specify both 'url' and 'urls'")
+        elif self.command in ("status", "cancel", "errors"):
             # Must have jobId
-            if field_name == "jobId" and not v:
-                raise ValueError(f"'jobId' is required for {command} command")
+            if not self.jobId:
+                raise ValueError(f"'jobId' is required for {self.command} command")
 
-        return v
+        return self
 
     model_config = {"use_enum_values": True}
 

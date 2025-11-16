@@ -309,16 +309,26 @@ export const buildScrapeArgsSchema = () => {
     })
     .transform((data) => {
       const command = resolveScrapeCommand(data);
-      const urls = data.urls ?? (data.url ? [data.url] : undefined);
-      const primaryUrl = data.url ?? urls?.[0];
       const { cancel: _cancel, ...rest } = data;
 
-      return {
-        ...rest,
-        command,
-        url: primaryUrl,
-        urls,
-      };
+      // Send either url OR urls, never both (webhook validation requirement)
+      if (data.urls && data.urls.length > 0) {
+        // Batch mode - send urls only
+        return {
+          ...rest,
+          command,
+          url: undefined,
+          urls: data.urls,
+        };
+      } else {
+        // Single URL mode - send url only
+        return {
+          ...rest,
+          command,
+          url: data.url,
+          urls: undefined,
+        };
+      }
     });
 };
 
