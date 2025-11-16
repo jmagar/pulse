@@ -2,18 +2,13 @@
  * @fileoverview Main scrape tool registration for MCP server
  *
  * This module exports the scrape tool definition including its name,
- * description, input schema, and request handler. The tool provides
- * intelligent web scraping with automatic strategy selection, caching,
- * and flexible result handling.
+ * description, input schema, and request handler. The tool is a thin
+ * wrapper that delegates all scraping operations to the webhook service.
  *
  * @module shared/mcp/tools/scrape
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import type {
-  IScrapingClients,
-  StrategyConfigFactory,
-} from "../../mcp-server.js";
 import { buildInputSchema } from "./schema.js";
 import { handleScrapeRequest } from "./handler.js";
 
@@ -21,32 +16,22 @@ import { handleScrapeRequest } from "./handler.js";
  * Create scrape tool definition for MCP server registration
  *
  * Builds a complete MCP tool definition with handler, schema, and documentation.
- * The tool supports multiple result handling modes, automatic caching, and
- * intelligent strategy selection based on URL patterns and available services.
+ * The tool delegates to the webhook service for all scraping operations including
+ * caching, cleaning, extraction, and storage.
  *
  * @param _server - MCP server instance (unused, kept for interface consistency)
- * @param clientsFactory - Factory function that creates scraping clients
- * @param strategyConfigFactory - Factory for loading/saving learned strategies
  * @returns MCP tool definition object with name, description, schema, and handler
  *
  * @example
  * ```typescript
- * const tool = scrapeTool(
- *   server,
- *   () => createScrapingClients(),
- *   strategyConfigFactory
- * );
+ * const tool = scrapeTool(server);
  * // Register with MCP server
  * server.setRequestHandler(ListToolsRequestSchema, async () => ({
  *   tools: [tool]
  * }));
  * ```
  */
-export function scrapeTool(
-  _server: Server,
-  clientsFactory: () => IScrapingClients,
-  strategyConfigFactory: StrategyConfigFactory,
-) {
+export function scrapeTool(_server: Server) {
   return {
     name: "scrape",
     description: `Scrape webpage content using intelligent automatic strategy selection with built-in caching. This tool fetches content from any URL with flexible result handling options and now supports Firecrawl batch scraping commands.
@@ -118,11 +103,7 @@ The tool automatically:
 4. Remembers successful strategies for future requests`,
     inputSchema: buildInputSchema(),
     handler: async (args: unknown) => {
-      return await handleScrapeRequest(
-        args,
-        clientsFactory,
-        strategyConfigFactory,
-      );
+      return await handleScrapeRequest(args);
     },
   };
 }

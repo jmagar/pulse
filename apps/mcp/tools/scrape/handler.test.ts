@@ -1,133 +1,208 @@
+/**
+ * @fileoverview Tests for scrape handler
+ *
+ * Tests the thin wrapper that delegates to webhook service.
+ */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleScrapeRequest } from "./handler.js";
-import type { IScrapingClients } from "../../mcp-server.js";
 
-const pipelineMocks = vi.hoisted(() => {
+// Mock WebhookScrapeClient
+const mockWebhookClient = vi.hoisted(() => ({
+  scrape: vi.fn(),
+}));
+
+vi.mock("./webhook-client.js", () => ({
+  WebhookScrapeClient: vi.fn(() => mockWebhookClient),
+}));
+
+// Mock response builders
+const mockBuildWebhookResponse = vi.hoisted(() => vi.fn());
+
+vi.mock("./response.js", async (importOriginal) => {
+  const original = await importOriginal();
   return {
-    checkCache: vi.fn().mockResolvedValue({ found: false }),
-    scrapeContent: vi.fn(),
-    processContent: vi.fn(),
-    saveToStorage: vi.fn(),
-    shouldUseBatchScrape: vi.fn().mockReturnValue(false),
-    createBatchScrapeOptions: vi.fn(),
-    startBatchScrapeJob: vi.fn(),
-    runBatchScrapeCommand: vi.fn(),
+    ...original,
+    buildWebhookResponse: mockBuildWebhookResponse,
   };
 });
 
-const responseMocks = vi.hoisted(() => {
-  return {
-    buildCachedResponse: vi.fn(),
-    buildErrorResponse: vi.fn(),
-    buildSuccessResponse: vi.fn(),
-    buildBatchStartResponse: vi.fn(),
-    buildBatchStatusResponse: vi.fn(),
-    buildBatchCancelResponse: vi.fn(),
-    buildBatchErrorsResponse: vi.fn(),
-    buildBatchCommandError: vi.fn(),
-  };
-});
-
-vi.mock("./pipeline.js", () => pipelineMocks);
-vi.mock("./response.js", () => responseMocks);
-
-const createClients = () =>
-  ({
-    native: {
-      scrape: vi.fn(),
-    },
-    firecrawl: {
-      scrape: vi.fn(),
-      batchScrape: vi.fn(),
-      getBatchScrapeStatus: vi.fn(),
-      cancelBatchScrape: vi.fn(),
-      getBatchScrapeErrors: vi.fn(),
-    },
-  }) as unknown as IScrapingClients;
-
-const createStrategyClient = () => ({
-  loadConfig: vi.fn(),
-  saveConfig: vi.fn(),
-  upsertEntry: vi.fn(),
-  getStrategyForUrl: vi.fn(),
-});
-
-const strategyFactory = vi.fn(() => createStrategyClient());
+// Mock env
+vi.mock("../../config/environment.js", () => ({
+  env: {
+    webhookBaseUrl: "http://localhost:52100",
+    webhookApiSecret: "test-secret",
+  },
+}));
 
 describe("handleScrapeRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    pipelineMocks.checkCache.mockResolvedValue({ found: false });
-    pipelineMocks.scrapeContent.mockResolvedValue({
+    mockBuildWebhookResponse.mockReturnValue({
+      content: [{ type: "text", text: "success" }],
+    });
+  });
+
+  it("should validate args and call webhook service", async () => {
+    mockWebhookClient.scrape.mockResolvedValue({
       success: true,
-      content: "html",
-      source: "native",
+      command: "start",
+      data: {
+        url: "https://example.com",
+        content: "# Test",
+        source: "firecrawl",
+        cached: false,
+        timestamp: "2025-01-15T12:00:00Z",
+      },
     });
-    pipelineMocks.processContent.mockResolvedValue({
-      cleaned: "clean",
-      extracted: undefined,
-      displayContent: "clean",
+
+    const result = await handleScrapeRequest({
+      url: "https://example.com",
     });
-    pipelineMocks.saveToStorage.mockResolvedValue({
-      raw: "raw://resource",
-    });
-    responseMocks.buildSuccessResponse.mockReturnValue({
-      content: [{ type: "text", text: "ok" }],
-    });
+
+    expect(mockWebhookClient.scrape).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "start",
+        url: "https://example.com",
+      }),
+    );
+    expect(mockBuildWebhookResponse).toHaveBeenCalled();
+    expect(result.content[0].text).toBe("success");
   });
 
-  it("routes multi-url start requests through batch pipeline", async () => {
-    pipelineMocks.shouldUseBatchScrape.mockReturnValue(true);
-    pipelineMocks.createBatchScrapeOptions.mockReturnValue({
-      urls: ["https://one.example", "https://two.example"],
-    });
-    pipelineMocks.startBatchScrapeJob.mockResolvedValue({
+  it("should handle batch scrape", async () => {
+    mockWebhookClient.scrape.mockResolvedValue({
       success: true,
-      id: "batch-job-1",
-      url: "https://status",
-    });
-    responseMocks.buildBatchStartResponse.mockReturnValue({
-      content: [{ type: "text", text: "batch" }],
+      command: "start",
+      data: {
+        jobId: "batch-123",
+        status: "scraping",
+        urls: 10,
+        message: "Batch started",
+      },
     });
 
-    const response = await handleScrapeRequest(
-      { urls: ["https://one.example", "https://two.example"] },
-      () => createClients(),
-      strategyFactory,
-    );
+    const result = await handleScrapeRequest({
+      urls: ["https://example.com/1", "https://example.com/2"],
+    });
 
-    expect(pipelineMocks.startBatchScrapeJob).toHaveBeenCalled();
-    expect(responseMocks.buildBatchStartResponse).toHaveBeenCalledWith(
-      { success: true, id: "batch-job-1", url: "https://status" },
-      2,
+    expect(mockWebhookClient.scrape).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "start",
+        urls: ["https://example.com/1", "https://example.com/2"],
+      }),
     );
-    expect(response.content[0].text).toBe("batch");
+    expect(mockBuildWebhookResponse).toHaveBeenCalled();
+    expect(result.content[0].text).toBe("success");
   });
 
-  it("routes status command to batch status response", async () => {
-    pipelineMocks.runBatchScrapeCommand.mockResolvedValue({
-      status: "scraping",
-      total: 10,
-      completed: 5,
-      creditsUsed: 2,
-      expiresAt: "soon",
-      data: [],
-    });
-    responseMocks.buildBatchStatusResponse.mockReturnValue({
-      content: [{ type: "text", text: "status" }],
+  it("should handle status command", async () => {
+    mockWebhookClient.scrape.mockResolvedValue({
+      success: true,
+      command: "status",
+      data: {
+        jobId: "batch-123",
+        status: "scraping",
+        total: 10,
+        completed: 5,
+        message: "5/10 completed",
+      },
     });
 
-    const response = await handleScrapeRequest(
-      { command: "status", jobId: "job-1" },
-      () => createClients(),
-      strategyFactory,
-    );
+    const result = await handleScrapeRequest({
+      command: "status",
+      jobId: "batch-123",
+    });
 
-    expect(pipelineMocks.runBatchScrapeCommand).toHaveBeenCalledWith(
-      expect.anything(),
-      "status",
-      "job-1",
+    expect(mockWebhookClient.scrape).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "status",
+        jobId: "batch-123",
+      }),
     );
-    expect(response.content[0].text).toBe("status");
+    expect(result.content[0].text).toBe("success");
   });
+
+  it("should handle cancel command", async () => {
+    mockWebhookClient.scrape.mockResolvedValue({
+      success: true,
+      command: "cancel",
+      data: {
+        jobId: "batch-123",
+        status: "cancelled",
+        message: "Cancelled",
+      },
+    });
+
+    const result = await handleScrapeRequest({
+      command: "cancel",
+      jobId: "batch-123",
+    });
+
+    expect(mockWebhookClient.scrape).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "cancel",
+        jobId: "batch-123",
+      }),
+    );
+    expect(result.content[0].text).toBe("success");
+  });
+
+  it("should handle errors command", async () => {
+    mockWebhookClient.scrape.mockResolvedValue({
+      success: true,
+      command: "errors",
+      data: {
+        jobId: "batch-123",
+        errors: [
+          {
+            url: "https://example.com/failed",
+            error: "Timeout",
+            timestamp: "2025-01-15T12:00:00Z",
+          },
+        ],
+        message: "1 error found",
+      },
+    });
+
+    const result = await handleScrapeRequest({
+      command: "errors",
+      jobId: "batch-123",
+    });
+
+    expect(mockWebhookClient.scrape).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "errors",
+        jobId: "batch-123",
+      }),
+    );
+    expect(result.content[0].text).toBe("success");
+  });
+
+  it("should handle validation errors", async () => {
+    // Use invalid schema (missing url and urls)
+    const result = await handleScrapeRequest({
+      command: "start",
+      // No URL provided
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("Invalid arguments");
+  });
+
+  it("should handle webhook service errors", async () => {
+    mockWebhookClient.scrape.mockRejectedValue(
+      new Error("Connection refused"),
+    );
+
+    const result = await handleScrapeRequest({
+      url: "https://example.com",
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("Connection refused");
+  });
+
+  // Note: Configuration check happens at import time via mock,
+  // so we can't dynamically test missing config in this test suite.
+  // The check is covered by the early return in handler.ts lines 46-56.
 });

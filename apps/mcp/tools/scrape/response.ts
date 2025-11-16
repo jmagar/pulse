@@ -459,3 +459,221 @@ export function buildBatchCommandError(message: string): ToolResponse {
     isError: true,
   };
 }
+
+/**
+ * Build MCP response from webhook scrape response
+ *
+ * Converts webhook service response to MCP CallToolResult format.
+ * Handles all command types: start (single/batch), status, cancel, errors.
+ *
+ * @param webhookResponse - Response from webhook /api/v2/scrape endpoint
+ * @param maxChars - Maximum characters for pagination
+ * @param startIndex - Starting index for pagination
+ * @returns MCP tool response
+ */
+export function buildWebhookResponse(
+  webhookResponse: {
+    success: boolean;
+    command: string;
+    data?:
+      | {
+          // ScrapeData (single URL)
+          url?: string;
+          content?: string;
+          contentType?: string;
+          source?: string;
+          cached?: boolean;
+          cacheAge?: number;
+          timestamp?: string;
+          savedUris?: {
+            raw?: string;
+            cleaned?: string;
+            extracted?: string;
+          };
+          metadata?: {
+            rawLength?: number;
+            cleanedLength?: number;
+            extractedLength?: number;
+            wasTruncated?: boolean;
+          };
+          screenshot?: string;
+          screenshotFormat?: string;
+          message?: string;
+        }
+      | {
+          // BatchData (batch operations)
+          jobId?: string;
+          status?: string;
+          total?: number;
+          completed?: number;
+          creditsUsed?: number;
+          expiresAt?: string;
+          urls?: number;
+          message?: string;
+        }
+      | {
+          // BatchErrorsData (errors command)
+          jobId?: string;
+          errors?: Array<{
+            url: string;
+            error: string;
+            timestamp: string;
+          }>;
+          message?: string;
+        };
+    error?: {
+      message: string;
+      code?: string;
+      url?: string;
+      diagnostics?: Record<string, unknown>;
+    };
+  },
+  maxChars: number,
+  startIndex: number,
+): ToolResponse {
+  // Handle errors
+  if (!webhookResponse.success || webhookResponse.error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: webhookResponse.error?.message || "Unknown error",
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  const data = webhookResponse.data;
+  if (!data) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: "No data in response",
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  // Handle batch operations (status, cancel, start batch)
+  if ("jobId" in data && data.jobId) {
+    // Batch errors command
+    if ("errors" in data && data.errors) {
+      const errors = data.errors.slice(0, 5); // Limit to 5 errors
+      const errorsText = errors.length
+        ? errors.map((err) => `• ${err.error} (${err.url})`).join("\n")
+        : "No batch errors recorded.";
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Batch Scrape Errors:\n${errorsText}`,
+          },
+        ],
+      };
+    }
+
+    // Batch status or cancel
+    return {
+      content: [
+        {
+          type: "text",
+          text: data.message || "Batch operation completed",
+        },
+      ],
+    };
+  }
+
+  // Handle single URL scrape
+  if ("content" in data || "savedUris" in data) {
+    let content = data.content || "";
+
+    // Apply pagination
+    const { processedContent, wasTruncated } = applyPagination(
+      content,
+      startIndex,
+      maxChars,
+    );
+
+    let resultText = processedContent;
+
+    // Add truncation notice
+    if (wasTruncated) {
+      resultText += `\n\n[Content truncated at ${maxChars} characters. Use startIndex parameter to continue reading from character ${startIndex + maxChars}]`;
+    }
+
+    // Add cache/source info
+    if (data.cached) {
+      const cacheAge = data.cacheAge
+        ? ` (${Math.floor(data.cacheAge / 1000)}s old)`
+        : "";
+      resultText += `\n\n---\nServed from cache${cacheAge}`;
+    } else {
+      resultText += `\n\n---\nSource: ${data.source || "firecrawl"}`;
+    }
+
+    // Handle savedUris (saveOnly or saveAndReturn modes)
+    if (data.savedUris && (data.savedUris.raw || data.savedUris.cleaned || data.savedUris.extracted)) {
+      const uri =
+        data.savedUris.extracted ||
+        data.savedUris.cleaned ||
+        data.savedUris.raw ||
+        "";
+      const mimeType = data.contentType || "text/markdown";
+
+      // saveOnly mode - link only
+      if (data.message?.includes("saved")) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Content saved to cache.\n\nResource URI: ${uri}`,
+            },
+          ],
+        };
+      }
+
+      // saveAndReturn mode - embedded resource
+      return {
+        content: [
+          {
+            type: "resource",
+            resource: {
+              uri,
+              name: data.url || "scraped content",
+              mimeType,
+              text: processedContent,
+            },
+          },
+          {
+            type: "text",
+            text: resultText,
+          },
+        ],
+      };
+    }
+
+    // returnOnly mode - plain text
+    return {
+      content: [
+        {
+          type: "text",
+          text: resultText,
+        },
+      ],
+    };
+  }
+
+  // Fallback for unknown response structure
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(data, null, 2),
+      },
+    ],
+  };
+}

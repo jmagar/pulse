@@ -1,228 +1,112 @@
+/**
+ * @fileoverview Scrape tool handler - Thin wrapper calling webhook service
+ *
+ * This handler delegates all scraping operations to the webhook service's
+ * /api/v2/scrape endpoint. The MCP server maintains schema validation
+ * and response formatting but no longer contains business logic.
+ *
+ * @module tools/scrape/handler
+ */
 import { z } from "zod";
-import { ExtractClientFactory } from "../../processing/extraction/index.js";
-import type {
-  IScrapingClients,
-  StrategyConfigFactory,
-} from "../../mcp-server.js";
 import { buildScrapeArgsSchema } from "./schema.js";
-import {
-  checkCache,
-  scrapeContent,
-  processContent,
-  saveToStorage,
-  shouldUseBatchScrape,
-  createBatchScrapeOptions,
-  startBatchScrapeJob,
-  runBatchScrapeCommand,
-} from "./pipeline.js";
-import {
-  buildCachedResponse,
-  buildErrorResponse,
-  buildSuccessResponse,
-  buildBatchStartResponse,
-  buildBatchStatusResponse,
-  buildBatchCancelResponse,
-  buildBatchErrorsResponse,
-  buildBatchCommandError,
-  type ToolResponse,
-} from "./response.js";
-import type {
-  BatchScrapeCancelResult,
-  CrawlErrorsResult,
-  CrawlStatusResult,
-} from "@firecrawl/client";
+import { WebhookScrapeClient } from "./webhook-client.js";
+import type { ToolResponse } from "./response.js";
+import { buildWebhookResponse } from "./response.js";
+import { env } from "../../config/environment.js";
+import { logDebug } from "../../utils/logging.js";
 
+/**
+ * Handle scrape tool request
+ *
+ * Validates input schema and delegates to webhook service for processing.
+ * All caching, cleaning, extraction, and storage handled server-side.
+ *
+ * @param args - User-provided arguments (unvalidated)
+ * @returns MCP tool response with content or error
+ */
 export async function handleScrapeRequest(
   args: unknown,
-  clientsFactory: () => IScrapingClients,
-  strategyConfigFactory: StrategyConfigFactory,
 ): Promise<ToolResponse> {
   try {
+    // Validate arguments
     const ScrapeArgsSchema = buildScrapeArgsSchema();
     const validatedArgs = ScrapeArgsSchema.parse(args);
-    const clients = clientsFactory();
-    const configClient = strategyConfigFactory();
 
-    const {
-      url,
-      urls,
-      command,
-      jobId,
-      maxChars,
-      startIndex,
-      timeout,
-      forceRescrape,
-      cleanScrape,
-      resultHandling,
-    } = validatedArgs;
+    logDebug("handleScrapeRequest", "Validated args", {
+      command: validatedArgs.command,
+      hasUrl: !!validatedArgs.url,
+      hasUrls: !!validatedArgs.urls,
+      jobId: validatedArgs.jobId,
+    });
 
-    // Type-safe extraction of optional extract parameter
-    let extract: string | undefined;
-    if (ExtractClientFactory.isAvailable() && "extract" in validatedArgs) {
-      extract = (validatedArgs as { extract?: string }).extract;
+    // Get webhook configuration
+    const webhookBaseUrl = env.webhookBaseUrl;
+    const webhookApiSecret = env.webhookApiSecret;
+
+    if (!webhookBaseUrl || !webhookApiSecret) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Webhook service not configured. Set MCP_WEBHOOK_BASE_URL and MCP_WEBHOOK_API_SECRET environment variables.",
+          },
+        ],
+        isError: true,
+      };
     }
 
-    // Handle batch subcommands (status/cancel/errors)
-    if (command && command !== "start") {
-      const batchCommand = command as "status" | "cancel" | "errors";
-      if (!jobId) {
-        return buildBatchCommandError(
-          `Command "${batchCommand}" requires a jobId argument`,
-        );
-      }
+    // Create webhook client
+    const client = new WebhookScrapeClient({
+      baseUrl: webhookBaseUrl,
+      apiSecret: webhookApiSecret,
+    });
 
-      try {
-        const batchResult = await runBatchScrapeCommand(
-          clients,
-          batchCommand,
-          jobId,
-        );
-        if (batchCommand === "status") {
-          return buildBatchStatusResponse(batchResult as CrawlStatusResult);
-        }
-        if (batchCommand === "cancel") {
-          return buildBatchCancelResponse(batchResult as BatchScrapeCancelResult);
-        }
-        if (batchCommand === "errors") {
-          return buildBatchErrorsResponse(batchResult as CrawlErrorsResult);
-        }
-      } catch (error) {
-        return buildBatchCommandError(
-          error instanceof Error ? error.message : String(error),
-        );
-      }
-    }
+    // Build webhook request from validated args
+    const webhookRequest = {
+      command: validatedArgs.command || "start",
+      url: validatedArgs.url,
+      urls: validatedArgs.urls,
+      jobId: validatedArgs.jobId,
+      timeout: validatedArgs.timeout,
+      maxChars: validatedArgs.maxChars,
+      startIndex: validatedArgs.startIndex,
+      resultHandling: validatedArgs.resultHandling,
+      forceRescrape: validatedArgs.forceRescrape,
+      cleanScrape: validatedArgs.cleanScrape,
+      maxAge: validatedArgs.maxAge,
+      proxy: validatedArgs.proxy,
+      blockAds: validatedArgs.blockAds,
+      headers: validatedArgs.headers,
+      waitFor: validatedArgs.waitFor,
+      includeTags: validatedArgs.includeTags,
+      excludeTags: validatedArgs.excludeTags,
+      formats: validatedArgs.formats,
+      onlyMainContent: validatedArgs.onlyMainContent,
+      actions: validatedArgs.actions,
+      extract: (validatedArgs as { extract?: string }).extract,
+    };
 
-    // Multi-URL start commands use Firecrawl batch scrape
-    if (shouldUseBatchScrape(urls)) {
-      const batchOptions = createBatchScrapeOptions({
-        urls,
-        timeout,
-        maxAge: validatedArgs.maxAge,
-        proxy: validatedArgs.proxy,
-        blockAds: validatedArgs.blockAds,
-        headers: validatedArgs.headers,
-        waitFor: validatedArgs.waitFor,
-        includeTags: validatedArgs.includeTags,
-        excludeTags: validatedArgs.excludeTags,
-        formats: validatedArgs.formats,
-        parsers: validatedArgs.parsers,
-        onlyMainContent: validatedArgs.onlyMainContent,
-        actions: validatedArgs.actions,
-      });
+    logDebug("handleScrapeRequest", "Calling webhook service", {
+      command: webhookRequest.command,
+      url: webhookRequest.url,
+      urlsCount: webhookRequest.urls?.length,
+    });
 
-      try {
-        const batchResult = await startBatchScrapeJob(clients, batchOptions);
-        return buildBatchStartResponse(batchResult, urls!.length);
-      } catch (error) {
-        return buildBatchCommandError(
-          error instanceof Error ? error.message : String(error),
-        );
-      }
-    }
+    // Call webhook service
+    const webhookResponse = await client.scrape(webhookRequest);
 
-    if (!url) {
-      return buildBatchCommandError(
-        "Start command requires at least one valid URL.",
-      );
-    }
+    logDebug("handleScrapeRequest", "Received webhook response", {
+      success: webhookResponse.success,
+      command: webhookResponse.command,
+      hasData: !!webhookResponse.data,
+      hasError: !!webhookResponse.error,
+    });
 
-    // Check if screenshot is requested
-    const formats =
-      ((validatedArgs as Record<string, unknown>).formats as
-        | string[]
-        | undefined) || [];
-    const includeScreenshot = formats.includes("screenshot");
-
-    // Check for cached resources (skip cache if screenshot requested)
-    if (!includeScreenshot) {
-      const cachedResult = await checkCache(
-        url,
-        extract,
-        resultHandling,
-        forceRescrape,
-      );
-      if (cachedResult.found) {
-        return buildCachedResponse(
-          cachedResult.content,
-          cachedResult.uri,
-          cachedResult.name,
-          cachedResult.mimeType,
-          cachedResult.description,
-          cachedResult.source,
-          cachedResult.timestamp,
-          resultHandling,
-          startIndex,
-          maxChars,
-        );
-      }
-    }
-
-    // Scrape fresh content
-    const scrapeResult = await scrapeContent(
-      url,
-      timeout,
-      clients,
-      configClient,
-      validatedArgs as Record<string, unknown>,
-    );
-
-    if (!scrapeResult.success) {
-      return buildErrorResponse(
-        url,
-        scrapeResult.error,
-        scrapeResult.diagnostics,
-      );
-    }
-
-    const rawContent = scrapeResult.content!;
-    const source = scrapeResult.source!;
-    const screenshot = scrapeResult.screenshot;
-    const screenshotFormat = scrapeResult.screenshotFormat;
-
-    // Process content through cleaning and extraction pipeline
-    const { cleaned, extracted, displayContent } = await processContent(
-      rawContent,
-      url,
-      cleanScrape,
-      extract,
-    );
-
-    // Save to storage if needed
-    let savedUris = null;
-    if (resultHandling === "saveOnly" || resultHandling === "saveAndReturn") {
-      // Need to determine wasTruncated for metadata
-      const wasTruncated =
-        resultHandling !== "saveOnly" && displayContent.length > maxChars;
-
-      savedUris = await saveToStorage(
-        url,
-        rawContent,
-        cleaned,
-        extracted,
-        extract,
-        source,
-        startIndex,
-        maxChars,
-        wasTruncated,
-      );
-    }
-
-    // Build and return response
-    return buildSuccessResponse(
-      url,
-      displayContent,
-      rawContent,
-      cleaned,
-      extracted,
-      extract,
-      source,
-      resultHandling,
-      startIndex,
-      maxChars,
-      savedUris,
-      screenshot,
-      screenshotFormat,
+    // Build MCP response from webhook response
+    return buildWebhookResponse(
+      webhookResponse,
+      validatedArgs.maxChars,
+      validatedArgs.startIndex,
     );
   } catch (error) {
     if (error instanceof z.ZodError) {

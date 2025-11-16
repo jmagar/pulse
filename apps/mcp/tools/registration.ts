@@ -72,7 +72,7 @@ export function registerTools(
   const toolConfigs = [
     {
       name: "scrape",
-      factory: () => scrapeTool(server, clientFactory, strategyConfigFactory),
+      factory: () => scrapeTool(server),
     },
     { name: "search", factory: () => createSearchTool(clients) },
     { name: "map", factory: () => createMapTool(clients) },
