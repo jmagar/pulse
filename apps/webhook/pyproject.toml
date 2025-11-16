@@ -66,12 +66,15 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 mypy_path = [".stubs"]
 cache_dir = ".cache/mypy"
+namespace_packages = true
+explicit_package_bases = true
 exclude = [
     "data/",
     ".venv/",
     ".cache/",
     "build/",
     "dist/",
+    "tests/",
 ]
 
 [tool.pytest.ini_options]

@@ -35,7 +35,7 @@
     "lint:webhook": "cd apps/webhook && uv run ruff check .",
     "typecheck": "pnpm typecheck:js && pnpm typecheck:webhook",
     "typecheck:js": "pnpm --filter './packages/*' --filter './apps/mcp' --filter './apps/web' typecheck",
-    "typecheck:webhook": "cd apps/webhook && uv run mypy app/",
+    "typecheck:webhook": "cd apps/webhook && uv run mypy .",
     "check": "pnpm format && pnpm lint && pnpm typecheck",
     "install:webhook": "cd apps/webhook && uv sync --extra dev",
     "services:up": "docker compose up -d pulse_playwright firecrawl pulse_redis pulse_postgres pulse_mcp pulse_webhook pulse_webhook-worker pulse_change-detection pulse_neo4j pulse_web",

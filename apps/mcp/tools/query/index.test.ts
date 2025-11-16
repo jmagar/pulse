@@ -80,9 +80,7 @@ describe("Query Tool", () => {
     });
 
     const result = await (
-      tool.handler as (
-        args: unknown,
-      ) => Promise<{
+      tool.handler as (args: unknown) => Promise<{
         isError?: boolean;
         content: { type: string; text: string }[];
       }>
@@ -104,9 +102,7 @@ describe("Query Tool", () => {
     });
 
     const result = await (
-      tool.handler as (
-        args: unknown,
-      ) => Promise<{
+      tool.handler as (args: unknown) => Promise<{
         isError?: boolean;
         content: { type: string; text: string }[];
       }>
