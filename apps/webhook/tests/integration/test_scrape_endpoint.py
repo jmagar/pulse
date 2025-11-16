@@ -252,9 +252,9 @@ def test_scrape_save_only_mode(client: TestClient):
 
 
 def test_scrape_with_extraction(client: TestClient):
-    """Should extract structured data using LLM."""
+    """Should log warning for extract parameter until migration to Firecrawl."""
     with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx, \
-         patch('api.routers.scrape.ContentProcessorService') as mock_processor_class:
+         patch('api.routers.scrape.logger') as mock_logger:
 
         # Mock Firecrawl response
         mock_fc_response = AsyncMock()
@@ -273,11 +273,6 @@ def test_scrape_with_extraction(client: TestClient):
         mock_fc_client.__aexit__.return_value = None
         mock_httpx.return_value = mock_fc_client
 
-        # Mock content processor
-        mock_processor = AsyncMock()
-        mock_processor.extract_content.return_value = "Author: John Doe\nDate: 2025-01-15"
-        mock_processor_class.return_value = mock_processor
-
         response = client.post(
             "/api/v2/scrape",
             json={
@@ -291,7 +286,17 @@ def test_scrape_with_extraction(client: TestClient):
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
-        # Should include extracted content in response
+
+        # Verify warning was logged about extract not being migrated yet
+        warning_logged = any(
+            call[0][0] == "LLM extraction requested but not yet migrated to Firecrawl"
+            for call in mock_logger.warning.call_args_list
+        )
+        assert warning_logged, "Expected warning about extract migration not logged"
+
+        # Should return scraped content (not extracted - extract feature not implemented yet)
+        assert "content" in data["data"]
+        assert data["data"]["content"] == "# Article by John Doe\n\nPublished on 2025-01-15"
 
 
 
