@@ -273,14 +273,15 @@ async def _handle_start_single_url(
     screenshot_b64 = fc_data.get("screenshot")
     screenshot_bytes = base64.b64decode(screenshot_b64) if screenshot_b64 else None
 
-    # Keep extract logic for now (will address in separate task)
-    extracted_content = None
+    # Check for deprecated extract parameter
     if request.extract:
-        # TODO: Route to Firecrawl /v2/extract instead
-        logger.warning(
-            "LLM extraction requested but not yet migrated to Firecrawl",
-            url=url,
-            extract_query=request.extract
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "The 'extract' parameter is deprecated. "
+                "Use the /v2/extract endpoint instead for LLM-based extraction. "
+                "See documentation: /docs#/firecrawl-proxy/proxy_extract_v2_extract_post"
+            )
         )
 
     # Save to cache (unless returnOnly)
@@ -291,8 +292,8 @@ async def _handle_start_single_url(
             url=url,
             raw_content=raw_content,
             cleaned_content=cleaned_content,
-            extracted_content=extracted_content,
-            extract_query=request.extract,
+            extracted_content=None,
+            extract_query=None,
             source="firecrawl",
             cache_key=cache_key,
             max_age=request.maxAge,
@@ -305,7 +306,7 @@ async def _handle_start_single_url(
         await session.commit()
 
     # Build response
-    final_content = extracted_content or cleaned_content or raw_content
+    final_content = cleaned_content or raw_content
 
     saved_uris = None
     metadata = None
@@ -315,13 +316,11 @@ async def _handle_start_single_url(
             saved_uris.raw = _build_saved_uri(url, "raw", now)
         if cleaned_content:
             saved_uris.cleaned = _build_saved_uri(url, "cleaned", now)
-        if extracted_content:
-            saved_uris.extracted = _build_saved_uri(url, "extracted", now)
 
         metadata = ScrapeMetadata(
             rawLength=len(raw_content) if raw_content else None,
             cleanedLength=len(cleaned_content) if cleaned_content else None,
-            extractedLength=len(extracted_content) if extracted_content else None,
+            extractedLength=None,
             wasTruncated=False
         )
 

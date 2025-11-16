@@ -252,51 +252,22 @@ def test_scrape_save_only_mode(client: TestClient):
 
 
 def test_scrape_with_extraction(client: TestClient):
-    """Should log warning for extract parameter until migration to Firecrawl."""
-    with patch('api.routers.scrape.httpx.AsyncClient') as mock_httpx, \
-         patch('api.routers.scrape.logger') as mock_logger:
-
-        # Mock Firecrawl response
-        mock_fc_response = AsyncMock()
-        mock_fc_response.status_code = 200
-        mock_fc_response.json.return_value = {
-            "success": True,
-            "data": {
-                "markdown": "# Article by John Doe\n\nPublished on 2025-01-15",
-                "metadata": {"title": "Test"}
-            }
+    """Should raise error for deprecated extract parameter."""
+    response = client.post(
+        "/api/v2/scrape",
+        json={
+            "command": "start",
+            "url": "https://example.com/extract",
+            "extract": "extract the author name and publication date",
+            "resultHandling": "returnOnly"
         }
+    )
 
-        mock_fc_client = AsyncMock()
-        mock_fc_client.post.return_value = mock_fc_response
-        mock_fc_client.__aenter__.return_value = mock_fc_client
-        mock_fc_client.__aexit__.return_value = None
-        mock_httpx.return_value = mock_fc_client
-
-        response = client.post(
-            "/api/v2/scrape",
-            json={
-                "command": "start",
-                "url": "https://example.com/extract",
-                "extract": "extract the author name and publication date",
-                "resultHandling": "returnOnly"
-            }
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-
-        # Verify warning was logged about extract not being migrated yet
-        warning_logged = any(
-            call[0][0] == "LLM extraction requested but not yet migrated to Firecrawl"
-            for call in mock_logger.warning.call_args_list
-        )
-        assert warning_logged, "Expected warning about extract migration not logged"
-
-        # Should return scraped content (not extracted - extract feature not implemented yet)
-        assert "content" in data["data"]
-        assert data["data"]["content"] == "# Article by John Doe\n\nPublished on 2025-01-15"
+    # Extract parameter is now deprecated and should return 400
+    assert response.status_code == 400
+    data = response.json()
+    assert "extract" in data["detail"].lower()
+    assert "/v2/extract" in data["detail"]
 
 
 
