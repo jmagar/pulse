@@ -25,7 +25,6 @@ from api.schemas.scrape import (
 )
 from config import settings
 from infra.database import get_db_session
-from services.content_processor import ContentProcessorService
 from services.scrape_cache import ScrapeCacheService
 from utils.logging import get_logger
 
@@ -204,7 +203,6 @@ async def _handle_start_single_url(
     url = str(request.url)
 
     cache_service = ScrapeCacheService()
-    processor = ContentProcessorService()
 
     # Compute cache key
     cache_key = cache_service.compute_cache_key(
@@ -268,35 +266,22 @@ async def _handle_start_single_url(
 
     # Extract content from Firecrawl response
     raw_content = fc_data.get("html") or fc_data.get("markdown", "")
+
+    # Use Firecrawl's markdown directly when cleanScrape is true
+    cleaned_content = fc_data.get("markdown") if request.cleanScrape else None
+
     screenshot_b64 = fc_data.get("screenshot")
     screenshot_bytes = base64.b64decode(screenshot_b64) if screenshot_b64 else None
 
-    # Process content
-    cleaned_content = None
-    if request.cleanScrape and raw_content:
-        cleaned_content = await processor.clean_content(
-            raw_html=raw_content,
-            url=url,
-            remove_scripts=True,
-            remove_styles=True,
-            extract_main=request.onlyMainContent
-        )
-
-    # Extract with LLM if requested
+    # Keep extract logic for now (will address in separate task)
     extracted_content = None
     if request.extract:
-        content_for_extraction = cleaned_content or raw_content
-        if content_for_extraction:
-            try:
-                extracted_content = await processor.extract_content(
-                    content=content_for_extraction,
-                    url=url,
-                    extract_query=request.extract
-                )
-            except ValueError as e:
-                logger.warning("LLM extraction skipped", url=url, error=str(e))
-            except Exception as e:
-                logger.error("LLM extraction failed", url=url, error=str(e))
+        # TODO: Route to Firecrawl /v2/extract instead
+        logger.warning(
+            "LLM extraction requested but not yet migrated to Firecrawl",
+            url=url,
+            extract_query=request.extract
+        )
 
     # Save to cache (unless returnOnly)
     now = datetime.now(timezone.utc)

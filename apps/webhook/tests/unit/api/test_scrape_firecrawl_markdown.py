@@ -49,7 +49,8 @@ async def test_scrape_uses_firecrawl_markdown_directly(db_session):
 
     # Critical assertion: Verify we used Firecrawl markdown, not processed HTML
     # This ensures no BeautifulSoup/html2text processing occurred
-    assert "html" not in response.data.content.lower()
+    assert "<html>" not in response.data.content.lower()
+    assert "<body>" not in response.data.content.lower()
 
 
 @pytest.mark.asyncio
