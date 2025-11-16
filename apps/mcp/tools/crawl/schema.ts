@@ -288,6 +288,101 @@ export const buildCrawlInputSchema = () => {
           excludeTags: { type: "array", items: { type: "string" } },
           actions: {
             type: "array",
+            items: {
+              type: "object",
+              oneOf: [
+                {
+                  type: "object",
+                  required: ["type", "milliseconds"],
+                  properties: {
+                    type: { type: "string", enum: ["wait"] },
+                    milliseconds: {
+                      type: "number",
+                      description: "Time to wait in milliseconds",
+                    },
+                  },
+                },
+                {
+                  type: "object",
+                  required: ["type", "selector"],
+                  properties: {
+                    type: { type: "string", enum: ["click"] },
+                    selector: {
+                      type: "string",
+                      description: "CSS selector of element to click",
+                    },
+                  },
+                },
+                {
+                  type: "object",
+                  required: ["type", "selector", "text"],
+                  properties: {
+                    type: { type: "string", enum: ["write"] },
+                    selector: {
+                      type: "string",
+                      description: "CSS selector of input field",
+                    },
+                    text: { type: "string", description: "Text to type" },
+                  },
+                },
+                {
+                  type: "object",
+                  required: ["type", "key"],
+                  properties: {
+                    type: { type: "string", enum: ["press"] },
+                    key: {
+                      type: "string",
+                      description: 'Key to press (e.g., "Enter")',
+                    },
+                  },
+                },
+                {
+                  type: "object",
+                  required: ["type", "direction"],
+                  properties: {
+                    type: { type: "string", enum: ["scroll"] },
+                    direction: { type: "string", enum: ["up", "down"] },
+                    amount: {
+                      type: "number",
+                      description: "Pixels to scroll (optional)",
+                    },
+                  },
+                },
+                {
+                  type: "object",
+                  required: ["type"],
+                  properties: {
+                    type: { type: "string", enum: ["screenshot"] },
+                    name: {
+                      type: "string",
+                      description: "Screenshot name (optional)",
+                    },
+                  },
+                },
+                {
+                  type: "object",
+                  required: ["type"],
+                  properties: {
+                    type: { type: "string", enum: ["scrape"] },
+                    selector: {
+                      type: "string",
+                      description: "CSS selector (optional)",
+                    },
+                  },
+                },
+                {
+                  type: "object",
+                  required: ["type", "script"],
+                  properties: {
+                    type: { type: "string", enum: ["executeJavascript"] },
+                    script: {
+                      type: "string",
+                      description: "JavaScript code to execute",
+                    },
+                  },
+                },
+              ],
+            },
             description: "Browser actions to perform before scraping",
           },
         },
