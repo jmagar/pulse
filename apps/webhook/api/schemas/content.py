@@ -4,6 +4,8 @@ Pydantic schemas for content retrieval API.
 Defines response models for scraped content endpoints.
 """
 
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -20,9 +22,9 @@ class ContentResponse(BaseModel):
     source_url: str | None = None
     markdown: str | None
     html: str | None
-    links: dict | None = None
+    links: dict[str, Any] | None = None
     screenshot: str | None = None
-    metadata: dict
+    metadata: dict[str, Any]
     content_source: str
     scraped_at: str | None = None
     created_at: str | None = None

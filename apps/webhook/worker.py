@@ -171,9 +171,9 @@ async def process_batch_async(documents: list[dict[str, Any]]) -> list[dict[str,
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Convert exceptions to error dicts
-    processed_results = []
+    processed_results: list[dict[str, str | bool | Any | None]] = []
     for i, result in enumerate(results):
-        if isinstance(result, Exception):
+        if isinstance(result, BaseException):
             logger.error(
                 "Document indexing failed in batch",
                 url=documents[i].get("url"),

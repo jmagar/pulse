@@ -46,12 +46,15 @@ async def _index_document_helper(
     # Create IndexDocumentRequest
     document = IndexDocumentRequest(
         url=url,
+        resolvedUrl=url,  # Same as URL for change detection rescans
         markdown=text,
+        html="",  # Not available from change detection
+        statusCode=200,  # Assume success if we got markdown
         title=metadata.get("title", ""),
         description=metadata.get("description", ""),
         language="en",  # Default language
         country=None,
-        is_mobile=False,
+        isMobile=False,
     )
 
     # Index document

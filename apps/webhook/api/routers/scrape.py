@@ -6,7 +6,7 @@ POST /api/v2/scrape - Multi-stage web scraping with caching
 
 import base64
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -44,7 +44,7 @@ def _build_saved_uri(url: str, tier: str, timestamp: datetime) -> str:
     return f"scrape://{url}/{tier}_{timestamp_str}"
 
 
-async def _call_firecrawl_scrape(url: str, request: ScrapeRequest) -> dict:
+async def _call_firecrawl_scrape(url: str, request: ScrapeRequest) -> dict[str, Any]:
     """
     Call Firecrawl API for single URL scrape.
 
@@ -61,7 +61,7 @@ async def _call_firecrawl_scrape(url: str, request: ScrapeRequest) -> dict:
     firecrawl_url = f"{settings.firecrawl_api_url}/v1/scrape"
 
     # Build Firecrawl request payload
-    payload: dict = {
+    payload: dict[str, Any] = {
         "url": url,
         "formats": request.formats,
         "onlyMainContent": request.onlyMainContent,
@@ -107,7 +107,7 @@ async def _call_firecrawl_scrape(url: str, request: ScrapeRequest) -> dict:
                 logger.error("Firecrawl scrape failed", url=url, error=error_msg)
                 raise HTTPException(status_code=500, detail=f"Firecrawl scrape failed: {error_msg}")
 
-            return data["data"]
+            return data["data"]  # type: ignore[no-any-return]
 
         except httpx.TimeoutException as e:
             logger.error("Firecrawl API timeout", url=url, timeout=request.timeout)
@@ -119,11 +119,11 @@ async def _call_firecrawl_scrape(url: str, request: ScrapeRequest) -> dict:
             raise HTTPException(status_code=500, detail=f"Firecrawl HTTP error: {str(e)}") from e
 
 
-async def _call_firecrawl_batch_start(urls: list[str], request: ScrapeRequest) -> dict:
+async def _call_firecrawl_batch_start(urls: list[str], request: ScrapeRequest) -> dict[str, Any]:
     """Call Firecrawl API to start batch scrape."""
     firecrawl_url = f"{settings.firecrawl_api_url}/v1/batch/scrape"
 
-    payload: dict = {
+    payload: dict[str, Any] = {
         "urls": urls,
         "formats": request.formats,
         "onlyMainContent": request.onlyMainContent,
@@ -141,10 +141,10 @@ async def _call_firecrawl_batch_start(urls: list[str], request: ScrapeRequest) -
                 status_code=500, detail=f"Firecrawl batch start failed: {response.status_code}"
             )
 
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
 
-async def _call_firecrawl_batch_status(job_id: str) -> dict:
+async def _call_firecrawl_batch_status(job_id: str) -> dict[str, Any]:
     """Get batch scrape status from Firecrawl."""
     firecrawl_url = f"{settings.firecrawl_api_url}/v1/batch/scrape/{job_id}"
 
@@ -158,10 +158,10 @@ async def _call_firecrawl_batch_status(job_id: str) -> dict:
                 status_code=500, detail=f"Firecrawl batch status failed: {response.status_code}"
             )
 
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
 
-async def _call_firecrawl_batch_cancel(job_id: str) -> dict:
+async def _call_firecrawl_batch_cancel(job_id: str) -> dict[str, Any]:
     """Cancel batch scrape job."""
     firecrawl_url = f"{settings.firecrawl_api_url}/v1/batch/scrape/{job_id}"
 
@@ -175,7 +175,7 @@ async def _call_firecrawl_batch_cancel(job_id: str) -> dict:
                 status_code=500, detail=f"Firecrawl batch cancel failed: {response.status_code}"
             )
 
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
 
 async def _handle_start_single_url(request: ScrapeRequest, session: AsyncSession) -> ScrapeResponse:
@@ -215,13 +215,13 @@ async def _handle_start_single_url(request: ScrapeRequest, session: AsyncSession
             cache_age = int((datetime.now(UTC) - cached_entry.scraped_at).total_seconds() * 1000)
 
             # Build response
-            saved_uris = SavedUris()
+            cached_saved_uris = SavedUris()
             if cached_entry.raw_content:
-                saved_uris.raw = _build_saved_uri(url, "raw", cached_entry.scraped_at)
+                cached_saved_uris.raw = _build_saved_uri(url, "raw", cached_entry.scraped_at)
             if cached_entry.cleaned_content:
-                saved_uris.cleaned = _build_saved_uri(url, "cleaned", cached_entry.scraped_at)
+                cached_saved_uris.cleaned = _build_saved_uri(url, "cleaned", cached_entry.scraped_at)
             if cached_entry.extracted_content:
-                saved_uris.extracted = _build_saved_uri(url, "extracted", cached_entry.scraped_at)
+                cached_saved_uris.extracted = _build_saved_uri(url, "extracted", cached_entry.scraped_at)
 
             return ScrapeResponse(
                 success=True,
@@ -234,7 +234,7 @@ async def _handle_start_single_url(request: ScrapeRequest, session: AsyncSession
                     cached=True,
                     cacheAge=cache_age,
                     timestamp=_format_iso_timestamp(cached_entry.scraped_at),
-                    savedUris=saved_uris if request.resultHandling != "returnOnly" else None,
+                    savedUris=cached_saved_uris if request.resultHandling != "returnOnly" else None,
                     screenshot=base64.b64encode(cached_entry.screenshot).decode("ascii")
                     if cached_entry.screenshot
                     else None,
@@ -294,8 +294,8 @@ async def _handle_start_single_url(request: ScrapeRequest, session: AsyncSession
     # Build response
     final_content = cleaned_content or raw_content
 
-    saved_uris = None
-    metadata = None
+    saved_uris: SavedUris | None = None
+    metadata: ScrapeMetadata | None = None
     if request.resultHandling != "returnOnly":
         saved_uris = SavedUris()
         if raw_content:

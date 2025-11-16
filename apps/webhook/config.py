@@ -167,7 +167,7 @@ class Settings(BaseSettings):
     # Worker batch processing
     worker_batch_size: int = Field(
         default=4,
-        env="WEBHOOK_WORKER_BATCH_SIZE",
+        validation_alias=AliasChoices("WEBHOOK_WORKER_BATCH_SIZE"),
         description="Number of documents to process concurrently per worker (1-10 recommended)",
     )
 
@@ -247,7 +247,7 @@ class Settings(BaseSettings):
         description="Enable automatic watch creation for scraped URLs",
     )
 
-    @field_validator("api_secret", "webhook_secret")
+    @field_validator("api_secret", "webhook_secret", mode="after")
     @classmethod
     def validate_whitespace(cls, value: str, info: ValidationInfo) -> str:
         """Ensure secrets do not contain surrounding whitespace."""

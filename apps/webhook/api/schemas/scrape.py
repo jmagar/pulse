@@ -71,7 +71,7 @@ class ScrapeRequest(BaseModel):
 
     @field_validator("url", "urls", "jobId", mode="before")
     @classmethod
-    def validate_command_params(cls, v, info):
+    def validate_command_params(cls, v: Any, info: Any) -> Any:
         """Validate command-specific required parameters."""
         command = info.data.get("command", "start")
         field_name = info.field_name

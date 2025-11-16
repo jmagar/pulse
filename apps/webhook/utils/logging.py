@@ -3,6 +3,7 @@
 import logging
 import re
 import sys
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any, cast
 from zoneinfo import ZoneInfo
@@ -129,21 +130,22 @@ def get_logger(name: str) -> FilteringBoundLogger:
     original_warning = logger.warning
     original_debug = logger.debug
 
-    def masked_info(event: str, **kwargs):
+    def masked_info(event: str, **kwargs: Any) -> Any:
         return original_info(mask_secrets(event), **mask_secrets(kwargs))
 
-    def masked_error(event: str, **kwargs):
+    def masked_error(event: str, **kwargs: Any) -> Any:
         return original_error(mask_secrets(event), **mask_secrets(kwargs))
 
-    def masked_warning(event: str, **kwargs):
+    def masked_warning(event: str, **kwargs: Any) -> Any:
         return original_warning(mask_secrets(event), **mask_secrets(kwargs))
 
-    def masked_debug(event: str, **kwargs):
+    def masked_debug(event: str, **kwargs: Any) -> Any:
         return original_debug(mask_secrets(event), **mask_secrets(kwargs))
 
-    logger.info = masked_info
-    logger.error = masked_error
-    logger.warning = masked_warning
-    logger.debug = masked_debug
+    # Type-ignore method reassignment (runtime monkey-patching pattern)
+    logger.info = masked_info  # type: ignore[method-assign]
+    logger.error = masked_error  # type: ignore[method-assign]
+    logger.warning = masked_warning  # type: ignore[method-assign]
+    logger.debug = masked_debug  # type: ignore[method-assign]
 
     return logger

@@ -61,7 +61,7 @@ class _StubRedis:
 
 
 class _StubQueue:
-    def enqueue(self, *args, **kwargs):
+    def enqueue(self, *args: Any, **kwargs: Any) -> SimpleNamespace:
         job_id = kwargs.get("job_id") or f"stub-job-{uuid4().hex[:8]}"
         return SimpleNamespace(id=job_id)
 
@@ -142,7 +142,7 @@ def get_text_chunker() -> TextChunker:
                 max_tokens=settings.max_chunk_tokens,
                 overlap_tokens=settings.chunk_overlap_tokens,
             )
-    return _text_chunker
+    return _text_chunker  # type: ignore[return-value]
 
 
 def get_embedding_service() -> EmbeddingService:
@@ -156,7 +156,7 @@ def get_embedding_service() -> EmbeddingService:
                 tei_url=settings.tei_url,
                 api_key=settings.tei_api_key,
             )
-    return _embedding_service  # type: ignore[return-value]
+    return _embedding_service  # type: ignore[no-any-return]
 
 
 def get_vector_store() -> VectorStore:
@@ -172,7 +172,7 @@ def get_vector_store() -> VectorStore:
                 vector_dim=settings.vector_dim,
                 timeout=int(settings.qdrant_timeout),
             )
-    return _vector_store  # type: ignore[return-value]
+    return _vector_store  # type: ignore[no-any-return]
 
 
 def get_bm25_engine() -> BM25Engine:
@@ -186,7 +186,7 @@ def get_bm25_engine() -> BM25Engine:
                 k1=settings.bm25_k1,
                 b=settings.bm25_b,
             )
-    return _bm25_engine  # type: ignore[return-value]
+    return _bm25_engine  # type: ignore[no-any-return]
 
 
 def get_indexing_service(
@@ -207,7 +207,7 @@ def get_indexing_service(
                 vector_store=vector_store,
                 bm25_engine=bm25_engine,
             )
-    return _indexing_service  # type: ignore[return-value]
+    return _indexing_service  # type: ignore[no-any-return]
 
 
 def get_search_orchestrator(
@@ -227,7 +227,7 @@ def get_search_orchestrator(
                 bm25_engine=bm25_engine,
                 rrf_k=settings.rrf_k,
             )
-    return _search_orchestrator  # type: ignore[return-value]
+    return _search_orchestrator  # type: ignore[no-any-return]
 
 
 def get_redis_connection() -> Redis:
@@ -239,7 +239,7 @@ def get_redis_connection() -> Redis:
         else:
             _redis_conn = Redis.from_url(settings.redis_url, decode_responses=True)
             logger.info("Redis connection established")
-    return _redis_conn  # type: ignore[return-value]
+    return _redis_conn  # type: ignore[no-any-return]
 
 
 def get_rq_queue(redis_conn: Annotated[Redis, Depends(get_redis_connection)]) -> Queue:
@@ -251,7 +251,7 @@ def get_rq_queue(redis_conn: Annotated[Redis, Depends(get_redis_connection)]) ->
         else:
             _rq_queue = Queue(connection=redis_conn, name="indexing")
             logger.info("RQ queue initialized")
-    return _rq_queue  # type: ignore[return-value]
+    return _rq_queue  # type: ignore[no-any-return]
 
 
 async def cleanup_services() -> None:
