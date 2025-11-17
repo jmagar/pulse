@@ -63,9 +63,15 @@ export interface ScrapeDiagnostics {
   timing?: Record<string, number>;
 }
 
-export type CrawlClient = Pick<
-  IFirecrawlClient,
-  "startCrawl" | "getCrawlStatus" | "cancelCrawl" | "getCrawlErrors" | "listActiveCrawls"
+export type CrawlClient = Required<
+  Pick<
+    IFirecrawlClient,
+    | "startCrawl"
+    | "getCrawlStatus"
+    | "cancelCrawl"
+    | "getCrawlErrors"
+    | "listActiveCrawls"
+  >
 >;
 
 /**
