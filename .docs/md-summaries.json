@@ -1,0 +1,1892 @@
+[
+  {
+    "name": "Document .docs/AGENTS.md",
+    "type": "document",
+    "observations": [
+      ".docs/ Directory \u2013 Sections: Structure. Key details: **Purpose:** Internal documentation, temporary artifacts, session logs, and working files. ``` .docs/ \u251c\u2500\u2500 sessions/          # Session logs from Claude Code interactions \u251c\u2500\u2500 plans/             # Implementation plans and task breakdowns \u251c\u2500\u2500 reports/           # Investigation reports and analysis \u2502   \u2514\u2500\u2500 changedetection/  # Feature-specific research"
+    ]
+  },
+  {
+    "name": "Document .docs/CLAUDE.md",
+    "type": "document",
+    "observations": [
+      ".docs/ Directory \u2013 Sections: Structure. Key details: **Purpose:** Internal documentation, temporary artifacts, session logs, and working files. ``` .docs/ \u251c\u2500\u2500 sessions/          # Session logs from Claude Code interactions \u251c\u2500\u2500 plans/             # Implementation plans and task breakdowns \u251c\u2500\u2500 reports/           # Investigation reports and analysis \u2502   \u2514\u2500\u2500 changedetection/  # Feature-specific research"
+    ]
+  },
+  {
+    "name": "Document .docs/EXPLORATION_SUMMARY.md",
+    "type": "document",
+    "observations": [
+      "Docker Compose Exploration - Executive Summary \u2013 Sections: Quick Reference, Current Service Topology. Key details: **Date:** 2025-11-10 **Status:** Complete (Very Thorough Exploration) **Output Location:** `.docs/DOCKER_COMPOSE_EXPLORATION_REPORT.md` (1,631 lines) - **6 Core Services:** Firecrawl API, MCP Server, Webhook Bridge, Playwright, PostgreSQL, Redis - **2 External Services:** TEI (embeddings), Qdrant (vector database) - **1 Docker Network:** `firecrawl` bridge network"
+    ]
+  },
+  {
+    "name": "Document .docs/QUEUE-CONCURRENCY-PERFORMANCE-GUIDE.md",
+    "type": "document",
+    "observations": [
+      "Complete Queue, Concurrency & Performance Control Guide \u2013 Sections: Table of Contents. Key details: **Version:** 1.0.0 **Date:** 2025-01-13 **Project:** Pulse Monorepo --- 1. [Executive Summary](#executive-summary) 2. [Concurrency Variables Explained](#concurrency-variables-explained) 3. [Queue Configuration Inventory](#queue-configuration-inventory) 4. [Crawl Speed Controls](#crawl-speed-controls) 5. [Resource Limits](#resource-limits)"
+    ]
+  },
+  {
+    "name": "Document .docs/README_EXPLORATION.md",
+    "type": "document",
+    "observations": [
+      "Docker Compose Exploration Report - Complete Index \u2013 Sections: Overview. Key details: **Completed:** 2025-11-10 **Status:** Very Thorough Exploration - 100% Complete **Repository:** `/compose/pulse` (feat/map-language-filtering branch) This directory contains a comprehensive exploration of the Docker Compose deployment architecture for the Firecrawl monorepo. The exploration covers all aspects of the current setup, provides detailed architectural documentation, and includes actiona"
+    ]
+  },
+  {
+    "name": "Document .docs/api/auth-endpoints.md",
+    "type": "document",
+    "observations": [
+      "MCP OAuth API Endpoints \u2013 **Date:** 2025-11-12 | Method | Path | Auth | Description | |--------|------|------|-------------| | `GET` | `/auth/google` | Session | Initiate Google OAuth with PKCE; returns 302 redirect | | `GET` | `/auth/google/callback` | Session | Handles Google callback, exchanges code for tokens | | `GET` | `/auth/status` | Session | Returns current authenticated user context |"
+    ]
+  },
+  {
+    "name": "Document .docs/api-design-firecrawl-consolidation.md",
+    "type": "document",
+    "observations": [
+      "Webhook Bridge REST API Design \u2013 Sections: Unified Firecrawl Operations, Architecture Decision. Key details: **Date:** 2025-11-14 **Status:** Design Proposal **Goal:** Consolidate all Firecrawl operations through webhook bridge, eliminating duplication between MCP and webhook services. --- **Current (Duplicated):** ``` Claude \u2192 MCP \u2192 Firecrawl API (direct) \u2193 Webhook Bridge \u2192 Firecrawl API (for indexing only) \u2193 Database (metrics with FK violations)"
+    ]
+  },
+  {
+    "name": "Document .docs/architecture/oauth.md",
+    "type": "document",
+    "observations": [
+      "OAuth Architecture Overview \u2013 Sections: Components. Key details: **Date:** 2025-11-12 ``` Client \u2192 /auth/google \u2192 Google Consent \u2192 /auth/google/callback \u2193                                \u2193 Session (Redis) \u2190 Token Manager \u2190 Google OAuth APIs \u2193                                \u2193 authMiddleware \u2192 scopeMiddleware \u2192 /mcp ``` - `server/middleware/session.ts`: Redis session store. - `server/oauth/pkce.ts`: PKCE helpers."
+    ]
+  },
+  {
+    "name": "Document .docs/deployment-changedetection.md",
+    "type": "document",
+    "observations": [
+      "changedetection.io Deployment Checklist \u2013 Sections: Pre-Deployment Verification. Key details: **Date:** 2025-11-10 **Service:** changedetection.io + Webhook Integration **Port:** 50109 - [ ] Review feasibility reports in `.docs/reports/changedetection/` - [ ] Verify port 50109 is available: `lsof -i :50109` - [ ] Backup existing .env file: `cp .env .env.backup.$(date +%Y%m%d-%H%M%S)` - [ ] Backup PostgreSQL database:"
+    ]
+  },
+  {
+    "name": "Document .docs/development/oauth-testing.md",
+    "type": "document",
+    "observations": [
+      "OAuth Testing Guide \u2013 Sections: Unit / Integration Suites. Key details: **Last Updated:** 2025-11-12 ``` cd apps/mcp pnpm vitest run \\ tests/server/auth-middleware.test.ts \\ tests/server/auth-routes.test.ts \\ tests/server/session-middleware.test.ts \\ tests/server/csrf-middleware.test.ts \\ tests/server/rate-limit.test.ts \\ tests/server/security-headers.test.ts \\ tests/oauth/token-manager.test.ts \\"
+    ]
+  },
+  {
+    "name": "Document .docs/docker-logs-remote-contexts.md",
+    "type": "document",
+    "observations": [
+      "Docker Logs from Remote Contexts \u2013 Sections: Overview, Setup, 1. Create Docker Context. Key details: The MCP Docker logs resource provider supports fetching logs from containers on remote Docker hosts using Docker contexts. First, create a Docker context pointing to your remote host: ```bash docker context create gpu-server --docker \"host=ssh://user@gpu-host\" docker context create gpu-server \\ --docker \"host=tcp://gpu-host:2376\" \\"
+    ]
+  },
+  {
+    "name": "Document .docs/fixme-completion-summary.md",
+    "type": "document",
+    "observations": [
+      "FIXME Tasks Completion Summary \u2013 Sections: Overview, Critical Security Fixes (Tasks 1-3), Task 1: Remove API Key from Debug Logs. Key details: **Date**: 2025-01-10 **Branch**: `feat/map-language-filtering` **Commit**: `58a98e1` All 24 tasks from FIXME.md (GitHub PR review comments) have been completed, verified by parallel agents, and committed. --- **File**: [packages/firecrawl-client/src/operations/crawl.ts:25](packages/firecrawl-client/src/operations/crawl.ts#L25)"
+    ]
+  },
+  {
+    "name": "Document .docs/markdown-files-list.md",
+    "type": "document",
+    "observations": [
+      "Markdown Files Inventory \u2013 Generated automatically; excludes third-party dependencies (`node_modules`, build artifacts). - .docs/AGENTS.md - .docs/CLAUDE.md - .docs/EXPLORATION_SUMMARY.md - .docs/QUEUE-CONCURRENCY-PERFORMANCE-GUIDE.md - .docs/README_EXPLORATION.md - .docs/api-design-firecrawl-consolidation.md - .docs/api/auth-endpoints.md - .docs/architecture/oauth.md"
+    ]
+  },
+  {
+    "name": "Document .docs/oauth-setup.md",
+    "type": "document",
+    "observations": [
+      "OAuth Setup Guide \u2013 Sections: 1. Google Cloud Console Configuration. Key details: **Last Updated:** 2025-11-12 This guide walks through configuring Google OAuth 2.1 for the Pulse MCP server. 1. Create a Google Cloud project (or reuse an existing one). 2. Enable the \"Google People API\" (required for profile access). 3. Navigate to **APIs & Services \u2192 Credentials** and create an OAuth Client (Web application)."
+    ]
+  },
+  {
+    "name": "Document .docs/plans/2025-01-08-monorepo-integration.md",
+    "type": "document",
+    "observations": [
+      "Monorepo Integration: apps/mcp and apps/webhook \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Integrate the MCP server (Node.js) and webhook bridge (Python) into the Firecrawl monorepo as first-class applications with shared infrastructure. **Architecture:** Apps remain language-independent (Node.js and Python) but share Docker network, Redis, and PostgreSQL. MCP's Firecrawl"
+    ]
+  },
+  {
+    "name": "Document .docs/plans/2025-11-10-combine-webhook-worker-api.md",
+    "type": "document",
+    "observations": [
+      "Combine Webhook Worker and API Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Merge the separate webhook API and worker containers into a single container with embedded background worker thread, eliminating BM25 file sync complexity and simplifying deployment. **Architecture:** Run RQ worker in a background thread within the same FastAPI process. The worker t"
+    ]
+  },
+  {
+    "name": "Document .docs/plans/2025-11-10-monorepo-cleanup.md",
+    "type": "document",
+    "observations": [
+      "Monorepo Cleanup and Documentation Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Fix monorepo integration issues including MCP workspace flattening, external services, port standardization, documentation, and developer workflow **Architecture:** Multi-phase cleanup addressing MCP nested workspace removal, external service dependencies, port allocation standardiz"
+    ]
+  },
+  {
+    "name": "Document .docs/plans/2025-11-13-timing-instrumentation-FINAL.md",
+    "type": "document",
+    "observations": [
+      "Implementation Plan: Complete Timing Instrumentation (FINAL) \u2013 Sections: Agent Verification Summary. Key details: **Date:** 2025-11-13 (Final revision after 2 rounds of agent verification) **Status:** \u2705 READY FOR IMPLEMENTATION **Revision History:** - v1: Original plan (task ordering issues) - v2: Corrected plan (missing imports, FK, string lengths) - **v3: FINAL** (all agent issues resolved) --- **Round 1 Issues:** - \u274c Task ordering violations"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-01-10-mcp-code-review.md",
+    "type": "document",
+    "observations": [
+      "Comprehensive Code Review Report: apps/mcp \u2013 Sections: Executive Summary. Key details: **Date:** January 10, 2025 **Reviewer:** Claude Code (Automated Review) **Scope:** Complete codebase review of `/compose/pulse/apps/mcp` **Method:** 6 parallel specialized review agents **Total Files Reviewed:** 98 TypeScript source files, 68 test files --- **Overall Assessment: B+ (Good with Critical Issues to Address)**"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-01-13-queue-concurrency-research-report.md",
+    "type": "document",
+    "observations": [
+      "Queue, Concurrency & Performance Research Report \u2013 Sections: Executive Summary. Key details: **Date:** January 13, 2025 **Project:** Pulse Monorepo **Research Duration:** ~3 hours **Methodology:** Parallel agent exploration + codebase analysis --- Conducted comprehensive investigation of Pulse monorepo's queueing, concurrency, and performance architecture using 8 parallel exploration agents. Key findings reveal the system is **significantly under-utilizing available hardware** (13700K/RTX"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-11-13-timing-plan-verification.md",
+    "type": "document",
+    "observations": [
+      "Timing Instrumentation Plan Verification Report \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-13 **Reviewer:** Claude (Sonnet 4.5) **Plan Location:** `/compose/pulse/.docs/plans/2025-11-13-timing-instrumentation-plan.md` **Status:** \u26a0\ufe0f Mostly accurate with critical corrections needed --- The timing instrumentation plan is **well-structured and demonstrates deep understanding** of the webhook architecture. However, there are **several critical technical inaccuracies** that"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-11-15-comprehensive-code-review.md",
+    "type": "document",
+    "observations": [
+      "Comprehensive Code Quality Review - Pulse Monorepo \u2013 Sections: Executive Summary. Key details: **Date**: 2025-11-15 **Reviewer**: Claude Code **Scope**: Full monorepo analysis (apps/mcp, apps/webhook, apps/web, packages/firecrawl-client) --- The Pulse monorepo demonstrates **solid engineering practices** with a clean architecture, comprehensive test coverage, and good security hygiene. The codebase shows evidence of TDD (Test-Driven Development) and follows modern best practices for both Ty"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-11-15-data-flow-analysis.md",
+    "type": "document",
+    "observations": [
+      "Complete Data Flow: MCP Scrape Tool \u2192 Webhook Storage \u2013 Sections: Overview, Complete Data Flow. Key details: The data flow has **TWO INDEPENDENT STORAGE PATHS**: 1. **MCP Local Storage** (TypeScript): saveToStorage() \u2192 ResourceStorageFactory 2. **Webhook Persistent Storage** (Python): webhooks \u2192 store_content_async() \u2192 PostgreSQL These are **COMPLETELY SEPARATE** and do NOT automatically synchronize. --- ``` \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-11-15-mcp-code-review-refactoring-analysis.md",
+    "type": "document",
+    "observations": [
+      "MCP Server Code Review - Post-Webhook Refactoring Analysis \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-15 **Author:** Claude Code **Session:** Comprehensive parallelized codebase analysis Following the refactoring of MCP tools to thin wrappers for webhook endpoints, this comprehensive code review identifies **dead code, duplicate logic, legacy patterns, and cleanup opportunities** across the MCP server codebase."
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-11-15-quick-reference.md",
+    "type": "document",
+    "observations": [
+      "Data Flow Quick Reference \u2013 Sections: One-Sentence Summary, The Two Storage Paths, Path 1: MCP Local Storage. Key details: **MCP scrape tool has TWO independent storage paths that don't synchronize: local MCP storage (saveToStorage) and webhook persistent storage (PostgreSQL), resulting in single-URL scrapes not being stored in the searchable webhook database.** --- ``` User calls scrape(url) \u2193 MCP Scrape Tool \u2193 saveToStorage() \u2192 ResourceStorageFactory.create()"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-11-15-task-10-code-review.md",
+    "type": "document",
+    "observations": [
+      "Code Review: Task 10 - MCP Scrape Thin Wrapper \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-15 **Reviewer:** Claude (Code Reviewer) **Task:** Refactor MCP scrape tool to delegate to webhook service **Base SHA:** 05aaee0d (Task 9: Webhook scrape endpoint) **Head SHA:** d8b89c95 (Task 10: MCP thin wrapper) **Plan:** `/compose/pulse/docs/plans/2025-11-15-mcp-refactoring-complete-cleanup.md` --- **Status:** \u2705 APPROVED - Implementation meets all requirements with excellent q"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/2025-11-15-unified-storage-code-review.md",
+    "type": "document",
+    "observations": [
+      "Unified Redis+PostgreSQL Storage Implementation - Code Review \u2013 Sections: Executive Summary, Scope. Key details: **Date:** 2025-11-15 **Reviewer:** Claude (Senior Code Reviewer) **Implementation:** Tasks 3.4-3.10 from unified storage plan **Base SHA:** 941e62d31810cd672792420065f3c2581e8ccdcc **Status:** REVIEW IN PROGRESS --- Review of complete unified Redis+PostgreSQL storage implementation covering: - Task 3.4: GET /api/content/{id} endpoint"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/changedetection/DOCKER_COMPOSE_EXPLORATION_REPORT.md",
+    "type": "document",
+    "observations": [
+      "Docker Compose Architecture & Deployment Configuration Report \u2013 Sections: Table of Contents. Key details: **Generated:** 2025-11-10 **Exploration Level:** Very Thorough **Repository:** `/compose/pulse` (feat/map-language-filtering branch) --- 1. [Current Service Topology](#current-service-topology) 2. [Network Architecture](#network-architecture) 3. [Volume and Data Persistence](#volume-and-data-persistence) 4. [Port Allocation Strategy](#port-allocation-strategy)"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/changedetection/WEBHOOK_ARCHITECTURE_EXPLORATION.md",
+    "type": "document",
+    "observations": [
+      "apps/webhook Codebase Exploration Report \u2013 Sections: Executive Summary. Key details: **Generated:** November 10, 2025 **Exploration Level:** Very Thorough **Codebase:** Firecrawl Search Bridge (Python/FastAPI) --- The `apps/webhook` application is a **FastAPI-based Python microservice** that bridges Firecrawl web scraping with semantic search capabilities. It receives scraped documents via HTTP webhooks, processes them through a hybrid search pipeline (combining vector embeddings "
+    ]
+  },
+  {
+    "name": "Document .docs/reports/changedetection/changedetection-io-feasibility-report.md",
+    "type": "document",
+    "observations": [
+      "changedetection.io Integration Feasibility Report \u2013 Sections: Executive Summary. Key details: **Generated:** 18:45:32 | 11/10/2025 **Project:** Pulse Monorepo **Purpose:** Evaluate feasibility of integrating changedetection.io for automated change tracking and recrawl triggering --- **Recommendation: \u2705 HIGHLY FEASIBLE - Proceed with Integration** changedetection.io is an **excellent fit** for the Pulse monorepo infrastructure with **minimal friction points** and **strong complementary capa"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/changedetection/changedetection-io-integration-research.md",
+    "type": "document",
+    "observations": [
+      "ChangeDetection.io Integration Research Report \u2013 Sections: Executive Summary. Key details: **Date:** November 10, 2025 **Purpose:** Research integration patterns for changedetection.io with web scraping and crawling systems --- ChangeDetection.io is a self-hosted, open-source website change detection and monitoring service with 28.4k GitHub stars. It provides a lightweight alternative to commercial services like Visualping and Distill, offering robust notification capabilities through t"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/migration-safety-analysis-2025-11-13.md",
+    "type": "document",
+    "observations": [
+      "Database Migration Safety Analysis \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-13 **Plan:** `/compose/pulse/.docs/plans/2025-11-13-timing-instrumentation-plan-CORRECTED.md` **Reviewer:** Claude (Sonnet 4.5) **Status:** \u26a0\ufe0f REQUIRES CHANGES - See Recommendations Below --- The timing instrumentation plan proposes adding two new tables (`crawl_sessions`) and one new column (`crawl_id` to `operation_metrics`) to track crawl lifecycle metrics. The migration strat"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/webhook-worker-performance-investigation-2025-01-11.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker Performance Investigation Report \u2013 Sections: Executive Summary. Key details: **Date:** January 11, 2025 **Investigator:** GitHub Copilot **Issue:** Investigate why webhook worker is slow at generating embeddings and storing in Qdrant Investigation revealed that the webhook worker's poor performance was **NOT due to embedding generation or Qdrant storage**, but rather **service reinitialization overhead**. Each job was recreating expensive services (tokenizer, HTTP clients,"
+    ]
+  },
+  {
+    "name": "Document .docs/reports/webhook-worker-separation-research.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker Separation Research Report \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-11 **Investigator:** Claude Code **Status:** Complete This report analyzes the current webhook worker architecture and provides recommendations for properly separating the background worker from the API server. The current embedded thread-based worker has signal handling limitations that cause stale worker registrations in Redis after restarts."
+    ]
+  },
+  {
+    "name": "Document .docs/reviews/2025-11-15-task-8-content-processor-review.md",
+    "type": "document",
+    "observations": [
+      "Code Review: Task 8 - Content Processor Service Implementation \u2013 Sections: Executive Summary. Key details: **Reviewer**: Claude Code (Senior Code Reviewer) **Date**: 2025-11-15 **Commit Range**: cf623ad0..363788b4 **Implementation**: ContentProcessorService for HTML cleaning and LLM extraction --- **Overall Assessment**: \u2705 **APPROVED WITH MINOR RECOMMENDATIONS** The Task 8 implementation successfully delivers the ContentProcessorService with HTML-to-Markdown cleaning and LLM extraction interface. The c"
+    ]
+  },
+  {
+    "name": "Document .docs/security/oauth-security.md",
+    "type": "document",
+    "observations": [
+      "OAuth Security Guide \u2013 Sections: Controls Implemented. Key details: **Version:** 2025-11-12 - **PKCE (S256)** enforced for all authorization flows. - **CSRF protection** via server-generated tokens (`X-CSRF-Token`). - **Redis-backed sessions** with HTTP-only, SameSite cookies and secure flag in production. - **Encrypted token storage** (AES-256-GCM with per-app secret). - **Scope enforcement** mapping MCP tools to `mcp:*` scopes."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-11-webhook-flattening-phases-1-4.md",
+    "type": "document",
+    "observations": [
+      "Webhook Flattening Refactor - Phases 1-4 Session Log \u2013 Sections: Session Overview. Key details: **Date:** January 11, 2025 **Branch:** `docs/webhook-flattening-plan` **Plan Document:** [docs/plans/2025-11-10-webhook-flattening-plan.md](../../docs/plans/2025-11-10-webhook-flattening-plan.md) This session executed Phases 1-4 of the webhook flattening plan, transforming the nested `app/` directory structure into a clean, domain-driven architecture. The refactor maintains 100% test compatibility"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-11-webhook-flattening-phases-5-10.md",
+    "type": "document",
+    "observations": [
+      "Webhook Flattening - Phases 5-10 \u2013 Sections: Overview. Key details: **Session Date:** 2025-01-11 **Engineer:** Claude (Sonnet 4.5) **Branch:** `docs/webhook-flattening-plan` **Plan:** `/compose/pulse/docs/plans/2025-11-10-webhook-flattening-plan.md` This session completes the final phases (5-10) of the webhook flattening plan, transforming the service from a nested `app/` structure to a flat root-level organization with relative imports."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-13-async-batch-worker-implementation.md",
+    "type": "document",
+    "observations": [
+      "Async Batch Worker Implementation Session \u2013 Sections: Executive Summary. Key details: **Date:** 2025-01-13 **Branch:** `feat/mcp-resources-and-worker-improvements` **Goal:** Enable concurrent document processing using asyncio.gather() for 3x throughput improvement Successfully implemented async batch processing for webhook workers, enabling each worker to process multiple documents concurrently instead of sequentially. This changes the architecture from **8 workers \u00d7 1 doc = 8 conc"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-13-batch-worker-performance.md",
+    "type": "document",
+    "observations": [
+      "Batch Worker Performance Analysis \u2013 Sections: Executive Summary. Key details: **Session Date:** January 13, 2025 **Session Time:** 08:00:00 - 08:30:00 **Task:** Document batch worker performance results (Task 9 from async-batch-worker implementation) **Status:** Completed This document analyzes the performance impact of migrating from sequential document indexing to concurrent batch processing using `asyncio.gather()` in the webhook worker service. The implementation shows "
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-14-containerize-web-app.md",
+    "type": "document",
+    "observations": [
+      "Web App Containerization - Session Log \u2013 Sections: Summary, Changes Made, 1. Dockerfile (`apps/web/Dockerfile`). Key details: **Date:** 2025-01-14 **Engineer:** Claude (Sonnet 4.5) **Task:** Containerize Next.js web app with hot reload support Containerized the Next.js web application following existing monorepo Docker patterns. Implemented hot reload via volume mounts to eliminate rebuild cycles during development. - Multi-stage build (builder + production)"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-14-firecrawl-api-consolidation-implementation.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl API Consolidation - Implementation Session \u2013 Sections: Session Overview. Key details: **Date:** 2025-11-14 (20:42 - 20:50 EST) **Goal:** Implement unified Firecrawl v2 API consolidation through webhook bridge to eliminate code duplication and fix foreign key violations. --- Continued from previous debugging session where we identified FK violations in `operation_metrics` table. User proposed consolidating all Firecrawl operations through the webhook bridge to create a single integr"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-14-mcp-webhook-bridge-completion.md",
+    "type": "document",
+    "observations": [
+      "MCP Webhook Bridge Integration - Session Completion \u2013 Sections: Session Summary, Work Completed, 1. Fixed Batch Scrape Errors Endpoint Bug \u2705. Key details: **Date:** 2025-01-14 (22:43 - 23:15 EST) **Goal:** Complete MCP webhook bridge refactoring and create implementation plan for map/search/extract tools --- Completed the MCP webhook bridge refactoring (Tasks 5.1-5.8) and created a detailed implementation plan for integrating map, search, and extract tools. --- **Issue:** `WebhookBridgeClient.getBatchScrapeErrors()` was calling wrong endpoint"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-14-mcp-webhook-bridge-refactoring.md",
+    "type": "document",
+    "observations": [
+      "MCP Webhook Bridge Refactoring Session \u2013 Sections: Session Overview. Key details: **Date:** 2025-11-14 (21:22 - 21:45 EST) **Goal:** Refactor MCP server to use webhook bridge instead of direct Firecrawl API calls, eliminating code duplication. --- Continued implementation of Firecrawl API consolidation plan (Task 5). Previous session completed database migration and webhook proxy implementation (commit d0f2d0e9). This session focuses on refactoring the MCP server to use the web"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-14-notebooklm-ui-completion.md",
+    "type": "document",
+    "observations": [
+      "NotebookLM UI Implementation - Session 2 Completion \u2013 Sections: Summary, Tasks Completed, Task 25: Chat Panel Component (TDD). Key details: **Date:** November 14, 2025 **Session:** Continuation from Task 25 (71% \u2192 100%) **Branch:** `feat/firecrawl-api-pr2381-local-build` Completed remaining NotebookLM UI implementation tasks (25-32, 31) using Test-Driven Development. All 34 planned tasks now complete with 47 passing tests. - **File:** `apps/web/components/chat-panel.tsx`"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-14-notebooklm-ui-progress.md",
+    "type": "document",
+    "observations": [
+      "NotebookLM UI Implementation - Progress Report \u2013 Sections: Completed Tasks (1-24), \u2705 Dependencies & shadcn Components (Tasks 1-15). Key details: **Session Date:** 2025-01-14 **Status:** IN PROGRESS (paused at Task 25 due to context limits) --- **Commits:** - `06f35b98` - chore(web): add framer-motion and sonner dependencies - `35f54ef4` - feat(web): add shadcn card component - `860fed8d` - feat(web): add all required shadcn components (badge, scroll-area, textarea, input, progress, avatar, separator, skeleton, tooltip, dropdown-menu, dialo"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-extract-tool-functional-verification.md",
+    "type": "document",
+    "observations": [
+      "Extract Tool Functional Verification Session \u2013 Sections: Context. Key details: **Date:** January 15, 2025 **Duration:** ~5 minutes **Status:** \u2705 Complete --- This session continued from [2025-01-15-map-search-extract-integration-session.md](./2025-01-15-map-search-extract-integration-session.md) where all 13 tasks were marked complete. User asked: **\"Soo.. does the tool work?\"** This required functional verification beyond just deployment checks."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-firecrawl-persistence-phase-0-1-complete.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl Content Persistence Implementation - Phase 0 & 1 Complete \u2013 **Date:** 2025-01-15 **Session Type:** Subagent-Driven Development (Executing Plans) **Plan:** [docs/plans/2025-01-15-complete-firecrawl-persistence.md](../../docs/plans/2025-01-15-complete-firecrawl-persistence.md) **Validation:** [docs/plans/2025-01-15-validation-summary.md](../../docs/plans/2025-01-15-validation-summary.md)"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-firecrawl-persistence-validation.md",
+    "type": "document",
+    "observations": [
+      "Session: Firecrawl Content Persistence Validation \u2013 Sections: Session Overview. Key details: **Date:** 2025-01-15 **Duration:** ~2 hours **Outcome:** Plan validated and corrected, ready for implementation --- User asked about Firecrawl's data persistence, leading to a complete plan for PostgreSQL-based content storage. After creating the initial plan, user requested validation by parallel agents, which uncovered critical bugs and schema corrections."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-fix-mcp-typescript-build-errors.md",
+    "type": "document",
+    "observations": [
+      "Session: Fix MCP TypeScript Build Errors \u2013 Sections: Session Overview. Key details: **Date:** January 15, 2025 **Duration:** ~2 hours **Status:** \u2705 Complete - All services operational Debugged and resolved TypeScript compilation errors in the MCP server Docker build, along with related Python import errors in the webhook service. The root cause was an incomplete refactoring (commit `24addf5d`) that removed type definitions without updating all references."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-map-search-extract-integration-session.md",
+    "type": "document",
+    "observations": [
+      "Map/Search/Extract Webhook Integration Session \u2013 Sections: Objective. Key details: **Date:** January 15, 2025 **Session Duration:** ~2 hours **Status:** Completed Tasks 1-3, paused for bug fixes --- Refactor map/search tools to use WebhookBridgeClient (dependency injection pattern) and create new extract tool for structured data extraction. All operations route through webhook bridge at `http://pulse_webhook:52100` for automatic session tracking."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-phase-0-test-results.md",
+    "type": "document",
+    "observations": [
+      "Phase 0.3: Test Webhook Reception - Results \u2013 Sections: Test Command, Test Results Summary. Key details: **Date:** 2025-01-15 **Branch:** feat/firecrawl-api-pr2381-local-build **Context:** Testing fixes from Phase 0.1-0.2 (CrawlSession field naming + connection pool) ```bash cd /compose/pulse/apps/webhook WEBHOOK_SKIP_DB_FIXTURES=1 uv run pytest tests/unit tests/integration -v ``` **Unit Tests:** - **Total:** 299 tests - **Passed:** 244 tests (81.6%)"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-phase-1-2-scraped-content-model.md",
+    "type": "document",
+    "observations": [
+      "Phase 1.2: ScrapedContent SQLAlchemy Model - Session Summary \u2013 Sections: Objective, TDD Execution, RED Phase: Write Failing Test \u2713. Key details: **Date:** 2025-01-15 **Phase:** 1.2 - ScrapedContent ORM Model **Plan:** `/compose/pulse/docs/plans/2025-01-15-complete-firecrawl-persistence.md` **Methodology:** TDD RED-GREEN-REFACTOR --- Create SQLAlchemy ORM model for `webhook.scraped_content` table with bidirectional relationship to `CrawlSession`. **File Created:** `/compose/pulse/apps/webhook/tests/unit/test_scraped_content_model.py`"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-phase-1-4-webhook-content-storage.md",
+    "type": "document",
+    "observations": [
+      "Phase 1.4: Integrate Content Storage into Webhook Handler \u2013 Sections: Objective. Key details: **Session Date:** January 15, 2025 **Implementation Plan:** `/compose/pulse/docs/plans/2025-01-15-complete-firecrawl-persistence.md` **Phase:** 1.4 (Integrate Content Storage into Webhook Handler) Integrate content storage into the Firecrawl webhook handler using the fire-and-forget async pattern to store scraped content BEFORE indexing, without blocking webhook response time."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-remove-redundant-content-processing-TDD-TASKS-5-8.md",
+    "type": "document",
+    "observations": [
+      "Remove Redundant Content Processing - TDD Implementation Session (Tasks 5-8) \u2013 Sections: Summary, Tasks Completed. Key details: **Date:** 2025-01-15 **Time:** 23:30 - 23:39 (9 minutes) **Approach:** Strict TDD (RED-GREEN-REFACTOR) **Plan:** /compose/pulse/docs/plans/2025-01-15-remove-redundant-content-processing-TDD.md Completed final cleanup tasks (5-8) from TDD plan to remove redundant HTML cleaning and LLM extraction code. **Task 5: Delete ContentProcessorService with test coverage check**"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-remove-redundant-content-processing-complete.md",
+    "type": "document",
+    "observations": [
+      "Session: Remove Redundant Content Processing (TDD Implementation) \u2013 Sections: Executive Summary. Key details: **Date:** 2025-01-15 **Duration:** ~4 hours **Branch:** `feat/firecrawl-api-pr2381-local-build` \u2192 merged to `main` **Status:** \u2705 Complete Successfully removed redundant `ContentProcessorService` from webhook bridge by leveraging Firecrawl's native markdown cleaning and structured extraction capabilities. Implemented with strict TDD discipline (RED-GREEN-REFACTOR), resulting in 845 lines of code re"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-task-8-content-processor-implementation.md",
+    "type": "document",
+    "observations": [
+      "Task 8: Content Processor Service Implementation \u2013 Sections: Summary. Key details: **Date:** 2025-01-15 **Task:** Implement Webhook Content Processing Service **Status:** \u2705 Complete (Pending Integration Testing) **Commit:** 363788b4 Successfully implemented the `ContentProcessorService` for the webhook service, providing HTML-to-Markdown cleaning and LLM-based content extraction. This service is a critical component of Task 8 in the MCP refactoring plan, migrating scrape busines"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-15-unified-storage-implementation-complete.md",
+    "type": "document",
+    "observations": [
+      "Unified Redis+PostgreSQL Storage Implementation Session \u2013 Sections: Executive Summary. Key details: **Date:** 2025-01-15 **Status:** \u2705 COMPLETE - Ready for merge **Branch:** `feat/firecrawl-api-pr2381-local-build` Successfully implemented complete unified Redis+PostgreSQL storage architecture (Tasks 3.1-3.10) using subagent-driven development with code review after each task. All critical blockers fixed, tests passing (28/28 for storage implementation)."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-16-fix-schema-validation-and-linters.md",
+    "type": "document",
+    "observations": [
+      "Session: Fix MCP Schema Validation and Linter Errors \u2013 Sections: Session Overview. Key details: **Date**: January 16, 2025 **Duration**: ~2 hours **Status**: \u2705 Complete Fixed critical JSON schema validation error blocking MCP client registration and resolved all TypeScript/Python linting errors across the monorepo. The session addressed: 1. Missing `items` property in crawl tool's `scrapeOptions.actions` array schema"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-01-16-mypy-typecheck-resolution.md",
+    "type": "document",
+    "observations": [
+      "Session: Complete MyPy Typecheck Resolution \u2013 Sections: Session Overview. Key details: **Date:** January 16, 2025 **Duration:** ~2 hours **Objective:** Resolve all mypy typecheck errors in apps/webhook **Result:** \u2705 71 errors \u2192 0 errors (100% success) Systematically resolved all 71 mypy typecheck errors across 70 source files in the webhook application. Achieved full strict type compliance by fixing type annotations, handling third-party library stubs, correcting Pydantic v2 syntax,"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-auto-watch-implementation.md",
+    "type": "document",
+    "observations": [
+      "Session Log: Automatic Watch Creation Implementation \u2013 Sections: Objective. Key details: **Date:** 2025-01-10 **Branch:** `feat/map-language-filtering` **Plan Document:** [docs/plans/2025-11-10-auto-watch-creation.md](/compose/pulse/docs/plans/2025-11-10-auto-watch-creation.md) **Methodology:** Subagent-driven development with TDD --- Implement automatic changedetection.io watch creation for all URLs scraped by Firecrawl, enabling bidirectional monitoring: Firecrawl \u2192 Index \u2192 Auto-wat"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-changedetection-implementation.md",
+    "type": "document",
+    "observations": [
+      "changedetection.io Integration Implementation \u2013 Sections: Summary. Key details: **Date:** 2025-11-10 **Engineer:** Claude Code **Duration:** ~8 hours (across multiple sessions) **Status:** Complete Successfully integrated changedetection.io into the Pulse monorepo for automated website change detection with webhook-triggered Firecrawl rescraping and search indexing. The integration enables automated monitoring of web pages with automatic re-indexing when changes are detected."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-crawl-status-fix.md",
+    "type": "document",
+    "observations": [
+      "Crawl Status Display Fix \u2013 Sections: Issue, Investigation, 1. Scraped Firecrawl API Documentation. Key details: User reported: \"it should NOT be saying crawl complete when its still crawling\" **Source:** https://docs.firecrawl.dev/api-reference/endpoint/crawl-get **Key findings:** - `status`: Can be `scraping`, `completed`, `failed`, or `cancelled` - `next`: URL for next 10MB batch (present when data > 10MB OR crawl incomplete) - `completed`: Number of pages successfully crawled"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-crawl-tool-wrong-url-fix.md",
+    "type": "document",
+    "observations": [
+      "Crawl Tool Wrong URL Investigation and Fix \u2013 Sections: Problem Discovery, Initial Symptoms. Key details: **Date:** 2025-01-10 **Issue:** MCP crawl tool was using cloud Firecrawl API (`https://api.firecrawl.dev/v2`) instead of self-hosted instance - User requested to scrape `docs.unraid.net` using self-hosted Firecrawl - Crawl tool returned 401 authentication errors - User repeatedly indicated the issue was using the wrong URL"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-data-persistence-investigation.md",
+    "type": "document",
+    "observations": [
+      "Data Persistence Investigation Session \u2013 Sections: User Questions, Investigation Process, Question 1: Webhook Service Data Persistence. Key details: **Date**: 2025-01-10 **Context**: Continuation from worker-api consolidation - investigating volume mount requirements 1. \"Does the webhook server not need to persist any data?\" 2. \"OK and what about the Firecrawl container itself? Does that need to persist any data?\" **Finding**: Yes, webhook service DOES need persistence for BM25 index"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-fix-monorepo-critical-issues.md",
+    "type": "document",
+    "observations": [
+      "Session Log: Fix Monorepo Critical Issues \u2013 Sections: Session Context. Key details: **Date:** November 10, 2025 **Session Duration:** [To be filled after completion] **Participants:** Claude Code Assistant **Objective:** Fix all critical and high-priority issues from pnpm workspace migration --- This session addresses critical bugs discovered after consolidating the MCP server from multiple packages (`apps/mcp/local`, `apps/mcp/remote`, `apps/mcp/shared`) into a single package (`"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-map-language-filtering.md",
+    "type": "document",
+    "observations": [
+      "Map Tool Language Path Filtering Implementation \u2013 Sections: Summary, Problem Identified. Key details: **Date:** 2025-11-10 **Branch:** `feat/map-language-filtering` **Commit:** `82b8669` Implemented automatic filtering of multilingual documentation paths in the map tool to focus results on English/default language content. Found hardcoded domain-specific language exclusions in [apps/mcp/shared/config/crawl-config.ts](../../apps/mcp/shared/config/crawl-config.ts):"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-mcp-server-consolidation.md",
+    "type": "document",
+    "observations": [
+      "MCP Server Consolidation - Session Summary \u2013 Sections: Problem Statement. Key details: **Date:** 2025-11-10 **Branch:** `feat/map-language-filtering` **Goal:** Eliminate symlink architecture hack and consolidate three packages (local/shared/remote) into a single clean MCP server package --- The MCP server was split across three packages with a symlink hack: - `apps/mcp/remote/shared` \u2192 symlinked to `../shared/dist`"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-monorepo-cleanup-execution.md",
+    "type": "document",
+    "observations": [
+      "Monorepo Cleanup Execution Summary \u2013 Sections: Overview. Key details: **Date**: 2025-11-10 **Branch**: feat/map-language-filtering **Plan**: [docs/plans/2025-11-10-monorepo-cleanup.md](../../docs/plans/2025-11-10-monorepo-cleanup.md) Executed monorepo cleanup plan to standardize infrastructure, improve developer workflow, and consolidate documentation. Completed 13 of 16 tasks (81% completion) with 1 task deferred for future work."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-monorepo-critical-issues-implementation.md",
+    "type": "document",
+    "observations": [
+      "Session Log: Monorepo Critical Issues Implementation \u2013 Sections: Session Overview. Key details: **Date:** November 10, 2025 **Session Type:** Implementation (Subagent-Driven Development + TDD) **Plan File:** `docs/plans/2025-11-10-fix-monorepo-critical-issues.md` **Skill Used:** `superpowers:executing-plans` --- Implemented all 8 tasks from the monorepo critical issues fix plan using subagent-driven development method with TDD where applicable. Successfully fixed broken pnpm filters, hardcod"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-test-infrastructure-fixes.md",
+    "type": "document",
+    "observations": [
+      "Test Infrastructure Fixes Implementation Session \u2013 Sections: Session Overview. Key details: **Date:** 2025-11-10 **Branch:** `docs/webhook-flattening-plan` **Plan:** `docs/plans/2025-11-10-fix-test-infrastructure.md` **Workflow:** Subagent-Driven Development --- Successfully implemented all 7 tasks from the test infrastructure fix plan to unblock `pnpm test` command and establish proper test infrastructure across the monorepo."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-10-webhook-enhancements-tasks-1-5.md",
+    "type": "document",
+    "observations": [
+      "Session: Webhook Bridge Enhancements - Tasks 1-5 \u2013 Sections: Executive Summary. Key details: **Date:** November 10, 2025 **Branch:** `feat/map-language-filtering` **Methodology:** Subagent-Driven Development with code review between tasks **Result:** All 5 tasks completed successfully with 100% test pass rate --- Successfully implemented 5 enhancement tasks for the webhook bridge service using Test-Driven Development (TDD) and subagent-driven workflow. Each task was implemented by a fresh"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-13-code-review-fixes-implementation.md",
+    "type": "document",
+    "observations": [
+      "Code Review Fixes Implementation Session \u2013 Sections: Session Overview. Key details: **Date:** 2025-11-13 **Session Type:** Subagent-Driven Development **Duration:** ~45 minutes **Baseline SHA:** 95ad055 (production hardening complete) **Final SHA:** 883841e (all code review fixes applied) --- Implemented all 10 critical and important fixes identified in the production hardening code review. Used parallel subagent execution across 3 independent workstreams following strict TDD met"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-13-complete-session-summary.md",
+    "type": "document",
+    "observations": [
+      "Complete Session Summary - 2025-11-13 \u2013 Sections: Session Timeline, Phase 1: Code Review (01:30-01:40). Key details: **Session Duration:** ~2 hours **Work Type:** Production hardening code review, fixes, and documentation **Baseline SHA:** 95ad055 **Final SHA:** c19aff5 **Total Commits:** 32 --- **Action:** Dispatched code-reviewer subagent to review 13 production hardening tasks **Input:** - Base SHA: 287f877 (first production hardening commit)"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-13-docker-logs-mcp-resources-completion.md",
+    "type": "document",
+    "observations": [
+      "Docker Compose Logs as MCP Resources - Implementation Complete \u2013 Sections: Overview, Features Implemented, 1. Docker Logs Resource Provider. Key details: **Session Date:** 2025-11-13 **Status:** \u2705 Complete **Duration:** ~2 hours Successfully implemented Docker Compose service logs as MCP resources, enabling Claude Code assistants to access real-time container logs through the Model Context Protocol. - Created `DockerLogsProvider` class ([apps/mcp/resources/docker-logs.ts](../../apps/mcp/resources/docker-logs.ts))"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-13-docker-logs-mcp-resources.md",
+    "type": "document",
+    "observations": [
+      "Docker Logs as MCP Resources - Complete Implementation Session \u2013 Sections: Session Overview, Problem Statement. Key details: **Date:** 2025-11-13 **Duration:** ~2 hours **Status:** \u2705 Complete Implemented Docker Compose service logs as MCP (Model Context Protocol) resources, enabling Claude Code assistants to access real-time container logs from both local and remote Docker hosts through a unified interface. User requested: \"Would it be possible to expose docker compose logs for the stack as MCP resources?\""
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-13-parallel-debugging-session.md",
+    "type": "document",
+    "observations": [
+      "Parallel Debugging Session - 2025-11-13 \u2013 Sections: Session Overview, Bug 1: Foreign Key Violations in Worker Operations, Error Pattern. Key details: Two critical bugs debugged using parallel agent methodology: 1. **Foreign key violations** in webhook worker operations 2. **changedetection.io API 404 errors** --- ``` pulse_postgres: ERROR: insert or update on table \"operation_metrics\" violates foreign key constraint \"fk_operation_metrics_request_id\" pulse_postgres: DETAIL: Key (request_id)=(9999f127-e3b5-43aa-a831-645e3fe639d7) is not present i"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-13-timing-instrumentation-completion.md",
+    "type": "document",
+    "observations": [
+      "Timing Instrumentation Implementation - Completion \u2013 Sections: Summary. Key details: **Date:** 2025-11-13 **Duration:** ~2 hours **Status:** \u2705 Complete **Branch:** feat/mcp-resources-and-worker-improvements Successfully implemented complete crawl lifecycle tracking with aggregate timing metrics following the TDD plan at [docs/plans/2025-11-13-timing-instrumentation-tdd.md](../../docs/plans/2025-11-13-timing-instrumentation-tdd.md)."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-13-timing-instrumentation-implementation-complete.md",
+    "type": "document",
+    "observations": [
+      "Timing Instrumentation Implementation - Complete \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-13 **Duration:** ~4 hours **Status:** \u2705 COMPLETE **Plan:** [docs/plans/2025-11-13-timing-instrumentation-tdd.md](../../docs/plans/2025-11-13-timing-instrumentation-tdd.md) --- Successfully implemented complete crawl lifecycle tracking with aggregate timing metrics following Test-Driven Development (TDD) approach. All 11 tasks from the implementation plan completed with code revie"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-14-documentation-indexing-complete.md",
+    "type": "document",
+    "observations": [
+      "Documentation Indexing Session - Complete \u2013 Sections: Summary, Key Findings, 1. Network Discovery Issue. Key details: **Date:** 2025-11-14 **Duration:** ~2 hours **Status:** \u2705 COMPLETE --- Successfully indexed all 160 project documentation files into the RAG (Retrieval-Augmented Generation) pipeline, making them searchable via the webhook bridge's hybrid vector/BM25 search. --- **Problem:** Webhook service not accessible on `localhost:50108`"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-14-firecrawl-pr2381-integration.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl API PR #2381 Integration Session \u2013 Sections: Objective, Context. Key details: **Date:** 2025-11-14 **Duration:** ~45 minutes **Outcome:** \u2705 Success Integrate Firecrawl API source code with PR #2381 bug fixes into Pulse monorepo to resolve production issues with infinite retries and client disconnects. **PR #2381 Summary:** - **Issue:** Self-hosted Firecrawl enters infinite retry loops when blocked by anti-bot systems"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-14-profile-crawl-tool-complete.md",
+    "type": "document",
+    "observations": [
+      "Profile Crawl Tool Implementation - Complete Session \u2013 Sections: Executive Summary. Key details: > Session Date: 11/14/2025 00:53 AM EST > Branch: feat/mcp-resources-and-worker-improvements > Status: \u2705 Complete - Production Ready Successfully implemented the `profile_crawl` MCP tool for debugging and profiling Firecrawl crawl performance. The tool queries the webhook service's metrics API to provide comprehensive diagnostics including timing breakdowns, error analysis, and actionable optimiza"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-14-security-fixes-pr56.md",
+    "type": "document",
+    "observations": [
+      "Security & Stability Fixes - PR #56 Implementation \u2013 Sections: Executive Summary, Fixes Implemented, Critical Security Fixes (3), 1. Command Injection Vulnerability - docker-logs.ts. Key details: **Date:** 2025-11-14 **Branch:** feat/mcp-resources-and-worker-improvements **Status:** Complete - Ready for merge/PR Implemented 13 security and stability fixes addressing critical vulnerabilities and configuration issues identified in PR #56. All fixes complete and verified. **File:** [apps/mcp/resources/docker-logs.ts](apps/mcp/resources/docker-logs.ts)"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-15-code-review-commit-and-push.md",
+    "type": "document",
+    "observations": [
+      "Session: Code Review Commit and Push \u2013 Sections: Session Overview. Key details: **Date:** 2025-11-15 **Duration:** ~15 minutes **Branch:** `feat/firecrawl-api-pr2381-local-build` Successfully committed and pushed comprehensive code review and linting fixes to the feature branch after resolving file permission issues. The session involved 134 files across MCP server, webhook service, and documentation with 11,674 insertions and 188 deletions."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-15-comprehensive-code-review-and-linting-fixes.md",
+    "type": "document",
+    "observations": [
+      "Comprehensive Code Review and Linting Fixes Session \u2013 Sections: Table of Contents. Key details: **Date**: 2025-11-15 **Duration**: ~2 hours **Scope**: Full monorepo code quality review, linting fixes, and Docker build debugging --- 1. [Comprehensive Code Review](#comprehensive-code-review) 2. [Critical P0-P1 Linting Fixes](#critical-p0-p1-linting-fixes) 3. [Complete Linting Cleanup](#complete-linting-cleanup) 4. [Docker Build Debug & Fix](#docker-build-debug--fix)"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-15-task-2-profile-tests-already-complete.md",
+    "type": "document",
+    "observations": [
+      "Task 2: Profile Tool Test Fixes - Already Completed \u2013 Sections: Summary. Key details: **Date:** 2025-11-15 **Agent:** Claude Code **Task:** Implement Task 2 from `/compose/pulse/docs/plans/2025-11-15-mcp-refactoring-complete-cleanup.md` Task 2 (Fix Profile Tool Failing Tests) was already completed in commit `44814f6b` on 2025-11-15 at 16:32:07 EST. All 8 profile tool tests are passing with the correct `Authorization: Bearer` header expectations."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/2025-11-15-webhook-content-storage-code-review-fixes.md",
+    "type": "document",
+    "observations": [
+      "Webhook Content Storage Code Review Fixes \u2013 Sections: Context. Key details: **Date:** 2025-11-15 **Session Type:** Code Review Response + Implementation **Status:** \u2705 Complete --- Implemented fixes for critical and important issues identified in comprehensive code review of webhook content storage implementation (commits `79e8c5b9..450245f2`). **Original Review Findings:** - CRITICAL: Race condition in deduplication (SELECT-then-INSERT pattern)"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/architecture-investigation-2025-11-09.md",
+    "type": "document",
+    "observations": [
+      "Complete Architecture Blocker Investigation \u2013 Sections: Executive Summary. Key details: **Date:** November 9, 2025 **Time:** 19:45 EST **Investigation Type:** Systematic and Complete Analysis **Blocker Severity:** CRITICAL (blocks Docker deployment) --- The MCP service Docker build fails because it expects **four specialized client classes** from `@firecrawl/client`: - `FirecrawlSearchClient` - `FirecrawlMapClient`"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/claude-alias-setup.md",
+    "type": "document",
+    "observations": [
+      "Claude Code Alias Setup \u2013 Sections: Investigation, Shell Detection, Alias Configuration. Key details: **Date**: 2025-11-10 **Task**: Configure shell alias for Claude Code local installation - Command: `echo $SHELL` - Result: `/usr/bin/zsh` - Conclusion: User is running zsh shell - Target file: `~/.zshrc` - Command executed: `grep -q 'alias claude=\"/config/.claude/local/claude\"' ~/.zshrc && echo \"Alias already exists\" || echo 'alias claude=\"/config/.claude/local/claude\"' >> ~/.zshrc`"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/crawl-loop-fix-2025-11-10.md",
+    "type": "document",
+    "observations": [
+      "Crawl Loop Fix - November 10, 2025 \u2013 Sections: Issue, Investigation, 1. Identified Active Services, 2. Stopped the Immediate Problem. Key details: Firecrawl service was stuck in an infinite crawl loop for `https://forums.unraid.net/`, continuously logging errors and attempting to scrape the same URL repeatedly. ```bash docker compose ps ``` Found all services running normally, but logs showed continuous scraping attempts on the same URL. ```bash docker compose restart firecrawl"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/execution-summary-2025-11-09.md",
+    "type": "document",
+    "observations": [
+      "Execution Summary: Tasks 13-15 \u2013 Sections: Overview. Key details: **Date:** November 9, 2025 **Session:** 19:00 - 19:40 EST **Plan:** `/compose/pulse/docs/plans/2025-01-08-monorepo-integration.md` **Method:** Subagent-driven development with code review --- Executed Tasks 13-15 of the monorepo integration plan using proper subagent-driven methodology. Successfully completed documentation and testing tasks, discovered critical architectural blockers preventing Do"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/integration-test-blockers-2025-11-09.md",
+    "type": "document",
+    "observations": [
+      "Integration Testing Blockers - Task 15 \u2013 Sections: Executive Summary. Key details: **Date:** November 9, 2025 **Time:** 19:35 EST **Task:** Task 15 - Integration Testing **Status:** \u274c BLOCKED **Plan:** `/compose/pulse/docs/plans/2025-01-08-monorepo-integration.md` --- Integration testing **cannot proceed** due to Docker build failures. All 7 services failed to start because the MCP service build failed during TypeScript compilation."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/npm-to-pnpm-migration.md",
+    "type": "document",
+    "observations": [
+      "NPM to PNPM Migration Investigation \u2013 Sections: Problem, Investigation, 1. Checked Package Manager Usage. Key details: **Date:** 2025-11-09 **Task:** Transition monorepo from npm to pnpm workspaces Docker build failed with: ``` npm error Unsupported URL Type \"workspace:\": workspace:* ``` **Root Cause:** [apps/mcp/Dockerfile](../apps/mcp/Dockerfile) was using `npm ci` but the monorepo uses pnpm workspace protocol. ```bash ls /compose/pulse/apps/mcp/ | grep -E \"(package|pnpm)\""
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/security-audit-2025-01-08.md",
+    "type": "document",
+    "observations": [
+      "Security Audit - Monorepo Integration \u2013 Sections: Summary, MCP Server (Node.js). Key details: **Date:** 2025-01-08 **Context:** Task 3 of monorepo integration plan **Auditor:** Claude Code Security audit completed for MCP and webhook services as part of monorepo integration. Both services were audited for known vulnerabilities in their dependency trees. **Tool:** `pnpm audit` **Location:** `/mnt/cache/compose/pulse/apps/mcp`"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/session-2025-11-09-tasks-15-16-complete.md",
+    "type": "document",
+    "observations": [
+      "Complete Session: Tasks 15-16 Integration Testing & Cleanup \u2013 Sections: Session Overview. Key details: **Date:** 2025-11-09 **Time:** 20:15 - 21:55 EST (100 minutes) **Tasks Completed:** Task 15 (Integration Testing), Task 16 (Cleanup) **Plan Document:** `/compose/pulse/docs/plans/2025-01-08-monorepo-integration.md` --- Resumed monorepo integration work from Task 13. Successfully completed: - **Task 15:** Full integration testing with 4 critical bug fixes"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/task-15-integration-tests-complete.md",
+    "type": "document",
+    "observations": [
+      "Task 15: Integration Testing - COMPLETE \u2013 Sections: Executive Summary. Key details: **Date:** November 9, 2025 **Time:** 20:15 - 21:45 EST **Plan:** `/compose/pulse/docs/plans/2025-01-08-monorepo-integration.md` **Status:** \u2705 **COMPLETE** --- Successfully completed Task 15 integration testing after resolving critical Docker build and runtime issues. All 7 services are now running healthy and communicating properly within the Docker network."
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/task-15-investigation-findings.md",
+    "type": "document",
+    "observations": [
+      "Task 15 Investigation: Docker Integration Testing Issues \u2013 Sections: Investigation Summary, Issue 1: TypeScript Type Errors in pulse-remote, Discovery. Key details: **Date:** 2025-11-09 **Status:** \u2705 RESOLVED **Session Duration:** ~90 minutes --- Attempted to complete Task 15 (Integration Testing) from the monorepo integration plan. Encountered 4 critical blocking issues that prevented Docker services from starting. All issues were systematically identified and resolved. --- ```bash"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/task-16-cleanup-complete.md",
+    "type": "document",
+    "observations": [
+      "Task 16: Remove Standalone Docker Compose Files - Complete \u2013 Sections: Summary, Files Removed. Key details: **Date:** 20:54:03 | 11/09/2025 **Task:** Monorepo Integration Plan - Task 16 **Status:** \u2705 Complete **Commit:** 24a2713 Successfully removed standalone docker-compose files from apps/mcp and apps/webhook, completing the final cleanup phase of the monorepo integration. 1. **apps/mcp/docker-compose.yml** (42 lines) - Standalone MCP service definition with pulse-resources volume"
+    ]
+  },
+  {
+    "name": "Document .docs/sessions/test-results-2025-11-09.md",
+    "type": "document",
+    "observations": [
+      "Test Results - Monorepo Integration \u2013 Sections: Executive Summary. Key details: **Date:** November 9, 2025 **Time:** 19:01 EST **Task:** Task 14 - Run Isolated App Tests **Plan:** `/compose/pulse/docs/plans/2025-01-08-monorepo-integration.md` --- | App | Status | Tests Passed | Tests Failed | Coverage | Issues | |-----|--------|-------------|-------------|----------|--------| | **MCP** | \u2705 Mostly Passing | 291 | 41 | N/A | Minor: missing function export in `@firecrawl/client`"
+    ]
+  },
+  {
+    "name": "Document .docs/test-infrastructure-status.md",
+    "type": "document",
+    "observations": [
+      "Test Infrastructure Status \u2013 Sections: Status Summary. Key details: **Last Updated:** 2025-11-10 \u274c Root `pnpm test` command exits with code 1 (failures present) \u26a0\ufe0f  MCP tests: 182 passed, 6 failed (module resolution issues) \u274c Webhook tests: 260 errors (PostgreSQL connection failures) \u2705 Web tests: No tests configured (no-op script returns 0) \u2705 Firecrawl client tests: No tests configured (no-op script returns 0)"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/2025-11-10-monorepo-cleanup-session.md",
+    "type": "document",
+    "observations": [
+      "Monorepo Cleanup Session - 2025-11-10 \u2013 Sections: Session Overview, Key Findings, 1. Port Standardization (Tasks 2 & 13). Key details: Executed comprehensive monorepo cleanup plan with 13 of 16 tasks completed (81% completion rate). **Investigation**: Reviewed current port allocation across services - Found scattered ports: 3060, 4300-4305, 52100 - Identified need for sequential high-numbered range **Implementation**: Migrated to 50100-50110 range - Files updated:"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/2025-11-13-0114-webhook-optimization-investigation.md",
+    "type": "document",
+    "observations": [
+      "Webhook Optimization Investigation Session \u2013 Sections: Session Overview, Part 1: Documentation Generation (Initial Investigation), Task: Explore Webhook Server Codebase. Key details: **Date:** 2025-11-13 01:14 AM EST **Duration:** ~2 hours **Focus:** Firecrawl webhook server implementation review and optimization --- User requested investigation of webhook server implementation against Firecrawl documentation, followed by optimization recommendations and comprehensive implementation plan. --- **Method:** Dispatched 6 parallel exploration agents via Task tool"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/2025-11-13-env-consolidation-debug-session.md",
+    "type": "document",
+    "observations": [
+      "Environment Variable Consolidation - Complete Debug Session \u2013 Sections: Session Overview. Key details: **Date:** 2025-11-13 **Duration:** Full session from consolidation to stack validation **Status:** \u2705 All issues resolved, stack operational --- **Goal:** Consolidate duplicate environment variables in Pulse monorepo, then systematically debug the stack to identify and resolve any connection issues. **Phases:** 1. Environment variable consolidation (completed via subagent-driven development)"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/2025-11-13-webhook-optimizations-session.md",
+    "type": "document",
+    "observations": [
+      "Webhook Optimizations Implementation Session \u2013 Sections: Execution Strategy. Key details: **Date:** 2025-11-13 **Duration:** ~30 minutes **Approach:** Test-Driven Development (TDD) with parallel agent execution **Result:** \u2705 All 6 tasks completed successfully --- Used `superpowers:executing-plans` skill to implement the complete optimization plan from [`docs/plans/2025-11-13-webhook-optimizations.md`](../../docs/plans/2025-11-13-webhook-optimizations.md)."
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/2025-11-14-web-containerization-hot-reload-fix.md",
+    "type": "document",
+    "observations": [
+      "Web Containerization Hot Reload Fix - Complete Session \u2013 Sections: Context. Key details: **Date:** 2025-11-14 23:59 **Task:** Fix development hot reload for containerized Next.js web app **Status:** \u2705 Complete - Both dev and production modes working Continued from previous session where web app was containerized but dev hot reload was broken due to: - pnpm not available to non-root users - Volume mount conflicts with node_modules"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/2025-11-15-code-review-implementation-session.md",
+    "type": "document",
+    "observations": [
+      "Code Review Implementation Session - 2025-11-15 \u2013 Sections: Session Overview, Investigation & Root Cause Analysis, Phase 1: Parallel Debugging (6 agents dispatched simultaneously). Key details: **Objective:** Address critical issues from comprehensive code review of webhook content storage **Approach:** Subagent-driven development with code review after each task **Status:** \u2705 Complete - All 6 tasks implemented successfully --- Investigated all issues identified in code review to understand root causes before implementation:"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/changedetection-502-fix.md",
+    "type": "document",
+    "observations": [
+      "changedetection.io 502 Bad Gateway Investigation \u2013 Sections: Summary. Key details: **Date**: 2025-11-13 **Issue**: SWAG reverse proxy returning 502 Bad Gateway for changedetection.tootie.tv **Status**: \u2705 RESOLVED --- The service was running but inaccessible due to a PORT environment variable conflict. Global `PORT=3002` in `.env` caused changedetection.io to start on port 3002 instead of its default 5000, breaking the health check and port mapping."
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/changedetection-implementation-session.md",
+    "type": "document",
+    "observations": [
+      "changedetection.io Implementation Session \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-10 **Method:** Subagent-Driven Development with TDD RED-GREEN-REFACTOR **Plan:** docs/plans/2025-11-10-changedetection-io-integration.md Successfully implemented complete changedetection.io integration using 11 specialized subagents, strict TDD methodology, and the executing-plans skill. All 11 tasks completed with 11 commits, 13 tests, 87% coverage."
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/crawl-tool-actions.md",
+    "type": "document",
+    "observations": [
+      "Crawl Tool Actions Investigation Log (2025-11-12) \u2013 Sections: Context & Goals. Key details: This document captures the full investigation and implementation session for expanding the MCP crawl command surface and the shared Firecrawl client. - **Initial prompt:** Add CLI-style crawl commands (`crawl <url>`, `crawl status <jobId>`, etc.) + Firecrawl SDK support for errors/active crawls. Requirements captured in `docs/plans/2025-11-12-crawl-tool-actions.md`."
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/docker-build-husky-fix.md",
+    "type": "document",
+    "observations": [
+      "Docker Build Fix: Husky Prepare Script Issue \u2013 Sections: Problem, Root Cause Analysis, Key Files Investigated. Key details: Docker build for `firecrawl_mcp` service was failing with: ``` . prepare$ husky . prepare: sh: husky: not found ELIFECYCLE  Command failed. ``` 1. **[package.json:50](../../package.json#L50)** - Root workspace configuration ```json \"prepare\": \"husky\" ``` 2. **[package.json:53-55](../../package.json#L53-L55)** - Husky as dev dependency"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/docker-dockerfile-improvements.md",
+    "type": "document",
+    "observations": [
+      "Docker Configuration and Markdown Linting Improvements \u2013 Sections: Overview, Part 1: Docker Configuration Fixes, Issue 1: Missing Root .dockerignore. Key details: **Date:** 2025-01-10 **Session:** Docker Dockerfile optimization and documentation cleanup Addressed three critical Docker configuration issues and resolved all markdown linting violations across the repository. --- **Problem:** - Complete deletion of `apps/mcp/.dockerignore` left no build context filtering - `node_modules/`, `.git/`, `.env`, and other unnecessary files copied into build context"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/env-consolidation-summary.md",
+    "type": "document",
+    "observations": [
+      "Environment Variables Consolidation - Investigation Summary \u2013 Sections: Objective, Investigation Methodology, 1. Initial Analysis, Duplicate Groups Identified. Key details: **Date:** 2025-11-12 **Branch:** `cleanup/env-duplicates-phase1` **Pull Request:** https://github.com/jmagar/pulse/pull/49 --- Eliminate duplicate environment variables in `.env` to reduce confusion and maintenance burden. --- **File Analyzed:** `.env` (189 lines, 144 variables) **Key Findings:** **Redis URLs (3 duplicates):**"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/env-synchronization.md",
+    "type": "document",
+    "observations": [
+      "Environment Variable Synchronization \u2013 Sections: Investigation Process, 1. Initial Comparison, 2. Missing Variables Identified, In `.env.example` (needed for documentation):. Key details: **Date:** 2025-11-14 **Task:** Synchronize `.env` and `.env.example` files across Pulse monorepo **Branch:** feat/firecrawl-api-pr2381-local-build **Commit:** 3bf5ceea Dispatched explore agent to compare `.env` and `.env.example` files and identify discrepancies. - `NUQ_WORKER_COUNT` - Critical PR #2381 worker configuration variable"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/firecrawl-queue-cleanup-fix.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl Queue Cleanup Script Fix \u2013 Sections: Problem. Key details: **Date:** 2025-11-10 **Issue:** Emergency queue cleanup script didn't actually clear stuck crawl jobs --- The emergency cleanup script at [scripts/reset-firecrawl-queue.sh](../../scripts/reset-firecrawl-queue.sh) only cleared Bull queue keys from Redis, but stuck crawl jobs persisted because they were stored in PostgreSQL."
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/firecrawl-v2-openapi-schema-generation.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl v2 OpenAPI Schema Generation Session \u2013 Sections: Initial Request. Key details: **Date:** 2025-11-15 **Task:** Generate and validate comprehensive OpenAPI schema for Firecrawl v2 API --- User asked about differences between three OpenAPI schemas: - `apps/api/openapi-v0.json` - `apps/api/openapi.json` - `apps/api/v1-openapi.json` **Initial Analysis:** - v0 schema: 33KB, 5 endpoints (legacy) - v1 schemas: 100KB, 18 endpoints (identical, just different version strings)"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/gitignore-dockerignore-cleanup.md",
+    "type": "document",
+    "observations": [
+      ".gitignore and .dockerignore Cleanup Investigation \u2013 Sections: Changes Made, 1. Simplified .gitignore Environment Pattern. Key details: **Date:** 2025-01-10 **Task:** Simplify environment variable patterns and consolidate Docker ignore patterns --- **File:** [/.gitignore](/compose/pulse/.gitignore#L109-L110) **Before:** ```gitignore .env .env.* .env.local .env.dev .env.bak !.env.example ``` **After:** ```gitignore .env* !.env.example ``` **Rationale:** Simpler pattern achieves the same result - ignores all files starting with `.en"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/pdf-scraping-loop-investigation.md",
+    "type": "document",
+    "observations": [
+      "PDF Scraping Loop Investigation \u2013 Sections: Problem Summary. Key details: **Date:** 2025-11-10 **Issue:** Continuous PDF scraping attempts causing infinite loop in Firecrawl crawl job --- Firecrawl crawl job `4347656a-24b8-4161-b861-64d078251833` is stuck in an infinite loop attempting to scrape GitHub URLs with the PDF engine, which continuously fails and retries. **Key Evidence:** - Same URLs scraped 3,884+ times (e.g., `trending?spoken_language_code=hi`)"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/pr-18-20-merge-investigation.md",
+    "type": "document",
+    "observations": [
+      "PR #18 and #20 Merge Investigation \u2013 Sections: Summary, PR Details, PR #18: test: stub external services for webhook integration tests. Key details: **Date:** 2025-11-10 **Branch:** `docs/webhook-flattening-plan` **Commit:** [458248a](458248a) Successfully merged PR #18 (webhook test infrastructure) and PR #20 (web Vitest setup) into the webhook flattening branch, resolving conflicts with Phase 2 refactoring changes. - **Branch:** `codex/add-test-fixtures-for-mocking-redis-and-services`"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/production-env-consolidation.md",
+    "type": "document",
+    "observations": [
+      "Production .env Consolidation Applied \u2013 Sections: Changes Applied to Production `.env`, Variables Removed (6 duplicates):. Key details: **Date:** 2025-11-12 **Status:** \u2705 Complete --- 1. \u2705 `REDIS_RATE_LIMIT_URL` (line 36) \u2192 Use `REDIS_URL` 2. \u2705 `SEARCH_SERVICE_API_SECRET` (line 41) \u2192 Use `WEBHOOK_API_SECRET` 3. \u2705 `WEBHOOK_REDIS_URL` (line 91) \u2192 Use `REDIS_URL` 4. \u2705 `WEBHOOK_CHANGEDETECTION_API_KEY` (line 165) \u2192 Use `CHANGEDETECTION_API_KEY` 5. \u2705 `WEBHOOK_FIRECRAWL_API_KEY` (line 174) \u2192 Use `FIRECRAWL_API_KEY`"
+    ]
+  },
+  {
+    "name": "Document .docs/tmp/query-tool-investigation.md",
+    "type": "document",
+    "observations": [
+      "Query Tool Implementation Session Report \u2013 Sections: 1. Plan Review & Skill Usage. Key details: **Date:** 11/12/2025 **Scope:** Continue executing `docs/plans/2025-11-11-query-tool.md` (Tasks 5\u20139), confirm prior work, and document outcomes. --- - Loaded plan from `docs/plans/2025-11-11-query-tool.md` and followed **superpowers:executing-plans**, **superpowers:brainstorming**, **superpowers:test-driven-development**, **superpowers:verification-before-completion**, and **superpowers:finishing-"
+    ]
+  },
+  {
+    "name": "Document .docs/webhook-troubleshooting.md",
+    "type": "document",
+    "observations": [
+      "Webhook Troubleshooting Guide \u2013 Sections: Overview, Architecture, Services Involved. Key details: This guide helps diagnose and resolve issues with webhook delivery from Firecrawl to the Webhook Bridge service. ``` Firecrawl API \u2192 Docker Network \u2192 Webhook Bridge (API + Worker Thread) \u2192 Redis Queue \u2192 Qdrant/BM25 ``` - **Firecrawl** (`firecrawl`): Web scraper that sends webhooks - **Webhook Bridge** (`pulse_webhook`): FastAPI service with embedded worker thread"
+    ]
+  },
+  {
+    "name": "Document .docs/webhook-worker-debug-2025-11-11.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker Debug Report \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-11 **Time:** 14:32:37 UTC **Service:** pulse_webhook The webhook worker has **three critical failures** preventing it from processing jobs: 1. **Worker Thread Crash** (CRITICAL): RQ worker cannot install signal handlers in a thread 2. **Qdrant Connection Failure**: Vector database service not running 3. **TEI 502 Bad Gateway**: Text Embeddings Inference service not accessible"
+    ]
+  },
+  {
+    "name": "Document .docs/webhook-worker-fix-summary-2025-11-11.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker Fix Summary \u2013 Sections: Issues Fixed, 1. \u2705 Worker Thread Signal Handler Crash. Key details: **Date:** 2025-11-11 **Time:** 14:50 UTC **Status:** \u2705 ALL ISSUES RESOLVED **Problem:** RQ worker tried to install signal handlers in a background thread, causing `ValueError: signal only works in main thread of the main interpreter` **Solution:** Monkeypatched the `_install_signal_handlers` method to be a no-op before calling `worker.work()`"
+    ]
+  },
+  {
+    "name": "Document .docs/webhook-worker-performance-optimization.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker Performance Optimization \u2013 Sections: Summary, Problem. Key details: Implemented service pool pattern to dramatically improve webhook worker performance by eliminating repeated service initialization overhead. The webhook worker was creating fresh service instances for every indexing job: ```python text_chunker = TextChunker(...)          # Loads tokenizer from disk (1-5s) embedding_service = EmbeddingService(...) # Creates HTTP client (0.1-0.5s)"
+    ]
+  },
+  {
+    "name": "Document .github/copilot-instructions.md",
+    "type": "document",
+    "observations": [
+      "Copilot Instructions for Pulse \u2013 Sections: Repository Overview. Key details: Pulse is a **multi-language monorepo** combining web scraping, semantic search, and MCP capabilities: - **Firecrawl API**: Web scraping (Docker image, source not in repo) - **MCP Server**: Model Context Protocol server (Node.js/TypeScript) - **Webhook Bridge**: Semantic search with vector/BM25 indexing (Python 3.12+/FastAPI)"
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      ".venv/lib/python3.12/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md \u2013 Copyright \u00a9 2020, [Encode OSS Ltd](https://www.encode.io/). All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/httpx-0.28.1.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      ".venv/lib/python3.12/site-packages/httpx-0.28.1.dist-info/licenses/LICENSE.md \u2013 Copyright \u00a9 2019, [Encode OSS Ltd](https://www.encode.io/). All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/huggingface_hub/templates/datasetcard_template.md",
+    "type": "document",
+    "observations": [
+      "For reference on dataset card metadata, see the spec: https://github.com/huggingface/hub-docs/blob/main/datasetcard.md?plain=1 \u2013 Sections: Dataset Details, Dataset Description. Key details: --- {{ card_data }} --- <!-- Provide a quick summary of the dataset. --> {{ dataset_summary | default(\"\", true) }} <!-- Provide a longer summary of what this dataset is. --> {{ dataset_description | default(\"\", true) }} - **Curated by:** {{ curators | default(\"[More Information Needed]\", true)}} - **Funded by [optional]:** {{ funded_by | default(\"[More Information Needed]\", true)}}"
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/huggingface_hub/templates/modelcard_template.md",
+    "type": "document",
+    "observations": [
+      "For reference on model card metadata, see the spec: https://github.com/huggingface/hub-docs/blob/main/modelcard.md?plain=1 \u2013 Sections: Model Details, Model Description. Key details: --- {{ card_data }} --- <!-- Provide a quick summary of what the model is/does. --> {{ model_summary | default(\"\", true) }} <!-- Provide a longer summary of what this model is. --> {{ model_description | default(\"\", true) }} - **Developed by:** {{ developers | default(\"[More Information Needed]\", true)}} - **Funded by [optional]:** {{ funded_by | default(\"[More Information Needed]\", true)}}"
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/idna-3.11.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      ".venv/lib/python3.12/site-packages/idna-3.11.dist-info/licenses/LICENSE.md \u2013 BSD 3-Clause License Copyright (c) 2013-2025, Kim Davies and contributors. All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/numpy/random/LICENSE.md",
+    "type": "document",
+    "observations": [
+      "NCSA Open Source License \u2013 **This software is dual-licensed under the The University of Illinois/NCSA Open Source License (NCSA) and The 3-Clause BSD License** **Copyright (c) 2019 Kevin Sheppard. All rights reserved.** Developed by: Kevin Sheppard (<kevin.sheppard@economics.ox.ac.uk>, <kevin.k.sheppard@gmail.com>) [http://www.kevinsheppard.com](http://www.kevinsheppard.com)"
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/starlette-0.49.3.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      ".venv/lib/python3.12/site-packages/starlette-0.49.3.dist-info/licenses/LICENSE.md \u2013 Copyright \u00a9 2018, [Encode OSS Ltd](https://www.encode.io/). All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/torchgen/packaged/autograd/README.md",
+    "type": "document",
+    "observations": [
+      ".venv/lib/python3.12/site-packages/torchgen/packaged/autograd/README.md \u2013 If you add a file to this directory, you **MUST** update `torch/CMakeLists.txt` and add the file as a dependency to the `add_custom_command` call."
+    ]
+  },
+  {
+    "name": "Document .venv/lib/python3.12/site-packages/uvicorn-0.38.0.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      ".venv/lib/python3.12/site-packages/uvicorn-0.38.0.dist-info/licenses/LICENSE.md \u2013 Copyright \u00a9 2017-present, [Encode OSS Ltd](https://www.encode.io/). All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document AGENTS.md",
+    "type": "document",
+    "observations": [
+      "Claude Assistant Memory - Pulse Project \u2013 Sections: Monorepo Structure, Apps & Packages. Key details: Quick reference for Claude Code assistants working on the Pulse monorepo. Pulse is a **multi-language monorepo** combining Firecrawl API, MCP server, webhook bridge, and web UI. **Node.js (pnpm workspace):** - `apps/mcp` - Model Context Protocol server (consolidated single package) - `apps/web` - Next.js web UI (containerized with hot reload)"
+    ]
+  },
+  {
+    "name": "Document apps/api/.docs/v2-schema-testing-guide.md",
+    "type": "document",
+    "observations": [
+      "Testing the Firecrawl v2 OpenAPI Schema \u2013 Sections: \u2705 Validation Results, 1. Swagger CLI Validation, 2. Redocly Linting, 3. Bundle Test, 4. Coverage Validation. Key details: ```bash swagger-cli validate openapi-v2.json ``` **Result:** \u2705 `openapi-v2.json is valid` ```bash redocly lint openapi-v2.json ``` **Result:** \u2705 Valid with 19 style warnings (non-blocking) ```bash redocly bundle openapi-v2.json -o openapi-v2-bundled.json ``` **Result:** \u2705 All references resolved successfully ```bash node /tmp/test_v2_schema.js"
+    ]
+  },
+  {
+    "name": "Document apps/api/.docs/v2-schema-validation-report.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl API v2 OpenAPI Schema Validation Report \u2013 Sections: Validation Results, Swagger CLI, Redocly CLI, Bundle Test. Key details: **Generated:** 2025-11-15 **Schema File:** `apps/api/openapi-v2.json` **Status:** \u2705 **VALID** ``` \u2705 /compose/pulse/apps/api/openapi-v2.json is valid ``` ``` \u2705 Your API description is valid. \ud83c\udf89 \u26a0\ufe0f  19 warnings (style/best-practice suggestions) ``` ``` \u2705 All references resolved successfully \ud83d\udce6 Created openapi-v2-bundled.json (30ms)"
+    ]
+  },
+  {
+    "name": "Document apps/api/CLAUDE.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl API - Pulse Integration \u2013 Sections: Overview, PR #2381: Scrape Reliability & Cancellation. Key details: Local build of Firecrawl API with PR #2381 patches applied for production stability. **Applied commits:** - `7c697331` - Initial implementation - `b613ae9d` - Review fixes (race conditions, test assertions) **Fixes:** 1. **Infinite Retry Loop Prevention** - `ScrapeRetryTracker` with global cap (`SCRAPE_MAX_ATTEMPTS=6`) - Per-error type limits (PDF, document, feature toggles)"
+    ]
+  },
+  {
+    "name": "Document apps/api/native/README.md",
+    "type": "document",
+    "observations": [
+      "`@napi-rs/package-template` \u2013 ![https://github.com/napi-rs/package-template/actions](https://github.com/napi-rs/package-template/workflows/CI/badge.svg) > Template project for writing node packages with napi-rs. 1. Click **Use this template**. 2. **Clone** your project. 3. Run `yarn install` to install dependencies. 4. Run `yarn napi rename -n [@your-scope/package-name] -b [binary-name]` command under the project folder to ren"
+    ]
+  },
+  {
+    "name": "Document apps/api/sharedLibs/go-html-to-md/README.md",
+    "type": "document",
+    "observations": [
+      "apps/api/sharedLibs/go-html-to-md/README.md \u2013 To build the `go-html-to-md` library, run the following command: ```bash cd apps/api/sharedLibs/go-html-to-md go build -o <OUTPUT> -buildmode=c-shared html-to-markdown.go ``` Replace `<OUTPUT>` with the correct filename for your OS: - Windows \u2192 `html-to-markdown.dll` - Linux \u2192 `libhtml-to-markdown.so` - macOS \u2192 `libhtml-to-markdown.dylib`"
+    ]
+  },
+  {
+    "name": "Document apps/api/src/scraper/WebScraper/utils/ENGINE_FORCING.md",
+    "type": "document",
+    "observations": [
+      "Engine Forcing \u2013 Sections: Configuration. Key details: This feature allows you to force specific scraping engines for certain domains based on URL patterns. This is useful when you know that certain websites work better with specific engines. The engine forcing is configured via the `FORCED_ENGINE_DOMAINS` environment variable. This should be a JSON object mapping domain patterns to engines."
+    ]
+  },
+  {
+    "name": "Document apps/api/src/scraper/scrapeURL/README.md",
+    "type": "document",
+    "observations": [
+      "`scrapeURL` \u2013 Sections: Signal flow. Key details: New URL scraper for Firecrawl ```mermaid flowchart TD; scrapeURL-.->buildFallbackList; buildFallbackList-.->scrapeURLWithEngine; scrapeURLWithEngine-.->parseMarkdown; parseMarkdown-.->wasScrapeSuccessful{{Was scrape successful?}}; wasScrapeSuccessful-.\"No\".->areEnginesLeft{{Are there engines left to try?}}; areEnginesLeft-.\"Yes, try next engine\".->scrapeURLWithEngine;"
+    ]
+  },
+  {
+    "name": "Document apps/mcp/CLAUDE.md",
+    "type": "document",
+    "observations": [
+      "MCP Server - Claude Memory \u2013 Sections: Architecture Overview. Key details: Consolidated MCP server for Firecrawl integration. Single package architecture with HTTP streaming transport. **Entry Point**: `index.ts` - Starts Express server with health checks **MCP Factory**: `server.ts` - Creates MCP server instance with tool/resource registration **HTTP Transport**: `server/http.ts` - Express app with streamable HTTP transport"
+    ]
+  },
+  {
+    "name": "Document apps/mcp/README.md",
+    "type": "document",
+    "observations": [
+      "MCP Server \u2013 Sections: Architecture. Key details: Model Context Protocol server for Firecrawl integration. The MCP server is a single consolidated package (previously split across local/shared/remote). **Directory Structure:** ``` apps/mcp/ \u251c\u2500\u2500 index.ts         # Entry point \u251c\u2500\u2500 mcp-server.ts    # MCP protocol handler \u251c\u2500\u2500 server.ts        # HTTP server \u251c\u2500\u2500 server/          # HTTP routes and middleware"
+    ]
+  },
+  {
+    "name": "Document apps/mcp/monitoring/CLAUDE.md",
+    "type": "document",
+    "observations": [
+      "Monitoring Module \u2013 Sections: Architecture. Key details: Performance metrics collection and export for the MCP server. Three-tier design with singleton pattern: 1. **Types** (`types.ts`) - Interface definitions for metrics structure 2. **Collector** (`metrics-collector.ts`) - Core metrics recording with percentile calculation 3. **Exporters** (`exporters/`) - Format-specific output (console, JSON)"
+    ]
+  },
+  {
+    "name": "Document apps/mcp/tools/CLAUDE.md",
+    "type": "document",
+    "observations": [
+      "Tools - MCP Tool Implementations \u2013 Sections: Architecture Pattern. Key details: MCP tool definitions for Pulse server with Firecrawl integration. All tools follow a consistent 3-file pattern: 1. **index.ts**: Tool factory that creates MCP `Tool` object with name, description, schema, and handler 2. **schema.ts**: Zod schema for validation + JSON schema builder for MCP protocol 3. **pipeline.ts**: Business logic that orchestrates client calls"
+    ]
+  },
+  {
+    "name": "Document apps/web/README.md",
+    "type": "document",
+    "observations": [
+      "Pulse Web (NotebookLM UI Clone) \u2013 Sections: Status, Features. Key details: _Last updated: November 14, 2025_ \u2705 **Complete** - Mobile-first, component-driven NotebookLM interface built with TDD. All core UI components implemented with comprehensive test coverage (47 passing tests). - **Mobile-First Design**: Optimized for 320px+ viewports - **Responsive Layout**: Vertical stack (mobile) \u2192 Three-panel resizable (desktop)"
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      "apps/webhook/.venv/lib/python3.12/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md \u2013 Copyright \u00a9 2020, [Encode OSS Ltd](https://www.encode.io/). All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/httpx-0.28.1.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      "apps/webhook/.venv/lib/python3.12/site-packages/httpx-0.28.1.dist-info/licenses/LICENSE.md \u2013 Copyright \u00a9 2019, [Encode OSS Ltd](https://www.encode.io/). All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/huggingface_hub/templates/datasetcard_template.md",
+    "type": "document",
+    "observations": [
+      "For reference on dataset card metadata, see the spec: https://github.com/huggingface/hub-docs/blob/main/datasetcard.md?plain=1 \u2013 Sections: Dataset Details, Dataset Description. Key details: --- {{ card_data }} --- <!-- Provide a quick summary of the dataset. --> {{ dataset_summary | default(\"\", true) }} <!-- Provide a longer summary of what this dataset is. --> {{ dataset_description | default(\"\", true) }} - **Curated by:** {{ curators | default(\"[More Information Needed]\", true)}} - **Funded by [optional]:** {{ funded_by | default(\"[More Information Needed]\", true)}}"
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/huggingface_hub/templates/modelcard_template.md",
+    "type": "document",
+    "observations": [
+      "For reference on model card metadata, see the spec: https://github.com/huggingface/hub-docs/blob/main/modelcard.md?plain=1 \u2013 Sections: Model Details, Model Description. Key details: --- {{ card_data }} --- <!-- Provide a quick summary of what the model is/does. --> {{ model_summary | default(\"\", true) }} <!-- Provide a longer summary of what this model is. --> {{ model_description | default(\"\", true) }} - **Developed by:** {{ developers | default(\"[More Information Needed]\", true)}} - **Funded by [optional]:** {{ funded_by | default(\"[More Information Needed]\", true)}}"
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/idna-3.11.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      "apps/webhook/.venv/lib/python3.12/site-packages/idna-3.11.dist-info/licenses/LICENSE.md \u2013 BSD 3-Clause License Copyright (c) 2013-2025, Kim Davies and contributors. All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/numpy/random/LICENSE.md",
+    "type": "document",
+    "observations": [
+      "NCSA Open Source License \u2013 **This software is dual-licensed under the The University of Illinois/NCSA Open Source License (NCSA) and The 3-Clause BSD License** **Copyright (c) 2019 Kevin Sheppard. All rights reserved.** Developed by: Kevin Sheppard (<kevin.sheppard@economics.ox.ac.uk>, <kevin.k.sheppard@gmail.com>) [http://www.kevinsheppard.com](http://www.kevinsheppard.com)"
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/soupsieve-2.8.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      "apps/webhook/.venv/lib/python3.12/site-packages/soupsieve-2.8.dist-info/licenses/LICENSE.md \u2013 MIT License Copyright (c) 2018 - 2025 Isaac Muse <isaacmuse@gmail.com> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell"
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/starlette-0.49.3.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      "apps/webhook/.venv/lib/python3.12/site-packages/starlette-0.49.3.dist-info/licenses/LICENSE.md \u2013 Copyright \u00a9 2018, [Encode OSS Ltd](https://www.encode.io/). All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/torchgen/packaged/autograd/README.md",
+    "type": "document",
+    "observations": [
+      "apps/webhook/.venv/lib/python3.12/site-packages/torchgen/packaged/autograd/README.md \u2013 If you add a file to this directory, you **MUST** update `torch/CMakeLists.txt` and add the file as a dependency to the `add_custom_command` call."
+    ]
+  },
+  {
+    "name": "Document apps/webhook/.venv/lib/python3.12/site-packages/uvicorn-0.38.0.dist-info/licenses/LICENSE.md",
+    "type": "document",
+    "observations": [
+      "apps/webhook/.venv/lib/python3.12/site-packages/uvicorn-0.38.0.dist-info/licenses/LICENSE.md \u2013 Copyright \u00a9 2017-present, [Encode OSS Ltd](https://www.encode.io/). All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+    ]
+  },
+  {
+    "name": "Document apps/webhook/IMPLEMENTATION_NOTES.md",
+    "type": "document",
+    "observations": [
+      "Content Processor Service Implementation Notes \u2013 Sections: Task 8: Implement Webhook Content Processing Service, What Was Implemented, 1. Service Implementation (`services/content_processor.py`), `clean_content(raw_html: str, url: str) -> str`. Key details: **Status**: \u2705 Implementation Complete (Pending Integration Testing) Created `ContentProcessorService` with two main methods: Converts HTML to semantic Markdown using: - **BeautifulSoup4** for HTML parsing and cleaning - **html2text** for HTML-to-Markdown conversion - Removes: scripts, styles, ads, popups, cookie banners"
+    ]
+  },
+  {
+    "name": "Document apps/webhook/README.md",
+    "type": "document",
+    "observations": [
+      "Webhook Search Bridge \u2013 Sections: Overview. Key details: A production-ready FastAPI service providing hybrid search (vector + keyword) capabilities for Firecrawl-crawled web content. The webhook service indexes scraped web content and provides semantic + keyword search with intelligent result fusion. It integrates with Firecrawl API for web scraping, changedetection.io for change monitoring, and provides comprehensive metrics and monitoring."
+    ]
+  },
+  {
+    "name": "Document apps/webhook/WORKER_README.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker - Background Job Processing \u2013 Sections: Overview. Key details: Complete guide to the webhook service's background worker system for asynchronous document indexing and URL rescraping. The webhook worker processes background jobs using **RQ (Redis Queue)**, a Python job queue framework built on Redis. Jobs are enqueued by API endpoints and processed asynchronously by worker processes."
+    ]
+  },
+  {
+    "name": "Document apps/webhook/docs/BATCH_WORKER.md",
+    "type": "document",
+    "observations": [
+      "Batch Worker Architecture \u2013 Sections: Overview. Key details: Comprehensive guide to the webhook service's batch processing system for concurrent document indexing using asyncio.gather(). The batch worker processes multiple documents concurrently using Python's asyncio, maximizing throughput for I/O-bound operations like embedding generation and vector indexing. Unlike sequential processing, batch workers leverage concurrent execution to reduce total process"
+    ]
+  },
+  {
+    "name": "Document docs/AGENTS.md",
+    "type": "document",
+    "observations": [
+      "docs/ Directory \u2013 Sections: Structure. Key details: **Purpose:** Public-facing project documentation for users, contributors, and external stakeholders. **Current directories/files:** ``` docs/ \u251c\u2500\u2500 mcp/                      # MCP tool documentation (scrape, crawl, map, search, query) \u251c\u2500\u2500 plans/                    # Implementation plans and roadmaps \u251c\u2500\u2500 services/                 # Service guides (CHANGEDETECTION, FIRECRAWL, PORTS, INDEX, etc.)"
+    ]
+  },
+  {
+    "name": "Document docs/CLAUDE.md",
+    "type": "document",
+    "observations": [
+      "docs/ Directory \u2013 Sections: Structure. Key details: **Purpose:** Public-facing project documentation for users, contributors, and external stakeholders. **Current directories/files:** ``` docs/ \u251c\u2500\u2500 mcp/                      # MCP tool documentation (scrape, crawl, map, search, query) \u251c\u2500\u2500 plans/                    # Implementation plans and roadmaps \u251c\u2500\u2500 services/                 # Service guides (CHANGEDETECTION, FIRECRAWL, PORTS, INDEX, etc.)"
+    ]
+  },
+  {
+    "name": "Document docs/OAUTH.md",
+    "type": "document",
+    "observations": [
+      "Pulse MCP OAuth Implementation \u2013 Sections: 1. Architecture Overview. Key details: **Last Updated:** 04:10 PM EST | 11/12/2025 **Scope:** `apps/mcp` Google OAuth 2.1 user authentication --- | Layer | Files | Purpose | |-------|-------|---------| | Session management | `server/middleware/session.ts` | Redis-backed `express-session`, secure cookies | | OAuth client | `server/oauth/google-client.ts` | PKCE auth URL, code exchange, refresh/revoke, ID token verify |"
+    ]
+  },
+  {
+    "name": "Document docs/mcp/CRAWL.md",
+    "type": "document",
+    "observations": [
+      "Crawl Tool Documentation \u2013 Sections: Overview. Key details: > Updated: 03:30 PM | 11/12/2025 The MCP **crawl** tool orchestrates Firecrawl-powered site crawls with a structured command set. It wraps the shared `@firecrawl/client` package so MCP clients can start jobs, monitor progress, cancel work, inspect errors, and list active crawls from a single interface. | Attribute | Value |"
+    ]
+  },
+  {
+    "name": "Document docs/mcp/INDEX.md",
+    "type": "document",
+    "observations": [
+      "MCP Tools Index \u2013 > Updated: 03:35 PM | 11/12/2025 | Tool | Purpose | Key Capabilities | Documentation | | --- | --- | --- | --- | | `scrape` | Single-page scraping + Firecrawl batch jobs | Cache-aware single fetches, batch start/status/cancel/errors, resource handling modes | [SCRAPE.md](./SCRAPE.md) | | `crawl` | Site-wide discovery via Firecrawl crawl API | Start/status/cancel/errors/list commands, prompt-driven"
+    ]
+  },
+  {
+    "name": "Document docs/mcp/MAP.md",
+    "type": "document",
+    "observations": [
+      "Map Tool Documentation \u2013 Sections: Overview. Key details: > Updated: 03:25 PM | 11/12/2025 The MCP **map** tool enumerates URLs under a given domain using Firecrawl\u2019s discovery pipeline. It understands sitemaps, on-site navigation, and optional search hints to build a structured list of links. Results can be returned inline, saved as embedded MCP resources, or stored as resource links for token-efficient workflows."
+    ]
+  },
+  {
+    "name": "Document docs/mcp/PROFILE.md",
+    "type": "document",
+    "observations": [
+      "Profile Crawl Tool Documentation \u2013 Sections: Overview. Key details: > Updated: 00:53 AM | 11/14/2025 The MCP **profile_crawl** tool provides comprehensive performance profiling and debugging for Firecrawl crawl jobs by querying the webhook service's lifecycle metrics API. It delivers plain-text diagnostic reports with timing breakdowns, error analysis, and actionable optimization insights\u2014ideal for investigating bottlenecks, monitoring progress, or troubleshooting"
+    ]
+  },
+  {
+    "name": "Document docs/mcp/QUERY.md",
+    "type": "document",
+    "observations": [
+      "Query Tool Documentation \u2013 Sections: Overview. Key details: > Updated: 07:30 AM | 11/12/2025 The MCP **query** tool lets Claude (or any MCP-compatible client) query the webhook service\u2019s hybrid (vector + BM25) index of Firecrawl documentation. Requests go to the webhook `/api/search` endpoint with Bearer auth; responses are returned as a concise plain-text summary listing the top five hits (title, URL, snippet, metadata) plus pagination guidance for the re"
+    ]
+  },
+  {
+    "name": "Document docs/mcp/RESOURCES.md",
+    "type": "document",
+    "observations": [
+      "MCP Resource Storage \u2013 Sections: Overview. Key details: > Updated: 03:40 PM | 11/12/2025 MCP resources are the persisted outputs of the **scrape** tool. Every scrape request can cache up to three variants of the same URL\u2014`raw` HTML, `cleaned` markdown, and optional `extracted` content\u2014inside a configurable storage backend. These cached artifacts serve two purposes: 1. **Instant reuse:** Subsequent scrapes run `checkCache()` before touching the network,"
+    ]
+  },
+  {
+    "name": "Document docs/mcp/SCRAPE.md",
+    "type": "document",
+    "observations": [
+      "Scrape Tool Documentation \u2013 Sections: Overview. Key details: > Updated: 03:30 PM | 11/12/2025 The MCP **scrape** tool handles single-page extractions (with caching) and Firecrawl-powered batch scraping when you pass multiple URLs or batch commands. It shares the crawl tool\u2019s command structure so conversational prompts like \u201cscrape status \u2026\u201d or \u201cscrape cancel \u2026\u201d just work. | Attribute | Value |"
+    ]
+  },
+  {
+    "name": "Document docs/mcp/SEARCH.md",
+    "type": "document",
+    "observations": [
+      "Search Tool Documentation \u2013 Sections: Overview. Key details: > Updated: 03:25 PM | 11/12/2025 The MCP **search** tool issues Firecrawl\u2019s federated search requests across web, images, and news endpoints (plus optional category filters like GitHub, research papers, and PDFs). Results can optionally trigger scraping of landing pages with ad blocking and main-content extraction, returning structured JSON resources for downstream processing."
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-complete-firecrawl-persistence/VALIDATION_SUMMARY.md",
+    "type": "document",
+    "observations": [
+      "Integration Validation Summary \u2013 Sections: Critical Findings, \ud83d\udd34 BLOCKING ISSUE: CrawlSession Naming Conflict. Key details: **Date:** 2025-01-15 **Validator:** Claude Code (Senior Software Architect) **Task:** Validate proposed Firecrawl content persistence integration points **Result:** \u2705 **APPROVED WITH MODIFICATIONS** --- **Problem:** Code uses `crawl_id` variable but database model defines `job_id` field **Location:** `/compose/pulse/apps/webhook/services/webhook_handlers.py:240-303`"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-complete-firecrawl-persistence/integration-validation.md",
+    "type": "document",
+    "observations": [
+      "Integration Point Validation Report \u2013 Sections: Executive Summary. Key details: **Created:** 2025-01-15 **Task:** Validate proposed integration points for Firecrawl content persistence **Status:** Complete --- **VALIDATION RESULT: \u2705 APPROVED WITH MODIFICATIONS** The proposed integration points are **viable** with the following critical findings: 1. \u2705 **Document queuing exists** - `queue.enqueue()` called in webhook handler"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-graphrag-integration.md",
+    "type": "document",
+    "observations": [
+      "GraphRAG Integration into Pulse Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Integrate GraphRAG's AI backend capabilities (API routes, state management, UI components) into Pulse's clean, production-ready foundation while preserving Pulse's superior code quality practices (Vitest, Prettier, Docker, TDD)."
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-notebooklm-ui-refinements.md",
+    "type": "document",
+    "observations": [
+      "NotebookLM UI Refinements Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Complete the NotebookLM UI clone by implementing missing features and refinements based on the reference screenshots. **Context:** The basic three-panel layout exists, but needs significant refinements to match the reference design:"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-remove-redundant-content-processing-TDD.md",
+    "type": "document",
+    "observations": [
+      "Remove Redundant Content Processing - TDD Implementation Plan \u2013 > **SUPERSEDES:** [2025-01-15-remove-redundant-content-processing.md](./2025-01-15-remove-redundant-content-processing.md) > **VALIDATION:** [2025-01-15-remove-redundant-content-processing-VALIDATION.md](./2025-01-15-remove-redundant-content-processing-VALIDATION.md) **Goal:** Remove redundant HTML cleaning and LLM extraction code using **strict TDD** (RED-GREEN-REFACTOR)."
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-remove-redundant-content-processing-VALIDATION.md",
+    "type": "document",
+    "observations": [
+      "Plan Validation: Remove Redundant Content Processing \u2013 Sections: Executive Summary, Severity Breakdown. Key details: **Validation Date:** 2025-01-15 **Plan:** [2025-01-15-remove-redundant-content-processing.md](./2025-01-15-remove-redundant-content-processing.md) **Status:** \u26a0\ufe0f **CRITICAL ISSUES FOUND - PLAN WILL FAIL** --- **VERDICT: Plan has 12 critical issues that will cause failures if executed as-written.** - \ud83d\udd34 **Critical (6)**: Will cause immediate failures"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-remove-redundant-content-processing.md",
+    "type": "document",
+    "observations": [
+      "Remove Redundant Content Processing Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Remove redundant HTML cleaning and LLM extraction code since Firecrawl natively handles both via `/v2/scrape` (markdown) and `/v2/extract` (structured JSON) endpoints. **Architecture:** Delete ContentProcessorService entirely. Update webhook scrape endpoint to use Firecrawl's markdo"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-remove-redundant-html-cleaning.md",
+    "type": "document",
+    "observations": [
+      "Remove Redundant HTML Cleaning Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Remove redundant HTML cleaning logic since Firecrawl already provides clean markdown output. **Architecture:** Simplify ContentProcessorService to only handle LLM extraction. Remove BeautifulSoup4 and html2text processing since Firecrawl's /scrape endpoint already returns cleaned ma"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-01-15-unified-redis-postgres-storage.md",
+    "type": "document",
+    "observations": [
+      "Unified Redis+PostgreSQL Storage Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Status:** \u2705 100% COMPLETE (Updated: 2025-11-15) **Note on Commit SHAs:** Only Tasks 1.1 and 1.2 have explicit commit SHAs (4f5e29c6, eb444a95). All other tasks (1.3-3.10) were implemented as part of the unified storage implementation. To find specific commits for tasks, use: `git log --grep"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-11-15-fix-unified-storage-issues.md",
+    "type": "document",
+    "observations": [
+      "Fix Unified Storage Issues Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Fix critical authentication bug and documentation issues in the unified Redis+PostgreSQL storage implementation **Architecture:** This plan addresses 3 issues identified in comprehensive validation: (1) CRITICAL authentication header mismatch preventing production use, (2) IMPORTANT"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-11-15-mcp-refactoring-complete-cleanup.md",
+    "type": "document",
+    "observations": [
+      "MCP Server Refactoring - Complete Cleanup Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Complete MCP server refactoring to thin wrappers, fix security issues, migrate scrape business logic to webhook service, and clean up dead code. **Architecture:** Migrate scrape tool's multi-stage processing pipeline (caching, cleaning, extraction, storage) to webhook service endpoi"
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-11-15-webhook-scrape-api-spec.md",
+    "type": "document",
+    "observations": [
+      "Webhook Scrape API Specification \u2013 Sections: Overview. Key details: **Version:** 1.0.0 **Date:** 2025-11-15 **Author:** Claude Code **Status:** Design Phase This document specifies the Webhook Scrape API endpoint that will replace the MCP server's direct scraping logic. The webhook service will provide identical functionality to the MCP scrape tool, enabling the MCP server to become a thin wrapper."
+    ]
+  },
+  {
+    "name": "Document docs/plans/2025-11-16-refactor-crawl-tool.md",
+    "type": "document",
+    "observations": [
+      "Refactor Crawl Tool To Use Webhook Bridge Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Make the MCP `crawl` tool use the same webhook-proxied Firecrawl client as the other tools so no code path talks to `FirecrawlCrawlClient` directly. **Architecture:** Treat `WebhookBridgeClient` (already injected via `registerTools`) as the single Firecrawl facade. Introduce a `Craw"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-01-14-containerize-web-app.md",
+    "type": "document",
+    "observations": [
+      "Containerize Web App Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Containerize the Next.js web app with hot reload for development, following monorepo patterns. **Architecture:** Multi-stage Docker build with Node.js 20 Alpine, pnpm workspace support, and volume mounts for hot reload without rebuild cycles."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-01-14-map-search-extract-webhook-integration.md",
+    "type": "document",
+    "observations": [
+      "Map/Search/Extract Tools Webhook Integration Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Refactor map and search tools to use WebhookBridgeClient (like scrape/crawl tools) and create new extract tool for structured data extraction. **Architecture:** Replace direct SDK client instantiation with dependency injection pattern. Map, search, and extract tools will receive cli"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-01-14-notebooklm-ui-implementation.md",
+    "type": "document",
+    "observations": [
+      "NotebookLM UI Clone Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Clone the MOCK_UI.ts NotebookLM-style interface into the apps/web Next.js application with full shadcn/ui components and responsive layout. **Architecture:** Convert the standalone React component into a Next.js app with proper routing, install all required shadcn/ui components, con"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-01-14-notebooklm-ui-mobile-first.md",
+    "type": "document",
+    "observations": [
+      "NotebookLM UI Clone - Mobile-First Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Status:** \u23f8\ufe0f PAUSED at Task 25 (context limit reached) **Progress:** 24/34 tasks complete (71%) **Session Log:** See `.docs/sessions/2025-01-14-notebooklm-ui-progress.md` for detailed progress **Last Commit:** `04db7c6c` - docs: capture NotebookLM UI implementation progress"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-01-15-complete-firecrawl-persistence.md",
+    "type": "document",
+    "observations": [
+      "Complete Firecrawl Content Persistence \u2013 Sections: Validation Summary, Critical Fixes Required (Phase 0 - 30 min). Key details: **Created:** 2025-01-15 **Updated:** 2025-01-15 (Post-Validation) **Status:** Ready for Implementation **Priority:** Critical **Complexity:** Medium-High \u2705 **All critical assumptions validated by 4 parallel research agents** 1. **\ud83d\udd34 BLOCKING: CrawlSession Field Naming Bug** - Code references `crawl_id` but model defines `job_id`"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-01-15-postgres-resource-storage.md",
+    "type": "document",
+    "observations": [
+      "PostgreSQL Resource Storage Migration Plan \u2013 Sections: Executive Summary, Research Synthesis, Current Architecture (Filesystem/Memory). Key details: **Created:** 2025-01-15 **Status:** Planning **Priority:** High **Complexity:** Medium Migrate MCP resource storage from filesystem/memory backends to PostgreSQL-backed storage, eliminating data duplication and creating a single source of truth for scraped content. --- **Storage Implementation:** - Dual-backend system: `memory` (default, ephemeral) and `filesystem` (persistent YAML+content)"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-01-15-validation-summary.md",
+    "type": "document",
+    "observations": [
+      "Plan Validation Summary \u2013 Sections: Executive Summary. Key details: **Date:** 2025-01-15 **Plan:** Complete Firecrawl Content Persistence **Validators:** 4 Parallel Research Agents **Status:** \u2705 VALIDATED - Ready for Implementation --- All critical assumptions in the [Complete Firecrawl Content Persistence](2025-01-15-complete-firecrawl-persistence.md) plan have been validated against the actual codebase by 4 specialized research agents running in parallel."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-10-auto-watch-creation.md",
+    "type": "document",
+    "observations": [
+      "Automatic Watch Creation for Scraped URLs \u2013 > **Status:** \u2705 COMPLETED - All tasks implemented and tested on 2025-11-10 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Automatically create changedetection.io watches for all URLs scraped/crawled by Firecrawl, enabling bidirectional monitoring. **Architecture:** Hook into Firecrawl webhook handler (`apps/webhook`) to call cha"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-10-changedetection-io-integration.md",
+    "type": "document",
+    "observations": [
+      "changedetection.io Integration Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Integrate changedetection.io for automated website change detection with webhook-triggered Firecrawl rescraping and search indexing. **Architecture:** Deploy changedetection.io as standalone Docker service sharing Playwright browser with Firecrawl. When changes detected, webhook not"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-10-consolidate-mcp-server.md",
+    "type": "document",
+    "observations": [
+      "MCP Server Consolidation Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Eliminate the symlink architecture hack and consolidate three packages (local, shared, remote) into a single clean MCP server package, fixing the Docker restart issue. **Context:** The `local` package is being removed (not publishing to npm). This consolidation is purely for Docker "
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-10-fix-monorepo-critical-issues.md",
+    "type": "document",
+    "observations": [
+      "Fix Monorepo Critical Issues Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Fix all critical and high-priority issues discovered in the pnpm workspace migration, including broken build scripts, missing security configuration, and port inconsistencies. **Architecture:** This plan addresses 8 distinct issues across build scripts, Docker configuration, test fi"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-10-fix-test-infrastructure.md",
+    "type": "document",
+    "observations": [
+      "Test Infrastructure Fixes Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Fix broken test infrastructure across the monorepo to enable `pnpm test` to run successfully in CI/CD. **Architecture:** - Fix webhook tests to use PostgreSQL test database instead of SQLite - Add no-op test scripts to apps/web and packages/firecrawl-client to unblock root test comm"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-10-webhook-flattening-plan.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl Webhook Flattening & Cleanup Plan (REVISED) \u2013 - **Author:** Claude (Sonnet 4.5) - **Timestamp (EST):** 20:15:00 | 11/10/2025 - **Scope:** `apps/webhook` - **Goal:** Remove the `app/` wrapper to comply with monorepo guidelines, adopt a layered layout that mirrors runtime responsibilities, and prepare the service for incremental modernization without breaking existing entry points or tests."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-11-knowledge-graph-implementation.md",
+    "type": "document",
+    "observations": [
+      "Knowledge Graph Integration Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Add knowledge graph extraction using Ollama (Qwen3:8B) and Neo4j to enhance RAG pipeline with entity/relationship extraction and graph-based search re-ranking. **Architecture:** Multi-stage extraction pipeline (chunk-level entities \u2192 chunk-level relationships \u2192 document consolidatio"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-11-knowledge-graph-integration.md",
+    "type": "document",
+    "observations": [
+      "Knowledge Graph Integration Plan \u2013 Sections: Executive Summary. Key details: **Created:** 2025-11-11 **Status:** DRAFT - Awaiting Approval **RTX 4070 12GB VRAM Target** Upgrade the RAG pipeline to extract structured knowledge graphs using Ollama (7B-8B model) running on gpu-machine, storing in Neo4j for hybrid retrieval that combines vector search (Qdrant), keyword search (BM25), and graph traversal."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-11-python-test-service-endpoints-plan.md",
+    "type": "document",
+    "observations": [
+      "Python Test Service Endpoints Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Ensure `apps/webhook/tests` consume service host/port values from a shared helper rather than hardcoded literals. **Architecture:** Introduce a small test-only helper that instantiates `Settings` once and exposes accessor functions for Firecrawl, changedetection, Qdrant, TEI, Redis,"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-11-query-tool.md",
+    "type": "document",
+    "observations": [
+      "Query Tool Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Add a `query` tool to the MCP server that searches the indexed Firecrawl documentation via the webhook service's Qdrant/BM25 hybrid search endpoint. **Architecture:** Create a new MCP tool following the existing pattern (search/map/crawl). The tool will make HTTP requests to the web"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-11-youtube-transcript-integration.md",
+    "type": "document",
+    "observations": [
+      "YouTube Transcript Integration Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Automatically fetch and index YouTube video transcripts through the RAG pipeline for all tools (scrape, crawl, search, map). **Architecture:** YouTube URLs detected in MCP tools are intelligently routed to the webhook service for transcript extraction. The webhook service uses the `"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-12-crawl-tool-actions.md",
+    "type": "document",
+    "observations": [
+      "Crawl Tool Actions Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Add full command-style crawl controls (start, status, cancel, errors, list) to the MCP crawl tool and supporting Firecrawl client so the CLI can run `crawl <url>`, `crawl status <jobId>`, `crawl cancel <jobId>`, `crawl errors <jobId>`, and `crawl list`."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-12-crawl-tool-test-coverage.md",
+    "type": "document",
+    "observations": [
+      "Crawl Tool Test Coverage Analysis \u2013 Sections: Executive Summary. Key details: **Test Coverage**: ~65% of code paths, ~45% of production scenarios **Critical Gaps**: 8 production-critical paths untested **High Priority Gaps**: 12 important scenarios missing **Overall Assessment**: Needs significant improvement before production The crawl tool has good happy-path coverage but lacks comprehensive error handling, edge case, and integration testing. Most tests use mocked APIs wi"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-12-env-consolidation.md",
+    "type": "document",
+    "observations": [
+      "Environment Variables Consolidation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Eliminate duplicate environment variables in `.env` to reduce confusion and maintenance burden. **Architecture:** Three-phase approach: (1) Safe removals with no code changes, (2) Variable substitution with minimal code updates, (3) Documentation cleanup."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-12-google-oauth-21.md",
+    "type": "document",
+    "observations": [
+      "Google OAuth 2.1 Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Deliver Google OAuth 2.1 authentication for the Pulse MCP server (per `oauth.md`) so every MCP session requires a verified Google identity with scoped access control, encrypted token storage, and production-grade security."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-12-query-plain-text.md",
+    "type": "document",
+    "observations": [
+      "Query Tool Plain Text Output Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Return clean, formatted plain-text responses for the `query` tool (top 5 results inline, remainder paginated) instead of embedded resources. **Architecture:** Modify the MCP `query` tool to post-process webhook hits into structured text (ranked list + pagination notice). Update sche"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-12-remove-scrape-autocrawl.md",
+    "type": "document",
+    "observations": [
+      "Remove Scrape Auto-Crawl Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Stop the scrape tool from silently launching Firecrawl crawls after every scrape request. **Architecture:** Replace the implicit \u201cbase URL crawl\u201d side-effect with no-op behavior, enforce the change with regression tests, and delete the helper/config plumbing that existed only for th"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-12-scrape-batch.md",
+    "type": "document",
+    "observations": [
+      "Scrape Tool Batch Support & Commands Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Allow the MCP `scrape` tool to accept multiple URLs\u2014using Firecrawl batch scrape when >1 URL\u2014and expose command-style controls similar to the crawl tool (`scrape <url(s)>`, `scrape status <jobId>`, `scrape cancel <jobId>`, `scrape errors <jobId>`)."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-13-code-review-fixes.md",
+    "type": "document",
+    "observations": [
+      "Code Review Fixes - Production Hardening \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans or superpowers:subagent-driven-development to implement this plan task-by-task. **Goal:** Fix all critical and important issues identified in the production hardening code review to achieve merge-ready status. **Review Summary:** Implementation quality is excellent (A-) but test infrastructure needs fixes. 87 webhook tests faili"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-13-env-debug-stack.md",
+    "type": "document",
+    "observations": [
+      "Environment Variable Debugging - Stack Validation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:systematic-debugging to implement this plan task-by-task. **Goal:** Bring up the full Pulse stack after environment variable consolidation and systematically debug any connection issues caused by the `.env` changes. **Architecture:** Systematic debugging approach - start services, capture errors, identify root causes, fix issues, verify resolut"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-13-production-hardening.md",
+    "type": "document",
+    "observations": [
+      "Production Hardening Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Fix all critical security, reliability, and data integrity issues identified in code reviews to achieve production readiness for crawl tool and webhook server. **Architecture:** Parallel implementation across 6 independent workstreams: (1) Crawl Tool Security & API, (2) Webhook Secu"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-13-profile-crawl-tool-design.md",
+    "type": "document",
+    "observations": [
+      "Profile Crawl MCP Tool - Design Document \u2013 Sections: Overview. Key details: **Date:** 2025-11-13 **Status:** Design Complete **Dependencies:** Timing Instrumentation (completed in feat/mcp-resources-and-worker-improvements) Create an MCP tool that enables Claude to debug and profile crawl performance by querying the metrics API built in the timing instrumentation feature. This tool provides comprehensive diagnostics including performance breakdowns, error analysis, and ac"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-13-profile-crawl-tool-implementation.md",
+    "type": "document",
+    "observations": [
+      "Profile Crawl MCP Tool - Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Implement `profile_crawl` MCP tool for debugging and profiling crawl performance **Architecture:** HTTP client calls webhook metrics API, Zod schemas validate input, response formatter creates plain-text diagnostic reports"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-13-service-doc-gap-remediation.md",
+    "type": "document",
+    "observations": [
+      "Service Documentation Gap Remediation Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Document the web UI service, ensure service indices/ports cross-link correctly, surface Firecrawl scrape defaults, add missing env vars, and clean up outdated references. **Architecture:** Pure documentation/config update. Create a dedicated service doc for the Next.js app, update s"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-13-timing-instrumentation-tdd.md",
+    "type": "document",
+    "observations": [
+      "Timing Instrumentation Implementation Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Add crawl lifecycle tracking with aggregate timing metrics for complete performance observability. **Architecture:** Extend existing TimingContext infrastructure to support crawl_id parameter, create CrawlSession table for lifecycle tracking, aggregate OperationMetric data into sess"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-13-webhook-optimizations.md",
+    "type": "document",
+    "observations": [
+      "Webhook Implementation Optimizations Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Optimize Firecrawl webhook processing for 5-10x faster throughput, improved reliability, and better resource efficiency. **Architecture:** Implement Redis pipeline batching for job enqueueing, move blocking operations to background tasks, fix request body handling bug, and add event"
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-14-firecrawl-api-pr2381-integration.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl API PR #2381 Integration Plan \u2013 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. **Goal:** Integrate Firecrawl API source code with PR #2381 bug fixes (infinite retries, client disconnect cancellation, NuQ finalization) into the Pulse monorepo and build locally instead of using upstream Docker image."
+    ]
+  },
+  {
+    "name": "Document docs/plans/complete/2025-11-15-webhook-content-storage-fixes.md",
+    "type": "document",
+    "observations": [
+      "Webhook Content Storage Fixes Implementation Plan \u2013 > **Status:** \u2705 COMPLETED (2025-11-15) > **Implementation commits:** `e92c18bb`, `5ed9c0eb`, `8076d141`, `b679b4a1`, `ac6d848b`, `02fa7406` **Goal:** Address critical issues in webhook content storage identified by code review: race condition handling, monitoring integration, pagination support, and connection pool documentation."
+    ]
+  },
+  {
+    "name": "Document docs/plans/content-storage/VALIDATION_SUMMARY.md",
+    "type": "document",
+    "observations": [
+      "Content Storage Performance Validation - Executive Summary \u2013 Sections: Key Findings, \u2705 PostgreSQL Storage is NOT a Bottleneck. Key details: **Date:** 2025-01-15 **Validation Status:** \u2705 COMPLETED WITH PRODUCTION DATA **Recommendation:** PROCEED with critical revisions --- **Validated with production data (4,307 documents):** - Adding content storage will increase per-document time by **<1%** (5-15ms out of 1,885ms total) - Current bottleneck is **BM25 indexing** (1,481ms - 78% of total time)"
+    ]
+  },
+  {
+    "name": "Document docs/plans/content-storage/performance-validation.md",
+    "type": "document",
+    "observations": [
+      "Performance Estimates Validation Report \u2013 Sections: Executive Summary, Critical Findings. Key details: **Date:** 2025-01-15 **Feature:** Content Storage in PostgreSQL **Status:** \u2705 VALIDATED WITH PRODUCTION DATA --- **VERDICT: Implementation plan needs MODERATE REVISIONS based on actual production metrics.** 1. \u2705 **Real performance data exists** - 4,307 documents indexed with timing metrics 2. \u26a0\ufe0f **Database pool is SHARED** - Not dedicated to content storage"
+    ]
+  },
+  {
+    "name": "Document docs/plans/crawl-api-contract-review.md",
+    "type": "document",
+    "observations": [
+      "Crawl Tool API Contract & Schema Review \u2013 **Research Date:** 2025-11-12 **Reviewed Files:** - `/compose/pulse/apps/mcp/tools/crawl/schema.ts` - `/compose/pulse/apps/mcp/tools/crawl/index.ts` - `/compose/pulse/apps/mcp/tools/crawl/response.ts` - `/compose/pulse/apps/mcp/tools/crawl/pipeline.ts` - `/compose/pulse/docs/mcp/CRAWL.md` - `/compose/pulse/apps/mcp/CLAUDE.md`"
+    ]
+  },
+  {
+    "name": "Document docs/plans/firecrawl-api-integration/postgresql-patterns.docs.md",
+    "type": "document",
+    "observations": [
+      "PostgreSQL Integration Patterns Research \u2013 Sections: Summary. Key details: The webhook bridge uses async PostgreSQL via SQLAlchemy 2.0 with asyncpg driver, maintaining all tables in a dedicated `webhook` schema. It employs connection pooling (pool_size=20, max_overflow=10), context managers for session management, and a fire-and-forget pattern for metrics storage to avoid blocking operations. The webhook bridge currently does NOT query Firecrawl's `public` schema - it on"
+    ]
+  },
+  {
+    "name": "Document docs/plans/firecrawl-database-research/database-schema.docs.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl API PostgreSQL Database Schema Research \u2013 Sections: Summary. Key details: Firecrawl uses a custom-built queue system called **NuQ** (Not-Unique Queue) to manage scraping jobs in PostgreSQL. Job data and results are stored in JSONB columns (`data` and `returnvalue`) within queue tables. The webhook bridge service maintains separate tracking tables in the `webhook` schema for metrics and session management. **Important**: Scraped content (markdown, HTML, metadata) is stor"
+    ]
+  },
+  {
+    "name": "Document docs/plans/firecrawl-persistence-service/webhook-integration-patterns.docs.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl Persistence Service Research: Webhook Bridge Integration Patterns \u2013 Sections: Summary. Key details: The webhook bridge **already captures Firecrawl metadata and tracks operations extensively**, but **does NOT persist actual content** (markdown, HTML). Content flows through the indexing pipeline and is stored in **Qdrant (vectors) and BM25 (keywords)** only. The webhook bridge provides comprehensive session tracking, metrics collection, and a proven integration pattern that can be extended for fu"
+    ]
+  },
+  {
+    "name": "Document docs/plans/firecrawl-result-capture/webhook-notification-research.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl Job Completion Notification Research \u2013 Sections: Summary. Key details: Firecrawl provides a robust webhook system for job completion notifications across all job types (scrape, crawl, batch_scrape, extract, map). The system supports per-request configuration, self-hosted environment variables, and database-stored webhooks. For the Pulse integration, webhooks are **already configured** via `SELF_HOSTED_WEBHOOK_URL` to send all events to the webhook bridge, making this"
+    ]
+  },
+  {
+    "name": "Document docs/plans/firecrawl-v2-migration/webhook-integration-validation.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl Webhook Integration Validation \u2013 Sections: Summary. Key details: Comprehensive validation of Firecrawl webhook integration assumptions reveals the system is **already correctly implemented** with proper signature verification, event handling, and database tracking. However, there is a **critical naming inconsistency** between `CrawlSession.job_id` (model) and `crawl_id` (handler code) that needs resolution."
+    ]
+  },
+  {
+    "name": "Document docs/plans/hybrid-search-analysis/correctness-performance-analysis.md",
+    "type": "document",
+    "observations": [
+      "Hybrid Search Implementation: Correctness, Performance & Data Integrity Analysis \u2013 Sections: Executive Summary. Key details: **Date**: 2025-11-12 **Scope**: Webhook server hybrid search (Qdrant vector + BM25 keyword) **Status**: Production-ready with identified optimization opportunities --- The webhook server implements a robust hybrid search system combining Qdrant vector search with BM25 keyword search, using Reciprocal Rank Fusion (RRF) for result combination. The implementation demonstrates strong architectural pat"
+    ]
+  },
+  {
+    "name": "Document docs/plans/mcp-postgres-integration/postgres-integration.docs.md",
+    "type": "document",
+    "observations": [
+      "PostgreSQL Integration Research - MCP Server \u2013 Sections: Summary. Key details: The MCP server already has robust PostgreSQL infrastructure in place. The `pg` (node-postgres) package is installed with TypeScript types, and there's an existing pattern for database connections used by the OAuth token storage system. The monorepo uses a shared PostgreSQL instance (`pulse_postgres`) with schema-based isolation: `public` schema for Firecrawl API data and `webhook` schema for webho"
+    ]
+  },
+  {
+    "name": "Document docs/plans/nuq-lifecycle-research/nuq-data-lifecycle.docs.md",
+    "type": "document",
+    "observations": [
+      "NuQ Queue Data Lifecycle Research \u2013 Sections: Summary. Key details: This research documents the complete lifecycle of scraped content in the NuQ (Not-Unique Queue) system, from job creation through data deletion. Key findings: 1. **Scraped content is stored in `nuq.queue_scrape.returnvalue` as JSONB** - not in separate tables 2. **Cleanup runs every 5 minutes** via pg_cron - completed jobs deleted after 1 hour, failed jobs after 6 hours"
+    ]
+  },
+  {
+    "name": "Document docs/plans/oauth.md",
+    "type": "document",
+    "observations": [
+      "Google OAuth 2.1 Implementation Plan for Pulse MCP Server \u2013 Sections: Executive Summary. Key details: **Date**: November 11, 2025 **Target**: `apps/mcp/` - TypeScript MCP Server **Specification**: MCP 2025-03-26 + OAuth 2.1 + Google OAuth --- This document outlines the complete implementation plan for adding Google OAuth 2.1 authentication to the Pulse MCP (Model Context Protocol) server. The implementation follows the latest MCP specification (2025-03-26), OAuth 2.1 standards, and Google's OAuth "
+    ]
+  },
+  {
+    "name": "Document docs/plans/resource-storage/current-implementation.docs.md",
+    "type": "document",
+    "observations": [
+      "MCP Resource Storage - Current Implementation Research \u2013 Sections: Summary. Key details: The MCP server implements a dual-backend resource storage system for persisting scraped content. Resources are created exclusively by the `scrape` tool pipeline and exposed via standard MCP resource handlers (`resources/list`, `resources/read`). The storage layer supports in-memory (development) and filesystem (production) backends with LRU eviction, TTL-based expiration, and configurable size lim"
+    ]
+  },
+  {
+    "name": "Document docs/plans/scraped-content-storage/schema-validation.docs.md",
+    "type": "document",
+    "observations": [
+      "Scraped Content Storage - Schema Validation \u2013 Sections: Summary. Key details: Validated the proposed `webhook.scraped_content` table design against existing webhook schema patterns. The schema is generally sound but requires several critical corrections to match established patterns, including proper foreign key references, index naming conventions, trigger creation for timestamps, and ENUM type handling."
+    ]
+  },
+  {
+    "name": "Document docs/plans/webhook-config-audit/config-security-audit.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server Configuration & Security Audit \u2013 Sections: Executive Summary. Key details: **Date:** 2025-11-12 **Scope:** apps/webhook configuration, environment variables, deployment, and secret management **Status:** CRITICAL ISSUES IDENTIFIED --- The webhook server configuration demonstrates **strong overall architecture** with Pydantic validation, comprehensive fallback chains, and structured logging. However, **several critical security vulnerabilities** exist in secret handling, "
+    ]
+  },
+  {
+    "name": "Document docs/plans/webhook-optimization-results.md",
+    "type": "document",
+    "observations": [
+      "Webhook Optimization Results \u2013 Sections: Summary, Optimizations Implemented, 1. Fixed Signature Verification Double Body Read \u2705. Key details: **Date:** 2025-11-13 **Commits:** 883841e, 682659e, c9b2e55, 1a78723 Implemented 4 critical optimizations for Firecrawl webhook processing, achieving significant performance improvements and fixing a critical bug. **Commit:** `883841e` - **Impact:** Critical bug fix - **Change:** Modified `verify_webhook_signature` to return verified body"
+    ]
+  },
+  {
+    "name": "Document docs/services/CHANGEDETECTION.md",
+    "type": "document",
+    "observations": [
+      "changedetection.io Service Guide \u2013 Sections: Role in Pulse. Key details: _Last Updated: 01:52 AM EST | Nov 13 2025_ changedetection.io continuously monitors Firecrawl-sourced URLs for DOM/content diffs, then triggers the webhook bridge so the latest version can be re-scraped, indexed, and exposed through hybrid search. It shares Playwright with Firecrawl to render JavaScript-heavy pages and, together with auto-watch creation, keeps every crawled source fresh without ma"
+    ]
+  },
+  {
+    "name": "Document docs/services/FIRECRAWL.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl API Service Guide \u2013 Sections: Role in Pulse. Key details: _Last Updated: 02:13 AM EST | Nov 13 2025_ The Firecrawl API is the core scraping/orchestration backend. MCP tools (`scrape`, `crawl`, `map`, `search`, `query`) and the webhook worker all rely on it to fetch raw pages, execute headless Playwright sessions, and normalize content into Markdown/JSON. Without Firecrawl the Pulse stack cannot scrape, crawl, or refresh documents."
+    ]
+  },
+  {
+    "name": "Document docs/services/INDEX.md",
+    "type": "document",
+    "observations": [
+      "Pulse Services Index \u2013 Sections: How to Read This Index. Key details: _Last Updated: 02:17 AM EST | Nov 13 2025_ This index is the front door to every service that powers Pulse. Use it to jump to detailed guides, verify port assignments, and understand how each container fits into the NotebookLM-style experience. - **Ports & networking:** Refer to [`PORTS.md`](./PORTS.md) for the authoritative mapping of host \u2194 container ports."
+    ]
+  },
+  {
+    "name": "Document docs/services/NEO4J.md",
+    "type": "document",
+    "observations": [
+      "Neo4j Graph Database Service Guide \u2013 Sections: Role in Pulse. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ Neo4j stores extracted entities and relationships that power upcoming knowledge-graph features (graph-based reranking, relationship queries, impact analysis). It complements vector (Qdrant) and keyword (BM25) indexes so the webhook worker can persist structured triples alongside unstructured embeddings."
+    ]
+  },
+  {
+    "name": "Document docs/services/OLLAMA.md",
+    "type": "document",
+    "observations": [
+      "Ollama Service Guide \u2013 Sections: Role in Pulse, Container & Ports. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ Ollama hosts local LLMs (currently `qwen3:8b-instruct` tuned for entity/relationship extraction) so the webhook worker can convert raw text into graph triples without sending data to external clouds. It runs on the GPU machine alongside TEI and Qdrant. - **Compose file**: `docker-compose.external.yaml`"
+    ]
+  },
+  {
+    "name": "Document docs/services/PLAYWRIGHT.md",
+    "type": "document",
+    "observations": [
+      "Playwright Service Guide \u2013 Sections: Role in Pulse, Container & Ports. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ The shared Playwright container (`pulse_playwright`) provides remote browser automation for Firecrawl and changedetection.io. Keeping it as a standalone service avoids bundling Chromium into every consumer, ensures deterministic versions, and centralizes resource limits. - **Image**: `ghcr.io/firecrawl/playwright-service:latest`"
+    ]
+  },
+  {
+    "name": "Document docs/services/PORTS.md",
+    "type": "document",
+    "observations": [
+      "Pulse Services Port Allocation \u2013 Sections: Overview. Key details: Authoritative map of every service, container, and port exposed by the Pulse stack. Source of truth verified against `docker-compose.yaml` and `docker-compose.external.yaml` before this update. _Last Updated: 01:10 AM EST | Nov 13 2025_ - Core host services occupy the 50100\u201350109 range, with Neo4j reserved at 50210/50211 for clarity."
+    ]
+  },
+  {
+    "name": "Document docs/services/POSTGRES.md",
+    "type": "document",
+    "observations": [
+      "PostgreSQL Service Guide \u2013 Sections: Role in Pulse, Container & Ports. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ PostgreSQL is the single relational datastore for Firecrawl (crawl metadata, job queue state) and the webhook bridge (search metadata, webhook events, future analytics). The container ships a tuned NUQ build optimized for high I/O and large text payloads. - **Compose service / container**: `pulse_postgres`"
+    ]
+  },
+  {
+    "name": "Document docs/services/PULSE_MCP.md",
+    "type": "document",
+    "observations": [
+      "Pulse MCP Server Guide \u2013 Sections: Role in Pulse. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ The MCP server bridges Claude with the Pulse scraping stack. It exposes Firecrawl-powered tools (`scrape`, `crawl`, `map`, `search`, `query`) plus OAuth-protected resource storage so users can orchestrate crawls, serve cached data, and query the webhook index directly from MCP-compatible clients. All Firecrawl traffic (including crawl commands) now routes"
+    ]
+  },
+  {
+    "name": "Document docs/services/PULSE_WEB.md",
+    "type": "document",
+    "observations": [
+      "Pulse Web Service Guide \u2013 Sections: Role in Pulse. Key details: _Last Updated: 02:17 AM EST | Nov 13 2025_ `pulse_web` will deliver the NotebookLM-style UI for orchestrating Firecrawl scrapes, reviewing chat results, and triggering Studio workflows. Today the app is a scaffolded Next.js 16 + Tailwind v4 + shadcn/ui project (see `apps/web/README.md`), but its deployment port is already reserved (50110 \u279c 3000) so infrastructure can point browsers at a consistent"
+    ]
+  },
+  {
+    "name": "Document docs/services/PULSE_WEBHOOK.md",
+    "type": "document",
+    "observations": [
+      "Webhook Search Bridge (pulse_webhook) \u2013 Sections: Role in Pulse, Container & Ports. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ `pulse_webhook` ingests scrape payloads from Firecrawl, processes change notifications, and exposes a hybrid search API (vector + BM25 + RRF). It owns the webhook endpoints, indexing pipeline, search orchestration, and operational metrics. - **Compose service / container**: `pulse_webhook`"
+    ]
+  },
+  {
+    "name": "Document docs/services/PULSE_WORKER.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker (pulse_webhook-worker) \u2013 Sections: Role in Pulse, Container & Command. Key details: _Last Updated: 06:56:18 | 11/13/2025_ The standalone worker container executes all background jobs queued by the webhook API: document indexing, rescrapes triggered by changedetection.io, and future graph enrichment tasks. Running it separately keeps the API responsive and allows horizontal scaling. - **Compose service / container**: `pulse_webhook-worker`"
+    ]
+  },
+  {
+    "name": "Document docs/services/QDRANT.md",
+    "type": "document",
+    "observations": [
+      "Qdrant Vector Database Service Guide \u2013 Sections: Role in Pulse, Container & Ports. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ Qdrant stores semantic embeddings generated from scraped content. Hybrid search combines these vectors with BM25 rankings to deliver relevant results. The webhook worker writes to Qdrant during indexing, and the API reads from it on every `/api/search` request. - **Compose file**: `docker-compose.external.yaml`"
+    ]
+  },
+  {
+    "name": "Document docs/services/REDIS.md",
+    "type": "document",
+    "observations": [
+      "Redis Service Guide \u2013 Sections: Role in Pulse, Container & Ports. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ Redis underpins rate limiting, caching, and background job queues. Firecrawl uses it for internal coordination, the webhook service stores request metrics and job payloads, and the worker consumes the `indexing` queue. - **Compose service / container**: `pulse_redis` - **Image**: `redis:alpine`"
+    ]
+  },
+  {
+    "name": "Document docs/services/TEI.md",
+    "type": "document",
+    "observations": [
+      "Text Embeddings Inference (TEI) Service Guide \u2013 Sections: Role in Pulse, Container & Ports. Key details: _Last Updated: 01:30 AM EST | Nov 13 2025_ TEI (Hugging Face Text Embeddings Inference) generates 1024-dimension embeddings (Qwen/Qwen3-Embedding-0.6B) for every document chunk. The webhook worker calls it before pushing vectors into Qdrant. Running TEI on a GPU keeps indexing throughput high while staying self-hosted. - **Compose file**: `docker-compose.external.yaml`"
+    ]
+  },
+  {
+    "name": "Document docs/services/firecrawl/DEFAULT_SCRAPE_OPTIONS.md",
+    "type": "document",
+    "observations": [
+      "Firecrawl Default Scrape Options \u2013 _Last Updated: 02:17 AM EST | Nov 13 2025_ This document captures the canonical defaults injected by the MCP crawl/scrape tooling (and any consumer that imports `mergeScrapeOptions` from `apps/mcp/config/crawl-config.ts`). Use it as a quick reference before overriding `scrapeOptions` in Firecrawl requests. For general service details (ports, env vars, lifecycle) see the [Firecrawl service guide](."
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/WEBHOOK_API_INDEX.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server API Documentation Index \u2013 Sections: Quick Navigation, For API Users. Key details: Complete exploration and documentation of the Firecrawl Search Bridge (webhook server) API endpoints, routing architecture, and request/response handling. Start here if you need to integrate with the webhook server: 1. **[Webhook API Quick Reference](webhook-api-quick-reference.md)** - START HERE - Endpoint summary table"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/WEBHOOK_DOCUMENTATION_INDEX.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server Documentation Index \u2013 Sections: Overview. Key details: This directory contains comprehensive documentation for the `pulse_webhook` service - a FastAPI-based hybrid search bridge that indexes Firecrawl-crawled content and provides semantic/BM25 search capabilities. **Service Location:** `/compose/pulse/apps/webhook/` **Container Name:** `pulse_webhook` (API server) + `pulse_webhook-worker` (background worker)"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/WEBHOOK_SEARCH_INDEX.md",
+    "type": "document",
+    "observations": [
+      "Webhook Search & Indexing - Documentation Index \u2013 Sections: Quick Start. Key details: **Last Updated**: 2025-11-13 This index guides you through the comprehensive analysis of the Pulse webhook server's search and indexing system. --- Start here if you want a fast overview: \ud83d\udcc4 **[Quick Reference Guide](webhook-search-quick-reference.md)** (300+ lines) - Pipeline stages diagram - Search modes comparison - Key files & classes"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/test-analysis-webhook-2025-11-13.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server Test Suite Analysis \u2013 Sections: Executive Summary. Key details: The webhook server (`apps/webhook`) has a **comprehensive test suite** with **54 test files** containing approximately **8,100+ lines of test code** across three tiers (unit, integration, security). The testing infrastructure is well-architected with sophisticated mocking, proper isolation patterns, and security-focused test coverage."
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/test-fixtures-webhook-reference.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server - Test Fixtures & Mock Reference \u2013 Sections: Global Fixtures (conftest.py), Database Fixtures, `initialize_test_database()` (Session-scoped, auto-use). Key details: Quick reference for fixtures, mocks, and testing patterns used in the webhook test suite. --- ```python @pytest_asyncio.fixture(scope=\"session\", autouse=True) async def initialize_test_database(): \"\"\"Initialize PostgreSQL test schema.\"\"\" ``` - **Scope**: Session (runs once per test session) - **Auto-use**: Yes (automatic)"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-api-endpoints.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server API Endpoint Map \u2013 Sections: Overview. Key details: The webhook server (Firecrawl Search Bridge) is a FastAPI application that provides: - Webhook handling from Firecrawl and changedetection.io - Hybrid semantic/keyword search with RRF fusion - Document indexing and metrics collection - Health monitoring and performance analytics **Server Details:** - Framework: FastAPI v0.100+"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-api-quick-reference.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server API Quick Reference \u2013 Sections: Endpoint Summary Table. Key details: | Method | Path | Auth | Rate Limit | Purpose | |--------|------|------|-----------|---------| | **POST** | `/api/webhook/firecrawl` | Signature | EXEMPT | Receive Firecrawl webhooks | | **POST** | `/api/webhook/changedetection` | Signature | EXEMPT | Receive change detection webhooks | | **POST** | `/api/search` | Secret | 50/min | Search documents (hybrid/semantic/keyword) |"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-configuration-deployment-analysis.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server: Comprehensive Configuration & Deployment Analysis \u2013 Sections: Executive Summary. Key details: The webhook server (`pulse_webhook`) is a FastAPI-based search bridge that indexes crawled content from Firecrawl and provides semantic/hybrid search capabilities. It uses PostgreSQL for metrics, Redis for task queuing, Qdrant for vector search, and TEI for embeddings. The service can run with either an embedded background worker (thread-based) or a separate RQ worker container."
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-database-analysis.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server Database Analysis \u2013 Sections: Summary. Key details: The webhook server uses PostgreSQL with async SQLAlchemy 2.0+ for three tables in the `webhook` schema: `request_metrics`, `operation_metrics`, and `change_events`. The database architecture follows best practices with proper indexing, async session management, and Alembic migrations. However, there are critical scalability concerns around unbounded table growth, missing constraints, and no data r"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-quick-reference.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server: Quick Reference Guide \u2013 Sections: Service Overview, Essential Configuration, Secrets (MUST BE SET IN PRODUCTION). Key details: **Service Name:** `pulse_webhook` **Language:** Python 3.13 **Framework:** FastAPI **Container Port:** 52100 (exposed as 50108 on host) **Purpose:** Hybrid semantic/BM25 search bridge for Firecrawl **Status:** Production-ready with health checks ```bash WEBHOOK_API_SECRET=$(openssl rand -hex 32) WEBHOOK_SECRET=$(openssl rand -hex 32)"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-routing-architecture.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server Routing Architecture \u2013 Sections: Router Hierarchy. Key details: ``` FastAPI Application (main.py) \u2502 \u251c\u2500\u2500 Middleware Stack (bottom \u2192 top execution order) \u2502   \u251c\u2500\u2500 CORSMiddleware \u2502   \u251c\u2500\u2500 SlowAPIMiddleware (rate limiting) \u2502   \u251c\u2500\u2500 TimingMiddleware (request metrics) \u2502   \u2514\u2500\u2500 HTTP Logging Middleware (webhook logging) \u2502 \u2514\u2500\u2500 APIRouter (api/__init__.py) \u2502 \u251c\u2500\u2500 search.router (prefix: /api, tags: [\"search\"])"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-search-architecture.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server Search & Indexing Architecture - Detailed Analysis \u2013 Sections: Table of Contents. Key details: **Document**: Complete search pipeline analysis for Pulse webhook bridge **Date**: 2025-11-13 **Scope**: Hybrid vector + BM25 search implementation with RRF fusion --- 1. [System Overview](#system-overview) 2. [Document Ingestion Pipeline](#document-ingestion-pipeline) 3. [Hybrid Search Architecture](#hybrid-search-architecture)"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-search-quick-reference.md",
+    "type": "document",
+    "observations": [
+      "Webhook Search & Indexing - Quick Reference \u2013 Sections: Pipeline Stages (Document Ingestion). Key details: ``` Raw Document (from Firecrawl) \u2193 [CLEANING]  \u2192 clean_text() removes control chars \u2193 [CHUNKING]   \u2192 semantic-text-splitter: 256 tokens, 50 overlap \u2193 [EMBEDDING]   \u2192 HF TEI /embed: batch request for efficiency \u2193 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u251c\u2500 VECTOR INDEXING         \u2502  Parallel \u2502  \u251c\u2500 Qdrant upsert        \u2502 \u2502  \u251c\u2500 COSINE distance      \u2502"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-test-coverage-analysis.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server Test Coverage Analysis \u2013 Sections: Executive Summary. Key details: **Overall Assessment**: The webhook server has **good foundational test coverage** (275 tests across 48 test files) but exhibits **critical gaps** in security, error handling, and production-readiness scenarios. Test-to-source line ratio is approximately **1.09:1** (7,031 test lines vs 6,459 source lines), suggesting comprehensive unit coverage but potentially shallow assertions."
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-worker-architecture.md",
+    "type": "document",
+    "observations": [
+      "Webhook Server Background Processing & Worker Architecture \u2013 Sections: Executive Summary. Key details: The webhook server implements a **dual-mode background processing system** using **RQ (Redis Queue)** for job management: 1. **Embedded Worker Thread** (Development): Worker runs in background thread within the FastAPI process 2. **Standalone Worker Container** (Production): Separate RQ worker container processing the same Redis queue"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-worker-flow-diagrams.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker - Flow Diagrams & Sequences \u2013 Sections: 1. Job Enqueueing & Processing Flow. Key details: ``` \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u2502  CLIENT                                                         \u2502 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2502 \u2502 POST /api/webhook/firecrawl \u2502 (signed webhook payload) \u2193 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510"
+    ]
+  },
+  {
+    "name": "Document docs/services/webhook/webhook-worker-quick-reference.md",
+    "type": "document",
+    "observations": [
+      "Webhook Worker - Quick Reference Guide \u2013 Sections: One-Page Overview. Key details: The webhook server uses **RQ (Redis Queue)** for background job processing with two deployment options: | Aspect | Value | |--------|-------| | **Queue Framework** | RQ v2.6.0+ | | **Queue Name** | `\"indexing\"` (single queue, all jobs) | | **Job Types** | Document indexing, URL rescraping | | **Worker Modes** | Embedded (dev), Standalone (prod), Hybrid (recommended) |"
+    ]
+  },
+  {
+    "name": "Document packages/firecrawl-client/README.md",
+    "type": "document",
+    "observations": [
+      "@firecrawl/client \u2013 Sections: Overview, Features. Key details: Shared TypeScript client for the Firecrawl API, used across the Pulse monorepo. This package provides a unified, type-safe client for interacting with the Firecrawl API. It includes support for all Firecrawl operations: scraping, searching, mapping, and crawling. - **Unified Client**: Single `FirecrawlClient` class for all operations"
+    ]
+  }
+]

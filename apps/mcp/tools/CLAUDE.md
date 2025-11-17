@@ -61,6 +61,7 @@ Multi-page crawling with job-based architecture.
 - Sitemap integration (include/skip)
 - Browser actions support (same as scrape)
 - Scrape format customization
+- Proxies all crawl commands through the webhook bridge (`pulse_webhook`) so MCP never talks to Firecrawl directly
 
 ### map
 

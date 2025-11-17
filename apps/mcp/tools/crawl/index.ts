@@ -1,5 +1,4 @@
-import { FirecrawlCrawlClient } from "@firecrawl/client";
-import type { FirecrawlConfig } from "../../types.js";
+import type { CrawlClient } from "../../types.js";
 import { crawlOptionsSchema, buildCrawlInputSchema } from "./schema.js";
 import { crawlPipeline } from "./pipeline.js";
 import { formatCrawlResponse } from "./response.js";
@@ -20,9 +19,7 @@ process.on("SIGINT", () => {
   crawlRateLimiter.destroy();
 });
 
-export function createCrawlTool(config: FirecrawlConfig): Tool {
-  const client = new FirecrawlCrawlClient(config);
-
+export function createCrawlTool(client: CrawlClient): Tool {
   return {
     name: "crawl",
     description:

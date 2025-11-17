@@ -3,7 +3,7 @@
 _Last Updated: 01:30 AM EST | Nov 13 2025_
 
 ## Role in Pulse
-The MCP server bridges Claude with the Pulse scraping stack. It exposes Firecrawl-powered tools (`scrape`, `crawl`, `map`, `search`, `query`) plus OAuth-protected resource storage so users can orchestrate crawls, serve cached data, and query the webhook index directly from MCP-compatible clients.
+The MCP server bridges Claude with the Pulse scraping stack. It exposes Firecrawl-powered tools (`scrape`, `crawl`, `map`, `search`, `query`) plus OAuth-protected resource storage so users can orchestrate crawls, serve cached data, and query the webhook index directly from MCP-compatible clients. All Firecrawl traffic (including crawl commands) now routes through the webhook bridge client, so the MCP container never talks to `firecrawl:3002` directly beyond health checks.
 
 ### Tool Reference
 - [`docs/mcp/INDEX.md`](../mcp/INDEX.md) – overview of every MCP tool and transport option.

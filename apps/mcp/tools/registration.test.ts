@@ -84,12 +84,20 @@ describe("MCP Registration with Tracking", () => {
       // Import after mocks are set up
       const { registerTools } = await import("./registration.js");
 
-      const mockFirecrawlClientFactory = vi.fn(() => ({
+      const sharedClient = {
         scrape: vi.fn(),
         search: vi.fn(),
         map: vi.fn(),
         extract: vi.fn(),
-      })) as unknown as FirecrawlClientFactory;
+        startCrawl: vi.fn(),
+        getCrawlStatus: vi.fn(),
+        cancelCrawl: vi.fn(),
+        getCrawlErrors: vi.fn(),
+        listActiveCrawls: vi.fn(),
+      };
+      const mockFirecrawlClientFactory = vi.fn(
+        () => sharedClient,
+      ) as unknown as FirecrawlClientFactory;
 
       registerTools(server, mockFirecrawlClientFactory);
 
@@ -100,13 +108,18 @@ describe("MCP Registration with Tracking", () => {
 
     it("should record all tool names correctly", async () => {
       const { registerTools } = await import("./registration.js");
+      const { createCrawlTool } = await import("./crawl/index.js");
 
-      const mockFirecrawlClientFactory = vi.fn(() => ({
+      const sharedClient = {
         scrape: vi.fn(),
         search: vi.fn(),
         map: vi.fn(),
         extract: vi.fn(),
-      })) as unknown as FirecrawlClientFactory;
+      };
+
+      const mockFirecrawlClientFactory = vi.fn(
+        () => sharedClient,
+      ) as unknown as FirecrawlClientFactory;
 
       registerTools(server, mockFirecrawlClientFactory);
 
@@ -120,6 +133,10 @@ describe("MCP Registration with Tracking", () => {
       expect(toolNames).toContain("extract");
       expect(toolNames).toContain("query");
       expect(toolNames).toContain("profile_crawl");
+
+      const mockCalls = vi.mocked(createCrawlTool).mock.calls;
+      expect(mockCalls.length).toBeGreaterThan(0);
+      expect(mockCalls[0][0]).toBe(sharedClient);
     });
 
     it("should continue registration if one tool fails", async () => {
@@ -136,6 +153,11 @@ describe("MCP Registration with Tracking", () => {
         search: vi.fn(),
         map: vi.fn(),
         extract: vi.fn(),
+        startCrawl: vi.fn(),
+        getCrawlStatus: vi.fn(),
+        cancelCrawl: vi.fn(),
+        getCrawlErrors: vi.fn(),
+        listActiveCrawls: vi.fn(),
       })) as unknown as FirecrawlClientFactory;
 
       // Should not throw even if one tool fails
@@ -172,6 +194,11 @@ describe("MCP Registration with Tracking", () => {
         search: vi.fn(),
         map: vi.fn(),
         extract: vi.fn(),
+        startCrawl: vi.fn(),
+        getCrawlStatus: vi.fn(),
+        cancelCrawl: vi.fn(),
+        getCrawlErrors: vi.fn(),
+        listActiveCrawls: vi.fn(),
       })) as unknown as FirecrawlClientFactory;
 
       registerTools(server, mockFirecrawlClientFactory);

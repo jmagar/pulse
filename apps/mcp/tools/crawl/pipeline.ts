@@ -1,5 +1,4 @@
 import type {
-  FirecrawlCrawlClient,
   CrawlOptions as ClientCrawlOptions,
   StartCrawlResult,
   CrawlStatusResult,
@@ -12,9 +11,10 @@ import {
   mergeExcludePaths,
   mergeScrapeOptions,
 } from "../../config/crawl-config.js";
+import type { CrawlClient } from "../../types.js";
 
 export async function crawlPipeline(
-  client: FirecrawlCrawlClient,
+  client: CrawlClient,
   options: CrawlOptions,
 ): Promise<
   | StartCrawlResult

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { FirecrawlCrawlClient } from "@firecrawl/client";
+import type { CrawlClient } from "../../types.js";
 import { crawlPipeline } from "./pipeline.js";
 import type { CrawlOptions } from "./schema.js";
 
@@ -12,7 +12,7 @@ import {
 } from "../../config/crawl-config.js";
 
 describe("crawlPipeline", () => {
-  let mockClient: FirecrawlCrawlClient;
+  let mockClient: CrawlClient;
 
   beforeEach(() => {
     mockClient = {
@@ -21,7 +21,7 @@ describe("crawlPipeline", () => {
       cancelCrawl: vi.fn(),
       getCrawlErrors: vi.fn(),
       listActiveCrawls: vi.fn(),
-    } as unknown as FirecrawlCrawlClient;
+    } as unknown as CrawlClient;
   });
 
   it("applies default language excludes when none provided", async () => {

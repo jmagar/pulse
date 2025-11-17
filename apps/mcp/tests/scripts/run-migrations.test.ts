@@ -9,7 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Pool } from "pg";
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync } from "fs";
 import { join } from "path";
 
 // Mock the environment module
@@ -21,7 +21,22 @@ vi.mock("../../config/environment.js", () => ({
   },
 }));
 
-describe("Migration Runner", () => {
+const databaseUrl =
+  process.env.TEST_DATABASE_URL ||
+  process.env.MCP_DATABASE_URL ||
+  process.env.DATABASE_URL ||
+  process.env.NUQ_DATABASE_URL;
+
+const describeFn = databaseUrl ? describe : describe.skip;
+
+if (!databaseUrl) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[vitest] Skipping migration runner tests because no database URL is configured",
+  );
+}
+
+describeFn("Migration Runner", () => {
   let pool: Pool;
   const testMigrationDir = join(process.cwd(), "test-migrations");
 
@@ -63,7 +78,6 @@ describe("Migration Runner", () => {
       writeFileSync(join(testMigrationDir, "002_second.sql"), "SELECT 2;");
       writeFileSync(join(testMigrationDir, "README.md"), "# Not a migration");
 
-      const { readdirSync } = await import("fs");
       const files = readdirSync(testMigrationDir)
         .filter((f) => f.endsWith(".sql"))
         .sort();
@@ -76,7 +90,6 @@ describe("Migration Runner", () => {
     });
 
     it("should handle empty migration directory", () => {
-      const { readdirSync } = await import("fs");
       const files = readdirSync(testMigrationDir).filter((f) =>
         f.endsWith(".sql"),
       );

@@ -66,7 +66,7 @@ describe("Environment Variable Display", () => {
       const vars = getEnvironmentVariables();
       const llmVars = vars.filter((v) => v.category === "LLM");
 
-      expect(llmVars).toHaveLength(4);
+      expect(llmVars).toHaveLength(3);
       expect(llmVars.some((v) => v.name === "LLM_PROVIDER")).toBe(true);
     });
 

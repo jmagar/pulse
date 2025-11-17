@@ -11,6 +11,7 @@ import type {
   ToolSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { z } from "zod";
+import type { IFirecrawlClient } from "./server.js";
 
 /**
  * Standard response format for MCP tools
@@ -62,15 +63,10 @@ export interface ScrapeDiagnostics {
   timing?: Record<string, number>;
 }
 
-/**
- * Configuration for Firecrawl API clients
- */
-export interface FirecrawlConfig {
-  /** Firecrawl API key */
-  apiKey: string;
-  /** Base URL for Firecrawl API (optional, defaults to https://api.firecrawl.dev/v2) */
-  baseUrl?: string;
-}
+export type CrawlClient = Pick<
+  IFirecrawlClient,
+  "startCrawl" | "getCrawlStatus" | "cancelCrawl" | "getCrawlErrors" | "listActiveCrawls"
+>;
 
 /**
  * MCP SDK Type Exports

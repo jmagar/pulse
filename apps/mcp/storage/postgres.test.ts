@@ -29,7 +29,22 @@ import { PostgresResourceStorage } from "./postgres.js";
 import { getPool, closePool } from "./postgres-pool.js";
 import { ResourceMetadata } from "./types.js";
 
-describe("PostgresResourceStorage", () => {
+const databaseUrl =
+  process.env.MCP_DATABASE_URL ||
+  process.env.DATABASE_URL ||
+  process.env.NUQ_DATABASE_URL ||
+  process.env.TEST_DATABASE_URL;
+
+const maybeDescribe = databaseUrl ? describe : describe.skip;
+
+if (!databaseUrl) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[vitest] Skipping PostgresResourceStorage tests because no database URL is configured",
+  );
+}
+
+maybeDescribe("PostgresResourceStorage", () => {
   let storage: PostgresResourceStorage;
 
   beforeAll(async () => {

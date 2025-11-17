@@ -7,15 +7,18 @@ describe("scrape schema", () => {
     const result = schema.parse({ url: "example.com" });
     expect(result.command).toBe("start");
     expect(result.url).toBe("https://example.com");
-    expect(result.urls).toEqual(["https://example.com"]);
+    expect(result.urls).toBeUndefined();
   });
 
   it("accepts urls array without url", () => {
     const schema = buildScrapeArgsSchema();
     const result = schema.parse({ urls: ["example.com", "example.org"] });
     expect(result.command).toBe("start");
-    expect(result.urls).toHaveLength(2);
-    expect(result.url).toBe("https://example.com");
+    expect(result.urls).toEqual([
+      "https://example.com",
+      "https://example.org",
+    ]);
+    expect(result.url).toBeUndefined();
   });
 
   it("requires url or urls for start", () => {

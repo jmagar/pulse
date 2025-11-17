@@ -26,7 +26,7 @@ import { createQueryTool } from "./query/index.js";
 import { createProfileTool } from "./profile/index.js";
 import { createExtractTool } from "./extract/index.js";
 import { ResourceStorageFactory } from "../storage/index.js";
-import type { FirecrawlConfig } from "../types.js";
+import type { CrawlClient } from "../types.js";
 import { logInfo, logError } from "../utils/logging.js";
 import { registrationTracker } from "../utils/mcp-status.js";
 import { getMetricsCollector } from "../monitoring/index.js";
@@ -56,12 +56,6 @@ export function registerTools(
   firecrawlClientFactory: FirecrawlClientFactory,
 ): void {
   const currentEnv = getEnvSnapshot();
-  // Create Firecrawl config from centralized environment
-  const firecrawlConfig: FirecrawlConfig = {
-    apiKey: currentEnv.firecrawlApiKey || SELF_HOSTED_NO_AUTH,
-    baseUrl: currentEnv.firecrawlBaseUrl || "http://firecrawl:3002",
-  };
-
   // Create Firecrawl client for tools
   const firecrawlClient = firecrawlClientFactory();
 
@@ -74,7 +68,10 @@ export function registerTools(
     },
     { name: "search", factory: () => createSearchTool(firecrawlClient) },
     { name: "map", factory: () => createMapTool(firecrawlClient) },
-    { name: "crawl", factory: () => createCrawlTool(firecrawlConfig) },
+    {
+      name: "crawl",
+      factory: () => createCrawlTool(firecrawlClient as CrawlClient),
+    },
     { name: "extract", factory: () => createExtractTool(firecrawlClient) },
     {
       name: "query",
