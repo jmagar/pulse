@@ -24,24 +24,23 @@ describeIntegration("Query Tool Integration", () => {
     const result = await callTool({
       query: "firecrawl scrape formats",
       mode: "hybrid",
-      limit: 5,
+      limit: 10,
     });
 
     expect(result.content).toBeDefined();
     expect(result.content.length).toBeGreaterThan(0);
     expect(result.isError).toBeUndefined();
 
-    const firstResult = result.content[0];
-    expect(firstResult.type).toBe("resource");
-    expect(firstResult.resource).toBeDefined();
-    expect(firstResult.resource?.uri).toContain("scraped://");
+    const firstContent = result.content[0];
+    expect(firstContent.type).toBe("text");
+    expect(firstContent.text).toContain("Results 1-10");
   }, 60_000);
 
   it("should handle semantic search", async () => {
     const result = await callTool({
       query: "how to extract links from pages",
       mode: "semantic",
-      limit: 3,
+      limit: 10,
     });
 
     expect(result.content).toBeDefined();
@@ -52,7 +51,7 @@ describeIntegration("Query Tool Integration", () => {
     const result = await callTool({
       query: "markdown html rawHtml",
       mode: "keyword",
-      limit: 5,
+      limit: 10,
     });
 
     expect(result.content).toBeDefined();
@@ -63,7 +62,7 @@ describeIntegration("Query Tool Integration", () => {
     const result = await callTool({
       query: "search",
       mode: "hybrid",
-      limit: 5,
+      limit: 10,
       filters: {
         domain: "docs.firecrawl.dev",
       },
@@ -72,10 +71,8 @@ describeIntegration("Query Tool Integration", () => {
     expect(result.content).toBeDefined();
     expect(result.isError).toBeUndefined();
 
-    for (const item of result.content) {
-      if (item.type === "resource") {
-        expect(item.resource?.name).toContain("docs.firecrawl.dev");
-      }
-    }
+    const firstContent = result.content[0];
+    expect(firstContent.type).toBe("text");
+    expect(firstContent.text).toContain("docs.firecrawl.dev");
   }, 60_000);
 });

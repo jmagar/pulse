@@ -8,16 +8,20 @@ Orchestrates the complete indexing pipeline:
 4. Index full document in BM25
 """
 
+import os
 from typing import Any
 
 from api.schemas.indexing import IndexDocumentRequest
 from services.bm25_engine import BM25Engine
+from services.content_storage import store_scraped_content
 from services.embedding import EmbeddingService
 from services.vector_store import VectorStore
 from utils.logging import get_logger
 from utils.text_processing import TextChunker, clean_text, extract_domain
 from utils.timing import TimingContext
 from utils.url import normalize_url
+from infra.database import get_db_context
+from domain.models import ScrapedContent
 
 logger = get_logger(__name__)
 
@@ -100,6 +104,38 @@ class IndexingService:
             "country": document.country,
             "isMobile": document.is_mobile,
         }
+
+        content_id: int | None = None
+
+        # Store/retrieve scraped content to obtain stable content_id for retrieval
+        if crawl_id and os.getenv("WEBHOOK_SKIP_DB_FIXTURES") != "1":
+            try:
+                async with get_db_context() as session:
+                    stored = await store_scraped_content(
+                        session=session,
+                        crawl_session_id=crawl_id,
+                        url=document.url,
+                        document={
+                            "markdown": cleaned_markdown,
+                            "html": document.html,
+                            "links": None,
+                            "metadata": {"sourceURL": document.resolved_url or document.url},
+                        },
+                        content_source="search_index",
+                    )
+                    content_id = stored.id
+                    chunk_metadata["content_id"] = content_id
+            except Exception as e:
+                logger.warning(
+                    "Failed to store content for content_id",
+                    url=document.url,
+                    crawl_id=crawl_id,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
+
+        if content_id:
+            chunk_metadata["content_id"] = content_id
 
         # Step 1: Chunk text (token-based)
         try:
@@ -217,6 +253,8 @@ class IndexingService:
                 "country": document.country,
                 "isMobile": document.is_mobile,
             }
+            if content_id:
+                bm25_metadata["content_id"] = content_id
 
             async with TimingContext(
                 "bm25",

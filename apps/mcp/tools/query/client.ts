@@ -1,4 +1,5 @@
 import type { QueryOptions } from "./schema.js";
+import { retryWithBackoff } from "./retry.js";
 
 interface QueryClientConfig {
   baseUrl: string;
@@ -7,6 +8,7 @@ interface QueryClientConfig {
 }
 
 interface SearchResult {
+  id?: string | number;
   url: string;
   title: string | null;
   description: string | null;
@@ -41,47 +43,44 @@ export class QueryClient {
    * Execute search query against webhook service
    */
   async query(options: QueryOptions): Promise<SearchResponse> {
-    const url = `${this.baseUrl}/api/search`;
+    return retryWithBackoff(async () => {
+      const url = `${this.baseUrl}/api/search`;
 
-    const offset = options.offset ?? 0;
-    const perPage = options.limit;
-    const fetchLimit = Math.min(100, offset + perPage);
+      const requestBody = {
+        query: options.query,
+        mode: options.mode,
+        limit: options.limit,
+        offset: options.offset ?? 0,
+        ...(options.filters && { filters: options.filters }),
+      };
 
-    const requestBody = {
-      query: options.query,
-      mode: options.mode,
-      limit: fetchLimit,
-      ...(options.filters && { filters: options.filters }),
-    };
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiSecret}`,
+        },
+        body: JSON.stringify(requestBody),
+        signal: AbortSignal.timeout(this.timeout),
+      });
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiSecret}`,
-      },
-      body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(this.timeout),
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const err: any = new Error(
+          `Query failed: ${response.status} ${response.statusText}${
+            errorBody.detail ? ` - ${errorBody.detail}` : ""
+          }`,
+        );
+        err.status = response.status;
+        throw err;
+      }
+
+      const payload = await response.json();
+
+      return {
+        ...payload,
+        offset: options.offset ?? 0,
+      };
     });
-
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}));
-      throw new Error(
-        `Query failed: ${response.status} ${response.statusText}${
-          errorBody.detail ? ` - ${errorBody.detail}` : ""
-        }`,
-      );
-    }
-
-    const payload = await response.json();
-    const trimmedResults = Array.isArray(payload.results)
-      ? payload.results.slice(offset)
-      : [];
-
-    return {
-      ...payload,
-      results: trimmedResults,
-      offset,
-    };
   }
 }

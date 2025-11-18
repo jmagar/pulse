@@ -6,7 +6,17 @@ Combines all feature routers into a single router for the application.
 
 from fastapi import APIRouter
 
-from api.routers import content, firecrawl_proxy, health, indexing, metrics, scrape, search, webhook
+from api.routers import (
+    content,
+    external_stats,
+    firecrawl_proxy,
+    health,
+    indexing,
+    metrics,
+    scrape,
+    search,
+    webhook,
+)
 
 router = APIRouter()
 
@@ -19,5 +29,6 @@ router.include_router(indexing.router, prefix="/api", tags=["indexing"])
 router.include_router(content.router, tags=["content"])
 router.include_router(health.router, tags=["health"])
 router.include_router(metrics.router, tags=["metrics"])
+router.include_router(external_stats.router, prefix="/api", tags=["external"])
 
 __all__ = ["router"]

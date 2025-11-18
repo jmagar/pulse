@@ -71,10 +71,11 @@ async def search_documents(
 
         # Execute search
         search_start = time.perf_counter()
-        raw_results = await orchestrator.search(
+        raw_results, total_count = await orchestrator.search(
             query=search_request.query,
             mode=search_request.mode,
             limit=search_request.limit,
+            offset=search_request.offset,
             domain=filters.get("domain"),
             language=filters.get("language"),
             country=filters.get("country"),
@@ -86,6 +87,7 @@ async def search_documents(
             "Search orchestration completed",
             duration_ms=search_duration_ms,
             raw_results_count=len(raw_results),
+            total_count=total_count,
         )
 
         # Convert to response format
@@ -100,6 +102,7 @@ async def search_documents(
 
             results.append(
                 SearchResult(
+                    id=payload.get("content_id") or payload.get("contentId") or result.get("id"),
                     url=payload.get("url", ""),
                     title=payload.get("title"),
                     description=payload.get("description"),
@@ -129,7 +132,7 @@ async def search_documents(
 
         return SearchResponse(
             results=results,
-            total=len(results),
+            total=total_count,
             query=search_request.query,
             mode=search_request.mode,
         )

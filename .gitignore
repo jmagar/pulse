@@ -8,7 +8,7 @@
 # =============================================================================
 .DS_Store
 Thumbs.db
-
+.mcp.json
 # Accidental directories from command-line parsing
 --*/
 
@@ -186,3 +186,4 @@ apps/python-sdk/.venv/
 /examples/haiku_web_crawler/firecrawl_env
 /examples/sonnet_web_crawler/firecrawl_env
 /examples/internal_link_assitant/firecrawl_env
+.mcp_sessions/

@@ -133,16 +133,21 @@ async def test_search_without_filters(
     mock_result.score = 0.95
     mock_result.payload = {"url": "https://example.com", "text": "result text"}
     mock_qdrant_client.search.return_value = [mock_result]
+    count_resp = MagicMock()
+    count_resp.count = 1
+    mock_qdrant_client.count.return_value = count_resp
 
-    results = await vector_store.search([0.1, 0.2, 0.3], limit=10)
+    results, total = await vector_store.search([0.1, 0.2, 0.3], limit=10)
 
     assert len(results) == 1
     assert results[0]["score"] == 0.95
     assert results[0]["payload"]["url"] == "https://example.com"
+    assert total == 1
 
     # Verify no filter was passed
     call_args = mock_qdrant_client.search.call_args
     assert call_args[1]["query_filter"] is None
+    assert call_args[1]["offset"] == 0
 
 
 @pytest.mark.asyncio
@@ -151,6 +156,9 @@ async def test_search_with_domain_filter(
 ) -> None:
     """Test search with domain filter."""
     mock_qdrant_client.search.return_value = []
+    count_resp = MagicMock()
+    count_resp.count = 0
+    mock_qdrant_client.count.return_value = count_resp
 
     await vector_store.search([0.1], domain="example.com")
 
@@ -166,6 +174,9 @@ async def test_search_with_multiple_filters(
 ) -> None:
     """Test search with multiple filters."""
     mock_qdrant_client.search.return_value = []
+    count_resp = MagicMock()
+    count_resp.count = 0
+    mock_qdrant_client.count.return_value = count_resp
 
     await vector_store.search(
         [0.1],

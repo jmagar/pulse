@@ -1,6 +1,7 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 interface SearchResult {
+  id?: string | number;
   url: string;
   title: string | null;
   description: string | null;
@@ -17,7 +18,7 @@ interface SearchResponse {
   offset: number;
 }
 
-const MAX_INLINE_RESULTS = 5;
+const MAX_INLINE_RESULTS = 10;
 const SNIPPET_LENGTH = 220;
 
 const truncate = (value: string, max = SNIPPET_LENGTH) =>
@@ -37,12 +38,25 @@ const formatResult = (result: SearchResult, index: number) => {
   lines.push(`   Snippet: ${snippet}`);
 
   const metadataParts: string[] = [];
+  const resultId =
+    (result.metadata.content_id as string | number | undefined) ??
+    (result.metadata.contentId as string | number | undefined) ??
+    result.id;
+  if (resultId !== undefined) metadataParts.push(`ID=${resultId}`);
   if (result.metadata.domain)
     metadataParts.push(`Domain=${result.metadata.domain}`);
   if (result.metadata.language)
     metadataParts.push(`Lang=${result.metadata.language}`);
   if (result.metadata.country)
     metadataParts.push(`Country=${result.metadata.country}`);
+  const mobile =
+    (result.metadata.is_mobile as boolean | undefined) ??
+    (result.metadata.isMobile as boolean | undefined);
+  if (mobile !== undefined) metadataParts.push(`Mobile=${mobile}`);
+  if (result.metadata.section)
+    metadataParts.push(`Section=${result.metadata.section}`);
+  if (result.metadata.source_type)
+    metadataParts.push(`Type=${result.metadata.source_type}`);
   metadataParts.push(`Score=${result.score.toFixed(2)}`);
 
   lines.push(`   Meta: ${metadataParts.join(" | ")}`);

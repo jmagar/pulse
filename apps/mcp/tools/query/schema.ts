@@ -31,9 +31,9 @@ export const queryOptionsSchema = z.object({
     .int()
     .min(1)
     .max(100)
-    .default(5)
+    .default(10)
     .describe(
-      "Number of results to fetch per page (1-100). Output shows only the first five.",
+      "Number of results to fetch per page (1-100). Output shows 10 per page by default.",
     ),
   offset: z
     .number()
@@ -75,9 +75,9 @@ export function buildQueryInputSchema() {
         type: "integer",
         minimum: 1,
         maximum: 100,
-        default: 5,
+        default: 10,
         description:
-          "Number of results to fetch per page (1-100). Output always shows top five.",
+          "Number of results to fetch per page (1-100). Output defaults to 10.",
       },
       offset: {
         type: "integer",
