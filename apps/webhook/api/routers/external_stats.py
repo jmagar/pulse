@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 from datetime import UTC, datetime
 from typing import Any
@@ -22,6 +23,28 @@ from utils.logging import get_logger
 
 router = APIRouter(prefix="/api/external", tags=["external"])
 logger = get_logger(__name__)
+
+# Constants for unit conversions
+BYTES_PER_KB = 1024
+BYTES_PER_MB = 1024**2
+BYTES_PER_GB = 1024**3
+
+
+def validate_service_name(name: str) -> str:
+    """Validate service name to prevent command injection."""
+    if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+        raise ValueError(f"Invalid service name: {name}")
+    return name
+
+
+def validate_volume_path(path: str) -> str:
+    """Validate volume path to prevent path traversal attacks."""
+    normalized = os.path.normpath(path)
+    if not os.path.isabs(normalized):
+        raise ValueError(f"Volume path must be absolute: {path}")
+    if any(c in normalized for c in [";", "&", "|", "$", "`", ".."]):
+        raise ValueError(f"Invalid characters in path: {path}")
+    return normalized
 
 
 async def run_command(args: list[str]) -> str:
@@ -116,15 +139,15 @@ def _parse_memory_mb(raw: str | None) -> float:
     value = float(match.group(1))
     unit = (match.group(2) or "").lower()
     multipliers = {
-        "b": 1 / (1024 * 1024),
-        "kb": 1 / 1024,
-        "kib": 1 / 1024,
+        "b": 1 / BYTES_PER_MB,
+        "kb": 1 / BYTES_PER_KB,
+        "kib": 1 / BYTES_PER_KB,
         "mb": 1,
         "mib": 1,
-        "gb": 1024,
-        "gib": 1024,
-        "tb": 1024 * 1024,
-        "tib": 1024 * 1024,
+        "gb": BYTES_PER_KB,
+        "gib": BYTES_PER_KB,
+        "tb": BYTES_PER_MB,
+        "tib": BYTES_PER_MB,
     }
 
     return round(value * multipliers.get(unit, 1.0), 3)
@@ -179,9 +202,12 @@ async def _compute_volume_bytes(volumes: list[str]) -> int:
     total = 0
     for path in volumes:
         try:
-            output = await run_command(["du", "-sb", path])
+            validated_path = validate_volume_path(path)
+            output = await run_command(["du", "-sb", validated_path])
             size_str = output.split()[0]
             total += int(size_str)
+        except ValueError as exc:
+            logger.warning("Volume path validation failed", path=path, error=str(exc))
         except Exception as exc:  # pragma: no cover - error logged for visibility
             logger.warning("Volume calculation failed", path=path, error=str(exc))
 
@@ -200,6 +226,28 @@ def _build_docker_args(context: str | None, *command: str) -> list[str]:
 
 async def _gather_service_status(service: ExternalServiceConfig) -> dict[str, Any]:
     """Collect inspect, stats, and volume data for a single external service."""
+
+    # Validate service name to prevent command injection
+    try:
+        validated_name = validate_service_name(service.name)
+    except ValueError as exc:
+        logger.error("Invalid service name", service=service.name, error=str(exc))
+        return {
+            "name": service.name,
+            "status": "unknown",
+            "port": service.port,
+            "restart_count": 0,
+            "uptime_seconds": 0,
+            "cpu_percent": 0.0,
+            "memory_mb": 0.0,
+            "health_check": {
+                "status": "unknown",
+                "last_check": datetime.now(UTC).isoformat(),
+                "response_time_ms": 0,
+            },
+            "replica_count": 0,
+            "volume_bytes": 0,
+        }
 
     context = service.context or settings.external_context
     volume_bytes = await _compute_volume_bytes(service.volumes)
@@ -227,7 +275,7 @@ async def _gather_service_status(service: ExternalServiceConfig) -> dict[str, An
     replica_count = 0
 
     try:
-        inspect_output = await run_command(_build_docker_args(context, "inspect", service.name))
+        inspect_output = await run_command(_build_docker_args(context, "inspect", validated_name))
         inspect_data = json.loads(inspect_output)
         if isinstance(inspect_data, list) and inspect_data:
             record = inspect_data[0]
@@ -259,14 +307,20 @@ async def _gather_service_status(service: ExternalServiceConfig) -> dict[str, An
                 stats_cpu = metrics.get("cpu", 0.0)
                 stats_mem = metrics.get("memory", 0.0)
         except Exception as exc:  # pragma: no cover - logged for debugging
-            logger.error("Stats collection failed", service=service.name, context=context, error=str(exc))
+            logger.error(
+                "Stats collection failed", service=service.name, context=context, error=str(exc)
+            )
 
     status = _normalize_status(container_state.get("Status"))
-    health = _build_health_check(container_state) if container_state else {
-        "status": "unknown",
-        "last_check": datetime.now(UTC).isoformat(),
-        "response_time_ms": 0,
-    }
+    health = (
+        _build_health_check(container_state)
+        if container_state
+        else {
+            "status": "unknown",
+            "last_check": datetime.now(UTC).isoformat(),
+            "response_time_ms": 0,
+        }
+    )
 
     return {
         "name": service.name,

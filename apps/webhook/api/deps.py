@@ -104,8 +104,8 @@ class _StubIndexingService:
 class _StubSearchOrchestrator:
     async def search(
         self, query: str, mode: str, limit: int, **kwargs: Any
-    ) -> list[dict[str, Any]]:
-        return [
+    ) -> tuple[list[dict[str, Any]], int]:
+        results = [
             {
                 "id": f"stub-{mode}",
                 "score": 0.99,
@@ -116,6 +116,7 @@ class _StubSearchOrchestrator:
                 },
             }
         ]
+        return results, len(results)
 
 
 class _StubBM25Engine:

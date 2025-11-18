@@ -12,6 +12,7 @@ import os
 from typing import Any
 
 from api.schemas.indexing import IndexDocumentRequest
+from infra.database import get_db_context
 from services.bm25_engine import BM25Engine
 from services.content_storage import store_scraped_content
 from services.embedding import EmbeddingService
@@ -20,8 +21,6 @@ from utils.logging import get_logger
 from utils.text_processing import TextChunker, clean_text, extract_domain
 from utils.timing import TimingContext
 from utils.url import normalize_url
-from infra.database import get_db_context
-
 
 logger = get_logger(__name__)
 
@@ -118,7 +117,6 @@ class IndexingService:
                         document={
                             "markdown": cleaned_markdown,
                             "html": document.html,
-                            "links": None,
                             "metadata": {"sourceURL": document.resolved_url or document.url},
                         },
                         content_source="search_index",
@@ -126,8 +124,11 @@ class IndexingService:
                     content_id = stored.id
                     chunk_metadata["content_id"] = content_id
             except Exception as e:
+                # Content storage failure is logged but indexing continues
+                # This allows documents to be indexed even if DB is temporarily unavailable
+                # Note: Without content_id, full document retrieval may not work
                 logger.warning(
-                    "Failed to store content for content_id",
+                    "Failed to store content for content_id - document indexed without retrieval capability",
                     url=document.url,
                     crawl_id=crawl_id,
                     error=str(e),

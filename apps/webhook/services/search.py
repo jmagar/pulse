@@ -152,9 +152,13 @@ class SearchOrchestrator:
         )
 
         if mode == SearchMode.HYBRID:
-            return await self._hybrid_search(query, limit, offset, domain, language, country, is_mobile)
+            return await self._hybrid_search(
+                query, limit, offset, domain, language, country, is_mobile
+            )
         elif mode == SearchMode.SEMANTIC:
-            return await self._semantic_search(query, limit, offset, domain, language, country, is_mobile)
+            return await self._semantic_search(
+                query, limit, offset, domain, language, country, is_mobile
+            )
         elif mode in (SearchMode.KEYWORD, SearchMode.BM25):
             return self._keyword_search(query, limit, offset, domain, language, country, is_mobile)
         else:
@@ -173,11 +177,15 @@ class SearchOrchestrator:
         """
         Hybrid search: Vector + BM25 with RRF fusion.
         """
-        # Run both searches
+        # Fetch enough results before fusion to maintain ranking accuracy across pages
+        # We need to fetch (limit + offset) results from each search to ensure proper ranking
+        fetch_limit = limit + offset
+
+        # Run both searches with expanded limit
         vector_results, vector_total = await self._semantic_search(
             query=query,
-            limit=limit,
-            offset=offset,
+            limit=fetch_limit,
+            offset=0,  # Fetch from beginning, apply offset after fusion
             domain=domain,
             language=language,
             country=country,
@@ -185,15 +193,15 @@ class SearchOrchestrator:
         )
         keyword_results, keyword_total = self._keyword_search(
             query=query,
-            limit=limit,
-            offset=offset,
+            limit=fetch_limit,
+            offset=0,  # Fetch from beginning, apply offset after fusion
             domain=domain,
             language=language,
             country=country,
             is_mobile=is_mobile,
         )
 
-        # Apply RRF fusion
+        # Apply RRF fusion on full result sets
         fused_results = reciprocal_rank_fusion(
             [vector_results, keyword_results],
             k=self.rrf_k,
@@ -201,8 +209,8 @@ class SearchOrchestrator:
 
         total = max(vector_total, keyword_total)
 
-        # Return top results
-        return fused_results[:limit], total
+        # Apply pagination after fusion to maintain ranking accuracy
+        return fused_results[offset : offset + limit], total
 
     async def _semantic_search(
         self,

@@ -28,6 +28,28 @@ const dockerAgent = DOCKER_SOCKET_PATH
 const EXTERNAL_DOCKER_CONTEXT = process.env.DASHBOARD_EXTERNAL_CONTEXT
 const execFileAsync = promisify(execFile)
 
+type ExternalEndpoint = { host: string; port: number; path: string }
+
+function parseExternalEndpoint(value: string | undefined, defaultPath: string): ExternalEndpoint {
+  if (!value) {
+    return { host: "localhost", port: 80, path: defaultPath }
+  }
+  try {
+    const url = new URL(value)
+    return {
+      host: url.hostname,
+      port: Number(url.port || 80),
+      path: defaultPath,
+    }
+  } catch {
+    return { host: "localhost", port: 80, path: defaultPath }
+  }
+}
+
+const externalTei = parseExternalEndpoint(process.env.DASHBOARD_EXTERNAL_TEI_URL, "/v1/health")
+const externalQdrant = parseExternalEndpoint(process.env.DASHBOARD_EXTERNAL_QDRANT_URL, "/health")
+const externalOllama = parseExternalEndpoint(process.env.DASHBOARD_EXTERNAL_OLLAMA_URL, "/")
+
 interface ServiceDefinition {
   name: string
   port: number | null
@@ -117,7 +139,7 @@ const SERVICE_DEFINITIONS: ServiceDefinition[] = [
       port: externalTei.port,
       path: externalTei.path,
     },
-    volumes: ["/home/jmagar/appdata/tei"],
+    volumes: [process.env.EXTERNAL_TEI_VOLUME ?? `${process.env.APPDATA_BASE ?? "/mnt/cache/appdata"}/tei`],
     external: true,
   },
   {
@@ -129,7 +151,7 @@ const SERVICE_DEFINITIONS: ServiceDefinition[] = [
       port: externalQdrant.port,
       path: externalQdrant.path,
     },
-    volumes: ["/home/jmagar/appdata/qdrant"],
+    volumes: [process.env.EXTERNAL_QDRANT_VOLUME ?? `${process.env.APPDATA_BASE ?? "/mnt/cache/appdata"}/qdrant`],
     external: true,
   },
   {
@@ -141,23 +163,17 @@ const SERVICE_DEFINITIONS: ServiceDefinition[] = [
       port: externalOllama.port,
       path: externalOllama.path,
     },
-    volumes: ["/home/jmagar/appdata/ollama"],
+    volumes: [process.env.EXTERNAL_OLLAMA_VOLUME ?? `${process.env.APPDATA_BASE ?? "/mnt/cache/appdata"}/ollama`],
     external: true,
   },
 ]
 
 let cachedResponse: DashboardResponse | null = null
 let cacheUpdatedAt = 0
+let inflightRequest: Promise<DashboardResponse> | null = null
 
-export async function GET() {
-  const now = Date.now()
-
-  if (cachedResponse && now - cacheUpdatedAt < CACHE_TTL_MS) {
-    return NextResponse.json(cachedResponse)
-  }
-
-  try {
-    const { statuses, runningContainerIds } = await getDockerStatuses()
+async function computeDashboardData(): Promise<DashboardResponse> {
+  const { statuses, runningContainerIds } = await getDockerStatuses()
     const statsByContainer = await getDockerStats(runningContainerIds)
 
     if (EXTERNAL_DOCKER_CONTEXT) {
@@ -234,20 +250,43 @@ export async function GET() {
       stack_volume_bytes,
     }
 
+    return response
+}
+
+export async function GET() {
+  const now = Date.now()
+
+  if (cachedResponse && now - cacheUpdatedAt < CACHE_TTL_MS) {
+    return NextResponse.json(cachedResponse)
+  }
+
+  if (inflightRequest) {
+    const response = await inflightRequest
+    return NextResponse.json(response)
+  }
+
+  inflightRequest = computeDashboardData()
+  try {
+    const response = await inflightRequest
     cachedResponse = response
     cacheUpdatedAt = now
-
     return NextResponse.json(response)
   } catch (error) {
     console.error("dashboard/services", error)
     if (cachedResponse) {
-      return NextResponse.json(cachedResponse)
+      return NextResponse.json({
+        ...cachedResponse,
+        stale: true,
+        error: error instanceof Error ? error.message : "Unknown error",
+      })
     }
 
     return NextResponse.json(
-      { timestamp: new Date().toISOString(), services: [] },
+      { timestamp: new Date().toISOString(), services: [], error: "Service unavailable" },
       { status: 500 },
     )
+  } finally {
+    inflightRequest = null
   }
 }
 
@@ -285,7 +324,8 @@ async function getDockerStatuses() {
           containerNames: matched
             .map((m) => m.Names ?? [])
             .flat()
-            .map((n) => sanitizeContainerName(n)),
+            .map((n) => sanitizeContainerName(n))
+            .filter((name): name is string => name !== undefined),
           replicaCount: matched.length,
         }
         return
@@ -302,6 +342,7 @@ async function getDockerStatuses() {
         .map((v) => v.entry.Names ?? [])
         .flat()
         .map((n) => sanitizeContainerName(n))
+        .filter((name): name is string => name !== undefined)
       const healthStates = valid
         .map((v) => v.state?.Health?.Status)
         .filter(Boolean) as string[]
@@ -368,8 +409,13 @@ async function inspectContainerState(containerId: string): Promise<ContainerStat
   }
 }
 
+interface AggregateStats {
+  cpu: number
+  memory: number
+}
+
 async function getDockerStats(containerIds: string[]) {
-  const stats: Record<string, DockerStats> = {}
+  const stats: Record<string, AggregateStats> = {}
   if (!containerIds.length) {
     return stats
   }
@@ -442,7 +488,7 @@ async function getHealthStatuses(timeoutMs: number) {
       return {
         name: definition.name,
         check: {
-          status: response.status < 500 ? "healthy" : "unhealthy",
+          status: response.status >= 200 && response.status < 300 ? "healthy" : "unhealthy",
           last_check: new Date().toISOString(),
           response_time_ms: duration,
         },
@@ -575,7 +621,7 @@ function tcpPing(host: string, port: number, timeout: number) {
   })
 }
 
-function aggregateStats(ids: string[], stats: Record<string, DockerStats>): AggregateStats {
+function aggregateStats(ids: string[], stats: Record<string, AggregateStats>): AggregateStats {
   return ids.reduce(
     (acc, id) => {
       const stat = stats[id]
@@ -641,11 +687,6 @@ interface ContainerStats {
   memory_stats?: {
     usage?: number
   }
-}
-
-interface AggregateStats {
-  cpu: number
-  memory: number
 }
 
 async function getVolumeSizes() {

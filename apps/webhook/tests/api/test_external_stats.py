@@ -2,8 +2,8 @@
 
 import json
 import os
+from collections.abc import Awaitable, Callable
 from importlib import reload
-from typing import Awaitable, Callable
 
 import pytest
 from fastapi import FastAPI
@@ -15,7 +15,9 @@ from api import deps
 os.environ.setdefault("WEBHOOK_SKIP_DB_FIXTURES", "1")
 
 
-async def _noop_verify_api_secret(authorization: str | None = None) -> None:  # pragma: no cover - test helper
+async def _noop_verify_api_secret(
+    authorization: str | None = None,
+) -> None:  # pragma: no cover - test helper
     return None
 
 
@@ -126,12 +128,14 @@ def test_external_services_handles_failures(monkeypatch: pytest.MonkeyPatch) -> 
 
     client = _build_client(
         monkeypatch,
-        services=[{
-            "name": "missing_service",
-            "context": "remote-gpu",
-            "volumes": ["/data/missing"],
-            "port": 52001,
-        }],
+        services=[
+            {
+                "name": "missing_service",
+                "context": "remote-gpu",
+                "volumes": ["/data/missing"],
+                "port": 52001,
+            }
+        ],
         run_command=failing_run_command,
     )
 
