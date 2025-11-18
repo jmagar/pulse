@@ -3,7 +3,6 @@
 import logging
 import re
 import sys
-from collections.abc import Callable
 from datetime import datetime
 from typing import Any, cast
 from zoneinfo import ZoneInfo

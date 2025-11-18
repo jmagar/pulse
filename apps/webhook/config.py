@@ -9,9 +9,17 @@ Environment variables are checked in order:
 """
 
 import json
+import re
 from typing import Any
 
-from pydantic import AliasChoices, BaseModel, Field, ValidationInfo, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +35,23 @@ class ExternalServiceConfig(BaseModel):
     health_port: int | None = None
     health_path: str | None = None
     volumes: list[str] = Field(default_factory=list)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        """Validate service name contains only alphanumeric, underscore, and hyphen characters."""
+        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
+            raise ValueError(f"Service name contains invalid characters: {v}")
+        return v
+
+    @field_validator("volumes")
+    @classmethod
+    def validate_volumes(cls, v: list[str]) -> list[str]:
+        """Validate volume paths do not contain path traversal patterns."""
+        for path in v:
+            if ".." in path:
+                raise ValueError(f"Volume paths cannot contain '..': {path}")
+        return v
 
     @field_validator("volumes", mode="before")
     @classmethod

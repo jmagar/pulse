@@ -458,7 +458,11 @@ async def scrape_endpoint(
         HTTPException: On validation or scraping errors
     """
     logger.debug(
-        "scrape_endpoint", command=request.command, url=request.url, urls=request.urls, jobId=request.jobId
+        "scrape_endpoint",
+        command=request.command,
+        url=request.url,
+        urls=request.urls,
+        jobId=request.jobId,
     )
     try:
         # Route by command

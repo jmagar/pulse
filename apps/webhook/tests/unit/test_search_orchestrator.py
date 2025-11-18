@@ -222,7 +222,11 @@ async def test_search_returns_results_and_total_with_offset(
     """Offset is forwarded and total tuple is returned."""
     mock_embedding_service.embed_single.return_value = [0.1] * 384
     all_results = [
-        {"id": f"doc{i}", "payload": {"url": f"url/{i}", "text": f"Result {i}"}, "score": 1.0 - (i * 0.01)}
+        {
+            "id": f"doc{i}",
+            "payload": {"url": f"url/{i}", "text": f"Result {i}"},
+            "score": 1.0 - (i * 0.01),
+        }
         for i in range(12)
     ]
     mock_vector_store.search.return_value = (all_results[5:10], 12)
@@ -259,9 +263,7 @@ async def test_hybrid_search_uses_backend_totals(
         30,
     )
 
-    results, total = await orchestrator.search(
-        query="q", mode=SearchMode.HYBRID, limit=1, offset=0
-    )
+    results, total = await orchestrator.search(query="q", mode=SearchMode.HYBRID, limit=1, offset=0)
 
     assert total == 30
     assert len(results) == 1

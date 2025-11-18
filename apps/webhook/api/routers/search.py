@@ -100,11 +100,18 @@ async def search_documents(
             # Vector results have text in payload, BM25 results have it at top-level
             text = payload.get("text") or result.get("text", "")
 
+            # Extract content ID with single lookups
+            content_id = payload.get("content_id")
+            content_id_camel = payload.get("contentId")
+            id_value = (
+                content_id
+                if content_id is not None
+                else (content_id_camel if content_id_camel is not None else result.get("id"))
+            )
+
             results.append(
                 SearchResult(
-                    id=payload.get("content_id") if payload.get("content_id") is not None else (
-                        payload.get("contentId") if payload.get("contentId") is not None else result.get("id")
-                    ),
+                    id=id_value,
                     url=payload.get("url", ""),
                     title=payload.get("title"),
                     description=payload.get("description"),
