@@ -134,9 +134,6 @@ class IndexingService:
                     error_type=type(e).__name__,
                 )
 
-        if content_id:
-            chunk_metadata["content_id"] = content_id
-
         # Step 1: Chunk text (token-based)
         try:
             async with TimingContext(
