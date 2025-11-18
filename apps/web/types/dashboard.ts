@@ -7,6 +7,8 @@ export interface DashboardResponse {
   stack_cpu_percent: number
   stack_memory_mb: number
   stack_volume_bytes: number
+  stale?: boolean
+  error?: string
 }
 
 export type ServiceStatusState = "running" | "paused" | "exited" | "unknown"

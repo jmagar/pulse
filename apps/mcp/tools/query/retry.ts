@@ -32,15 +32,17 @@ export async function retryWithBackoff<T>(
     try {
       return await fn();
     } catch (error) {
-      lastError = error as Error;
-      const errorObj = error as any;
+      // Ensure error is an Error instance
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const errorObj = error as { status?: number; code?: string };
       const status = errorObj.status;
+      const errorName = typeof lastError.name === "string" ? lastError.name : "";
 
       // Only retry network errors, not programming errors
       const isNetworkError = !status && (
-        ['ECONNRESET', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENOTFOUND'].includes(errorObj.code) ||
-        lastError.name.includes('Timeout') ||
-        lastError.name.includes('NetworkError')
+        (errorObj.code && ['ECONNRESET', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENOTFOUND'].includes(errorObj.code)) ||
+        errorName.includes('Timeout') ||
+        errorName.includes('NetworkError')
       );
       const retriable = status ? RETRYABLE_STATUSES.includes(status) : isNetworkError;
       

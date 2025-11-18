@@ -275,14 +275,15 @@ async def test_hybrid_search_uses_backend_totals(
 async def test_hybrid_search_limit_expansion(
     orchestrator: SearchOrchestrator, mock_vector_store: AsyncMock, mock_bm25_engine: MagicMock
 ) -> None:
-    """Test hybrid search gets more results for fusion."""
-    await orchestrator.search("test", mode=SearchMode.HYBRID, limit=10)
+    """Test hybrid search expands limit with buffer for deduplication during fusion."""
+    # Request page 2 with 5 results per page
+    await orchestrator.search("test", mode=SearchMode.HYBRID, limit=5, offset=10)
 
-    # Should pass through requested limit/offset to both backends
+    # Backends should receive expanded limit (15 * 1.5 = 22) with offset=0 for fusion
     vector_call = mock_vector_store.search.call_args
-    assert vector_call[1]["limit"] == 10
-    assert vector_call[1]["offset"] == 0
+    assert vector_call[1]["limit"] == 22  # (5 + 10) * 1.5
+    assert vector_call[1]["offset"] == 0  # Always 0, offset applied after fusion
 
     bm25_call = mock_bm25_engine.search.call_args
-    assert bm25_call[1]["limit"] == 10
+    assert bm25_call[1]["limit"] == 22
     assert bm25_call[1]["offset"] == 0
