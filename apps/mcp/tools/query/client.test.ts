@@ -119,7 +119,7 @@ describe("QueryClient", () => {
   });
 
   it("should honor offset by fetching more results and trimming", async () => {
-    const mockResults = Array.from({ length: 8 }).map((_, i) => ({
+    const allResults = Array.from({ length: 8 }).map((_, i) => ({
       url: `https://example.com/${i}`,
       title: `Result ${i}`,
       description: null,
@@ -128,12 +128,15 @@ describe("QueryClient", () => {
       metadata: {},
     }));
 
+    // Mock backend returns sliced results based on offset and limit
+    const slicedResults = allResults.slice(5, 10);  // offset=5, limit=5, but only 3 results left
+
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       status: 200,
       json: async () => ({
-        results: mockResults,
-        total: mockResults.length,
+        results: slicedResults,
+        total: allResults.length,
         query: "test",
         mode: "hybrid",
       }),
@@ -148,7 +151,7 @@ describe("QueryClient", () => {
 
     const callArgs = (global.fetch as any).mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.limit).toBe(10);
+    expect(body.limit).toBe(5);  // Should pass through the requested limit
     expect(result.results).toHaveLength(3);
     expect(result.results[0].title).toBe("Result 5");
     expect(result.offset).toBe(5);

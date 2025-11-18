@@ -25,6 +25,10 @@ interface SearchResponse {
   offset: number;
 }
 
+interface HttpError extends Error {
+  status?: number;
+}
+
 /**
  * HTTP client for webhook service search endpoint
  */
@@ -66,11 +70,11 @@ export class QueryClient {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        const err: any = new Error(
+        const err = new Error(
           `Query failed: ${response.status} ${response.statusText}${
             errorBody.detail ? ` - ${errorBody.detail}` : ""
           }`,
-        );
+        ) as HttpError;
         err.status = response.status;
         throw err;
       }
