@@ -181,6 +181,64 @@ async def test_search_documents_with_filters(
 
 
 @pytest.mark.asyncio
+async def test_search_returns_metadata_and_applies_filters(
+    mock_request: MagicMock, mock_search_orchestrator: AsyncMock
+) -> None:
+    """Test search returns metadata and applies filters."""
+    from api.schemas.search import SearchFilter
+
+    mock_search_orchestrator.search.return_value = (
+        [
+            {
+                "id": "doc1",
+                "payload": {
+                    "url": "https://example.com",
+                    "title": "Title",
+                    "text": "Snippet",
+                    "description": "Description",
+                    "content_id": 123,
+                    "domain": "example.com",
+                    "language": "en",
+                    "country": "us",
+                    "is_mobile": True,
+                    "section": "API Reference",
+                    "source_type": "documentation",
+                },
+                "score": 0.9,
+            }
+        ],
+        1,
+    )
+
+    search_request = SearchRequest(
+        query="q",
+        limit=1,
+        offset=0,
+        filters=SearchFilter(domain="example.com", language="en", is_mobile=True),
+    )
+
+    response = await search.search_documents(mock_request, search_request, mock_search_orchestrator)
+
+    # Verify metadata is in response
+    assert len(response.results) == 1
+    result = response.results[0]
+    assert result.metadata["is_mobile"] is True
+    assert result.metadata["domain"] == "example.com"
+    assert result.metadata["language"] == "en"
+    assert result.metadata["country"] == "us"
+    assert result.metadata["section"] == "API Reference"
+    assert result.metadata["source_type"] == "documentation"
+    assert result.id == 123
+    assert response.total == 1
+
+    # Verify filters were passed to orchestrator
+    call_args = mock_search_orchestrator.search.call_args
+    assert call_args[1]["domain"] == "example.com"
+    assert call_args[1]["language"] == "en"
+    assert call_args[1]["is_mobile"] is True
+
+
+@pytest.mark.asyncio
 async def test_search_documents_failure(
     mock_request: MagicMock, mock_search_orchestrator: AsyncMock
 ) -> None:

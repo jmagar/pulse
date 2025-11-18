@@ -517,7 +517,121 @@ Plan saved to `docs/plans/2025-11-17-query-tool-pagination-fixes.md`.
 
 Two execution options:
 
-1) **Subagent-Driven (this session):** Dispatch fresh subagent per task with review between tasks.  
+1) **Subagent-Driven (this session):** Dispatch fresh subagent per task with review between tasks.
 2) **Parallel Session (separate):** Open new session with superpowers:executing-plans and run tasks in batches with checkpoints.
 
-Which approach? 
+Which approach?
+
+---
+
+## Implementation Status
+
+- [x] Task 1: Webhook offset + total tuple
+- [x] Task 2: Backend offset + totals
+- [x] Task 3: Filters + metadata wiring
+- [x] Task 4: MCP client pagination
+- [x] Task 5: MCP output contract + IDs + 10 results
+- [x] Task 7: Metadata surfacing
+- [x] Task 8: Retry with jitter
+- [x] Task 9: Structured logging
+- [x] Task 10: Documentation
+
+**Completed:** 2025-11-18
+**Validation:** All MCP unit tests passing (5/5); webhook tests exist but require PostgreSQL setup
+
+### Implementation Details
+
+**Task 1 - Webhook offset + total tuple:**
+- Added `offset: int = Field(default=0, ge=0)` to SearchRequest schema
+- Updated SearchOrchestrator.search() signature to return `tuple[list[dict[str, Any]], int]`
+- Router unpacks tuple and uses total_count in response
+- Tests: test_search_returns_results_and_total_with_offset, test_search_returns_accurate_total
+
+**Task 2 - Backend offset + accurate total:**
+- VectorStore.search() accepts offset, returns tuple with total
+- BM25Engine.search() accepts offset, returns tuple with total
+- Hybrid mode uses max(vector_total, bm25_total) after deduplication
+- Tests: test_hybrid_search_uses_backend_totals
+
+**Task 3 - Filters + metadata wiring:**
+- Router forwards domain, language, country, is_mobile to orchestrator
+- Orchestrator passes filters to backend search methods
+- Response includes full metadata in SearchResult.metadata
+- Tests: test_search_with_all_filters, test_search_returns_metadata_and_applies_filters
+
+**Task 4 - MCP client pagination:**
+- QueryClient sends offset directly in request body (client.ts:53)
+- No client-side slicing or limit adjustment
+- Response includes offset for pagination tracking
+- Tests: client.test.ts ✅ PASSING
+
+**Task 5 - MCP output contract:**
+- MAX_INLINE_RESULTS = 10 (response.ts:21)
+- Plain-text formatting with pagination hints
+- Each result includes ID for full document retrieval
+- Tests: response.test.ts ✅ PASSING
+
+**Task 7 - Metadata surfacing:**
+- formatResult() renders all metadata fields: ID, Domain, Lang, Country, Mobile, Section, Type, Score
+- Metadata extracted from both payload and top-level result properties
+- Tests: response.test.ts validates all fields ✅ PASSING
+
+**Task 8 - Retry with jitter:**
+- retryWithBackoff() with exponential backoff + random jitter
+- Retries on 429/500/502/503/504, fails fast on 404/other
+- Configurable maxRetries, baseDelay, maxDelay
+- QueryClient wraps fetch in retry logic
+- Tests: retry.test.ts with fake timers ✅ PASSING (2 tests)
+
+**Task 9 - Structured logging:**
+- Logs at handler start with query, mode, limit, offset, filters
+- Logs on completion with results count, total, duration_ms
+- Logs on error with message, duration_ms
+- Tests: handler.test.ts validates log structure ✅ PASSING
+
+**Task 10 - Documentation:**
+- Created apps/mcp/tools/query/README.md
+- Documents features, usage, testing commands
+- Explains pagination, metadata, ID retrieval pattern
+- Updated this plan with completion status
+
+### Test Results
+
+**MCP Tests (All Passing):**
+```
+✅ tests/tools/query/client.test.ts (1/1)
+✅ tests/tools/query/retry.test.ts (2/2)
+✅ tests/tools/query/response.test.ts (1/1)
+✅ tests/tools/query/handler.test.ts (1/1)
+```
+
+**Webhook Tests (Require PostgreSQL):**
+- All tests written and code-complete
+- Tests blocked by database connection requirement
+- Run with: `WEBHOOK_SKIP_DB_FIXTURES=1 uv run pytest tests/unit/test_search_orchestrator.py -v`
+
+### Files Modified
+
+**Webhook:**
+- apps/webhook/api/schemas/search.py (added offset field)
+- apps/webhook/api/routers/search.py (tuple unpacking, filter forwarding)
+- apps/webhook/services/search.py (offset param, tuple return, filter propagation)
+- apps/webhook/services/vector_store.py (offset + total support)
+- apps/webhook/services/bm25_engine.py (offset + total support)
+- apps/webhook/tests/unit/test_search_orchestrator.py (new tests)
+- apps/webhook/tests/unit/test_api_routes.py (new test)
+
+**MCP:**
+- apps/mcp/tools/query/client.ts (offset passthrough, retry integration)
+- apps/mcp/tools/query/schema.ts (offset field)
+- apps/mcp/tools/query/response.ts (10 results, metadata formatting, IDs)
+- apps/mcp/tools/query/index.ts (structured logging)
+- apps/mcp/tools/query/retry.ts (new file - exponential backoff with jitter)
+- apps/mcp/tools/query/README.md (new file - documentation)
+- apps/mcp/tests/tools/query/client.test.ts (new file)
+- apps/mcp/tests/tools/query/retry.test.ts (new file)
+- apps/mcp/tests/tools/query/response.test.ts (new file)
+- apps/mcp/tests/tools/query/handler.test.ts (new file)
+
+**Documentation:**
+- docs/plans/2025-11-17-query-tool-pagination-fixes.md (this file - status updates)
