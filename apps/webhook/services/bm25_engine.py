@@ -307,7 +307,7 @@ class BM25Engine:
         """
         if not self.bm25 or not self.corpus:
             logger.warning("BM25 index is empty")
-            return []
+            return [], 0
 
         # Tokenize query
         query_tokens = self._tokenize(query)

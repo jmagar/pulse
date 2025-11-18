@@ -47,20 +47,36 @@ def validate_volume_path(path: str) -> str:
     return normalized
 
 
-async def run_command(args: list[str]) -> str:
-    """Run a subprocess command and return stdout, raising on failure."""
+async def run_command(args: list[str], timeout: int = 30) -> str:
+    """Run a subprocess command and return stdout, raising on failure.
 
-    process = await asyncio.create_subprocess_exec(  # type: ignore[attr-defined]
-        *args,
-        stdout=asyncio.subprocess.PIPE,  # type: ignore[attr-defined]
-        stderr=asyncio.subprocess.PIPE,  # type: ignore[attr-defined]
-    )
-    stdout, stderr = await process.communicate()
-    if process.returncode not in {0, None}:
-        raise RuntimeError(
-            f"Command failed ({process.returncode}): {' '.join(args)} | {stderr.decode().strip()}"
+    Args:
+        args: Command and arguments to execute
+        timeout: Timeout in seconds (default 30s)
+
+    Raises:
+        RuntimeError: If command fails or times out
+    """
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
-    return stdout.decode().strip()
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
+        if process.returncode not in {0, None}:
+            raise RuntimeError(
+                f"Command failed ({process.returncode}): {' '.join(args)} | {stderr.decode().strip()}"
+            )
+        return stdout.decode().strip()
+    except TimeoutError:
+        # Kill the process on timeout
+        try:
+            process.kill()
+            await process.wait()
+        except Exception:
+            pass
+        raise RuntimeError(f"Command timed out after {timeout}s: {' '.join(args)}")
 
 
 def _normalize_status(raw: str | None) -> str:
@@ -153,10 +169,12 @@ def _parse_memory_mb(raw: str | None) -> float:
     return round(value * multipliers.get(unit, 1.0), 3)
 
 
-def _parse_stats_output(output: str) -> dict[str, dict[str, float]]:
-    """Parse docker stats JSON lines into a mapping of container id to metrics."""
+def _parse_stats_output(output: str) -> dict[str, float]:
+    """Parse docker stats JSON output for a single container.
 
-    results: dict[str, dict[str, float]] = {}
+    Since stats is queried for a single container, we return the first valid line
+    rather than mapping by container ID (which can have truncation mismatches).
+    """
     for line in output.splitlines():
         candidate = line.strip()
         if not candidate:
@@ -164,19 +182,14 @@ def _parse_stats_output(output: str) -> dict[str, dict[str, float]]:
 
         try:
             parsed = json.loads(candidate)
+            return {
+                "cpu": _parse_cpu_percent(parsed.get("CPUPerc")),
+                "memory": _parse_memory_mb(parsed.get("MemUsage")),
+            }
         except json.JSONDecodeError:
             continue
 
-        container_id = parsed.get("Container") or parsed.get("ID")
-        if not container_id:
-            continue
-
-        results[container_id] = {
-            "cpu": _parse_cpu_percent(parsed.get("CPUPerc")),
-            "memory": _parse_memory_mb(parsed.get("MemUsage")),
-        }
-
-    return results
+    return {"cpu": 0.0, "memory": 0.0}
 
 
 def _build_health_check(state: dict[str, Any]) -> dict[str, Any]:
@@ -301,11 +314,9 @@ async def _gather_service_status(service: ExternalServiceConfig) -> dict[str, An
                     container_id,
                 )
             )
-            stats = _parse_stats_output(stats_output)
-            metrics = stats.get(container_id)
-            if metrics:
-                stats_cpu = metrics.get("cpu", 0.0)
-                stats_mem = metrics.get("memory", 0.0)
+            metrics = _parse_stats_output(stats_output)
+            stats_cpu = metrics.get("cpu", 0.0)
+            stats_mem = metrics.get("memory", 0.0)
         except Exception as exc:  # pragma: no cover - logged for debugging
             logger.error(
                 "Stats collection failed", service=service.name, context=context, error=str(exc)
@@ -340,8 +351,9 @@ async def _gather_service_status(service: ExternalServiceConfig) -> dict[str, An
 async def get_external_services() -> dict[str, Any]:
     """Expose summaries for configured external services with timestamp."""
 
-    services = [await _gather_service_status(service) for service in settings.external_services]
+    # Use asyncio.gather for concurrent execution
+    services = await asyncio.gather(*[_gather_service_status(service) for service in settings.external_services])
     return {
         "timestamp": datetime.now(UTC).isoformat(),
-        "services": services,
+        "services": list(services),
     }

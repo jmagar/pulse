@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import net from "node:net"
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
+import { existsSync } from "node:fs"
 
 import type {
   DashboardResponse,
@@ -253,10 +254,14 @@ async function computeDashboardData(): Promise<DashboardResponse> {
     return response
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const now = Date.now()
+  
+  // Support force_refresh query parameter to bypass cache
+  const url = new URL(request.url)
+  const forceRefresh = url.searchParams.get("force_refresh") === "true"
 
-  if (cachedResponse && now - cacheUpdatedAt < CACHE_TTL_MS) {
+  if (!forceRefresh && cachedResponse && now - cacheUpdatedAt < CACHE_TTL_MS) {
     return NextResponse.json(cachedResponse)
   }
 
@@ -699,17 +704,33 @@ async function getVolumeSizes() {
   return Object.fromEntries(entries)
 }
 
+function validateVolumePath(path: string): string {
+  // Prevent path traversal
+  if (path.includes("..")) {
+    throw new Error(`Volume path contains '..': ${path}`)
+  }
+  // Require absolute paths
+  if (!path.startsWith("/")) {
+    throw new Error(`Volume path must be absolute: ${path}`)
+  }
+  return path
+}
+
 async function sumPaths(paths: string[]) {
   let total = 0
   for (const path of paths) {
     try {
-      const { stdout } = await execFileAsync("du", ["-sb", path])
+      const validatedPath = validateVolumePath(path)
+      const { stdout } = await execFileAsync("du", ["-sb", validatedPath])
       const value = Number(stdout.split("\t")[0])
       if (Number.isFinite(value)) {
         total += value
       }
-    } catch {
-      // Ignore missing paths
+    } catch (error) {
+      // Log validation errors, ignore missing paths
+      if (error instanceof Error && error.message.includes("Volume path")) {
+        console.warn(`[dashboard] Invalid volume path: ${error.message}`)
+      }
     }
   }
   return total
@@ -756,7 +777,7 @@ async function getContextServiceData(
         restartCount: Number(state.RestartCount) || 0,
         uptimeSeconds: computeUptimeSeconds(state),
         containerIds: [containerId],
-        containerNames: [sanitizeContainerName(name)],
+        containerNames: [sanitizeContainerName(name)].filter((n): n is string => n !== undefined),
         replicaCount: 1,
         containerHealth: state.Health?.Status,
       }
@@ -832,10 +853,40 @@ async function getContextServiceData(
   return { statuses, stats }
 }
 
-const DOCKER_BIN = process.env.DASHBOARD_DOCKER_BIN ?? "/usr/local/bin/docker"
+// Validate and select Docker binary path
+function getDockerBinaryPath(): string {
+  const envPath = process.env.DASHBOARD_DOCKER_BIN
+  if (envPath) {
+    if (!existsSync(envPath)) {
+      console.warn(`[dashboard] Custom DASHBOARD_DOCKER_BIN not found: ${envPath}`)
+    }
+    return envPath
+  }
+  
+  // Check common locations in order of preference
+  const paths = ["/usr/bin/docker", "/usr/local/bin/docker"]
+  for (const path of paths) {
+    if (existsSync(path)) {
+      return path
+    }
+  }
+  
+  // Fallback to default if none exist (will fail at runtime if docker not in PATH)
+  return "/usr/local/bin/docker"
+}
+
+const DOCKER_BIN = getDockerBinaryPath()
+
+function validateContext(context: string): string {
+  if (!/^[a-zA-Z0-9_-]+$/.test(context)) {
+    throw new Error(`Invalid Docker context name: ${context}`)
+  }
+  return context
+}
 
 async function execDocker(args: string[], context?: string) {
-  const finalArgs = context ? ["--context", context, ...args] : args
+  const validatedContext = context ? validateContext(context) : undefined
+  const finalArgs = validatedContext ? ["--context", validatedContext, ...args] : args
   console.log("[dashboard] exec docker", { args: finalArgs.join(" ") })
   const { stdout } = await execFileAsync(DOCKER_BIN, finalArgs)
   return stdout
@@ -846,6 +897,13 @@ function parseCliCpu(value?: string) {
   const numeric = parseFloat(value.replace("%", ""))
   return Number.isFinite(numeric) ? numeric : 0
 }
+
+// Memory conversion constants
+const B_TO_MB = 1 / 1024 / 1024
+const KB_TO_MB = 1 / 1024
+const MB_TO_MB = 1
+const GB_TO_MB = 1024
+const TB_TO_MB = 1024 * 1024
 
 function parseCliMemory(raw?: string) {
   if (!raw) return 0
@@ -858,19 +916,19 @@ function parseCliMemory(raw?: string) {
   const unit = match[2].toLowerCase()
   switch (unit) {
     case "b":
-      return value / 1024 / 1024
+      return value * B_TO_MB
     case "kb":
     case "ki":
-      return value / 1024
+      return value * KB_TO_MB
     case "mb":
     case "mi":
-      return value
+      return value * MB_TO_MB
     case "gb":
     case "gi":
-      return value * 1024
+      return value * GB_TO_MB
     case "tb":
     case "ti":
-      return value * 1024 * 1024
+      return value * TB_TO_MB
     default:
       return value
   }

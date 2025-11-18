@@ -93,7 +93,7 @@ class IndexingService:
         canonical_url = normalize_url(document.url, remove_tracking=True)
 
         # Prepare chunk metadata
-        chunk_metadata = {
+        chunk_metadata: dict[str, Any] = {
             "url": document.url,
             "canonical_url": canonical_url,
             "domain": domain,
@@ -241,7 +241,7 @@ class IndexingService:
 
         # Step 4: Index full document in BM25
         try:
-            bm25_metadata = {
+            bm25_metadata: dict[str, Any] = {
                 "url": document.url,
                 "canonical_url": canonical_url,
                 "domain": domain,

@@ -15,6 +15,7 @@ from typing import Any
 from pydantic import (
     AliasChoices,
     BaseModel,
+    ConfigDict,
     Field,
     ValidationInfo,
     field_validator,
@@ -26,7 +27,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class ExternalServiceConfig(BaseModel):
     """Configuration for an external Docker service monitored by the webhook."""
 
-    model_config = SettingsConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow")
 
     name: str
     context: str | None = None
@@ -47,10 +48,12 @@ class ExternalServiceConfig(BaseModel):
     @field_validator("volumes")
     @classmethod
     def validate_volumes(cls, v: list[str]) -> list[str]:
-        """Validate volume paths do not contain path traversal patterns."""
+        """Validate volume paths do not contain path traversal patterns and are absolute."""
         for path in v:
             if ".." in path:
                 raise ValueError(f"Volume paths cannot contain '..': {path}")
+            if not path.startswith("/"):
+                raise ValueError(f"Volume paths must be absolute: {path}")
         return v
 
     @field_validator("volumes", mode="before")

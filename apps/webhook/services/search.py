@@ -46,12 +46,14 @@ def reciprocal_rank_fusion(
             metadata = result.get("metadata", {})
 
             # Prefer canonical_url for deduplication, fallback to url, then id
+            # Use hash-based fallback to guarantee uniqueness if ID is missing
             doc_id = (
                 payload.get("canonical_url")
                 or metadata.get("canonical_url")
                 or payload.get("url")
                 or metadata.get("url")
-                or result.get("id", str(rank))
+                or result.get("id")
+                or f"__rank_{rank}_{hash(str(result))}"
             )
 
             # Calculate RRF score
@@ -179,7 +181,9 @@ class SearchOrchestrator:
         """
         # Fetch enough results before fusion to maintain ranking accuracy across pages
         # We need to fetch (limit + offset) results from each search to ensure proper ranking
-        fetch_limit = limit + offset
+        # Add buffer factor to account for deduplication during RRF fusion
+        dedup_buffer_factor = 1.5
+        fetch_limit = int((limit + offset) * dedup_buffer_factor)
 
         # Run both searches with expanded limit
         vector_results, vector_total = await self._semantic_search(
