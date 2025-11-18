@@ -791,7 +791,7 @@ async function getContextServiceData(
           }
         })
     } catch (error) {
-      console.error("[dashboard] external stats failed", { context, containerNames, error })
+      console.error("[dashboard] external stats failed", { context, statTargets, error })
     }
   } else {
     console.warn("[dashboard] external stats skipped - no container IDs", {
