@@ -34,5 +34,5 @@ export async function retryWithBackoff<T>(
     }
   }
 
-  throw lastError;
+  throw lastError ?? new Error("Retry exhausted without error");
 }

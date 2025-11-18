@@ -597,27 +597,7 @@ function aggregateStatuses(states: ContainerState[]) {
   return "unknown" as const
 }
 
-function parseExternalUrl(
-  raw: string | undefined,
-  fallbackHost: string,
-  fallbackPort: number,
-  fallbackPath: string,
-) {
-  if (!raw) {
-    return { host: fallbackHost, port: fallbackPort, path: fallbackPath }
-  }
 
-  try {
-    const url = new URL(raw)
-    return {
-      host: url.hostname || fallbackHost,
-      port: url.port ? Number(url.port) : fallbackPort,
-      path: url.pathname && url.pathname !== "/" ? url.pathname : fallbackPath,
-    }
-  } catch {
-    return { host: fallbackHost, port: fallbackPort, path: fallbackPath }
-  }
-}
 
 interface ContainerListEntry {
   Id: string

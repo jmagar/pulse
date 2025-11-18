@@ -21,7 +21,7 @@ from utils.text_processing import TextChunker, clean_text, extract_domain
 from utils.timing import TimingContext
 from utils.url import normalize_url
 from infra.database import get_db_context
-from domain.models import ScrapedContent
+
 
 logger = get_logger(__name__)
 

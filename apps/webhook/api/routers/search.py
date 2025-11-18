@@ -102,7 +102,9 @@ async def search_documents(
 
             results.append(
                 SearchResult(
-                    id=payload.get("content_id") or payload.get("contentId") or result.get("id"),
+                    id=payload.get("content_id") if payload.get("content_id") is not None else (
+                        payload.get("contentId") if payload.get("contentId") is not None else result.get("id")
+                    ),
                     url=payload.get("url", ""),
                     title=payload.get("title"),
                     description=payload.get("description"),
