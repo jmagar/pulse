@@ -162,7 +162,9 @@ class SearchOrchestrator:
                 query, limit, offset, domain, language, country, is_mobile
             )
         elif mode in (SearchMode.KEYWORD, SearchMode.BM25):
-            return self._keyword_search(query, limit, offset, domain, language, country, is_mobile)
+            return await self._keyword_search(
+                query, limit, offset, domain, language, country, is_mobile
+            )
         else:
             raise ValueError(f"Unknown search mode: {mode}")
 
@@ -195,7 +197,7 @@ class SearchOrchestrator:
             country=country,
             is_mobile=is_mobile,
         )
-        keyword_results, keyword_total = self._keyword_search(
+        keyword_results, keyword_total = await self._keyword_search(
             query=query,
             limit=fetch_limit,
             offset=0,  # Fetch from beginning, apply offset after fusion
@@ -252,7 +254,7 @@ class SearchOrchestrator:
         logger.info("Semantic search completed", results=len(results), total=total)
         return results, total
 
-    def _keyword_search(
+    async def _keyword_search(
         self,
         query: str,
         limit: int,
@@ -262,23 +264,26 @@ class SearchOrchestrator:
         country: str | None,
         is_mobile: bool | None,
     ) -> tuple[list[dict[str, Any]], int]:
-        """
-        Keyword search: BM25 only.
-        """
-        result = self.bm25_engine.search(
-            query=query,
-            limit=limit,
-            offset=offset,
-            domain=domain,
-            language=language,
-            country=country,
-            is_mobile=is_mobile,
+        """Keyword search: BM25 only (runs in thread executor)."""
+        import asyncio
+
+        loop = asyncio.get_running_loop()
+
+        result = await loop.run_in_executor(
+            None,
+            lambda: self.bm25_engine.search(
+                query=query,
+                limit=limit,
+                offset=offset,
+                domain=domain,
+                language=language,
+                country=country,
+                is_mobile=is_mobile,
+            ),
         )
 
-        results, total = self._normalize_results(result)
-
-        logger.info("Keyword search completed", results=len(results), total=total)
-        return results, total
+        # Normalize to (results, total) tuple for consistent callers.
+        return self._normalize_results(result)
 
     @staticmethod
     def _normalize_results(

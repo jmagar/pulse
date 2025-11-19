@@ -78,8 +78,9 @@ def test_search_basic(temp_index_path: str) -> None:
     engine.index_document("deep learning networks", {"url": "url2"})
     engine.index_document("python programming", {"url": "url3"})
 
-    results = engine.search("machine learning", limit=10)
+    results, total = engine.search("machine learning", limit=10)
 
+    assert total > 0
     assert len(results) > 0
     assert results[0]["metadata"]["url"] == "url1"  # Best match
     assert "score" in results[0]
@@ -89,9 +90,10 @@ def test_search_empty_index(temp_index_path: str) -> None:
     """Test search on empty index."""
     engine = BM25Engine(index_path=temp_index_path)
 
-    results = engine.search("test query")
+    results, total = engine.search("test query")
 
     assert results == []
+    assert total == 0
 
 
 def test_search_no_matches(temp_index_path: str) -> None:
@@ -99,7 +101,7 @@ def test_search_no_matches(temp_index_path: str) -> None:
     engine = BM25Engine(index_path=temp_index_path)
     engine.index_document("completely unrelated content", {"url": "url1"})
 
-    results = engine.search("machine learning", limit=10)
+    results, total = engine.search("machine learning", limit=10)
 
     # BM25 always returns scores, but they'll be very low
     assert isinstance(results, list)
@@ -111,8 +113,9 @@ def test_search_with_domain_filter(temp_index_path: str) -> None:
     engine.index_document("machine learning", {"url": "url1", "domain": "example.com"})
     engine.index_document("machine learning", {"url": "url2", "domain": "other.com"})
 
-    results = engine.search("machine", domain="example.com")
+    results, total = engine.search("machine", domain="example.com")
 
+    assert total == 1
     assert len(results) == 1
     assert results[0]["metadata"]["domain"] == "example.com"
 
@@ -123,8 +126,9 @@ def test_search_with_language_filter(temp_index_path: str) -> None:
     engine.index_document("test", {"url": "url1", "language": "en"})
     engine.index_document("test", {"url": "url2", "language": "es"})
 
-    results = engine.search("test", language="en")
+    results, total = engine.search("test", language="en")
 
+    assert total == 1
     assert len(results) == 1
     assert results[0]["metadata"]["language"] == "en"
 
@@ -135,8 +139,9 @@ def test_search_with_is_mobile_filter(temp_index_path: str) -> None:
     engine.index_document("test", {"url": "url1", "isMobile": True})
     engine.index_document("test", {"url": "url2", "isMobile": False})
 
-    results = engine.search("test", is_mobile=True)
+    results, total = engine.search("test", is_mobile=True)
 
+    assert total == 1
     assert len(results) == 1
     assert results[0]["metadata"]["isMobile"] is True
 

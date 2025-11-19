@@ -12,6 +12,7 @@ from types import SimpleNamespace
 from typing import Annotated, Any
 from uuid import uuid4
 
+import httpx
 from fastapi import Depends, Header, HTTPException, Request, status
 from redis import Redis
 from rq import Queue
@@ -20,10 +21,12 @@ from config import settings
 from services.bm25_engine import BM25Engine
 from services.embedding import EmbeddingService
 from services.indexing import IndexingService
-from services.search import SearchOrchestrator
 from services.vector_store import VectorStore
 from utils.logging import get_logger
 from utils.text_processing import TextChunker
+
+if False:  # TYPE_CHECKING
+    from services.search import SearchOrchestrator
 
 logger = get_logger(__name__)
 
@@ -36,6 +39,7 @@ __all__ = [
     "get_bm25_engine",
     "get_redis_connection",
     "get_rq_queue",
+    "get_http_client",
     "get_indexing_service",
     "get_search_orchestrator",
     "cleanup_services",
@@ -50,6 +54,7 @@ _indexing_service: Any = None
 _search_orchestrator: Any = None
 _redis_conn: Any = None
 _rq_queue: Any = None
+_http_client: httpx.AsyncClient | None = None
 
 
 class _StubRedis:
@@ -215,13 +220,15 @@ def get_search_orchestrator(
     embedding_service: Annotated[EmbeddingService, Depends(get_embedding_service)],
     vector_store: Annotated[VectorStore, Depends(get_vector_store)],
     bm25_engine: Annotated[BM25Engine, Depends(get_bm25_engine)],
-) -> SearchOrchestrator:
+) -> "SearchOrchestrator":
     """Get or create SearchOrchestrator instance."""
     global _search_orchestrator
     if _search_orchestrator is None:
         if settings.test_mode:
             _search_orchestrator = _StubSearchOrchestrator()
         else:
+            from services.search import SearchOrchestrator
+
             _search_orchestrator = SearchOrchestrator(
                 embedding_service=embedding_service,
                 vector_store=vector_store,
@@ -255,6 +262,17 @@ def get_rq_queue(redis_conn: Annotated[Redis, Depends(get_redis_connection)]) ->
     return _rq_queue  # type: ignore[no-any-return]
 
 
+async def get_http_client() -> httpx.AsyncClient:
+    """Get or create shared HTTP client."""
+    global _http_client
+    if _http_client is None:
+        # Create a client with reasonable default timeouts
+        # We use a generous timeout because scraping can be slow
+        _http_client = httpx.AsyncClient(timeout=60.0, follow_redirects=True)
+        logger.info("Shared HTTP client initialized")
+    return _http_client
+
+
 async def cleanup_services() -> None:
     """
     Clean up all singleton services.
@@ -266,6 +284,17 @@ async def cleanup_services() -> None:
     """
     global _text_chunker, _embedding_service, _vector_store, _bm25_engine
     global _indexing_service, _search_orchestrator, _redis_conn, _rq_queue
+    global _http_client
+
+    # Close shared HTTP client
+    if _http_client is not None:
+        try:
+            await _http_client.aclose()
+            logger.info("Shared HTTP client closed")
+        except Exception:
+            logger.exception("Failed to close shared HTTP client")
+        finally:
+            _http_client = None
 
     # Close embedding service (async HTTP client)
     if _embedding_service is not None:

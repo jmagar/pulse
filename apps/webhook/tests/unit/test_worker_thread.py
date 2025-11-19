@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 
-def test_worker_thread_manager_start():
+def test_worker_thread_manager_start() -> None:
     """WorkerThreadManager starts worker in background thread."""
     from worker_thread import WorkerThreadManager
 
@@ -22,7 +22,7 @@ def test_worker_thread_manager_start():
     manager.stop()
 
 
-def test_worker_thread_manager_stop():
+def test_worker_thread_manager_stop() -> None:
     """WorkerThreadManager stops worker gracefully."""
     from worker_thread import WorkerThreadManager
 
@@ -39,15 +39,14 @@ def test_worker_thread_manager_stop():
     assert not manager._thread.is_alive()
 
 
-def test_worker_thread_manager_does_not_start_twice():
+def test_worker_thread_manager_does_not_start_twice() -> None:
     """WorkerThreadManager cannot be started twice."""
     from worker_thread import WorkerThreadManager
 
     manager = WorkerThreadManager()
 
-    with patch("worker_thread.Redis") as mock_redis:
-        mock_redis.from_url.return_value = Mock()
-
+    # Patch worker_thread.get_redis_connection to avoid real Redis connections.
+    with patch("worker_thread.get_redis_connection", return_value=Mock()):
         manager.start()
 
         # Trying to start again should raise

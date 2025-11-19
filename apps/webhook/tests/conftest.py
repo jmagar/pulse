@@ -298,10 +298,10 @@ def stub_external_services(
 
     import api.deps as deps
     import api.routers.indexing as routes  # "routes" is a historical name for indexing router
+    import config as app_config
     import infra.rate_limit as rate_limit_module
     import services.embedding as embedding_module
     import services.vector_store as vector_store_module
-    import worker as worker_module
 
     redis_conn = InMemoryRedis()
     InMemoryVectorStore.reset()
@@ -313,6 +313,9 @@ def stub_external_services(
     deps._bm25_engine = None
     deps._indexing_service = None
     deps._search_orchestrator = None
+    deps._http_client = None
+    # Ensure dependency layer uses the latest settings instance for auth checks.
+    deps.settings = app_config.settings
 
     monkeypatch.setattr(deps, "get_redis_connection", lambda: redis_conn)
     monkeypatch.setattr(deps, "_redis_conn", redis_conn, raising=False)
@@ -325,8 +328,6 @@ def stub_external_services(
 
     monkeypatch.setattr(vector_store_module, "VectorStore", InMemoryVectorStore)
     monkeypatch.setattr(embedding_module, "EmbeddingService", InMemoryEmbeddingService)
-    monkeypatch.setattr(worker_module, "VectorStore", InMemoryVectorStore)
-    monkeypatch.setattr(worker_module, "EmbeddingService", InMemoryEmbeddingService)
     rate_limit_module.limiter.enabled = False
 
     try:
@@ -340,6 +341,7 @@ def stub_external_services(
         deps._bm25_engine = None
         deps._indexing_service = None
         deps._search_orchestrator = None
+        deps._http_client = None
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -455,6 +457,9 @@ async def db_session():
     This fixture creates a new session for each test and rolls back
     changes after the test completes to maintain test isolation.
     """
+    if os.getenv("WEBHOOK_SKIP_DB_FIXTURES") == "1":
+        pytest.skip("Database fixtures are disabled (WEBHOOK_SKIP_DB_FIXTURES=1)")
+
     from infra.database import get_db_context
 
     async with get_db_context() as session:

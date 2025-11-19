@@ -237,3 +237,6 @@ async def rescrape_changed_url(change_event_id: int) -> dict[str, Any]:
         "document_id": doc_id,
         "url": watch_url,
     }
+
+
+__all__ = ["rescrape_changed_url"]

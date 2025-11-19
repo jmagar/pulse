@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Protocol
 
-from transformers import AutoTokenizer
+try:
+    from transformers import AutoTokenizer  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - optional dependency for metrics only
+    AutoTokenizer = None
 
 from config import settings
 from utils.logging import get_logger
@@ -128,9 +131,22 @@ def _extract_url(metadata: Any) -> str | None:
 def _default_token_counter() -> TokenCounter:
     """Return a cached tokenizer-backed token counter."""
 
+    if AutoTokenizer is None:
+        logger.warning(
+            "Transformers not installed; using fallback token counter for metrics only",
+        )
+
+        def _fallback_counter(text: str) -> int:
+            if not text:
+                return 0
+            # Approximate tokens as whitespace-separated words
+            return len(text.split())
+
+        return _fallback_counter
+
     logger.debug("Initializing webhook token counter", model=settings.embedding_model)
 
-    tokenizer = AutoTokenizer.from_pretrained(settings.embedding_model)  # type: ignore[no-untyped-call]
+    tokenizer = AutoTokenizer.from_pretrained(settings.embedding_model)
 
     def _counter(text: str) -> int:
         if not text:

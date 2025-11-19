@@ -1,9 +1,16 @@
 """Test change_events table schema."""
 
+import os
+
 import pytest
 from sqlalchemy import inspect
 
 from infra.database import engine
+
+pytestmark = pytest.mark.skipif(
+    os.getenv("WEBHOOK_SKIP_DB_FIXTURES") == "1",
+    reason="Database fixtures are disabled (WEBHOOK_SKIP_DB_FIXTURES=1)",
+)
 
 
 @pytest.mark.asyncio

@@ -2,9 +2,9 @@
 
 import pytest
 from sqlalchemy import select
+from worker import _index_document_async
 
 from domain.models import OperationMetric
-from worker import _index_document_async
 
 
 @pytest.mark.asyncio

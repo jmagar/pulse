@@ -3,23 +3,28 @@
 import os
 
 
-def test_database_url_from_env():
+def test_database_url_from_env() -> None:
     """Test database_url can be loaded from environment."""
-    # Set environment variable
-    os.environ["SEARCH_BRIDGE_DATABASE_URL"] = "postgresql+asyncpg://test:pass@localhost/testdb"
+    test_url = "postgresql+asyncpg://test:pass@localhost/testdb"
 
-    # Reload settings (this may need adjustment based on your config pattern)
-    from config import Settings
+    # Preserve existing value to avoid leaking changes between tests
+    prev_value = os.environ.get("WEBHOOK_DATABASE_URL")
+    os.environ["WEBHOOK_DATABASE_URL"] = test_url
 
-    test_settings = Settings()
+    try:
+        from config import Settings
 
-    assert test_settings.database_url == "postgresql+asyncpg://test:pass@localhost/testdb"
+        test_settings = Settings()
 
-    # Cleanup
-    del os.environ["SEARCH_BRIDGE_DATABASE_URL"]
+        assert test_settings.database_url == test_url
+    finally:
+        if prev_value is None:
+            os.environ.pop("WEBHOOK_DATABASE_URL", None)
+        else:
+            os.environ["WEBHOOK_DATABASE_URL"] = prev_value
 
 
-def test_database_url_default():
+def test_database_url_default() -> None:
     """Test database_url has a sensible default."""
     from config import Settings
 

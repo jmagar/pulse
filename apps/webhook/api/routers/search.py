@@ -14,9 +14,11 @@ from api.schemas.health import IndexStats
 from api.schemas.search import SearchRequest, SearchResponse, SearchResult
 from infra.rate_limit import limiter
 from services.bm25_engine import BM25Engine
-from services.search import SearchOrchestrator
 from services.vector_store import VectorStore
 from utils.logging import get_logger
+
+if False:  # TYPE_CHECKING
+    from services.search import SearchOrchestrator
 
 logger = get_logger(__name__)
 
@@ -32,7 +34,7 @@ router = APIRouter()
 async def search_documents(
     request: Request,
     search_request: SearchRequest,
-    orchestrator: Annotated[SearchOrchestrator, Depends(get_search_orchestrator)],
+    orchestrator: Annotated["SearchOrchestrator", Depends(get_search_orchestrator)],
 ) -> SearchResponse:
     """
     Search indexed documents.
