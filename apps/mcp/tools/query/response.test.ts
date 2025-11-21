@@ -30,7 +30,7 @@ describe("Query Response Formatter", () => {
     expect(text).toContain("1. Result 1");
     expect(text).toContain("5. Result 5");
     expect(text).toContain("8. Result 8");
-    expect(text).not.toContain("Showing");  // No pagination notice when all results fit
+    expect(text).not.toContain("Showing"); // No pagination notice when all results fit
   });
 
   it("handles empty result sets", () => {

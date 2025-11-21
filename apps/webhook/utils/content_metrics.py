@@ -6,13 +6,16 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Protocol
 
-try:
-    from transformers import AutoTokenizer  # type: ignore[import-not-found]
-except ImportError:  # pragma: no cover - optional dependency for metrics only
-    AutoTokenizer = None
-
 from config import settings
 from utils.logging import get_logger
+
+AutoTokenizer: Any
+try:
+    from transformers import AutoTokenizer as _AutoTokenizer
+
+    AutoTokenizer = _AutoTokenizer
+except ImportError:  # pragma: no cover - optional dependency for metrics only
+    AutoTokenizer = None
 
 logger = get_logger(__name__)
 

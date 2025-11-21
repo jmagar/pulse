@@ -12,7 +12,7 @@ describe("Query Tool Schema", () => {
 
       expect(result.query).toBe("firecrawl scrape options");
       expect(result.mode).toBe("hybrid");
-      expect(result.limit).toBe(10);  // Default changed to 10
+      expect(result.limit).toBe(10); // Default changed to 10
       expect(result.offset).toBe(0);
     });
 

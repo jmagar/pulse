@@ -20,7 +20,9 @@ from rq import Queue
 from config import settings
 from services.bm25_engine import BM25Engine
 from services.embedding import EmbeddingService
-from services.indexing import IndexingService
+# NOTE: IndexingService is imported lazily inside get_indexing_service
+# to avoid circular imports between services.indexing, api.deps, and
+# API routers that depend on these modules.
 from services.vector_store import VectorStore
 from utils.logging import get_logger
 from utils.text_processing import TextChunker
@@ -200,8 +202,14 @@ def get_indexing_service(
     embedding_service: Annotated[EmbeddingService, Depends(get_embedding_service)],
     vector_store: Annotated[VectorStore, Depends(get_vector_store)],
     bm25_engine: Annotated[BM25Engine, Depends(get_bm25_engine)],
-) -> IndexingService:
-    """Get or create IndexingService instance."""
+) -> "IndexingService":
+    """Get or create IndexingService instance.
+
+    IndexingService is imported lazily to avoid circular imports between
+    services.indexing, api.deps, and API routers that depend on them.
+    """
+    # Local import to avoid circular dependency during module import
+    from services.indexing import IndexingService
     global _indexing_service
     if _indexing_service is None:
         if settings.test_mode:

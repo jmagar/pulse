@@ -129,7 +129,7 @@ describe("QueryClient", () => {
     }));
 
     // Mock backend returns sliced results based on offset and limit
-    const slicedResults = allResults.slice(5, 10);  // offset=5, limit=5, but only 3 results left
+    const slicedResults = allResults.slice(5, 10); // offset=5, limit=5, but only 3 results left
 
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
@@ -151,7 +151,7 @@ describe("QueryClient", () => {
 
     const callArgs = (global.fetch as any).mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.limit).toBe(5);  // Should pass through the requested limit
+    expect(body.limit).toBe(5); // Should pass through the requested limit
     expect(result.results).toHaveLength(3);
     expect(result.results[0].title).toBe("Result 5");
     expect(result.offset).toBe(5);

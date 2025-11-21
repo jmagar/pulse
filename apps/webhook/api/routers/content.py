@@ -1,6 +1,7 @@
 """Content retrieval API router with Redis-backed caching."""
 
 import inspect
+from collections.abc import Awaitable, Callable
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
@@ -27,21 +28,21 @@ def _content_to_dict(content: Any) -> dict[str, Any]:
 
     # Optional string fields – coerce non-strings to string when present
     raw_source_url = getattr(content, "source_url", None)
-    source_url = raw_source_url if isinstance(raw_source_url, str) else (
-        str(raw_source_url) if raw_source_url is not None else None
+    source_url = (
+        raw_source_url
+        if isinstance(raw_source_url, str)
+        else (str(raw_source_url) if raw_source_url is not None else None)
     )
 
     raw_screenshot = getattr(content, "screenshot", None)
-    screenshot = raw_screenshot if isinstance(raw_screenshot, str) else (
-        str(raw_screenshot) if raw_screenshot is not None else None
+    screenshot = (
+        raw_screenshot
+        if isinstance(raw_screenshot, str)
+        else (str(raw_screenshot) if raw_screenshot is not None else None)
     )
 
     raw_content_source = getattr(content, "content_source", None)
-    content_source = (
-        raw_content_source
-        if isinstance(raw_content_source, str)
-        else "unknown"
-    )
+    content_source = raw_content_source if isinstance(raw_content_source, str) else "unknown"
 
     # Dict-like fields – fall back to empty dict when not a real mapping
     raw_links = getattr(content, "links", None)
@@ -154,13 +155,14 @@ async def get_content_for_session(
 ) -> list[ContentResponse]:
     """Retrieve content for a crawl session with pagination and Redis caching."""
 
+    helper: Callable[..., Awaitable[list[Any]]]
     helper = get_content_by_session
     sig = inspect.signature(helper)
     param_count = len(sig.parameters)
 
     if param_count <= 2:
         # Unit tests patch get_content_by_session(session, session_id)
-        raw_items = await helper(session, session_id)  # type: ignore[misc]
+        raw_items = await helper(session, session_id)  # type: ignore[call-arg]
     else:
         raw_items = await helper(
             session,

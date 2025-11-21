@@ -26,10 +26,6 @@
     "deny": []
   },
 
-  "additionalDirectories": [
-    "/mnt/cache/compose/pulse"
-  ],
-
   "enableAllProjectMcpServers": true,
 
   "model": "sonnet",
@@ -38,5 +34,7 @@
 
   "cleanupPeriodDays": 30,
 
-  "env": {}
+  "env": {
+    "CLAUDE_CODE_DISABLE_SANDBOX": "1"
+  }
 }

@@ -30,3 +30,11 @@ cache_dir = ".cache/pytest"
 
 [tool.coverage.run]
 data_file = ".cache/coverage/.coverage"
+
+[tool.windsurfpyright]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = "none"
+reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
+reportUnknownMemberType = "none"
+reportUnknownArgumentType = "none"

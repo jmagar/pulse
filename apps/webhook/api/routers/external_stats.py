@@ -352,7 +352,9 @@ async def get_external_services() -> dict[str, Any]:
     """Expose summaries for configured external services with timestamp."""
 
     # Use asyncio.gather for concurrent execution
-    services = await asyncio.gather(*[_gather_service_status(service) for service in settings.external_services])
+    services = await asyncio.gather(
+        *[_gather_service_status(service) for service in settings.external_services]
+    )
     return {
         "timestamp": datetime.now(UTC).isoformat(),
         "services": list(services),

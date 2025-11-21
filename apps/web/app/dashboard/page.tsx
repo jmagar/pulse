@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button"
 import { LayoutGrid, Table } from "lucide-react"
 import type { DashboardResponse } from "@/types/dashboard"
 
-const REFRESH_SECONDS = Number(process.env.NEXT_PUBLIC_DASHBOARD_REFRESH_INTERVAL ?? 30)
+const REFRESH_SECONDS = Number(
+  process.env.NEXT_PUBLIC_DASHBOARD_REFRESH_INTERVAL ?? 30
+)
 const REFRESH_INTERVAL_MS = Math.max(5_000, REFRESH_SECONDS * 1_000)
 
 export default function DashboardPage() {
@@ -19,20 +21,21 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [viewMode, setViewMode] = useState<"grid" | "table">("table")
-  const [sortKey, setSortKey] = useState<
-    keyof Pick<
-      DashboardResponse["services"][number],
-      | "name"
-      | "port"
-      | "replica_count"
-      | "uptime_seconds"
-      | "restart_count"
-      | "cpu_percent"
-      | "memory_mb"
-      | "health_check"
-      | "volume_bytes"
-    >
-  >("name")
+  const [sortKey, setSortKey] =
+    useState<
+      keyof Pick<
+        DashboardResponse["services"][number],
+        | "name"
+        | "port"
+        | "replica_count"
+        | "uptime_seconds"
+        | "restart_count"
+        | "cpu_percent"
+        | "memory_mb"
+        | "health_check"
+        | "volume_bytes"
+      >
+    >("name")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const initialLoadRef = useRef(true)
 
@@ -118,7 +121,7 @@ export default function DashboardPage() {
       | "memory_mb"
       | "health_check"
       | "volume_bytes"
-    >,
+    >
   ) => {
     if (sortKey === key) {
       setSortDir((prev) => (prev === "asc" ? "desc" : "asc"))
@@ -130,52 +133,82 @@ export default function DashboardPage() {
 
   return (
     <TooltipProvider>
-      <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-foreground">
+      <div className="text-foreground relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.15),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.12),transparent_32%)]" />
-        <div className="pointer-events-none absolute inset-0 mix-blend-screen opacity-10" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-10 mix-blend-screen"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
         <Header />
         <div className="relative mx-auto flex max-w-screen-2xl flex-col gap-8 px-4 py-10">
           <header className="flex flex-col gap-3">
-            <p className="text-sm font-medium uppercase tracking-[0.35em] text-indigo-200/80">
+            <p className="text-sm font-medium tracking-[0.35em] text-indigo-200/80 uppercase">
               Service Monitoring
             </p>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-9 items-center rounded-full bg-white/5 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-100 ring-1 ring-white/10 shadow-sm shadow-black/30">
+                <span className="inline-flex h-9 items-center rounded-full bg-white/5 px-4 text-xs font-semibold tracking-[0.2em] text-indigo-100 uppercase shadow-sm ring-1 shadow-black/30 ring-white/10">
                   Live
                 </span>
                 <h1 className="text-3xl font-semibold text-indigo-50 drop-shadow-sm">
                   Service Dashboard
                 </h1>
               </div>
-              <div className="flex items-center gap-3 rounded-full bg-white/5 px-3 py-1 text-xs text-indigo-100 ring-1 ring-white/10 shadow-sm shadow-black/30">
+              <div className="flex items-center gap-3 rounded-full bg-white/5 px-3 py-1 text-xs text-indigo-100 shadow-sm ring-1 shadow-black/30 ring-white/10">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(16,185,129,0.35)]" />
                 Last update: {formattedLastUpdate}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs text-indigo-200/70">
-              <span>Auto-refresh every {Math.round(REFRESH_INTERVAL_MS / 1000)} seconds.</span>
+              <span>
+                Auto-refresh every {Math.round(REFRESH_INTERVAL_MS / 1000)}{" "}
+                seconds.
+              </span>
               {dashboard && (
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-indigo-100 ring-1 ring-white/10 shadow-sm shadow-black/30">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-[11px] tracking-[0.2em] text-indigo-100 uppercase shadow-sm ring-1 shadow-black/30 ring-white/10">
                   <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                  Up {dashboard.services.filter((s) => s.status === "running").length}
+                  Up{" "}
+                  {
+                    dashboard.services.filter((s) => s.status === "running")
+                      .length
+                  }
                   <span className="inline-flex h-2 w-2 rounded-full bg-amber-400" />
                   Degraded{" "}
                   {
                     dashboard.services.filter(
-                      (s) => s.status === "running" && s.health_check.status !== "healthy"
+                      (s) =>
+                        s.status === "running" &&
+                        s.health_check.status !== "healthy"
                     ).length
                   }
                   <span className="inline-flex h-2 w-2 rounded-full bg-rose-500" />
-                  Down {dashboard.services.filter((s) => s.status !== "running").length}
+                  Down{" "}
+                  {
+                    dashboard.services.filter((s) => s.status !== "running")
+                      .length
+                  }
                 </span>
               )}
               <div className="flex items-center gap-2">
                 {dashboard && (
-                  <div className="flex items-center gap-3 rounded-full bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-indigo-100 ring-1 ring-white/10 shadow-sm shadow-black/30">
-                    <span>Stack CPU: {dashboard.stack_cpu_percent.toFixed(1)}%</span>
-                    <span>Stack Mem: {dashboard.stack_memory_mb.toFixed(0)} MB</span>
-                    <span>Volumes: {(dashboard.stack_volume_bytes / (1024 * 1024)).toFixed(1)} MB</span>
+                  <div className="flex items-center gap-3 rounded-full bg-white/5 px-3 py-1 text-[11px] tracking-[0.2em] text-indigo-100 uppercase shadow-sm ring-1 shadow-black/30 ring-white/10">
+                    <span>
+                      Stack CPU: {dashboard.stack_cpu_percent.toFixed(1)}%
+                    </span>
+                    <span>
+                      Stack Mem: {dashboard.stack_memory_mb.toFixed(0)} MB
+                    </span>
+                    <span>
+                      Volumes:{" "}
+                      {(dashboard.stack_volume_bytes / (1024 * 1024)).toFixed(
+                        1
+                      )}{" "}
+                      MB
+                    </span>
                   </div>
                 )}
                 <Button
@@ -201,9 +234,9 @@ export default function DashboardPage() {
           </header>
 
           {error && (
-            <div className="rounded-2xl border border-destructive/50 bg-destructive/15 px-4 py-3 text-sm text-destructive shadow-lg shadow-destructive/20">
+            <div className="border-destructive/50 bg-destructive/15 text-destructive shadow-destructive/20 rounded-2xl border px-4 py-3 text-sm shadow-lg">
               <p className="font-semibold">Unable to load dashboard data.</p>
-              <p className="text-xs text-destructive/80">{error}</p>
+              <p className="text-destructive/80 text-xs">{error}</p>
             </div>
           )}
 
@@ -211,11 +244,14 @@ export default function DashboardPage() {
             <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {loading &&
                 Array.from({ length: 3 }).map((_, index) => (
-                  <Skeleton key={index} className="h-64 rounded-2xl bg-white/5" />
+                  <Skeleton
+                    key={index}
+                    className="h-64 rounded-2xl bg-white/5"
+                  />
                 ))}
 
               {!loading && services.length === 0 && !error && (
-                <div className="col-span-1 md:col-span-2 xl:grid-cols-3 rounded-2xl border border-dashed border-muted-foreground/60 bg-muted/10 p-6 text-center text-sm text-muted-foreground">
+                <div className="border-muted-foreground/60 bg-muted/10 text-muted-foreground col-span-1 rounded-2xl border border-dashed p-6 text-center text-sm md:col-span-2 xl:grid-cols-3">
                   <p>No service data available yet.</p>
                 </div>
               )}
@@ -227,33 +263,97 @@ export default function DashboardPage() {
             </section>
           ) : (
             <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70 shadow-lg shadow-black/40 backdrop-blur-lg">
-              <div className="grid grid-cols-2 gap-2 border-b border-white/5 bg-white/5 px-4 py-3 text-[11px] uppercase tracking-[0.2em] text-indigo-100 md:grid-cols-10">
-                <button onClick={() => toggleSort("name")} className="col-span-2 flex items-center gap-1 md:col-span-2">
-                  Service {sortKey === "name" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+              <div className="grid grid-cols-2 gap-2 border-b border-white/5 bg-white/5 px-4 py-3 text-[11px] tracking-[0.2em] text-indigo-100 uppercase md:grid-cols-10">
+                <button
+                  onClick={() => toggleSort("name")}
+                  className="col-span-2 flex items-center gap-1 md:col-span-2"
+                >
+                  Service{" "}
+                  {sortKey === "name" ? (sortDir === "asc" ? "↑" : "↓") : ""}
                 </button>
-                <button onClick={() => toggleSort("port")} className="hidden md:flex items-center gap-1">
-                  Port {sortKey === "port" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                <button
+                  onClick={() => toggleSort("port")}
+                  className="hidden items-center gap-1 md:flex"
+                >
+                  Port{" "}
+                  {sortKey === "port" ? (sortDir === "asc" ? "↑" : "↓") : ""}
                 </button>
-                <button onClick={() => toggleSort("replica_count")} className="hidden md:flex items-center gap-1">
-                  Replicas {sortKey === "replica_count" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                <button
+                  onClick={() => toggleSort("replica_count")}
+                  className="hidden items-center gap-1 md:flex"
+                >
+                  Replicas{" "}
+                  {sortKey === "replica_count"
+                    ? sortDir === "asc"
+                      ? "↑"
+                      : "↓"
+                    : ""}
                 </button>
-                <button onClick={() => toggleSort("uptime_seconds")} className="hidden md:flex items-center gap-1">
-                  Uptime {sortKey === "uptime_seconds" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                <button
+                  onClick={() => toggleSort("uptime_seconds")}
+                  className="hidden items-center gap-1 md:flex"
+                >
+                  Uptime{" "}
+                  {sortKey === "uptime_seconds"
+                    ? sortDir === "asc"
+                      ? "↑"
+                      : "↓"
+                    : ""}
                 </button>
-                <button onClick={() => toggleSort("restart_count")} className="hidden md:flex items-center gap-1">
-                  Restarts {sortKey === "restart_count" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                <button
+                  onClick={() => toggleSort("restart_count")}
+                  className="hidden items-center gap-1 md:flex"
+                >
+                  Restarts{" "}
+                  {sortKey === "restart_count"
+                    ? sortDir === "asc"
+                      ? "↑"
+                      : "↓"
+                    : ""}
                 </button>
-                <button onClick={() => toggleSort("cpu_percent")} className="hidden md:flex items-center gap-1">
-                  CPU {sortKey === "cpu_percent" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                <button
+                  onClick={() => toggleSort("cpu_percent")}
+                  className="hidden items-center gap-1 md:flex"
+                >
+                  CPU{" "}
+                  {sortKey === "cpu_percent"
+                    ? sortDir === "asc"
+                      ? "↑"
+                      : "↓"
+                    : ""}
                 </button>
-                <button onClick={() => toggleSort("memory_mb")} className="hidden md:flex items-center gap-1">
-                  Memory {sortKey === "memory_mb" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                <button
+                  onClick={() => toggleSort("memory_mb")}
+                  className="hidden items-center gap-1 md:flex"
+                >
+                  Memory{" "}
+                  {sortKey === "memory_mb"
+                    ? sortDir === "asc"
+                      ? "↑"
+                      : "↓"
+                    : ""}
                 </button>
-                <button onClick={() => toggleSort("volume_bytes")} className="hidden md:flex items-center gap-1">
-                  Volume {sortKey === "volume_bytes" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                <button
+                  onClick={() => toggleSort("volume_bytes")}
+                  className="hidden items-center gap-1 md:flex"
+                >
+                  Volume{" "}
+                  {sortKey === "volume_bytes"
+                    ? sortDir === "asc"
+                      ? "↑"
+                      : "↓"
+                    : ""}
                 </button>
-                <button onClick={() => toggleSort("health_check")} className="hidden md:flex items-center gap-1">
-                  Response {sortKey === "health_check" ? (sortDir === "asc" ? "↑" : "↓") : ""}
+                <button
+                  onClick={() => toggleSort("health_check")}
+                  className="hidden items-center gap-1 md:flex"
+                >
+                  Response{" "}
+                  {sortKey === "health_check"
+                    ? sortDir === "asc"
+                      ? "↑"
+                      : "↓"
+                    : ""}
                 </button>
               </div>
               <div className="divide-y divide-white/5">
@@ -275,7 +375,7 @@ export default function DashboardPage() {
                   sortedServices.map((service) => (
                     <div
                       key={service.name}
-                      className="grid grid-cols-2 items-center gap-2 px-4 py-3 text-sm text-indigo-100/80 md:grid-cols-10 hover:bg-white/5"
+                      className="grid grid-cols-2 items-center gap-2 px-4 py-3 text-sm text-indigo-100/80 hover:bg-white/5 md:grid-cols-10"
                     >
                       <div className="col-span-2 flex items-center gap-2 md:col-span-2">
                         <span
@@ -283,28 +383,28 @@ export default function DashboardPage() {
                         />
                         <span className="truncate">{service.name}</span>
                       </div>
-                      <div className="hidden md:block text-xs text-indigo-100/70">
+                      <div className="hidden text-xs text-indigo-100/70 md:block">
                         {service.port ?? "—"}
                       </div>
-                      <div className="hidden md:block text-xs text-indigo-100/70">
+                      <div className="hidden text-xs text-indigo-100/70 md:block">
                         {service.replica_count}
                       </div>
-                      <div className="hidden md:block text-xs text-indigo-100/70">
+                      <div className="hidden text-xs text-indigo-100/70 md:block">
                         {formatUptime(service.uptime_seconds)}
                       </div>
-                      <div className="hidden md:block text-xs text-indigo-100/70">
+                      <div className="hidden text-xs text-indigo-100/70 md:block">
                         {service.restart_count}
                       </div>
-                      <div className="hidden md:block text-xs text-indigo-100/70">
+                      <div className="hidden text-xs text-indigo-100/70 md:block">
                         {service.cpu_percent.toFixed(1)}%
                       </div>
-                      <div className="hidden md:block text-xs text-indigo-100/70">
+                      <div className="hidden text-xs text-indigo-100/70 md:block">
                         {service.memory_mb.toFixed(0)} MB
                       </div>
-                      <div className="hidden md:block text-xs text-indigo-100/70">
+                      <div className="hidden text-xs text-indigo-100/70 md:block">
                         {(service.volume_bytes / (1024 * 1024)).toFixed(1)} MB
                       </div>
-                      <div className="hidden md:block text-xs text-indigo-100/70">
+                      <div className="hidden text-xs text-indigo-100/70 md:block">
                         {service.health_check.response_time_ms
                           ? `${service.health_check.response_time_ms} ms`
                           : "—"}

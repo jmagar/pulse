@@ -40,7 +40,7 @@ function formatUptime(seconds: number) {
 
 function getStatusVariant(
   status: ServiceStatus["status"],
-  health: ServiceStatus["health_check"]["status"],
+  health: ServiceStatus["health_check"]["status"]
 ) {
   if (status !== "running") {
     return "destructive"
@@ -51,7 +51,7 @@ function getStatusVariant(
 
 function getStatusEmoji(
   status: ServiceStatus["status"],
-  health: ServiceStatus["health_check"]["status"],
+  health: ServiceStatus["health_check"]["status"]
 ) {
   if (status !== "running") {
     return "🔴"
@@ -134,7 +134,7 @@ export function ServiceStatusCard({ service }: ServiceStatusCardProps) {
             {emoji} {statusLabels[service.status]}
           </Badge>
         </div>
-        <p className="text-[10px] uppercase tracking-[0.25em] text-indigo-100/70">
+        <p className="text-[10px] tracking-[0.25em] text-indigo-100/70 uppercase">
           {isUnmonitored
             ? "Health: Not monitored"
             : `Health: ${healthLabels[service.health_check.status]} · Last check: ${healthTimestamp}`}
@@ -142,32 +142,36 @@ export function ServiceStatusCard({ service }: ServiceStatusCardProps) {
       </CardHeader>
 
       <CardContent className="relative z-10 space-y-3 pt-0">
-        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-indigo-100/70">
+        <div className="flex items-center justify-between text-[10px] tracking-[0.28em] text-indigo-100/70 uppercase">
           <span>{replicaLabel}</span>
-          {service.replica_count > 1 && <span className="text-indigo-100/60">Totals shown</span>}
+          {service.replica_count > 1 && (
+            <span className="text-indigo-100/60">Totals shown</span>
+          )}
         </div>
 
         <div className="grid gap-3 text-xs text-indigo-100/80 md:grid-cols-3">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em]">Uptime</p>
+            <p className="text-[10px] tracking-[0.25em] uppercase">Uptime</p>
             <p className="text-sm text-indigo-50">
               {formatUptime(service.uptime_seconds)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em]">Restarts</p>
+            <p className="text-[10px] tracking-[0.25em] uppercase">Restarts</p>
             <p className="text-sm text-indigo-50">{service.restart_count}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em]">
+            <p className="text-[10px] tracking-[0.25em] uppercase">
               Memory {service.replica_count > 1 ? "(total)" : ""}
             </p>
-            <p className="text-sm text-indigo-50">{memoryValue.toFixed(0)} MB</p>
+            <p className="text-sm text-indigo-50">
+              {memoryValue.toFixed(0)} MB
+            </p>
           </div>
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.25em] text-indigo-100/80">
+          <div className="flex items-center justify-between text-[10px] tracking-[0.25em] text-indigo-100/80 uppercase">
             <span>CPU Usage {service.replica_count > 1 ? "(total)" : ""}</span>
             <span>{cpuValue.toFixed(1)}%</span>
           </div>
@@ -185,13 +189,19 @@ export function ServiceStatusCard({ service }: ServiceStatusCardProps) {
 
         <div className="grid gap-3 text-xs text-indigo-100/80 md:grid-cols-2">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em]">Health status</p>
+            <p className="text-[10px] tracking-[0.25em] uppercase">
+              Health status
+            </p>
             <p className="text-sm text-indigo-50 capitalize">
-              {isUnmonitored ? "Not monitored" : healthLabels[service.health_check.status]}
+              {isUnmonitored
+                ? "Not monitored"
+                : healthLabels[service.health_check.status]}
             </p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em]">Response time</p>
+            <p className="text-[10px] tracking-[0.25em] uppercase">
+              Response time
+            </p>
             <p className="text-sm text-indigo-50">
               {isUnmonitored ? "—" : responseTime}
             </p>

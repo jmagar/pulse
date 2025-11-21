@@ -38,7 +38,6 @@ const databaseUrl =
 const maybeDescribe = databaseUrl ? describe : describe.skip;
 
 if (!databaseUrl) {
-  // eslint-disable-next-line no-console
   console.warn(
     "[vitest] Skipping PostgresResourceStorage tests because no database URL is configured",
   );

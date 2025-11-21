@@ -179,24 +179,51 @@ class BatchWorker:
 
         # Convert exceptions to error dicts
         processed_results: list[dict[str, str | bool | Any | None]] = []
+        infrastructure_errors = []
+
         for i, result in enumerate(results):
             if isinstance(result, BaseException):
+                error_type = type(result).__name__
+                error_msg = str(result)
+
+                # Detect infrastructure failures
+                is_infra_error = any(
+                    err_type in error_type
+                    for err_type in ["ConnectionError", "TimeoutError", "HTTPError"]
+                )
+
                 logger.error(
                     "Document indexing failed in batch",
                     url=documents[i].get("url"),
-                    error=str(result),
-                    error_type=type(result).__name__,
+                    error=error_msg,
+                    error_type=error_type,
+                    is_infrastructure_failure=is_infra_error,
                 )
+
+                if is_infra_error:
+                    infrastructure_errors.append(
+                        {"url": documents[i].get("url"), "error": error_msg}
+                    )
+
                 processed_results.append(
                     {
                         "success": False,
                         "url": documents[i].get("url"),
-                        "error": str(result),
-                        "error_type": type(result).__name__,
+                        "error": error_msg,
+                        "error_type": error_type,
                     }
                 )
             else:
                 processed_results.append(result)
+
+        # Log infrastructure error summary
+        if infrastructure_errors:
+            logger.warning(
+                "Batch contained infrastructure failures",
+                count=len(infrastructure_errors),
+                total=len(documents),
+                failures=infrastructure_errors[:3],  # Sample of failures
+            )
 
         success_count = sum(1 for r in processed_results if r.get("success"))
         logger.info(

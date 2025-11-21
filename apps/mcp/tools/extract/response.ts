@@ -8,12 +8,26 @@ export function formatExtractResponse(
   result: ExtractResult,
   urls: string[],
 ): CallToolResult {
+  // Check for error field first
+  if (result.error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Extract failed: ${result.error}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  // Then check for success and data
   if (!result.success || !result.data) {
     return {
       content: [
         {
           type: "text",
-          text: `Extract failed: ${result.error || "No data extracted"}`,
+          text: `Extract failed: No data extracted`,
         },
       ],
       isError: true,

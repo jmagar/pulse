@@ -329,10 +329,23 @@ export class WebhookBridgeClient implements IFirecrawlClient {
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Extract request failed: ${error}`);
+      return {
+        success: false,
+        error: error || `HTTP ${response.status}: ${response.statusText}`,
+      };
     }
 
-    return response.json();
+    const result = await response.json();
+
+    // Check for error in response body even when HTTP status is OK
+    if (result.error) {
+      return {
+        success: false,
+        error: result.error,
+      };
+    }
+
+    return result;
   }
 }
 

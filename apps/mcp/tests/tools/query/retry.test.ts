@@ -15,7 +15,11 @@ describe("retryWithBackoff", () => {
       return "ok";
     });
 
-    const promise = retryWithBackoff(fn, { baseDelay: 10, maxRetries: 3, maxDelay: 20 });
+    const promise = retryWithBackoff(fn, {
+      baseDelay: 10,
+      maxRetries: 3,
+      maxDelay: 20,
+    });
     await vi.runAllTimersAsync();
     const result = await promise;
 
@@ -31,7 +35,9 @@ describe("retryWithBackoff", () => {
       throw err;
     });
 
-    await expect(retryWithBackoff(fn, { maxRetries: 3 })).rejects.toThrow("Not found");
+    await expect(retryWithBackoff(fn, { maxRetries: 3 })).rejects.toThrow(
+      "Not found",
+    );
     expect(fn).toHaveBeenCalledTimes(1);
   });
 });

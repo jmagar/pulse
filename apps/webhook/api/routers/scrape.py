@@ -344,9 +344,7 @@ async def _handle_start_single_url(
     )
 
 
-async def _handle_start_batch(
-    request: ScrapeRequest, client: httpx.AsyncClient
-) -> ScrapeResponse:
+async def _handle_start_batch(request: ScrapeRequest, client: httpx.AsyncClient) -> ScrapeResponse:
     """Handle batch scrape start command."""
     urls = [str(u) for u in request.urls] if request.urls else []
 

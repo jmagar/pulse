@@ -23,8 +23,10 @@ router = APIRouter()
 @router.get(
     "/health",
     response_model=HealthStatus,
-    dependencies=[Depends(verify_api_secret)],
 )
+# NOTE: Health endpoint is intentionally unauthenticated so that Docker
+# health checks and infrastructure probes can verify liveness/readiness
+# without requiring API credentials.
 async def health_check(
     embedding_service: Annotated[EmbeddingService, Depends(get_embedding_service)],
     vector_store: Annotated[VectorStore, Depends(get_vector_store)],
