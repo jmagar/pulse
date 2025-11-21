@@ -7,6 +7,7 @@ Tests cache storage, retrieval, expiration, and invalidation logic.
 from datetime import UTC, datetime, timedelta
 
 import pytest
+import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.models import ScrapeCache
@@ -17,7 +18,7 @@ from services.scrape_cache import ScrapeCacheService
 class TestScrapeCacheService:
     """Test scrape cache operations."""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def cache_service(self) -> ScrapeCacheService:
         """Create cache service instance."""
         return ScrapeCacheService()

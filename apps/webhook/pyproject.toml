@@ -98,3 +98,11 @@ dev = [
     "pytest-cov>=7.0.0",
     "pytest-mock>=3.15.1",
 ]
+
+[tool.windsurfpyright]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = "none"
+reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
+reportUnknownMemberType = "none"
+reportUnknownArgumentType = "none"

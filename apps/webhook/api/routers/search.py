@@ -14,9 +14,11 @@ from api.schemas.health import IndexStats
 from api.schemas.search import SearchRequest, SearchResponse, SearchResult
 from infra.rate_limit import limiter
 from services.bm25_engine import BM25Engine
-from services.search import SearchOrchestrator
 from services.vector_store import VectorStore
 from utils.logging import get_logger
+
+if False:  # TYPE_CHECKING
+    from services.search import SearchOrchestrator
 
 logger = get_logger(__name__)
 
@@ -32,7 +34,7 @@ router = APIRouter()
 async def search_documents(
     request: Request,
     search_request: SearchRequest,
-    orchestrator: Annotated[SearchOrchestrator, Depends(get_search_orchestrator)],
+    orchestrator: Annotated["SearchOrchestrator", Depends(get_search_orchestrator)],
 ) -> SearchResponse:
     """
     Search indexed documents.
@@ -71,10 +73,11 @@ async def search_documents(
 
         # Execute search
         search_start = time.perf_counter()
-        raw_results = await orchestrator.search(
+        raw_results, total_count = await orchestrator.search(
             query=search_request.query,
             mode=search_request.mode,
             limit=search_request.limit,
+            offset=search_request.offset,
             domain=filters.get("domain"),
             language=filters.get("language"),
             country=filters.get("country"),
@@ -86,6 +89,7 @@ async def search_documents(
             "Search orchestration completed",
             duration_ms=search_duration_ms,
             raw_results_count=len(raw_results),
+            total_count=total_count,
         )
 
         # Convert to response format
@@ -98,8 +102,18 @@ async def search_documents(
             # Vector results have text in payload, BM25 results have it at top-level
             text = payload.get("text") or result.get("text", "")
 
+            # Extract content ID with single lookups
+            content_id = payload.get("content_id")
+            content_id_camel = payload.get("contentId")
+            id_value = (
+                content_id
+                if content_id is not None
+                else (content_id_camel if content_id_camel is not None else result.get("id"))
+            )
+
             results.append(
                 SearchResult(
+                    id=id_value,
                     url=payload.get("url", ""),
                     title=payload.get("title"),
                     description=payload.get("description"),
@@ -129,7 +143,7 @@ async def search_documents(
 
         return SearchResponse(
             results=results,
-            total=len(results),
+            total=total_count,
             query=search_request.query,
             mode=search_request.mode,
         )

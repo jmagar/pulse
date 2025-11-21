@@ -12,7 +12,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import verify_api_secret
+from api.deps import get_http_client, verify_api_secret
 from api.schemas.scrape import (
     BatchData,
     BatchError,
@@ -44,13 +44,16 @@ def _build_saved_uri(url: str, tier: str, timestamp: datetime) -> str:
     return f"scrape://{url}/{tier}_{timestamp_str}"
 
 
-async def _call_firecrawl_scrape(url: str, request: ScrapeRequest) -> dict[str, Any]:
+async def _call_firecrawl_scrape(
+    url: str, request: ScrapeRequest, client: httpx.AsyncClient
+) -> dict[str, Any]:
     """
     Call Firecrawl API for single URL scrape.
 
     Args:
         url: URL to scrape
         request: Original scrape request
+        client: HTTP client
 
     Returns:
         Firecrawl API response data
@@ -80,46 +83,52 @@ async def _call_firecrawl_scrape(url: str, request: ScrapeRequest) -> dict[str, 
     if request.actions:
         payload["actions"] = [action.model_dump(exclude_none=True) for action in request.actions]
 
-    async with httpx.AsyncClient(timeout=float(request.timeout) / 1000.0 + 10.0) as client:
-        try:
-            response = await client.post(
-                firecrawl_url,
-                json=payload,
-                headers={"Authorization": f"Bearer {settings.firecrawl_api_key}"},
+    # Use settings.firecrawl_timeout_buffer if available, else default to 10.0
+    timeout_buffer = getattr(settings, "firecrawl_timeout_buffer", 10.0)
+    request_timeout = float(request.timeout) / 1000.0 + timeout_buffer
+
+    try:
+        response = await client.post(
+            firecrawl_url,
+            json=payload,
+            headers={"Authorization": f"Bearer {settings.firecrawl_api_key}"},
+            timeout=request_timeout,
+        )
+
+        if response.status_code != 200:
+            logger.error(
+                "Firecrawl API error",
+                url=url,
+                status_code=response.status_code,
+                response_text=response.text,
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"Firecrawl API error: {response.status_code} {response.text}",
             )
 
-            if response.status_code != 200:
-                logger.error(
-                    "Firecrawl API error",
-                    url=url,
-                    status_code=response.status_code,
-                    response_text=response.text,
-                )
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Firecrawl API error: {response.status_code} {response.text}",
-                )
+        data = response.json()
 
-            data = response.json()
+        if not data.get("success"):
+            error_msg = data.get("error", "Unknown error")
+            logger.error("Firecrawl scrape failed", url=url, error=error_msg)
+            raise HTTPException(status_code=500, detail=f"Firecrawl scrape failed: {error_msg}")
 
-            if not data.get("success"):
-                error_msg = data.get("error", "Unknown error")
-                logger.error("Firecrawl scrape failed", url=url, error=error_msg)
-                raise HTTPException(status_code=500, detail=f"Firecrawl scrape failed: {error_msg}")
+        return data["data"]  # type: ignore[no-any-return]
 
-            return data["data"]  # type: ignore[no-any-return]
-
-        except httpx.TimeoutException as e:
-            logger.error("Firecrawl API timeout", url=url, timeout=request.timeout)
-            raise HTTPException(
-                status_code=408, detail=f"Scraping timeout after {request.timeout}ms"
-            ) from e
-        except httpx.HTTPError as e:
-            logger.error("Firecrawl HTTP error", url=url, error=str(e))
-            raise HTTPException(status_code=500, detail=f"Firecrawl HTTP error: {str(e)}") from e
+    except httpx.TimeoutException as e:
+        logger.error("Firecrawl API timeout", url=url, timeout=request.timeout)
+        raise HTTPException(
+            status_code=408, detail=f"Scraping timeout after {request.timeout}ms"
+        ) from e
+    except httpx.HTTPError as e:
+        logger.error("Firecrawl HTTP error", url=url, error=str(e))
+        raise HTTPException(status_code=500, detail=f"Firecrawl HTTP error: {str(e)}") from e
 
 
-async def _call_firecrawl_batch_start(urls: list[str], request: ScrapeRequest) -> dict[str, Any]:
+async def _call_firecrawl_batch_start(
+    urls: list[str], request: ScrapeRequest, client: httpx.AsyncClient
+) -> dict[str, Any]:
     """Call Firecrawl API to start batch scrape."""
     firecrawl_url = f"{settings.firecrawl_api_url}/v1/batch/scrape"
 
@@ -129,56 +138,60 @@ async def _call_firecrawl_batch_start(urls: list[str], request: ScrapeRequest) -
         "onlyMainContent": request.onlyMainContent,
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(
-            firecrawl_url,
-            json=payload,
-            headers={"Authorization": f"Bearer {settings.firecrawl_api_key}"},
+    response = await client.post(
+        firecrawl_url,
+        json=payload,
+        headers={"Authorization": f"Bearer {settings.firecrawl_api_key}"},
+        timeout=30.0,
+    )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=500, detail=f"Firecrawl batch start failed: {response.status_code}"
         )
 
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=500, detail=f"Firecrawl batch start failed: {response.status_code}"
-            )
-
-        return response.json()  # type: ignore[no-any-return]
+    return response.json()  # type: ignore[no-any-return]
 
 
-async def _call_firecrawl_batch_status(job_id: str) -> dict[str, Any]:
+async def _call_firecrawl_batch_status(job_id: str, client: httpx.AsyncClient) -> dict[str, Any]:
     """Get batch scrape status from Firecrawl."""
     firecrawl_url = f"{settings.firecrawl_api_url}/v1/batch/scrape/{job_id}"
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.get(
-            firecrawl_url, headers={"Authorization": f"Bearer {settings.firecrawl_api_key}"}
+    response = await client.get(
+        firecrawl_url,
+        headers={"Authorization": f"Bearer {settings.firecrawl_api_key}"},
+        timeout=10.0,
+    )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=500, detail=f"Firecrawl batch status failed: {response.status_code}"
         )
 
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=500, detail=f"Firecrawl batch status failed: {response.status_code}"
-            )
-
-        return response.json()  # type: ignore[no-any-return]
+    return response.json()  # type: ignore[no-any-return]
 
 
-async def _call_firecrawl_batch_cancel(job_id: str) -> dict[str, Any]:
+async def _call_firecrawl_batch_cancel(job_id: str, client: httpx.AsyncClient) -> dict[str, Any]:
     """Cancel batch scrape job."""
     firecrawl_url = f"{settings.firecrawl_api_url}/v1/batch/scrape/{job_id}"
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.delete(
-            firecrawl_url, headers={"Authorization": f"Bearer {settings.firecrawl_api_key}"}
+    response = await client.delete(
+        firecrawl_url,
+        headers={"Authorization": f"Bearer {settings.firecrawl_api_key}"},
+        timeout=10.0,
+    )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=500, detail=f"Firecrawl batch cancel failed: {response.status_code}"
         )
 
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=500, detail=f"Firecrawl batch cancel failed: {response.status_code}"
-            )
-
-        return response.json()  # type: ignore[no-any-return]
+    return response.json()  # type: ignore[no-any-return]
 
 
-async def _handle_start_single_url(request: ScrapeRequest, session: AsyncSession) -> ScrapeResponse:
+async def _handle_start_single_url(
+    request: ScrapeRequest, session: AsyncSession, client: httpx.AsyncClient
+) -> ScrapeResponse:
     """Handle single URL scrape command."""
     url = str(request.url)
 
@@ -252,12 +265,10 @@ async def _handle_start_single_url(request: ScrapeRequest, session: AsyncSession
     # Cache miss or force rescrape - call Firecrawl
     logger.info("Scraping URL", url=url, force_rescrape=request.forceRescrape)
 
-    fc_data = await _call_firecrawl_scrape(url, request)
+    fc_data = await _call_firecrawl_scrape(url, request, client)
 
     # Extract content from Firecrawl response
     raw_content = fc_data.get("html") or fc_data.get("markdown", "")
-
-    # Use Firecrawl's markdown directly when cleanScrape is true
     cleaned_content = fc_data.get("markdown") if request.cleanScrape else None
 
     screenshot_b64 = fc_data.get("screenshot")
@@ -333,13 +344,13 @@ async def _handle_start_single_url(request: ScrapeRequest, session: AsyncSession
     )
 
 
-async def _handle_start_batch(request: ScrapeRequest) -> ScrapeResponse:
+async def _handle_start_batch(request: ScrapeRequest, client: httpx.AsyncClient) -> ScrapeResponse:
     """Handle batch scrape start command."""
     urls = [str(u) for u in request.urls] if request.urls else []
 
     logger.info("Starting batch scrape", url_count=len(urls))
 
-    fc_response = await _call_firecrawl_batch_start(urls, request)
+    fc_response = await _call_firecrawl_batch_start(urls, request, client)
 
     job_id = fc_response.get("id")
     if not job_id:
@@ -357,14 +368,14 @@ async def _handle_start_batch(request: ScrapeRequest) -> ScrapeResponse:
     )
 
 
-async def _handle_status(request: ScrapeRequest) -> ScrapeResponse:
+async def _handle_status(request: ScrapeRequest, client: httpx.AsyncClient) -> ScrapeResponse:
     """Handle batch status command."""
     if not request.jobId:
         raise HTTPException(status_code=400, detail="jobId required for status command")
 
     logger.info("Getting batch status", job_id=request.jobId)
 
-    fc_response = await _call_firecrawl_batch_status(request.jobId)
+    fc_response = await _call_firecrawl_batch_status(request.jobId, client)
 
     total = fc_response.get("total", 0)
     completed = fc_response.get("completed", 0)
@@ -385,14 +396,14 @@ async def _handle_status(request: ScrapeRequest) -> ScrapeResponse:
     )
 
 
-async def _handle_cancel(request: ScrapeRequest) -> ScrapeResponse:
+async def _handle_cancel(request: ScrapeRequest, client: httpx.AsyncClient) -> ScrapeResponse:
     """Handle batch cancel command."""
     if not request.jobId:
         raise HTTPException(status_code=400, detail="jobId required for cancel command")
 
     logger.info("Cancelling batch scrape", job_id=request.jobId)
 
-    await _call_firecrawl_batch_cancel(request.jobId)
+    await _call_firecrawl_batch_cancel(request.jobId, client)
 
     return ScrapeResponse(
         success=True,
@@ -401,14 +412,14 @@ async def _handle_cancel(request: ScrapeRequest) -> ScrapeResponse:
     )
 
 
-async def _handle_errors(request: ScrapeRequest) -> ScrapeResponse:
+async def _handle_errors(request: ScrapeRequest, client: httpx.AsyncClient) -> ScrapeResponse:
     """Handle batch errors command."""
     if not request.jobId:
         raise HTTPException(status_code=400, detail="jobId required for errors command")
 
     logger.info("Getting batch errors", job_id=request.jobId)
 
-    fc_response = await _call_firecrawl_batch_status(request.jobId)
+    fc_response = await _call_firecrawl_batch_status(request.jobId, client)
 
     # Extract errors from Firecrawl response
     # Note: Actual error format may vary, this is a placeholder
@@ -436,7 +447,9 @@ async def _handle_errors(request: ScrapeRequest) -> ScrapeResponse:
 
 @router.post("/v2/scrape", response_model=ScrapeResponse, dependencies=[Depends(verify_api_secret)])
 async def scrape_endpoint(
-    request: ScrapeRequest, session: Annotated[AsyncSession, Depends(get_db_session)]
+    request: ScrapeRequest,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    client: Annotated[httpx.AsyncClient, Depends(get_http_client)],
 ) -> ScrapeResponse:
     """
     Multi-stage web scraping endpoint with caching.
@@ -450,6 +463,7 @@ async def scrape_endpoint(
     Args:
         request: Scrape request with command and parameters
         session: Database session
+        client: Shared HTTP client
 
     Returns:
         Scrape response with content or status
@@ -458,25 +472,29 @@ async def scrape_endpoint(
         HTTPException: On validation or scraping errors
     """
     logger.debug(
-        "scrape_endpoint", command=request.command, url=request.url, urls=request.urls, jobId=request.jobId
+        "scrape_endpoint",
+        command=request.command,
+        url=request.url,
+        urls=request.urls,
+        jobId=request.jobId,
     )
     try:
         # Route by command
         if request.command == "start":
             if request.url:
-                return await _handle_start_single_url(request, session)
+                return await _handle_start_single_url(request, session, client)
             elif request.urls:
-                return await _handle_start_batch(request)
+                return await _handle_start_batch(request, client)
             else:
                 raise HTTPException(
                     status_code=400, detail="Either 'url' or 'urls' required for start command"
                 )
         elif request.command == "status":
-            return await _handle_status(request)
+            return await _handle_status(request, client)
         elif request.command == "cancel":
-            return await _handle_cancel(request)
+            return await _handle_cancel(request, client)
         elif request.command == "errors":
-            return await _handle_errors(request)
+            return await _handle_errors(request, client)
         else:
             raise HTTPException(status_code=400, detail=f"Unknown command: {request.command}")
 

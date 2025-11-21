@@ -203,6 +203,7 @@ class VectorStore:
                 "language",
                 "country",
                 "isMobile",
+                "content_id",
             ]:
                 if key in chunk:
                     payload[key] = chunk[key]
@@ -246,24 +247,26 @@ class VectorStore:
         self,
         query_vector: list[float],
         limit: int = 10,
+        offset: int = 0,
         domain: str | None = None,
         language: str | None = None,
         country: str | None = None,
         is_mobile: bool | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], int]:
         """
         Search for similar vectors with optional filters and automatic retry on HTTP errors.
 
         Args:
             query_vector: Query embedding vector
             limit: Maximum results
+            offset: Zero-based pagination offset
             domain: Filter by domain
             language: Filter by language code
             country: Filter by country code
             is_mobile: Filter by mobile flag
 
         Returns:
-            List of search results with score and payload
+            Tuple of (results, total_count)
 
         Raises:
             Exception: If search fails after 3 retry attempts
@@ -308,16 +311,25 @@ class VectorStore:
                 query_vector=query_vector,
                 query_filter=query_filter,
                 limit=limit,
+                offset=offset,
             )
+
+            total_resp = await self.client.count(
+                collection_name=self.collection_name,
+                filter=query_filter,
+                exact=True,
+            )
+            total_count = int(getattr(total_resp, "count", len(results)))
 
             logger.info(
                 "Vector search completed",
                 results=len(results),
                 filters=len(must_conditions),
+                total=total_count,
             )
 
             # Convert to dict format
-            return [
+            formatted = [
                 {
                     "id": str(result.id),
                     "score": result.score,
@@ -325,6 +337,7 @@ class VectorStore:
                 }
                 for result in results
             ]
+            return formatted, total_count
 
         except Exception as e:
             error_message = str(e) or repr(e)

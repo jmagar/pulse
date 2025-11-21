@@ -37,12 +37,14 @@ class SearchRequest(BaseModel):
     query: str = Field(description="Search query text")
     mode: SearchMode = Field(default=SearchMode.HYBRID, description="Search mode")
     limit: int = Field(default=10, ge=1, le=100, description="Maximum results")
+    offset: int = Field(default=0, ge=0, description="Zero-based pagination offset")
     filters: SearchFilter | None = Field(default=None, description="Search filters")
 
 
 class SearchResult(BaseModel):
     """Individual search result."""
 
+    id: int | str | None = Field(default=None, description="Content identifier if available")
     url: str = Field(description="Document URL")
     title: str | None = Field(description="Document title")
     description: str | None = Field(description="Document description")

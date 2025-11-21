@@ -1,6 +1,7 @@
 """Unit tests for Firecrawl webhook API route."""
 
 from collections.abc import Generator
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -25,8 +26,15 @@ def webhook_client() -> Generator[tuple[TestClient, MagicMock]]:
     async def override_signature(
         request: Request,
         x_firecrawl_signature: str | None = None,
-    ) -> None:
-        return None
+    ) -> bytes:
+        """Bypass signature verification but still return raw request body.
+
+        The real dependency returns the verified body bytes; tests only care that
+        the router receives a valid JSON payload, not the signature itself.
+        """
+
+        body = await request.body()
+        return cast(bytes, body)
 
     def override_queue() -> MagicMock:
         return queue
@@ -48,7 +56,8 @@ def test_webhook_with_valid_signature(
     handler_mock = AsyncMock(
         return_value={"status": "queued", "queued_jobs": 1, "job_ids": ["job-1"]}
     )
-    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
+    # Patch the symbol used inside the router module, not the services module.
+    monkeypatch.setattr(webhook, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,
@@ -119,7 +128,8 @@ def test_webhook_crawl_page_event(
     handler_mock = AsyncMock(
         return_value={"status": "queued", "queued_jobs": 1, "job_ids": ["job-1"]}
     )
-    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
+    # Patch the router's imported handle_firecrawl_event so calls hit the mock.
+    monkeypatch.setattr(webhook, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,
@@ -186,7 +196,7 @@ def test_webhook_accepts_job_id_v0_payload(
     handler_mock = AsyncMock(
         return_value={"status": "queued", "queued_jobs": 1, "job_ids": ["job-legacy"]}
     )
-    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
+    monkeypatch.setattr(webhook, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,
@@ -217,7 +227,8 @@ def test_webhook_queue_failure(
 
     client, _ = webhook_client
     handler_mock = AsyncMock(side_effect=handlers.WebhookHandlerError(500, "Queue failure"))
-    monkeypatch.setattr(handlers, "handle_firecrawl_event", handler_mock)
+    # Patch router's symbol so exceptions propagate from the mock.
+    monkeypatch.setattr(webhook, "handle_firecrawl_event", handler_mock)
 
     payload = {
         "success": True,

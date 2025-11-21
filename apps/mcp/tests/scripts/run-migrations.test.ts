@@ -9,7 +9,13 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Pool } from "pg";
-import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync } from "fs";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  rmSync,
+  readdirSync,
+} from "fs";
 import { join } from "path";
 
 // Mock the environment module
@@ -30,7 +36,6 @@ const databaseUrl =
 const describeFn = databaseUrl ? describe : describe.skip;
 
 if (!databaseUrl) {
-  // eslint-disable-next-line no-console
   console.warn(
     "[vitest] Skipping migration runner tests because no database URL is configured",
   );

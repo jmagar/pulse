@@ -17,7 +17,7 @@ from pydantic import TypeAdapter, ValidationError
 from rq import Queue
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import get_redis_connection, get_rq_queue, verify_webhook_signature
+from api.deps import get_rq_queue, verify_webhook_signature
 from api.schemas.webhook import ChangeDetectionPayload, FirecrawlWebhookEvent
 from config import settings
 from domain.models import ChangeEvent
@@ -276,10 +276,7 @@ async def handle_changedetection_webhook(
     await db.refresh(change_event)
 
     # Enqueue rescrape job
-    redis_client = get_redis_connection()
-    rescrape_queue = Queue("indexing", connection=redis_client)
-
-    job = rescrape_queue.enqueue(
+    job = queue.enqueue(
         "app.jobs.rescrape.rescrape_changed_url",
         change_event.id,
         job_timeout="10m",

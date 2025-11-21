@@ -12,36 +12,37 @@ type MockCrawlClient = CrawlClient & {
   listActiveCrawls: MockFn<NonNullable<CrawlClient["listActiveCrawls"]>>;
 };
 
-const makeMockCrawlClient = (): MockCrawlClient => ({
-  startCrawl: vi.fn().mockResolvedValue({
-    success: true,
-    id: "crawl-job-123",
-    url: "https://api.firecrawl.dev/v2/crawl/crawl-job-123",
-  }),
-  getCrawlStatus: vi.fn().mockResolvedValue({
-    status: "scraping",
-    total: 100,
-    completed: 50,
-    creditsUsed: 50,
-    expiresAt: "2025-11-06T12:00:00Z",
-    data: [],
-  }),
-  cancelCrawl: vi.fn().mockResolvedValue({ status: "cancelled" }),
-  getCrawlErrors: vi.fn().mockResolvedValue({
-    errors: [{ id: "err-1", error: "boom" }],
-    robotsBlocked: ["https://robots"],
-  }),
-  listActiveCrawls: vi.fn().mockResolvedValue({
-    success: true,
-    crawls: [
-      {
-        id: "job-1",
-        teamId: "team",
-        url: "https://example.com",
-      },
-    ],
-  }),
-}) as unknown as MockCrawlClient;
+const makeMockCrawlClient = (): MockCrawlClient =>
+  ({
+    startCrawl: vi.fn().mockResolvedValue({
+      success: true,
+      id: "crawl-job-123",
+      url: "https://api.firecrawl.dev/v2/crawl/crawl-job-123",
+    }),
+    getCrawlStatus: vi.fn().mockResolvedValue({
+      status: "scraping",
+      total: 100,
+      completed: 50,
+      creditsUsed: 50,
+      expiresAt: "2025-11-06T12:00:00Z",
+      data: [],
+    }),
+    cancelCrawl: vi.fn().mockResolvedValue({ status: "cancelled" }),
+    getCrawlErrors: vi.fn().mockResolvedValue({
+      errors: [{ id: "err-1", error: "boom" }],
+      robotsBlocked: ["https://robots"],
+    }),
+    listActiveCrawls: vi.fn().mockResolvedValue({
+      success: true,
+      crawls: [
+        {
+          id: "job-1",
+          teamId: "team",
+          url: "https://example.com",
+        },
+      ],
+    }),
+  }) as unknown as MockCrawlClient;
 
 describe("Crawl Tool", () => {
   let crawlClient: MockCrawlClient;

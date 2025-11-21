@@ -1,334 +1,127 @@
 """
-Background worker for async document indexing.
+Standalone RQ worker entry point for webhook service.
 
-DEPRECATED: This module is kept for backward compatibility only.
-The worker now runs as a background thread within the FastAPI process.
-See worker_thread.WorkerThreadManager for the new implementation.
+This module provides the entry point for running RQ workers in dedicated
+containers (pulse_webhook-worker). For embedded worker mode within the
+FastAPI application, see worker_thread.py instead.
 
-To run worker standalone (not recommended):
+Usage:
     python -m worker
-
-To run worker embedded in API (recommended):
-    WEBHOOK_ENABLE_WORKER=true uvicorn main:app
 """
 
-import asyncio
 import sys
-from typing import Any
-from uuid import uuid4
-
 from rq import Worker
 
-from api.schemas.indexing import IndexDocumentRequest
 from config import settings
 from infra.redis import get_redis_connection
-from services.embedding import EmbeddingService
-from services.service_pool import ServicePool
-from services.vector_store import VectorStore
-from utils.logging import configure_logging, get_logger
-from utils.timing import TimingContext
+from utils.logging import get_logger
 
-# Configure logging
-configure_logging(settings.log_level)
+
 logger = get_logger(__name__)
 
 
-async def _index_document_async(document_dict: dict[str, Any]) -> dict[str, Any]:
+def validate_startup() -> None:
     """
-    Async implementation of document indexing with crawl_id propagation.
+    Validate critical configuration and connectivity before starting worker.
 
-    Uses service pool for efficient resource reuse across jobs.
-
-    Args:
-        document_dict: Document data including optional crawl_id
-
-    Returns:
-        Indexing result
+    Raises:
+        ValueError: If critical configuration is missing or invalid
+        ConnectionError: If required services are unreachable
     """
-    # Generate job ID for correlation
-    job_id = str(uuid4())
+    # Validate critical secrets
+    if not settings.api_secret or len(settings.api_secret) < 32:
+        msg = "WEBHOOK_API_SECRET must be at least 32 characters"
+        raise ValueError(msg)
 
-    # Extract crawl_id BEFORE parsing (not in schema)
-    crawl_id = document_dict.get("crawl_id")
+    if not settings.webhook_secret or len(settings.webhook_secret) < 32:
+        msg = "WEBHOOK_SECRET must be at least 32 characters"
+        raise ValueError(msg)
 
-    logger.info(
-        "Starting indexing job",
-        url=document_dict.get("url"),
-        crawl_id=crawl_id,
-    )
-
-    try:
-        # Parse with detailed error context
-        try:
-            document = IndexDocumentRequest(**document_dict)
-        except Exception as parse_error:
-            logger.error(
-                "Failed to parse document payload",
-                url=document_dict.get("url"),
-                crawl_id=crawl_id,
-                error=str(parse_error),
-                error_type=type(parse_error).__name__,
-                provided_keys=list(document_dict.keys()),
-                sample_values={k: str(v)[:100] for k, v in list(document_dict.items())[:5]},
-            )
-            raise
-
-        # Get services from pool (FAST - no initialization overhead)
-        async with TimingContext(
-            "worker",
-            "get_service_pool",
-            job_id=job_id,
-            crawl_id=crawl_id,
-            document_url=document.url,
-            request_id=None,  # Worker operations have no HTTP request context
-        ) as ctx:
-            service_pool = ServicePool.get_instance()
-            ctx.metadata = {"pool_exists": True}
-
-        # Get indexing service from pool
-        indexing_service = service_pool.get_indexing_service()
-
-        # Ensure collection exists
-        try:
-            await service_pool.vector_store.ensure_collection()
-        except Exception as coll_error:
-            logger.error(
-                "Failed to ensure Qdrant collection",
-                collection=settings.qdrant_collection,
-                error=str(coll_error),
-                error_type=type(coll_error).__name__,
-            )
-            raise
-
-        # Index document with timing
-        async with TimingContext(
-            "worker",
-            "index_document",
-            job_id=job_id,
-            crawl_id=crawl_id,
-            document_url=document.url,
-            request_id=None,  # Worker operations have no HTTP request context
-        ) as ctx:
-            result = await indexing_service.index_document(
-                document,
-                job_id=job_id,
-                crawl_id=crawl_id,
-            )
-            ctx.metadata = {
-                "chunks_indexed": result.get("chunks_indexed", 0),
-                "total_tokens": result.get("total_tokens", 0),
-            }
-
-        logger.info(
-            "Indexing job completed",
-            url=document.url,
-            success=result.get("success"),
-            chunks=result.get("chunks_indexed", 0),
-        )
-
-        return result
-
-    except Exception as e:
-        logger.error(
-            "Indexing job failed",
-            url=document_dict.get("url"),
-            error=str(e),
-            error_type=type(e).__name__,
-            exc_info=True,  # Include full traceback
-        )
-
-        return {
-            "success": False,
-            "url": document_dict.get("url"),
-            "error": str(e),
-            "error_type": type(e).__name__,
-        }
-
-
-async def process_batch_async(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """
-    Process multiple documents concurrently using asyncio.gather().
-
-    This function processes documents in parallel, maximizing throughput
-    for I/O-bound operations (TEI embeddings, Qdrant indexing).
-
-    Args:
-        documents: List of document dictionaries to index
-
-    Returns:
-        List of indexing results (same order as input)
-    """
-    if not documents:
-        return []
-
-    logger.info("Starting batch processing", batch_size=len(documents))
-
-    # Create tasks for all documents
-    tasks = [_index_document_async(doc) for doc in documents]
-
-    # Execute concurrently with asyncio.gather()
-    # return_exceptions=True ensures one failure doesn't stop the batch
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    # Convert exceptions to error dicts
-    processed_results: list[dict[str, str | bool | Any | None]] = []
-    for i, result in enumerate(results):
-        if isinstance(result, BaseException):
-            logger.error(
-                "Document indexing failed in batch",
-                url=documents[i].get("url"),
-                error=str(result),
-                error_type=type(result).__name__,
-            )
-            processed_results.append(
-                {
-                    "success": False,
-                    "url": documents[i].get("url"),
-                    "error": str(result),
-                    "error_type": type(result).__name__,
-                }
-            )
-        else:
-            processed_results.append(result)
-
-    success_count = sum(1 for r in processed_results if r.get("success"))
-    logger.info(
-        "Batch processing complete",
-        total=len(documents),
-        success=success_count,
-        failed=len(documents) - success_count,
-    )
-
-    return processed_results
-
-
-def index_document_job(document_dict: dict[str, Any]) -> dict[str, Any]:
-    """
-    Background job to index a document.
-
-    This is the actual job function that RQ executes.
-    RQ requires synchronous functions, so this wraps the async implementation.
-
-    Args:
-        document_dict: Document data as dictionary
-
-    Returns:
-        Indexing result
-    """
-    # RQ expects a synchronous function, so we use asyncio.run() to execute the async code
-    return asyncio.run(_index_document_async(document_dict))
-
-
-def index_document_batch_job(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """
-    Background job to index multiple documents in a batch.
-
-    This is the batch job function that RQ executes for multiple documents.
-    RQ requires synchronous functions, so this wraps the async batch implementation.
-
-    Args:
-        documents: List of document dictionaries to index
-
-    Returns:
-        List of indexing results (same order as input)
-    """
-    # Use BatchWorker for batch processing
-    from workers.batch_worker import BatchWorker
-
-    batch_worker = BatchWorker()
-    return batch_worker.process_batch_sync(documents)
-
-
-async def _validate_external_services() -> bool:
-    """
-    Validate that all required external services are accessible.
-
-    Returns:
-        True if all services are healthy, False otherwise
-    """
-    logger.info("Validating external services...")
-    all_healthy = True
-
-    # Check TEI
-    embedding_service = EmbeddingService(tei_url=settings.tei_url)
-    try:
-        if await embedding_service.health_check():
-            logger.info("✓ TEI service is healthy", url=settings.tei_url)
-        else:
-            logger.error("✗ TEI service is unhealthy", url=settings.tei_url)
-            all_healthy = False
-    except Exception:
-        logger.exception("✗ Failed to connect to TEI", url=settings.tei_url)
-        all_healthy = False
-    finally:
-        await embedding_service.close()
-
-    # Check Qdrant
-    vector_store = VectorStore(
-        url=settings.qdrant_url,
-        collection_name=settings.qdrant_collection,
-        vector_dim=settings.vector_dim,
-        timeout=int(settings.qdrant_timeout),
-    )
-    try:
-        if await vector_store.health_check():
-            logger.info("✓ Qdrant service is healthy", url=settings.qdrant_url)
-        else:
-            logger.error("✗ Qdrant service is unhealthy", url=settings.qdrant_url)
-            all_healthy = False
-    except Exception:
-        logger.exception("✗ Failed to connect to Qdrant", url=settings.qdrant_url)
-        all_healthy = False
-    finally:
-        await vector_store.close()
-
-    return all_healthy
-
-
-def run_worker() -> None:
-    """
-    Run the RQ worker.
-
-    This is the main entry point for the worker process.
-    The worker processes both individual document jobs (index_document_job)
-    and batch jobs (index_document_batch_job) which uses BatchWorker for
-    concurrent processing via asyncio.gather().
-    """
-    logger.info("Starting RQ worker", redis_url=settings.redis_url)
-
-    # Validate external services before starting
-    if not asyncio.run(_validate_external_services()):
-        logger.error("External service validation failed - worker cannot start")
-        logger.error("Please ensure TEI and Qdrant are running and accessible")
-        sys.exit(1)
-
-    logger.info("All external services validated successfully")
-
-    # Connect to Redis
+    # Test Redis connectivity
+    logger.info("Testing Redis connectivity...")
     redis_conn = get_redis_connection()
+    try:
+        redis_conn.ping()
+        logger.info("Redis connection healthy")
+    except Exception as e:
+        msg = f"Failed to connect to Redis: {e}"
+        raise ConnectionError(msg) from e
 
-    # Create worker with unique name (hostname ensures uniqueness across replicas)
-    import socket
+    # Validate external service URLs
+    if not settings.qdrant_url:
+        msg = "WEBHOOK_QDRANT_URL is required"
+        raise ValueError(msg)
 
-    worker_name = f"search-bridge-worker-{socket.gethostname()}"
+    if not settings.tei_url:
+        msg = "WEBHOOK_TEI_URL is required"
+        raise ValueError(msg)
 
-    worker = Worker(
-        queues=["indexing"],
-        connection=redis_conn,
-        name=worker_name,
+    logger.info(
+        "Startup validation passed",
+        qdrant_url=settings.qdrant_url,
+        tei_url=settings.tei_url,
     )
 
-    logger.info("Worker initialized, listening for jobs...")
 
+def main() -> None:
+    """
+    Run standalone RQ worker for processing indexing jobs.
+
+    This worker processes jobs from the "indexing" queue and runs
+    indefinitely until terminated.
+    """
     try:
-        worker.work()
+        logger.info(
+            "Starting standalone RQ worker",
+            redis_url=settings.redis_url,
+            worker_name="webhook-worker",
+        )
+
+        # Validate configuration and connectivity
+        validate_startup()
+
+        # Connect to Redis
+        redis_conn = get_redis_connection()
+
+        # Pre-initialize service pool for performance
+        # This loads the tokenizer and creates service connections once
+        # before any jobs are processed
+        logger.info("Pre-initializing service pool...")
+        from services.service_pool import ServicePool
+
+        pool = ServicePool.get_instance()
+        logger.info("Service pool ready for jobs")
+
+        # Validate service pool health
+        try:
+            # Quick validation that services initialized correctly
+            if not pool.text_chunker or not pool.embedding_service:
+                msg = "Service pool initialization incomplete"
+                raise RuntimeError(msg)
+            logger.info("Service pool health check passed")
+        except Exception as e:
+            logger.error("Service pool health check failed", error=str(e))
+            raise
+
+        # Create and configure worker
+        worker = Worker(
+            queues=["indexing"],
+            connection=redis_conn,
+            name="webhook-worker",
+        )
+
+        logger.info("Worker initialized, listening for jobs on 'indexing' queue...")
+
+        # Start processing jobs (blocks until termination signal)
+        worker.work(with_scheduler=False)
+
     except KeyboardInterrupt:
         logger.info("Worker interrupted by user")
         sys.exit(0)
-    except Exception as e:
-        logger.error("Worker error", error=str(e))
+    except Exception:
+        logger.exception("Worker crashed")
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    run_worker()
+    main()

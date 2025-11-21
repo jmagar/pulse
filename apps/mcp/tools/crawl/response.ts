@@ -59,8 +59,21 @@ export function formatCrawlResponse(
   }
 
   // Check which type of result we have
+  if ("error" in result && result.error) {
+    // StartCrawlResult with error
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Crawl failed to start: ${result.error}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+
   if ("id" in result && "url" in result) {
-    // StartCrawlResult
+    // StartCrawlResult - success
     return {
       content: [
         {

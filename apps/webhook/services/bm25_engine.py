@@ -285,11 +285,12 @@ class BM25Engine:
         self,
         query: str,
         limit: int = 10,
+        offset: int = 0,
         domain: str | None = None,
         language: str | None = None,
         country: str | None = None,
         is_mobile: bool | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], int]:
         """
         Search documents using BM25.
 
@@ -302,11 +303,11 @@ class BM25Engine:
             is_mobile: Filter by mobile flag
 
         Returns:
-            List of results with score and metadata
+            Tuple of (results, total_count)
         """
         if not self.bm25 or not self.corpus:
             logger.warning("BM25 index is empty")
-            return []
+            return [], 0
 
         # Tokenize query
         query_tokens = self._tokenize(query)
@@ -340,8 +341,8 @@ class BM25Engine:
         # Sort by score (descending)
         doc_scores.sort(key=lambda x: x[1], reverse=True)
 
-        # Take top results
-        top_results = doc_scores[:limit]
+        # Take window respecting offset/limit
+        top_results = doc_scores[offset : offset + limit]
 
         # Build result list
         results: list[dict[str, Any]] = []
@@ -362,7 +363,7 @@ class BM25Engine:
             returned=len(results),
         )
 
-        return results
+        return results, len(doc_scores)
 
     def get_document_count(self) -> int:
         """

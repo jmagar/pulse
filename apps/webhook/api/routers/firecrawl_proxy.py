@@ -14,6 +14,7 @@ import httpx
 from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.deps import get_http_client
 from config import settings
 from infra.database import get_db_session
 from services.crawl_session import create_crawl_session
@@ -32,6 +33,7 @@ async def proxy_with_session_tracking(
     endpoint_path: str,
     operation_type: str,
     db: AsyncSession,
+    client: httpx.AsyncClient,
     method: str = "POST",
 ) -> Response:
     """
@@ -42,6 +44,7 @@ async def proxy_with_session_tracking(
         endpoint_path: Path to proxy to (e.g., "/scrape")
         operation_type: Type of operation (scrape, scrape_batch, crawl, map, search, extract)
         db: Database session
+        client: HTTP client
         method: HTTP method (POST for job-starting endpoints)
 
     Returns:
@@ -55,7 +58,7 @@ async def proxy_with_session_tracking(
         request_body = {}
 
     # First, proxy the request to Firecrawl
-    response = await proxy_to_firecrawl(request, endpoint_path, method)
+    response = await proxy_to_firecrawl(request, endpoint_path, client, method)
 
     # If successful (2xx status), parse response and create crawl session
     if 200 <= response.status_code < 300:
@@ -117,6 +120,7 @@ async def proxy_with_session_tracking(
 async def proxy_to_firecrawl(
     request: Request,
     endpoint_path: str,
+    client: httpx.AsyncClient,
     method: str = "GET",
 ) -> Response:
     """
@@ -125,6 +129,7 @@ async def proxy_to_firecrawl(
     Args:
         request: FastAPI request object
         endpoint_path: Path to proxy to (e.g., "/scrape")
+        client: HTTP client
         method: HTTP method (GET, POST, DELETE)
 
     Returns:
@@ -154,198 +159,264 @@ async def proxy_to_firecrawl(
         url=url,
     )
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        try:
-            if method == "GET":
-                response = await client.get(url, headers=headers)
-            elif method == "POST":
-                response = await client.post(url, json=body, headers=headers)
-            elif method == "DELETE":
-                response = await client.delete(url, headers=headers)
-            else:
-                return Response(
-                    content='{"error": "Method not allowed"}',
-                    status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-                    media_type="application/json",
-                )
+    # Use settings.firecrawl_timeout_buffer if available, else default to 10.0
+    timeout_buffer = getattr(settings, "firecrawl_timeout_buffer", 10.0)
+    # Default timeout for proxy requests
+    proxy_timeout = 120.0 + timeout_buffer
 
-            logger.info(
-                "Firecrawl response received",
-                status_code=response.status_code,
-                path=endpoint_path,
-            )
-
+    try:
+        if method == "GET":
+            response = await client.get(url, headers=headers, timeout=proxy_timeout)
+        elif method == "POST":
+            response = await client.post(url, json=body, headers=headers, timeout=proxy_timeout)
+        elif method == "DELETE":
+            response = await client.delete(url, headers=headers, timeout=proxy_timeout)
+        else:
             return Response(
-                content=response.content,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-                media_type=response.headers.get("content-type", "application/json"),
-            )
-
-        except httpx.TimeoutException:
-            logger.error("Firecrawl request timeout", path=endpoint_path)
-            return Response(
-                content='{"error": "Firecrawl API timeout"}',
-                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                content='{"error": "Method not allowed"}',
+                status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
                 media_type="application/json",
             )
-        except httpx.HTTPError as e:
-            logger.error(
-                "Firecrawl HTTP error",
-                path=endpoint_path,
-                error=str(e),
-            )
-            return Response(
-                content=f'{{"error": "Firecrawl API error: {str(e)}"}}',
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                media_type="application/json",
-            )
+
+        logger.info(
+            "Firecrawl response received",
+            status_code=response.status_code,
+            path=endpoint_path,
+        )
+
+        return Response(
+            content=response.content,
+            status_code=response.status_code,
+            headers=dict(response.headers),
+            media_type=response.headers.get("content-type", "application/json"),
+        )
+
+    except httpx.TimeoutException:
+        logger.error("Firecrawl request timeout", path=endpoint_path)
+        return Response(
+            content='{"error": "Firecrawl API timeout"}',
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            media_type="application/json",
+        )
+    except httpx.HTTPError as e:
+        logger.error(
+            "Firecrawl HTTP error",
+            path=endpoint_path,
+            error=str(e),
+        )
+        return Response(
+            content=f'{{"error": "Firecrawl API error: {str(e)}"}}',
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            media_type="application/json",
+        )
 
 
 # Core Operations
 @router.post("/v2/scrape")
-async def scrape_url(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
+async def scrape_url(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    client: httpx.AsyncClient = Depends(get_http_client),
+) -> Response:
     """Single URL scrape → proxy + session tracking + auto-index"""
-    return await proxy_with_session_tracking(request, "/scrape", "scrape", db, "POST")
+    return await proxy_with_session_tracking(request, "/scrape", "scrape", db, client, "POST")
 
 
 @router.get("/v2/scrape/{job_id}")
-async def get_scrape_status(request: Request, job_id: str) -> Response:
+async def get_scrape_status(
+    request: Request, job_id: str, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Scrape job status → proxy"""
-    return await proxy_to_firecrawl(request, f"/scrape/{job_id}", "GET")
+    return await proxy_to_firecrawl(request, f"/scrape/{job_id}", client, "GET")
 
 
 @router.post("/v2/batch/scrape")
-async def batch_scrape(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
+async def batch_scrape(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    client: httpx.AsyncClient = Depends(get_http_client),
+) -> Response:
     """Batch scrape → proxy + session tracking + auto-index"""
-    return await proxy_with_session_tracking(request, "/batch/scrape", "scrape_batch", db, "POST")
+    return await proxy_with_session_tracking(
+        request, "/batch/scrape", "scrape_batch", db, client, "POST"
+    )
 
 
 @router.get("/v2/batch/scrape/{job_id}")
-async def get_batch_scrape_status(request: Request, job_id: str) -> Response:
+async def get_batch_scrape_status(
+    request: Request, job_id: str, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Batch status → proxy"""
-    return await proxy_to_firecrawl(request, f"/batch/scrape/{job_id}", "GET")
+    return await proxy_to_firecrawl(request, f"/batch/scrape/{job_id}", client, "GET")
 
 
 @router.delete("/v2/batch/scrape/{job_id}")
-async def cancel_batch_scrape(request: Request, job_id: str) -> Response:
+async def cancel_batch_scrape(
+    request: Request, job_id: str, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Cancel batch → proxy"""
-    return await proxy_to_firecrawl(request, f"/batch/scrape/{job_id}", "DELETE")
+    return await proxy_to_firecrawl(request, f"/batch/scrape/{job_id}", client, "DELETE")
 
 
 @router.get("/v2/batch/scrape/{job_id}/errors")
-async def get_batch_scrape_errors(request: Request, job_id: str) -> Response:
+async def get_batch_scrape_errors(
+    request: Request, job_id: str, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Batch scrape errors → proxy"""
-    return await proxy_to_firecrawl(request, f"/batch/scrape/{job_id}/errors", "GET")
+    return await proxy_to_firecrawl(request, f"/batch/scrape/{job_id}/errors", client, "GET")
 
 
 @router.post("/v2/crawl")
-async def start_crawl(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
+async def start_crawl(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    client: httpx.AsyncClient = Depends(get_http_client),
+) -> Response:
     """Start crawl → proxy + session tracking + auto-index"""
-    return await proxy_with_session_tracking(request, "/crawl", "crawl", db, "POST")
+    return await proxy_with_session_tracking(request, "/crawl", "crawl", db, client, "POST")
 
 
 @router.get("/v2/crawl/{job_id}")
-async def get_crawl_status(request: Request, job_id: str) -> Response:
+async def get_crawl_status(
+    request: Request, job_id: str, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Crawl status → proxy"""
-    return await proxy_to_firecrawl(request, f"/crawl/{job_id}", "GET")
+    return await proxy_to_firecrawl(request, f"/crawl/{job_id}", client, "GET")
 
 
 @router.delete("/v2/crawl/{job_id}")
-async def cancel_crawl(request: Request, job_id: str) -> Response:
+async def cancel_crawl(
+    request: Request, job_id: str, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Cancel crawl → proxy"""
-    return await proxy_to_firecrawl(request, f"/crawl/{job_id}", "DELETE")
+    return await proxy_to_firecrawl(request, f"/crawl/{job_id}", client, "DELETE")
 
 
 @router.get("/v2/crawl/{job_id}/errors")
-async def get_crawl_errors(request: Request, job_id: str) -> Response:
+async def get_crawl_errors(
+    request: Request, job_id: str, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Crawl errors → proxy"""
-    return await proxy_to_firecrawl(request, f"/crawl/{job_id}/errors", "GET")
+    return await proxy_to_firecrawl(request, f"/crawl/{job_id}/errors", client, "GET")
 
 
 @router.post("/v2/crawl/params-preview")
-async def preview_crawl_params(request: Request) -> Response:
+async def preview_crawl_params(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Preview crawl params → proxy"""
-    return await proxy_to_firecrawl(request, "/crawl/params-preview", "POST")
+    return await proxy_to_firecrawl(request, "/crawl/params-preview", client, "POST")
 
 
 @router.get("/v2/crawl/ongoing")
-async def list_ongoing_crawls(request: Request) -> Response:
+async def list_ongoing_crawls(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """List ongoing crawls → proxy"""
-    return await proxy_to_firecrawl(request, "/crawl/ongoing", "GET")
+    return await proxy_to_firecrawl(request, "/crawl/ongoing", client, "GET")
 
 
 @router.get("/v2/crawl/active")
-async def list_active_crawls(request: Request) -> Response:
+async def list_active_crawls(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """List active crawls → proxy"""
-    return await proxy_to_firecrawl(request, "/crawl/active", "GET")
+    return await proxy_to_firecrawl(request, "/crawl/active", client, "GET")
 
 
 @router.post("/v2/map")
-async def map_urls(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
+async def map_urls(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    client: httpx.AsyncClient = Depends(get_http_client),
+) -> Response:
     """URL discovery → proxy + session tracking"""
-    return await proxy_with_session_tracking(request, "/map", "map", db, "POST")
+    return await proxy_with_session_tracking(request, "/map", "map", db, client, "POST")
 
 
 @router.post("/v2/search")
-async def web_search(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
+async def web_search(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    client: httpx.AsyncClient = Depends(get_http_client),
+) -> Response:
     """Web search → proxy + session tracking"""
-    return await proxy_with_session_tracking(request, "/search", "search", db, "POST")
+    return await proxy_with_session_tracking(request, "/search", "search", db, client, "POST")
 
 
 # AI Features
 @router.post("/v2/extract")
-async def extract_data(request: Request, db: AsyncSession = Depends(get_db_session)) -> Response:
+async def extract_data(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    client: httpx.AsyncClient = Depends(get_http_client),
+) -> Response:
     """Extract structured data → proxy + session tracking"""
-    return await proxy_with_session_tracking(request, "/extract", "extract", db, "POST")
+    return await proxy_with_session_tracking(request, "/extract", "extract", db, client, "POST")
 
 
 @router.get("/v2/extract/{job_id}")
-async def get_extract_status(request: Request, job_id: str) -> Response:
+async def get_extract_status(
+    request: Request, job_id: str, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Extraction status → proxy"""
-    return await proxy_to_firecrawl(request, f"/extract/{job_id}", "GET")
+    return await proxy_to_firecrawl(request, f"/extract/{job_id}", client, "GET")
 
 
 # Account Management
 @router.get("/v2/team/credit-usage")
-async def get_credit_usage(request: Request) -> Response:
+async def get_credit_usage(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Current credits → proxy"""
-    return await proxy_to_firecrawl(request, "/team/credit-usage", "GET")
+    return await proxy_to_firecrawl(request, "/team/credit-usage", client, "GET")
 
 
 @router.get("/v2/team/credit-usage/historical")
-async def get_historical_credit_usage(request: Request) -> Response:
+async def get_historical_credit_usage(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Credit history → proxy"""
-    return await proxy_to_firecrawl(request, "/team/credit-usage/historical", "GET")
+    return await proxy_to_firecrawl(request, "/team/credit-usage/historical", client, "GET")
 
 
 @router.get("/v2/team/token-usage")
-async def get_token_usage(request: Request) -> Response:
+async def get_token_usage(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Current tokens → proxy"""
-    return await proxy_to_firecrawl(request, "/team/token-usage", "GET")
+    return await proxy_to_firecrawl(request, "/team/token-usage", client, "GET")
 
 
 @router.get("/v2/team/token-usage/historical")
-async def get_historical_token_usage(request: Request) -> Response:
+async def get_historical_token_usage(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Token history → proxy"""
-    return await proxy_to_firecrawl(request, "/team/token-usage/historical", "GET")
+    return await proxy_to_firecrawl(request, "/team/token-usage/historical", client, "GET")
 
 
 # Monitoring
 @router.get("/v2/team/queue-status")
-async def get_queue_status(request: Request) -> Response:
+async def get_queue_status(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Queue status → proxy"""
-    return await proxy_to_firecrawl(request, "/team/queue-status", "GET")
+    return await proxy_to_firecrawl(request, "/team/queue-status", client, "GET")
 
 
 @router.get("/v2/concurrency-check")
-async def check_concurrency(request: Request) -> Response:
+async def check_concurrency(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """Concurrency limits → proxy"""
-    return await proxy_to_firecrawl(request, "/concurrency-check", "GET")
+    return await proxy_to_firecrawl(request, "/concurrency-check", client, "GET")
 
 
 # Experimental
 @router.post("/v2/x402/search")
-async def x402_search(request: Request) -> Response:
+async def x402_search(
+    request: Request, client: httpx.AsyncClient = Depends(get_http_client)
+) -> Response:
     """X402 micropayment search → proxy"""
-    return await proxy_to_firecrawl(request, "/x402/search", "POST")
+    return await proxy_to_firecrawl(request, "/x402/search", client, "POST")

@@ -14,10 +14,7 @@ describe("scrape schema", () => {
     const schema = buildScrapeArgsSchema();
     const result = schema.parse({ urls: ["example.com", "example.org"] });
     expect(result.command).toBe("start");
-    expect(result.urls).toEqual([
-      "https://example.com",
-      "https://example.org",
-    ]);
+    expect(result.urls).toEqual(["https://example.com", "https://example.org"]);
     expect(result.url).toBeUndefined();
   });
 

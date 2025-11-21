@@ -46,12 +46,14 @@ def reciprocal_rank_fusion(
             metadata = result.get("metadata", {})
 
             # Prefer canonical_url for deduplication, fallback to url, then id
+            # Use hash-based fallback to guarantee uniqueness if ID is missing
             doc_id = (
                 payload.get("canonical_url")
                 or metadata.get("canonical_url")
                 or payload.get("url")
                 or metadata.get("url")
-                or result.get("id", str(rank))
+                or result.get("id")
+                or f"__rank_{rank}_{hash(str(result))}"
             )
 
             # Calculate RRF score
@@ -115,11 +117,12 @@ class SearchOrchestrator:
         query: str,
         mode: SearchMode = SearchMode.HYBRID,
         limit: int = 10,
+        offset: int = 0,
         domain: str | None = None,
         language: str | None = None,
         country: str | None = None,
         is_mobile: bool | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], int]:
         """
         Execute search with specified mode.
 
@@ -127,19 +130,21 @@ class SearchOrchestrator:
             query: Search query text
             mode: Search mode (hybrid, semantic, keyword, bm25)
             limit: Maximum results
+            offset: Zero-based pagination offset
             domain: Filter by domain
             language: Filter by language
             country: Filter by country
             is_mobile: Filter by mobile flag
 
         Returns:
-            List of search results
+            Tuple of (results, total_count)
         """
         logger.info(
             "Executing search",
             query=query,
             mode=mode,
             limit=limit,
+            offset=offset,
             filters={
                 "domain": domain,
                 "language": language,
@@ -149,11 +154,17 @@ class SearchOrchestrator:
         )
 
         if mode == SearchMode.HYBRID:
-            return await self._hybrid_search(query, limit, domain, language, country, is_mobile)
+            return await self._hybrid_search(
+                query, limit, offset, domain, language, country, is_mobile
+            )
         elif mode == SearchMode.SEMANTIC:
-            return await self._semantic_search(query, limit, domain, language, country, is_mobile)
+            return await self._semantic_search(
+                query, limit, offset, domain, language, country, is_mobile
+            )
         elif mode in (SearchMode.KEYWORD, SearchMode.BM25):
-            return self._keyword_search(query, limit, domain, language, country, is_mobile)
+            return await self._keyword_search(
+                query, limit, offset, domain, language, country, is_mobile
+            )
         else:
             raise ValueError(f"Unknown search mode: {mode}")
 
@@ -161,50 +172,62 @@ class SearchOrchestrator:
         self,
         query: str,
         limit: int,
+        offset: int,
         domain: str | None,
         language: str | None,
         country: str | None,
         is_mobile: bool | None,
-    ) -> list[dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], int]:
         """
         Hybrid search: Vector + BM25 with RRF fusion.
         """
-        # Run both searches in parallel
-        vector_results = await self._semantic_search(
-            query,
-            limit * 2,
-            domain,
-            language,
-            country,
-            is_mobile,  # Get more for fusion
+        # Fetch enough results before fusion to maintain ranking accuracy across pages
+        # We need to fetch (limit + offset) results from each search to ensure proper ranking
+        # Add buffer factor to account for deduplication during RRF fusion
+        dedup_buffer_factor = 1.5
+        fetch_limit = int((limit + offset) * dedup_buffer_factor)
+
+        # Run both searches with expanded limit
+        vector_results, vector_total = await self._semantic_search(
+            query=query,
+            limit=fetch_limit,
+            offset=0,  # Fetch from beginning, apply offset after fusion
+            domain=domain,
+            language=language,
+            country=country,
+            is_mobile=is_mobile,
         )
-        keyword_results = self._keyword_search(
-            query,
-            limit * 2,
-            domain,
-            language,
-            country,
-            is_mobile,  # Get more for fusion
+        keyword_results, keyword_total = await self._keyword_search(
+            query=query,
+            limit=fetch_limit,
+            offset=0,  # Fetch from beginning, apply offset after fusion
+            domain=domain,
+            language=language,
+            country=country,
+            is_mobile=is_mobile,
         )
 
-        # Apply RRF fusion
+        # Apply RRF fusion on full result sets
         fused_results = reciprocal_rank_fusion(
             [vector_results, keyword_results],
             k=self.rrf_k,
         )
 
-        # Return top results
-        return fused_results[:limit]
+        total = max(vector_total, keyword_total)
+
+        # Apply pagination after fusion to maintain ranking accuracy
+        return fused_results[offset : offset + limit], total
 
     async def _semantic_search(
         self,
         query: str,
         limit: int,
+        offset: int,
         domain: str | None,
         language: str | None,
         country: str | None,
         is_mobile: bool | None,
-    ) -> list[dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], int]:
         """
         Semantic search: Vector similarity only.
         """
@@ -213,41 +236,61 @@ class SearchOrchestrator:
 
         if not query_vector:
             logger.warning("Failed to generate query embedding")
-            return []
+            return [], 0
 
         # Search vector store
-        results = await self.vector_store.search(
+        result = await self.vector_store.search(
             query_vector=query_vector,
             limit=limit,
+            offset=offset,
             domain=domain,
             language=language,
             country=country,
             is_mobile=is_mobile,
         )
 
-        logger.info("Semantic search completed", results=len(results))
-        return results
+        results, total = self._normalize_results(result)
 
-    def _keyword_search(
+        logger.info("Semantic search completed", results=len(results), total=total)
+        return results, total
+
+    async def _keyword_search(
         self,
         query: str,
         limit: int,
+        offset: int,
         domain: str | None,
         language: str | None,
         country: str | None,
         is_mobile: bool | None,
-    ) -> list[dict[str, Any]]:
-        """
-        Keyword search: BM25 only.
-        """
-        results = self.bm25_engine.search(
-            query=query,
-            limit=limit,
-            domain=domain,
-            language=language,
-            country=country,
-            is_mobile=is_mobile,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Keyword search: BM25 only (runs in thread executor)."""
+        import asyncio
+
+        loop = asyncio.get_running_loop()
+
+        result = await loop.run_in_executor(
+            None,
+            lambda: self.bm25_engine.search(
+                query=query,
+                limit=limit,
+                offset=offset,
+                domain=domain,
+                language=language,
+                country=country,
+                is_mobile=is_mobile,
+            ),
         )
 
-        logger.info("Keyword search completed", results=len(results))
-        return results
+        # Normalize to (results, total) tuple for consistent callers.
+        return self._normalize_results(result)
+
+    @staticmethod
+    def _normalize_results(
+        result: list[dict[str, Any]] | tuple[list[dict[str, Any]], int],
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Normalize backend results to (list, total)."""
+        if isinstance(result, tuple):
+            results, total = result
+            return results, int(total)
+        return result, len(result)

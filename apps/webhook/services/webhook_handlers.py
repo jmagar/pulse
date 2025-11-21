@@ -6,7 +6,7 @@ import asyncio
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any
 
 from rq import Queue
 from sqlalchemy import func, select
